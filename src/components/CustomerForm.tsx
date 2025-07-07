@@ -11,7 +11,7 @@ export function CustomerForm() {
       <Input placeholder="Total Amount" className="rounded-xl" />
       <Input placeholder="Total Due Amount" className="rounded-xl" />
       <div className="md:col-span-2 text-right">
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-55 py-2 rounded-xl shadow-md">
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-xl shadow-md">
           + New Order
         </Button>
       </div>

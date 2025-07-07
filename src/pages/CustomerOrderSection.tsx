@@ -70,7 +70,7 @@ export default function CustomerOrderSection() {
 
         {/* Order Form */}
         <div className="p-6 bg-white rounded-[28px] shadow-[inset_4px_4px_10px_rgba(0,0,0,0.05),_inset_-4px_-4px_10px_rgba(255,255,255,0.8)]">
-          <h2 className="text-lg font-semibold mb-4">Order Form</h2>
+          <h2 className="text-lg font-semibold mb-4 bg-red-500">Order Form</h2>
           <OrderForm onAddOrder={handleAddOrder} />
         </div>
 
