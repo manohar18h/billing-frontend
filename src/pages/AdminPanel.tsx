@@ -19,10 +19,13 @@ import {
   useLocation,
 } from "react-router-dom";
 import classNames from "classnames";
+import Dashboard from "@/pages/admin/Dashboard";
+import Customers from "@/pages/admin/Customers";
+import Orders from "@/pages/admin/Orders";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
-  { icon: Users, label: "Customers", path: "/admin/customers" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
+  { icon: Users, label: "Customers", path: "/admin/Customers" },
   { icon: Package, label: "Orders", path: "/admin/orders" },
   { icon: HardHat, label: "Workers", path: "/admin/workers" },
   { icon: Hammer, label: "LotWork", path: "/admin/lotwork" },
@@ -48,7 +51,7 @@ const Sidebar = ({ activeIndex }: { activeIndex: number }) => {
   return (
     <aside
       ref={containerRef}
-      className="relative w-[72px] bg-[rgb(136,71,255)] flex flex-col items-center py-5 space-y-4 rounded-tr-3xl rounded-br-3xl overflow-hidden"
+      className="relative w-[72px] bg-[rgb(136,71,255)] flex flex-col items-center py-5 space-y-4 rounded-tr-3xl rounded-br-3xl overflow-hidden p-10"
     >
       {/* Curved Highlight Background */}
       <div
@@ -114,14 +117,14 @@ const AdminPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-10 bg-white dark:bg-gray-800/50 backdrop-blur-md border border-purple-200 dark:border-gray-700 p-8 rounded-3xl shadow-xl h-[500px] flex items-center justify-center">
+        <div>
           <Routes>
-            <Route path="dashboard" element={<p>Dashboard</p>} />
-            <Route path="customers" element={<p>Customers</p>} />
-            <Route path="orders" element={<p>Orders</p>} />
-            <Route path="workers" element={<p>Workers</p>} />
-            <Route path="lotwork" element={<p>Lot Work</p>} />
-            <Route path="repairwork" element={<p>Repair Work</p>} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="customers" element={<Customers />} />
+            <Route path="orders" element={<Orders />} />
+            {/* <Route path="workers" element={<Workers />} />
+  <Route path="lotwork" element={<LotWork />} />
+  <Route path="repairwork" element={<RepairWork />} /> */}
             <Route path="*" element={<p>Select a menu option</p>} />
           </Routes>
         </div>
