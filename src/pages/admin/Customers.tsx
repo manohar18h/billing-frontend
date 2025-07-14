@@ -1,21 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TextField,
   Box,
   Grid,
   Button,
   InputAdornment,
-  Paper,
   Typography,
+  Paper,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
-const Customers: React.FC = () => {
+const SearchAddCustomer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
-  const [customer, setCustomer] = useState({
+  const emptyCustomer = {
     customerId: "",
     name: "",
     village: "",
@@ -25,8 +26,9 @@ const Customers: React.FC = () => {
     finalAmount: 0.0,
     totalDueAmount: 0.0,
     password: "",
-  });
+  };
 
+  const [customer, setCustomer] = useState({ ...emptyCustomer });
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const handleChange = (field: string, value: string | number) => {
@@ -36,23 +38,81 @@ const Customers: React.FC = () => {
   const thickTextFieldProps = {
     variant: "outlined" as const,
     fullWidth: true,
-    slotProps: {
-      input: { style: { fontWeight: "500" } },
-      notchedOutline: { style: { borderWidth: "2px", borderColor: "#8847FF" } },
-      label: { style: { fontWeight: "bold", color: "#333" } },
-    },
+    InputLabelProps: { shrink: true },
+    InputProps: { style: { fontWeight: "500" } },
+  };
+
+  const handleSearch = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://15.207.98.116:8081/admin/getByCusPhnNumber/${searchQuery}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Fetch failed");
+
+      sessionStorage.setItem("customer", JSON.stringify(data));
+      sessionStorage.setItem("orders", JSON.stringify(data.orders || []));
+
+      navigate("/admin/customer-details", {
+        state: { customer: data, orders: data.orders || [] },
+      });
+    } catch (error) {
+      console.error("Search failed:", error);
+      toast.error("Customer not found");
+    }
+  };
+
+  const handleAddCustomer = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      setFieldErrors({});
+
+      const response = await fetch(
+        "http://15.207.98.116:8081/admin/addCustomer",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(customer),
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok) {
+        if (result.message?.includes("Phone number is already registered")) {
+          toast.error(result.message);
+        } else if (typeof result === "object") {
+          setFieldErrors(result);
+        } else {
+          toast.error("Failed to add customer");
+        }
+        return;
+      }
+
+      localStorage.setItem("customerId", result.customerId);
+      navigate("/admin/orders", {
+        state: { fromCustomer: true },
+      });
+    } catch (error) {
+      console.error("Error adding customer:", error);
+      toast.error("Something went wrong");
+    }
   };
 
   return (
-    <div className="mt-10 p-3 rounded-[24px] bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)] h-[500px] flex items-center justify-center">
-      <Box
-        sx={{
-          padding: 4,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-        }}
+    <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6">
+      <Paper
+        elevation={4}
+        className="relative p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
       >
         <Typography
           variant="h4"
@@ -64,17 +124,13 @@ const Customers: React.FC = () => {
           Customer
         </Typography>
 
-        {/* Search Bar */}
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 1,
-            borderRadius: 8,
-            maxWidth: 400,
-            marginBottom: 2,
-            alignSelf: "center",
-            width: "100%",
-          }}
+        <Box
+          mt={6}
+          display="flex"
+          gap={2}
+          maxWidth={600}
+          alignSelf="center"
+          mb={4}
         >
           <TextField
             fullWidth
@@ -95,183 +151,71 @@ const Customers: React.FC = () => {
               },
             }}
           />
-        </Paper>
-
-        {/* Customer Details Form */}
-        <Box flexGrow={1}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                {...thickTextFieldProps}
-                label="Customer ID"
-                value={customer.customerId}
-                onChange={(e) => handleChange("customerId", e.target.value)}
-                error={!!fieldErrors.customerId}
-                helperText={fieldErrors.customerId}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                {...thickTextFieldProps}
-                label="Name"
-                value={customer.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                error={!!fieldErrors.name}
-                helperText={fieldErrors.name}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                {...thickTextFieldProps}
-                label="Village"
-                value={customer.village}
-                onChange={(e) => handleChange("village", e.target.value)}
-                error={!!fieldErrors.village}
-                helperText={fieldErrors.village}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                {...thickTextFieldProps}
-                label="Phone Number"
-                value={customer.phoneNumber}
-                onChange={(e) => handleChange("phoneNumber", e.target.value)}
-                error={!!fieldErrors.phoneNumber}
-                helperText={fieldErrors.phoneNumber}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                {...thickTextFieldProps}
-                label="Email ID"
-                value={customer.emailId}
-                onChange={(e) => handleChange("emailId", e.target.value)}
-                error={!!fieldErrors.emailId}
-                helperText={fieldErrors.emailId}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                {...thickTextFieldProps}
-                label="Password"
-                value={customer.password}
-                onChange={(e) => handleChange("password", e.target.value)}
-                error={!!fieldErrors.password}
-                helperText={fieldErrors.password}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                {...thickTextFieldProps}
-                label="Number of Orders"
-                type="number"
-                value={customer.numberOfOrders}
-                onChange={(e) =>
-                  handleChange("numberOfOrders", Number(e.target.value))
-                }
-                error={!!fieldErrors.numberOfOrders}
-                helperText={fieldErrors.numberOfOrders}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                {...thickTextFieldProps}
-                label="Final Amount"
-                type="number"
-                value={customer.finalAmount}
-                onChange={(e) =>
-                  handleChange("finalAmount", Number(e.target.value))
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                {...thickTextFieldProps}
-                label="Total Due Amount"
-                type="number"
-                value={customer.totalDueAmount}
-                onChange={(e) =>
-                  handleChange("totalDueAmount", Number(e.target.value))
-                }
-              />
-            </Grid>
-          </Grid>
-          {/* Next Button */}
-          <Box
-            display="flex"
-            justifyContent="flex-end"
-            alignItems="center"
-            mt={4}
-            width="100%"
+          <Button
+            variant="outlined"
+            onClick={handleSearch}
+            sx={{
+              paddingX: 6,
+              paddingY: 0.2,
+              borderRadius: "12px",
+              fontWeight: "bold",
+              boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+              borderColor: "#8847FF",
+              color: "#8847FF",
+              transition: "all 0.3s",
+              "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+            }}
           >
-            <Button
-              onClick={async () => {
-                try {
-                  setFieldErrors({}); // clear previous errors
-                  const token = localStorage.getItem("token");
-                  const response = await fetch(
-                    "http://15.207.98.116:8080/admin/addCustomer",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({
-                        name: customer.name,
-                        village: customer.village,
-                        phoneNumber: customer.phoneNumber,
-                        password: customer.password,
-                        emailId: customer.emailId,
-                        numberOfOrders: customer.numberOfOrders,
-                      }),
-                    }
-                  );
-
-                  const result = await response.json();
-
-                  if (!response.ok) {
-                    if (typeof result === "object" && !Array.isArray(result)) {
-                      // set individual field errors
-                      setFieldErrors(result);
-                    } else {
-                      throw new Error(
-                        result.message || "Failed to add customer"
-                      );
-                    }
-                    return;
-                  }
-
-                  console.log("Customer added successfully:", result);
-                  localStorage.setItem("customerId", result.customerId);
-                  navigate("/admin/orders");
-                } catch (error) {
-                  console.error("Error adding customer:", error);
-                }
-              }}
-              variant="outlined"
-              sx={{
-                paddingX: 4,
-                paddingY: 1.5,
-                borderRadius: "12px",
-                fontWeight: "bold",
-                boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
-                borderColor: "#8847FF",
-                color: "#8847FF",
-                transition: "all 0.3s",
-                "&:hover": {
-                  backgroundColor: "#8847FF",
-                  color: "#fff",
-                },
-              }}
-            >
-              Nexttt
-            </Button>
-          </Box>
+            Search
+          </Button>
         </Box>
-      </Box>
+
+        <Grid container spacing={3}>
+          {["name", "village", "phoneNumber", "emailId", "password"].map(
+            (key) => (
+              <Grid item xs={12} sm={6} key={key}>
+                <TextField
+                  {...thickTextFieldProps}
+                  label={
+                    key === "phoneNumber"
+                      ? "Phone Number"
+                      : key === "emailId"
+                      ? "Email ID"
+                      : key.charAt(0).toUpperCase() + key.slice(1)
+                  }
+                  type={key === "password" ? "password" : "text"}
+                  value={customer[key]}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  error={!!fieldErrors[key]}
+                  helperText={fieldErrors[key]}
+                />
+              </Grid>
+            )
+          )}
+        </Grid>
+
+        <Box display="flex" justifyContent="flex-end" mt={4}>
+          <Button
+            onClick={handleAddCustomer}
+            variant="outlined"
+            sx={{
+              paddingX: 4,
+              paddingY: 1.5,
+              borderRadius: "12px",
+              fontWeight: "bold",
+              boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+              borderColor: "#8847FF",
+              color: "#8847FF",
+              transition: "all 0.3s",
+              "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+            }}
+          >
+            Next
+          </Button>
+        </Box>
+      </Paper>
     </div>
   );
 };
 
-export default Customers;
+export default SearchAddCustomer;

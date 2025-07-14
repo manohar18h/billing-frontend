@@ -17,7 +17,7 @@ const LoginScreen: React.FC = () => {
     console.log("Sending Login Payload:", payLoad);
 
     try {
-      const response = await fetch("http://15.207.98.116:8080/auth/login", {
+      const response = await fetch("http://15.207.98.116:8081/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,4 +1,3 @@
-// src/App.tsx
 import React from "react";
 import {
   BrowserRouter as Router,
@@ -8,16 +7,24 @@ import {
 } from "react-router-dom";
 import LoginScreen from "./components/Login";
 import WrappedAdminPanel from "./pages/AdminPanel";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Public Route */}
         <Route path="/login" element={<LoginScreen />} />
+
+        {/* All admin-related routes go through AdminPanel */}
         <Route path="/admin/*" element={<WrappedAdminPanel />} />
-        {/* Redirect root to login */}
-        <Route path="/" element={<Navigate to="/login" />} />
+
+        {/* Default redirect */}
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
+
+      <ToastContainer />
     </Router>
   );
 };

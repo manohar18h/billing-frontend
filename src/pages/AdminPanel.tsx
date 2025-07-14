@@ -11,22 +11,18 @@ import {
   Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  NavLink,
-  useLocation,
-} from "react-router-dom";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import classNames from "classnames";
 import Dashboard from "@/pages/admin/Dashboard";
 import Customers from "@/pages/admin/Customers";
 import Orders from "@/pages/admin/Orders";
+import GenerateBill from "./admin/GenerateBill";
+import CustomerDetails from "./admin/CustomerDetails";
+import OrderDetails from "./admin/OrderDetails";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
   { icon: Users, label: "Customers", path: "/admin/Customers" },
-  { icon: Package, label: "Orders", path: "/admin/orders" },
   { icon: HardHat, label: "Workers", path: "/admin/workers" },
   { icon: Hammer, label: "LotWork", path: "/admin/lotwork" },
   { icon: Wrench, label: "RepairWork", path: "/admin/repairwork" },
@@ -44,38 +40,39 @@ const Sidebar = ({ activeIndex }: { activeIndex: number }) => {
     if (activeItem) {
       const offsetTop = activeItem.offsetTop;
       const height = activeItem.offsetHeight;
-      setHighlightTop(offsetTop + height / 2 - 28); // 28 = half of the curved highlight height
+      setHighlightTop(offsetTop + height / 2 - 28); // Center the white highlight
     }
   }, [activeIndex]);
 
   return (
     <aside
       ref={containerRef}
-      className="relative w-[72px] bg-[rgb(136,71,255)] flex flex-col items-center py-5 space-y-4 rounded-tr-3xl rounded-br-3xl overflow-hidden p-10"
+      className="relative w-[72px] bg-[rgb(136,71,255)] flex flex-col items-center py-5 space-y-4 rounded-tr-3xl rounded-br-3xl overflow-hidden"
     >
       {/* Curved Highlight Background */}
       <div
         className="absolute left-5 w-[calc(100%-1.25rem)] h-14 transition-all duration-300 ease-in-out"
         style={{ top: `${highlightTop}px` }}
       >
-        <div className="w-full h-full bg-white rounded-l-full shadow-lg z-0"></div>
+        <div className="w-full h-full bg-white rounded-l-full shadow-md z-0"></div>
       </div>
 
       {/* Menu Items */}
-      {menuItems.map((item, idx) => (
-        <NavLink
-          key={idx}
-          to={item.path}
-          className={({ isActive }) =>
-            classNames(
+      {menuItems.map((item, idx) => {
+        const isActive = idx === activeIndex;
+        return (
+          <NavLink
+            key={idx}
+            to={item.path}
+            className={classNames(
               "sidebar-item relative z-10 flex items-center justify-center w-12 h-12 transition-all duration-300",
-              isActive ? "text-[#8847FF]" : "text-white"
-            )
-          }
-        >
-          <item.icon className="w-6 h-6" />
-        </NavLink>
-      ))}
+              isActive ? "text-[rgb(136,71,255)]" : "text-white"
+            )}
+          >
+            <item.icon className="w-6 h-6" />
+          </NavLink>
+        );
+      })}
     </aside>
   );
 };
@@ -84,9 +81,22 @@ const AdminPanel: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
 
-  const activeIndex = menuItems.findIndex((item) =>
+  // Determine which menu to highlight
+  let activeIndex = menuItems.findIndex((item) =>
     location.pathname.startsWith(item.path)
   );
+
+  // Force Customers icon active on hidden sub-pages
+  if (
+    location.pathname === "/admin/customer-details" ||
+    location.pathname === "/admin/generate-bill" ||
+    location.pathname === "/admin/orders" ||
+    location.pathname.startsWith("/admin/order-details")
+  ) {
+    activeIndex = 1;
+  }
+
+  if (activeIndex === -1) activeIndex = 0;
 
   useEffect(() => {
     if (darkMode) {
@@ -98,7 +108,7 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-white dark:bg-[#1a1b1f] transition-colors">
-      <Sidebar activeIndex={activeIndex === -1 ? 0 : activeIndex} />
+      <Sidebar activeIndex={activeIndex} />
 
       <main className="flex-1 p-6 text-gray-800 dark:text-white">
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center">
@@ -122,15 +132,16 @@ const AdminPanel: React.FC = () => {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="customers" element={<Customers />} />
             <Route path="orders" element={<Orders />} />
-            {/* <Route path="workers" element={<Workers />} />
-  <Route path="lotwork" element={<LotWork />} />
-  <Route path="repairwork" element={<RepairWork />} /> */}
+            <Route path="generate-bill" element={<GenerateBill />} />
+            <Route path="customer-details" element={<CustomerDetails />} />
+            <Route path="order-details/:orderId" element={<OrderDetails />} />
+
             <Route path="*" element={<p>Select a menu option</p>} />
           </Routes>
         </div>
       </main>
 
-      {/* Utility buttons */}
+      {/* Utility Buttons */}
       <div className="absolute bottom-8 left-6 flex flex-col gap-4">
         <Button
           variant="ghost"
