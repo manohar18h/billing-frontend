@@ -15,6 +15,8 @@ import {
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { IconButton } from "@mui/material";
 
 import {
   Dialog,
@@ -31,7 +33,6 @@ type AppWorker = {
 
 const Orders: React.FC = () => {
   const [order, setOrder] = useState({
-    orderDate: "",
     metal: "",
     metalPrice: 0.0,
     itemName: "",
@@ -67,18 +68,22 @@ const Orders: React.FC = () => {
   const showOrdersList = location.state?.showOrdersList || false;
   const fromCustomer = location.state?.fromCustomer || false;
   const fromCustomerDetails = location.state?.fromCustomerDetails || false;
+  const from = location.state?.from || localStorage.getItem("from");
 
   const customerId =
-    location.state?.customerId || localStorage.getItem("customerId");
+    location.state?.customerId ||
+    localStorage.getItem("CusDetailsCustomerId") ||
+    localStorage.getItem("customerId");
+
   const token = localStorage.getItem("token");
   const apiBase = "http://15.207.98.116:8081";
 
   const [exchange, setExchange] = useState({
     exchange_metal: "",
     exchange_metal_name: "",
-    exchange_metal_weight: "",
-    exchange_purity_weight: "",
-    exchange_item_amount: 0.0,
+    exchange_metal_weight: 0,
+    exchange_purity_weight: 0,
+    exchange_item_amount: 0,
   });
 
   const [payDialogOpen, setPayDialogOpen] = useState(false);
@@ -94,6 +99,7 @@ const Orders: React.FC = () => {
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
   const [workerPayAmount, setWorkerPayAmount] = useState("");
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
+
   useEffect(() => {
     axios
       .get<AppWorker[]>(`${apiBase}/admin/getAllWorkers`, {
@@ -127,6 +133,10 @@ const Orders: React.FC = () => {
   }, [location.key]);
 
   const handleOrderSubmit = async () => {
+    console.log("customerid  in order  :  " + customerId);
+    console.log("Token id: " + token);
+    console.log("Request Body:", JSON.stringify(order, null, 2));
+
     try {
       const response = await axios.post(
         `${apiBase}/admin/addOrder/${customerId}`,
@@ -153,23 +163,53 @@ const Orders: React.FC = () => {
       }
     }
   };
-
   const handleExchangeSubmit = async () => {
     try {
+      localStorage.removeItem("exchangeItemAmount");
+      localStorage.removeItem("exchangeOrderId");
+
+      const exchangeItemAmount = exchange.exchange_item_amount;
       const orderId = ordersList[ordersList.length - 1]?.orderId;
+
       if (!orderId) return alert("Submit order first");
+
+      localStorage.setItem("exchangeItemAmount", exchangeItemAmount.toString());
+      localStorage.setItem("exchangeOrderId", orderId.toString());
+
       const response = await axios.post(
         `${apiBase}/admin/addOldExItem/${orderId}`,
         exchange,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setExchangeList([...exchangeList, response.data]);
+
+      const newExchangeList = [...exchangeList, response.data];
+      setExchangeList(newExchangeList);
+
+      const updatedOrders = ordersList.map((order) => {
+        if (order.orderId === orderId) {
+          const newDue = Math.max(order.dueAmount - exchangeItemAmount, 0);
+          return { ...order, dueAmount: newDue };
+        }
+        return order;
+      });
+
+      setOrdersList(updatedOrders);
+
+      sessionStorage.setItem(
+        "ordersState",
+        JSON.stringify({
+          ordersList: updatedOrders,
+          exchangeList: newExchangeList,
+        })
+      );
+
       setExchangeErrors({});
     } catch (error: any) {
       if (error.response && error.response.data) {
-        setExchangeErrors(error.response.data); // assumes { field: "error message" }
+        setExchangeErrors(error.response.data);
       } else {
-        alert("Failed to submit order");
+        alert("Failed to submit exchange");
+        console.error("Exchange error:", error);
       }
     }
   };
@@ -182,8 +222,10 @@ const Orders: React.FC = () => {
     );
 
     navigate(`/admin/order-details/${orderId}`, {
+      replace: true,
       state: {
         customerId,
+        from: "orders",
       },
     });
   };
@@ -198,6 +240,21 @@ const Orders: React.FC = () => {
       },
       label: { style: { fontWeight: "bold", color: "#333" } },
     },
+  };
+
+  const handleBackClick = () => {
+    localStorage.removeItem("from");
+
+    if (from === "customerDetails") {
+      navigate("/admin/customer-details", {
+        state: { customerId: location.state?.customerId }, // optionally pass back
+        replace: true,
+      });
+    } else if (from === "customer") {
+      navigate("/admin/customers", { replace: true });
+    } else {
+      navigate("/admin"); // fallback
+    }
   };
 
   return (
@@ -220,9 +277,14 @@ const Orders: React.FC = () => {
           alignItems="center"
           mb={6}
         >
-          <Typography variant="h4" fontWeight="bold" color="primary">
-            Orders
-          </Typography>
+          <Box display="flex">
+            <IconButton color="primary" onClick={handleBackClick}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h4" fontWeight="bold" color="primary">
+              Orders
+            </Typography>
+          </Box>
           <Button
             variant="outlined"
             onClick={() => {
@@ -385,19 +447,72 @@ const Orders: React.FC = () => {
             </Typography>
             <Grid container spacing={3}>
               {Object.entries(exchange).map(([key, value]) => (
-                <Grid item xs={12} sm={6} key={key}>
-                  <TextField
-                    {...thickTextFieldProps}
-                    label={key
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (c) => c.toUpperCase())}
-                    value={value}
-                    error={!!exchangeErrors[key]}
-                    helperText={exchangeErrors[key] || ""}
-                    onChange={(e) =>
-                      setExchange({ ...exchange, [key]: e.target.value })
-                    }
-                  />
+                <Grid item xs={12} sm={12} key={key}>
+                  {key === "exchange_metal" ? (
+                    <TextField
+                      select
+                      label="Exchange Metal"
+                      value={exchange.exchange_metal}
+                      onChange={(e) =>
+                        setExchange({
+                          ...exchange,
+                          exchange_metal: e.target.value,
+                        })
+                      }
+                      error={!!exchangeErrors.exchange_metal}
+                      helperText={exchangeErrors.exchange_metal || ""}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        style: { color: "#333" },
+                        shrink: true, // ✅ ensures label is always visible
+                      }}
+                      InputProps={{
+                        style: { fontWeight: 500 },
+                      }}
+                      sx={{
+                        minWidth: "200px",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderWidth: "2px",
+                          borderColor: "#8847FF",
+                        },
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>Select Metal</em>
+                      </MenuItem>
+                      <MenuItem value="Gold">Gold</MenuItem>
+                      <MenuItem value="Silver">Silver</MenuItem>
+                    </TextField>
+                  ) : (
+                    <TextField
+                      {...thickTextFieldProps}
+                      label={key
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (c) => c.toUpperCase())}
+                      type={
+                        typeof value === "number"
+                          ? "number"
+                          : key.includes("date")
+                          ? "date"
+                          : "text"
+                      }
+                      InputLabelProps={
+                        key.includes("date") ? { shrink: true } : undefined
+                      }
+                      value={value}
+                      error={!!exchangeErrors[key]}
+                      helperText={exchangeErrors[key] || ""}
+                      onChange={(e) => {
+                        const newValue =
+                          typeof value === "number"
+                            ? Number(e.target.value)
+                            : e.target.value;
+
+                        setExchange({ ...exchange, [key]: newValue });
+                      }}
+                    />
+                  )}
                 </Grid>
               ))}
             </Grid>

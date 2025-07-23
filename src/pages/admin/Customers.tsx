@@ -43,35 +43,47 @@ const SearchAddCustomer: React.FC = () => {
   };
 
   const handleSearch = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://15.207.98.116:8081/admin/getByCusPhnNumber/${searchQuery}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Fetch failed");
+    console.log("number : " + searchQuery);
+    localStorage.removeItem("phnNumber");
 
-      sessionStorage.setItem("customer", JSON.stringify(data));
-      sessionStorage.setItem("orders", JSON.stringify(data.orders || []));
+    localStorage.setItem("phnNumber", searchQuery);
+    setTimeout(() => {
+      navigate("/admin/customer-details");
+    }, 100); // Delay by 100ms
 
-      navigate("/admin/customer-details", {
-        state: { customer: data, orders: data.orders || [] },
-      });
-    } catch (error) {
-      console.error("Search failed:", error);
-      toast.error("Customer not found");
-    }
+    // try {
+    //   const token = localStorage.getItem("token");
+    //   const response = await fetch(
+    //     `http://15.207.98.116:8081/admin/getByCusPhnNumber/${searchQuery}`,
+    //     {
+    //       method: "GET",
+    //       headers: {
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //     }
+    //   );
+    //   const data = await response.json();
+    //   if (!response.ok) throw new Error(data.message || "Fetch failed");
+
+    //   sessionStorage.setItem("customer", JSON.stringify(data));
+    //   sessionStorage.setItem("orders", JSON.stringify(data.orders || []));
+
+    //   navigate("/admin/customer-details", {
+    //     state: { customer: data, orders: data.orders || [] },
+    //   });
+    // } catch (error) {
+    //   console.error("Search failed:", error);
+    //   toast.error("Customer not found");
+    // }
   };
 
   const handleAddCustomer = async () => {
     try {
       const token = localStorage.getItem("token");
+      localStorage.removeItem("CusDetailsCustomerId");
+      localStorage.removeItem("customerId");
+      localStorage.removeItem("from");
+
       setFieldErrors({});
 
       const response = await fetch(
@@ -99,7 +111,11 @@ const SearchAddCustomer: React.FC = () => {
       }
 
       localStorage.setItem("customerId", result.customerId);
+      localStorage.setItem("from", "customer");
+      console.log("customerid in customer  :  " + result.customerId);
+
       navigate("/admin/orders", {
+        replace: true,
         state: { fromCustomer: true },
       });
     } catch (error) {

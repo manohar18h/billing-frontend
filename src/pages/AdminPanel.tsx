@@ -91,6 +91,7 @@ const AdminPanel: React.FC = () => {
     location.pathname === "/admin/customer-details" ||
     location.pathname === "/admin/generate-bill" ||
     location.pathname === "/admin/orders" ||
+    location.pathname === "/admin/customers" ||
     location.pathname.startsWith("/admin/order-details")
   ) {
     activeIndex = 1;
