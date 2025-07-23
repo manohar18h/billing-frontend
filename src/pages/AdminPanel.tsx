@@ -7,6 +7,8 @@ import {
   Hammer,
   Wrench,
   LogOut,
+  Boxes,
+  ClipboardList,
   Sun,
   Moon,
 } from "lucide-react";
@@ -22,14 +24,22 @@ import classNames from "classnames";
 import Dashboard from "@/pages/admin/Dashboard";
 import Customers from "@/pages/admin/Customers";
 import Orders from "@/pages/admin/Orders";
+import Workers from "@/pages/admin/Workers";
+import Service from "@/pages/admin/Service";
+
+import WorkerStock from "@/pages/admin/WorkerStock";
+import RepairWork from "@/pages/admin/RepairWork"
+import LotWork from "@/pages/admin/LotWork";
+import WorkerTransaction from "@/pages/admin/WorkerTransaction";
+import WorkerDetails from "@/pages/admin/WorkerDetails";
+import { WorkersProvider } from "@/contexts/WorkersContext"; 
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
   { icon: Users, label: "Customers", path: "/admin/Customers" },
   { icon: Package, label: "Orders", path: "/admin/orders" },
   { icon: HardHat, label: "Workers", path: "/admin/workers" },
-  { icon: Hammer, label: "LotWork", path: "/admin/lotwork" },
-  { icon: Wrench, label: "RepairWork", path: "/admin/repairwork" },
+  { icon: Boxes, label: "Worker Stock", path: "/admin/service" },
 ];
 
 const Sidebar = ({ activeIndex }: { activeIndex: number }) => {
@@ -80,7 +90,7 @@ const Sidebar = ({ activeIndex }: { activeIndex: number }) => {
   );
 };
 
-const AdminPanel: React.FC = () => {
+function  AdminPanelContent() {
   const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
 
@@ -100,35 +110,42 @@ const AdminPanel: React.FC = () => {
     <div className="flex min-h-screen bg-white dark:bg-[#1a1b1f] transition-colors">
       <Sidebar activeIndex={activeIndex === -1 ? 0 : activeIndex} />
 
-      <main className="flex-1 p-6 text-gray-800 dark:text-white">
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Hello, Admin!</h1>
-            <p className="text-sm opacity-80">
-              Welcome to your smart dashboard panel.
-            </p>
-          </div>
-          <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white">
-            <img
-              src="https://i.pravatar.cc/300"
-              alt="Admin Avatar"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
+      <main className="flex-1 flex flex-col overflow-hidden h-screen text-gray-800 dark:text-white">
+  {/* Top Header */}
+  <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center">
+    <div>
+      <h1 className="text-2xl font-bold">Hello, Admin!</h1>
+      <p className="text-sm opacity-80">
+        Welcome to your smart dashboard panel.
+      </p>
+    </div>
+    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white">
+      <img
+        src="https://i.pravatar.cc/300"
+        alt="Admin Avatar"
+        className="w-full h-full object-cover"
+      />
+    </div>
+  </div>
 
-        <div>
-          <Routes>
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="customers" element={<Customers />} />
-            <Route path="orders" element={<Orders />} />
-            {/* <Route path="workers" element={<Workers />} />
-  <Route path="lotwork" element={<LotWork />} />
-  <Route path="repairwork" element={<RepairWork />} /> */}
-            <Route path="*" element={<p>Select a menu option</p>} />
-          </Routes>
-        </div>
-      </main>
+  {/* Scrollable Content Area */}
+  <div className="flex-1 overflow-y-auto mt-6 pr-2 space-y-12">
+    <Routes>
+      <Route path="dashboard" element={<Dashboard />} />
+      <Route path="customers" element={<Customers />} />
+      <Route path="orders" element={<Orders />} />
+      <Route path="workers" element={<Workers />} />
+      <Route path="service" element={<Service />} />
+      <Route path="worker-stock" element={<WorkerStock />} />
+      <Route path="repair-work" element={<RepairWork />} />
+      <Route path="lot-work" element={<LotWork />} />
+      <Route path="worker-transaction" element={<WorkerTransaction />} />
+      <Route path="worker-details/:workerId" element={<WorkerDetails />} />
+      <Route path="*" element={<Dashboard />} />
+    </Routes>
+  </div>
+</main>
+
 
       {/* Utility buttons */}
       <div className="absolute bottom-8 left-6 flex flex-col gap-4">
@@ -155,5 +172,11 @@ const AdminPanel: React.FC = () => {
     </div>
   );
 };
+const AdminPanel: React.FC = () => (
+  <WorkersProvider>           
+    <AdminPanelContent />      
+  </WorkersProvider>
+);
+
 
 export default AdminPanel;

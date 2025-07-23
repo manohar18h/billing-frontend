@@ -210,7 +210,7 @@ const Customers: React.FC = () => {
                   setFieldErrors({}); // clear previous errors
                   const token = localStorage.getItem("token");
                   const response = await fetch(
-                    "http://15.207.98.116:8080/admin/addCustomer",
+                    "http://15.207.98.116:8081/admin/addCustomer",
                     {
                       method: "POST",
                       headers: {
