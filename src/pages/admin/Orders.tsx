@@ -257,6 +257,40 @@ const Orders: React.FC = () => {
     }
   };
 
+  const goldItems = [
+    "Pusthela Thadu",
+    "Mattalu",
+    "Finger Ring",
+    "Vaddanam",
+    "Bracelet",
+    "Bangles",
+    "Vathulu",
+    "Gundla Mala",
+    "Papidi Billa",
+    "Necklace",
+    "Nose Ring",
+    "Neck Chains",
+    "Jhumkas",
+    "Earring",
+  ];
+
+  const silverItems = [
+    "Kadiyam",
+    "Finger Ring",
+    "Neck Chains",
+    "Pattilu",
+    "Bangles",
+    "Bracelet",
+    "Mettalu",
+    "Pilenlu",
+  ];
+
+  const getItemOptions = () => {
+    if (order.metal === "Gold") return goldItems;
+    if (order.metal === "Silver") return silverItems;
+    return [];
+  };
+
   return (
     <Box>
       <Paper
@@ -301,36 +335,190 @@ const Orders: React.FC = () => {
         <Grid container spacing={3}>
           {Object.entries(order).map(([key, value]) => (
             <Grid item xs={12} sm={6} key={key}>
-              <TextField
-                {...thickTextFieldProps}
-                label={key
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (c) => c.toUpperCase())}
-                type={
-                  typeof value === "number"
-                    ? "number"
-                    : key.includes("date")
-                    ? "date"
-                    : "text"
-                }
-                InputLabelProps={
-                  key.includes("date") ? { shrink: true } : undefined
-                }
-                value={value}
-                error={!!orderErrors[key]}
-                helperText={orderErrors[key] || ""}
-                onChange={(e) => {
-                  const newValue =
-                    typeof value === "number"
-                      ? Number(e.target.value)
-                      : e.target.value;
-                  setOrder({ ...order, [key]: newValue });
-
-                  if (orderErrors[key]) {
-                    setOrderErrors((prev) => ({ ...prev, [key]: "" }));
+              {key === "metal" ? (
+                <TextField
+                  select
+                  label="Metal"
+                  value={order.metal}
+                  onChange={(e) =>
+                    setOrder({
+                      ...order,
+                      metal: e.target.value,
+                    })
                   }
-                }}
-              />
+                  error={!!orderErrors.metal}
+                  helperText={orderErrors.metal || ""}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    style: { color: "#333" },
+                    shrink: true, // ✅ ensures label is always visible
+                  }}
+                  InputProps={{
+                    style: { fontWeight: 500 },
+                  }}
+                  sx={{
+                    minWidth: "200px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderWidth: "2px",
+                      borderColor: "gray",
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select Metal</em>
+                  </MenuItem>
+                  <MenuItem value="Gold">Gold</MenuItem>
+                  <MenuItem value="Silver">Silver</MenuItem>
+                </TextField>
+              ) : key === "delivery_status" ? (
+                <TextField
+                  select
+                  label="Delivery Status"
+                  value={order.delivery_status}
+                  onChange={(e) =>
+                    setOrder({
+                      ...order,
+                      delivery_status: e.target.value,
+                    })
+                  }
+                  error={!!orderErrors.delivery_status}
+                  helperText={orderErrors.delivery_status || ""}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    style: { color: "#333" },
+                    shrink: true, // ✅ ensures label is always visible
+                  }}
+                  InputProps={{
+                    style: { fontWeight: 500 },
+                  }}
+                  sx={{
+                    minWidth: "200px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderWidth: "2px",
+                      borderColor: "gray",
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select Delivery Status</em>
+                  </MenuItem>
+                  <MenuItem value="Deliverd">Deliverd</MenuItem>
+                  <MenuItem value="Pending">Pending</MenuItem>
+                </TextField>
+              ) : key === "occasion" ? (
+                <TextField
+                  select
+                  label="Occasion"
+                  value={order.occasion}
+                  onChange={(e) =>
+                    setOrder({
+                      ...order,
+                      occasion: e.target.value,
+                    })
+                  }
+                  error={!!orderErrors.occasion}
+                  helperText={orderErrors.occasion || ""}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    style: { color: "#333" },
+                    shrink: true, // ✅ ensures label is always visible
+                  }}
+                  InputProps={{
+                    style: { fontWeight: 500 },
+                  }}
+                  sx={{
+                    minWidth: "200px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderWidth: "2px",
+                      borderColor: "gray",
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select Occasion</em>
+                  </MenuItem>
+                  <MenuItem value="Wedding and Engagement">
+                    Wedding and Engagement
+                  </MenuItem>
+                  <MenuItem value="Party wear">Party wear</MenuItem>
+                  <MenuItem value="Religious">Religious</MenuItem>
+                  <MenuItem value="Work wear">Work wear</MenuItem>
+                  <MenuItem value="Daily wear">Daily wear</MenuItem>
+                </TextField>
+              ) : key === "itemName" ? (
+                <TextField
+                  select
+                  label="Item Name"
+                  value={order.itemName}
+                  onChange={(e) =>
+                    setOrder({
+                      ...order,
+                      itemName: e.target.value,
+                    })
+                  }
+                  error={!!orderErrors.itemName}
+                  helperText={orderErrors.itemName || ""}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    style: { color: "#333" },
+                    shrink: true, // ✅ ensures label is always visible
+                  }}
+                  InputProps={{
+                    style: { fontWeight: 500 },
+                  }}
+                  sx={{
+                    minWidth: "200px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderWidth: "2px",
+                      borderColor: "gray",
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select Item</em>
+                  </MenuItem>
+                  {getItemOptions().map((item) => (
+                    <MenuItem key={item} value={item}>
+                      {item}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              ) : (
+                <TextField
+                  {...thickTextFieldProps}
+                  label={key
+                    .replace(/_/g, " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase())}
+                  type={
+                    typeof value === "number"
+                      ? "number"
+                      : key.includes("date")
+                      ? "date"
+                      : "text"
+                  }
+                  InputLabelProps={
+                    key.includes("date") ? { shrink: true } : undefined
+                  }
+                  value={value}
+                  error={!!orderErrors[key]}
+                  helperText={orderErrors[key] || ""}
+                  onChange={(e) => {
+                    const newValue =
+                      typeof value === "number"
+                        ? Number(e.target.value)
+                        : e.target.value;
+                    setOrder({ ...order, [key]: newValue });
+
+                    if (orderErrors[key]) {
+                      setOrderErrors((prev) => ({ ...prev, [key]: "" }));
+                    }
+                  }}
+                />
+              )}
             </Grid>
           ))}
         </Grid>
@@ -474,7 +662,7 @@ const Orders: React.FC = () => {
                         minWidth: "200px",
                         "& .MuiOutlinedInput-notchedOutline": {
                           borderWidth: "2px",
-                          borderColor: "#8847FF",
+                          borderColor: "gray",
                         },
                       }}
                     >
@@ -570,11 +758,16 @@ const Orders: React.FC = () => {
             );
             navigate("/admin/generate-bill", {
               state: {
-                ordersList,
-                exchangeList,
-                customerId,
+                selectedOrders: ordersList.map((order) => order.orderId),
               },
             });
+            // navigate("/admin/generate-bill", {
+            //   state: {
+            //     ordersList,
+            //     exchangeList,
+            //     customerId,
+            //   },
+            // });
           }}
         >
           Bill Generate
