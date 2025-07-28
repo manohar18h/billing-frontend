@@ -5,6 +5,7 @@ import {
   Box,
   Grid,
   Button,
+  InputAdornment,
   Paper,
   Typography,
   Table,
@@ -17,6 +18,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 
 import {
   Dialog,
@@ -26,12 +28,61 @@ import {
   MenuItem,
 } from "@mui/material";
 
+type BarcodeProduct = {
+  metal: string;
+  metalPrice: number;
+  itemName: string;
+  design: string;
+  size: number;
+  metal_weight: number;
+  wastage: number;
+  making_charges: number;
+  stone_weight: number;
+  diamond_weight: number;
+  bits_weight: number;
+  enamel_weight: number;
+  pearls_weight: number;
+  other_weight: number;
+  gross_weight: number;
+  total_item_amount: number;
+};
+
 type AppWorker = {
   workerId: number;
   fullName: string;
 };
 
 const Orders: React.FC = () => {
+  const handleClearOrder = () => {
+    setOrder({
+      metal: "",
+      metalPrice: 0.0,
+      itemName: "",
+      occasion: "",
+      design: "",
+      size: "",
+      metal_weight: 0.0,
+      wastage: 0.0,
+      making_charges: 0.0,
+      stone_weight: 0.0,
+      diamond_weight: 0.0,
+      bits_weight: 0.0,
+      enamel_weight: 0.0,
+      pearls_weight: 0.0,
+      other_weight: 0.0,
+      stock_box: 0.0,
+      gross_weight: 0.0,
+      total_item_amount: 5000.0,
+      discount: 0.0,
+      paidAmount: 0.0,
+      dueAmount: 0.0,
+      delivery_status: "",
+      deliveryDate: "06-25-2025",
+    });
+    setOrderErrors({});
+    setIsPrefilled(false);
+  };
+
   const [order, setOrder] = useState({
     metal: "",
     metalPrice: 0.0,
@@ -63,12 +114,14 @@ const Orders: React.FC = () => {
     [key: string]: string;
   }>({});
 
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const showOrdersList = location.state?.showOrdersList || false;
   const fromCustomer = location.state?.fromCustomer || false;
   const fromCustomerDetails = location.state?.fromCustomerDetails || false;
   const from = location.state?.from || localStorage.getItem("from");
+  const [isPrefilled, setIsPrefilled] = useState(false);
 
   const customerId =
     location.state?.customerId ||
@@ -277,6 +330,7 @@ const Orders: React.FC = () => {
   const silverItems = [
     "Kadiyam",
     "Finger Ring",
+    "Ring",
     "Neck Chains",
     "Pattilu",
     "Bangles",
@@ -289,6 +343,50 @@ const Orders: React.FC = () => {
     if (order.metal === "Gold") return goldItems;
     if (order.metal === "Silver") return silverItems;
     return [];
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery) {
+      alert("Please enter barcode value");
+      return;
+    }
+
+    try {
+      const response = await axios.get<BarcodeProduct>(
+        `${apiBase}/admin/getByBarcode?barcodeValue=${searchQuery}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = response.data;
+
+      setOrder((prev) => ({
+        ...prev,
+        metal: data.metal ?? prev.metal,
+        metalPrice: data.metalPrice ?? prev.metalPrice,
+        itemName: data.itemName ?? prev.itemName,
+        design: data.design ?? prev.design,
+        size: String(data.size ?? prev.size), // convert number to string if needed
+        metal_weight: data.metal_weight ?? prev.metal_weight,
+        wastage: data.wastage ?? prev.wastage,
+        making_charges: data.making_charges ?? prev.making_charges,
+        stone_weight: data.stone_weight ?? prev.stone_weight,
+        diamond_weight: data.diamond_weight ?? prev.diamond_weight,
+        bits_weight: data.bits_weight ?? prev.bits_weight,
+        enamel_weight: data.enamel_weight ?? prev.enamel_weight,
+        pearls_weight: data.pearls_weight ?? prev.pearls_weight,
+        other_weight: data.other_weight ?? prev.other_weight,
+        gross_weight: data.gross_weight ?? prev.gross_weight,
+        total_item_amount: data.total_item_amount ?? prev.total_item_amount,
+      }));
+
+      setIsPrefilled(true); // ✅ disable fields now
+      setOrderErrors({});
+    } catch (error) {
+      console.error("Failed to fetch barcode data:", error);
+      alert("Barcode not found or error occurred");
+    }
   };
 
   return (
@@ -319,6 +417,52 @@ const Orders: React.FC = () => {
               Orders
             </Typography>
           </Box>
+          <Box
+            mt={6}
+            display="flex"
+            gap={2}
+            maxWidth={600}
+            alignSelf="center"
+            mb={4}
+          >
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Search Product..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+                style: {
+                  borderRadius: "25px",
+                  backgroundColor: "#fff",
+                  paddingLeft: 8,
+                },
+              }}
+            />
+            <Button
+              variant="outlined"
+              onClick={handleSearch}
+              sx={{
+                paddingX: 6,
+                paddingY: 0.2,
+                borderRadius: "12px",
+                fontWeight: "bold",
+                boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+                borderColor: "#8847FF",
+                color: "#8847FF",
+                transition: "all 0.3s",
+                "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+              }}
+            >
+              Search
+            </Button>
+          </Box>
+
           <Button
             variant="outlined"
             onClick={() => {
@@ -346,6 +490,7 @@ const Orders: React.FC = () => {
                       metal: e.target.value,
                     })
                   }
+                  disabled={isPrefilled} // ✅ add this
                   error={!!orderErrors.metal}
                   helperText={orderErrors.metal || ""}
                   fullWidth
@@ -459,6 +604,7 @@ const Orders: React.FC = () => {
                       itemName: e.target.value,
                     })
                   }
+                  disabled={isPrefilled} // ✅ add this
                   error={!!orderErrors.itemName}
                   helperText={orderErrors.itemName || ""}
                   fullWidth
@@ -511,20 +657,31 @@ const Orders: React.FC = () => {
                       typeof value === "number"
                         ? Number(e.target.value)
                         : e.target.value;
+
                     setOrder({ ...order, [key]: newValue });
 
                     if (orderErrors[key]) {
                       setOrderErrors((prev) => ({ ...prev, [key]: "" }));
                     }
                   }}
+                  disabled={isPrefilled}
                 />
               )}
             </Grid>
           ))}
         </Grid>
 
-        <Box display="flex" justifyContent="flex-end" mt={4}>
-          <Button onClick={handleOrderSubmit}>Submit</Button>
+        <Box display="flex" justifyContent="flex-end" mt={4} gap={2}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={handleClearOrder}
+          >
+            Clear
+          </Button>
+          <Button variant="contained" onClick={handleOrderSubmit}>
+            Submit
+          </Button>
         </Box>
       </Paper>
 
@@ -761,13 +918,6 @@ const Orders: React.FC = () => {
                 selectedOrders: ordersList.map((order) => order.orderId),
               },
             });
-            // navigate("/admin/generate-bill", {
-            //   state: {
-            //     ordersList,
-            //     exchangeList,
-            //     customerId,
-            //   },
-            // });
           }}
         >
           Bill Generate

@@ -45,30 +45,32 @@ const GenerateBill: React.FC = () => {
       {/* PRINT CSS */}
       <style>
         {`
-          @media print {
-            body * {
-              visibility: hidden;
-            }
-            #print-section, #print-section * {
-              visibility: visible;
-            }
-            #print-section {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-              margin: 0;
-              padding: 6;
-            }
-          }
-        `}
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #print-section, #print-section * {
+        visibility: visible;
+      }
+      #print-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 10;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  `}
       </style>
 
       {/* Printable Content */}
       <div
         id="print-section"
         ref={printRef}
-        className="border-2 border-orange-500 p-6 max-w-5xl mx-auto"
+        className="p-6 bg-gray-100 shadow-2xl rounded-md max-w-4xl mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
       >
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 pb-4 mb-4">
@@ -114,10 +116,14 @@ const GenerateBill: React.FC = () => {
           <thead>
             <tr className="bg-orange-500 text-white">
               <th className="border px-2 py-1">Item Name</th>
+              <th className="border px-2 py-1">Metal</th>
+              <th className="border px-2 py-1">Rate (G-22k) (S-999)</th>
               <th className="border px-2 py-1">Gross Weight</th>
               <th className="border px-2 py-1">Stone Weight</th>
               <th className="border px-2 py-1">Item Weight</th>
+              <th className="border px-2 py-1">Stone Amount</th>
               <th className="border px-2 py-1">Wastage</th>
+              <th className="border px-2 py-1">Making Charges</th>
               <th className="border px-2 py-1">Paid</th>
               <th className="border px-2 py-1">Amount</th>
             </tr>
@@ -126,10 +132,14 @@ const GenerateBill: React.FC = () => {
             {bill.selectedOrders.map((item: any, index: number) => (
               <tr key={index} className="border">
                 <td className="border px-2 py-1">{item.itemName}</td>
+                <td className="border px-2 py-1">{item.metal}</td>
+                <td className="border px-2 py-1">{item.metalPrice}</td>
                 <td className="border px-2 py-1">{item.gross_weight}</td>
                 <td className="border px-2 py-1">{item.stone_weight}</td>
                 <td className="border px-2 py-1">{item.metal_weight}</td>
+                <td className="border px-2 py-1">{item.stone_weight}</td>
                 <td className="border px-2 py-1">{item.wastage}%</td>
+                <td className="border px-2 py-1">{item.making_charges}</td>
                 <td className="border px-2 py-1">
                   {item.transactions?.length > 0
                     ? item.transactions.map((tx: any, i: number) => (
@@ -151,6 +161,8 @@ const GenerateBill: React.FC = () => {
                     <td className="border px-2 py-1">
                       {ex.exchange_metal_name + "  ( Ex )"}
                     </td>
+                    <td className="border px-2 py-1">{ex.exchange_metal}</td>
+                    <td className="border px-2 py-1">-</td>
                     <td className="border px-2 py-1">
                       {ex.exchange_metal_weight}
                     </td>
@@ -158,6 +170,8 @@ const GenerateBill: React.FC = () => {
                     <td className="border px-2 py-1">
                       {ex.exchange_purity_weight}
                     </td>
+                    <td className="border px-2 py-1">-</td>
+                    <td className="border px-2 py-1">-</td>
                     <td className="border px-2 py-1">-</td>
                     <td className="border px-2 py-1">-</td>
                     <td className="border px-2 py-1">
@@ -171,34 +185,42 @@ const GenerateBill: React.FC = () => {
 
         {/* Totals */}
         <div className="flex justify-end">
-          <table className="text-sm w-64">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1">Bill Total:</td>
-                <td className="text-right font-semibold">
-                  ₹{bill.billTotalAmount}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1">Exchange Amount:</td>
-                <td className="text-right">₹{bill.exchangeAmount}</td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1">Discount:</td>
-                <td className="text-right">₹{bill.billDiscountAmount}</td>
-              </tr>
-              <tr className="border-t border-black">
-                <td className="px-2 py-1 font-bold">Paid:</td>
-                <td className="text-right font-bold">₹{bill.billPaidAmount}</td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-bold text-red-600">Due:</td>
-                <td className="text-right font-bold text-red-600">
-                  ₹{bill.billDueAmount}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="bg-orange-100 p-4 rounded-md border border-orange-400">
+            <table className="text-sm w-64 table-fixed">
+              <tbody>
+                <tr>
+                  <td className="px-3 py-2">Bill Total:</td>
+                  <td className="text-right font-semibold px-3 py-2">
+                    ₹{bill.billTotalAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2">Exchange Amount:</td>
+                  <td className="text-right px-3 py-2">
+                    ₹{bill.exchangeAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2">Discount:</td>
+                  <td className="text-right px-3 py-2">
+                    ₹{bill.billDiscountAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2">Paid:</td>
+                  <td className="text-right px-3 py-2">
+                    ₹{bill.billPaidAmount}
+                  </td>
+                </tr>
+                <tr className="border-t border-black">
+                  <td className="px-3 py-2 font-bold text-red-600">Due:</td>
+                  <td className="text-right font-bold text-red-600 px-3 py-2">
+                    ₹{bill.billDueAmount}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Footer */}
@@ -210,10 +232,10 @@ const GenerateBill: React.FC = () => {
       {/* Print Button (Hidden during print) */}
       <div className="text-center mt-6 print:hidden">
         <button
-          onClick={handlePrint}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded"
+          onClick={() => window.print()}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4"
         >
-          Print Invoice
+          🖨️ Print Invoice
         </button>
       </div>
     </div>
