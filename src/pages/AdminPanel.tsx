@@ -8,6 +8,7 @@ import {
   Wrench,
   LogOut,
   Boxes,
+  Tag,
   ClipboardList,
   Sun,
   Moon,
@@ -26,6 +27,7 @@ import Customers from "@/pages/admin/Customers";
 import Orders from "@/pages/admin/Orders";
 import Workers from "@/pages/admin/Workers";
 import Service from "@/pages/admin/Service";
+import Products from "@/pages/admin/Products";
 
 import WorkerStock from "@/pages/admin/WorkerStock";
 import RepairWork from "@/pages/admin/RepairWork"
@@ -40,6 +42,7 @@ const menuItems = [
   { icon: Package, label: "Orders", path: "/admin/orders" },
   { icon: HardHat, label: "Workers", path: "/admin/workers" },
   { icon: Boxes, label: "Worker Stock", path: "/admin/service" },
+  { icon: Tag, label: "Products", path: "/admin/products"}
 ];
 
 const Sidebar = ({ activeIndex }: { activeIndex: number }) => {
@@ -136,6 +139,7 @@ function  AdminPanelContent() {
       <Route path="orders" element={<Orders />} />
       <Route path="workers" element={<Workers />} />
       <Route path="service" element={<Service />} />
+      <Route path="products" element={<Products />} />
       <Route path="worker-stock" element={<WorkerStock />} />
       <Route path="repair-work" element={<RepairWork />} />
       <Route path="lot-work" element={<LotWork />} />

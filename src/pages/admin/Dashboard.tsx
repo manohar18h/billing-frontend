@@ -21,15 +21,6 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 
-/*
-  ──────────────────────────────────────────────────────────────────────────────
-  «DashboardMain» – *only* the central dashboard canvas (no sidebar / header)
-  Drop this component inside whatever layout you already have.
-  All numbers are still static placeholders, but the structure matches the
-  earlier mock‑up and the Gold/Silver widget is editable.
-  ──────────────────────────────────────────────────────────────────────────────
-*/
-
 const DashboardMain: React.FC = () => {
   /* ───────── state for precious‑metal prices ───────── */
   const [prices, setPrices] = useState({ gold: 5850, silver: 72 });
@@ -63,7 +54,6 @@ const DashboardMain: React.FC = () => {
     </Card>
   );
 
-  /* ───────── render ───────── */
   return (
     <Box sx={{ width: "100%", p: { xs: 2, md: 4 } }}>
       {/* SUMMARY CARDS ROW */}
@@ -163,7 +153,7 @@ const DashboardMain: React.FC = () => {
               <TableBody>
                 {[
                   ["#1028", "Ashles S.", "21 Apr.", "Processed", "Megan"],
-                  ["#1028", "David M.", "20 Apr.", "Pending", "Kevin"],
+                  ["#1029", "David M.", "20 Apr.", "Pending", "Kevin"],
                   ["#1016", "Maria R.", "16 Jun.", "Completed", "Sarah"],
                   ["#1018", "John D.", "26 Jun.", "Pending", "Brian"],
                 ].map((row) => (
