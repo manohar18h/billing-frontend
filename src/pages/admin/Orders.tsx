@@ -38,6 +38,7 @@ type BarcodeProduct = {
   wastage: number;
   making_charges: number;
   stone_weight: number;
+  stone_amount: number;
   diamond_weight: number;
   bits_weight: number;
   enamel_weight: number;
@@ -65,6 +66,7 @@ const Orders: React.FC = () => {
       wastage: 0.0,
       making_charges: 0.0,
       stone_weight: 0.0,
+      stone_amount: 0.0,
       diamond_weight: 0.0,
       bits_weight: 0.0,
       enamel_weight: 0.0,
@@ -94,6 +96,8 @@ const Orders: React.FC = () => {
     wastage: 0.0,
     making_charges: 0.0,
     stone_weight: 0.0,
+    stone_amount: 0.0,
+
     diamond_weight: 0.0,
     bits_weight: 0.0,
     enamel_weight: 0.0,
@@ -268,6 +272,7 @@ const Orders: React.FC = () => {
   };
 
   const handleViewMore = (orderId: number) => {
+    sessionStorage.removeItem("ordersState");
     // Save current state
     sessionStorage.setItem(
       "ordersState",
@@ -909,6 +914,7 @@ const Orders: React.FC = () => {
           variant="contained"
           color="primary"
           onClick={() => {
+            sessionStorage.removeItem("ordersState");
             sessionStorage.setItem(
               "ordersState",
               JSON.stringify({ ordersList, exchangeList, customerId })

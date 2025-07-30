@@ -7,36 +7,49 @@ const GenerateBill: React.FC = () => {
   const location = useLocation();
   const selectedOrders = location.state?.selectedOrders || [];
   const token = localStorage.getItem("token");
+  const billNumber = localStorage.getItem("billNumber");
 
   const [bill, setBill] = useState<any>(null);
 
   useEffect(() => {
     if (selectedOrders.length === 0) return;
+    const billingFrom = sessionStorage.getItem("billingFrom");
 
     const fetchBillSummary = async () => {
-      try {
-        const response = await axios.post(
-          "http://15.207.98.116:8081/admin/bill-summary",
-          { orderId: selectedOrders },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        setBill(response.data);
-      } catch (error) {
-        console.error("Error fetching bill summary:", error);
+      if (billingFrom === "BillDetails") {
+        try {
+          const res = await axios.get(
+            `http://15.207.98.116:8081/admin/getDataByBillNumber/${billNumber}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          setBill(res.data);
+        } catch (err) {
+          console.error("Error fetching customer details:", err);
+        }
+      } else {
+        try {
+          const response = await axios.post(
+            "http://15.207.98.116:8081/admin/bill-summary",
+            { orderId: selectedOrders },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          setBill(response.data);
+        } catch (error) {
+          console.error("Error fetching bill summary:", error);
+        }
       }
     };
 
     fetchBillSummary();
   }, [selectedOrders, token]);
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   if (!bill) return <p className="p-6">Loading Bill Summary...</p>;
 

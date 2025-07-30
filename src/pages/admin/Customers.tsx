@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   TextField,
   Box,
@@ -6,6 +6,7 @@ import {
   Button,
   InputAdornment,
   Typography,
+  MenuItem,
   Paper,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -14,6 +15,7 @@ import { toast } from "react-toastify";
 
 const SearchAddCustomer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState("");
   const navigate = useNavigate();
 
   const emptyCustomer = {
@@ -43,38 +45,27 @@ const SearchAddCustomer: React.FC = () => {
   };
 
   const handleSearch = async () => {
-    console.log("number : " + searchQuery);
-    localStorage.removeItem("phnNumber");
+    const trimmedQuery = searchQuery.trim();
 
-    localStorage.setItem("phnNumber", searchQuery);
-    setTimeout(() => {
+    if (!searchType) {
+      toast.error("Please select a search type.");
+      return;
+    }
+
+    if (!trimmedQuery) {
+      toast.error("Please enter a value to search.");
+      return;
+    }
+
+    if (searchType === "Bill Number") {
+      localStorage.removeItem("billNumber");
+      localStorage.setItem("billNumber", trimmedQuery);
+      navigate("/admin/bill-details");
+    } else if (searchType === "Phone Number") {
+      localStorage.removeItem("phnNumber");
+      localStorage.setItem("phnNumber", trimmedQuery);
       navigate("/admin/customer-details");
-    }, 100); // Delay by 100ms
-
-    // try {
-    //   const token = localStorage.getItem("token");
-    //   const response = await fetch(
-    //     `http://15.207.98.116:8081/admin/getByCusPhnNumber/${searchQuery}`,
-    //     {
-    //       method: "GET",
-    //       headers: {
-    //         Authorization: `Bearer ${token}`,
-    //       },
-    //     }
-    //   );
-    //   const data = await response.json();
-    //   if (!response.ok) throw new Error(data.message || "Fetch failed");
-
-    //   sessionStorage.setItem("customer", JSON.stringify(data));
-    //   sessionStorage.setItem("orders", JSON.stringify(data.orders || []));
-
-    //   navigate("/admin/customer-details", {
-    //     state: { customer: data, orders: data.orders || [] },
-    //   });
-    // } catch (error) {
-    //   console.error("Search failed:", error);
-    //   toast.error("Customer not found");
-    // }
+    }
   };
 
   const handleAddCustomer = async () => {
@@ -148,6 +139,34 @@ const SearchAddCustomer: React.FC = () => {
           alignSelf="center"
           mb={4}
         >
+          <TextField
+            select
+            label="Search Type"
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{
+              style: { color: "#333" },
+              shrink: true, // ✅ ensures label is always visible
+            }}
+            InputProps={{
+              style: { fontWeight: 500 },
+            }}
+            sx={{
+              minWidth: "200px",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderWidth: "2px",
+                borderColor: "gray",
+              },
+            }}
+          >
+            <MenuItem value="">
+              <em>Select Search Type</em>
+            </MenuItem>
+            <MenuItem value="Bill Number">Bill Number</MenuItem>
+            <MenuItem value="Phone Number">Phone Number</MenuItem>
+          </TextField>
           <TextField
             fullWidth
             variant="outlined"

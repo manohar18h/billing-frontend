@@ -53,13 +53,27 @@ const OrderDetails: React.FC = () => {
       <div className="w-full max-w-5xl bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-8 relative">
         <button
           onClick={() => {
-            if (customer && orders) {
+            const from = sessionStorage.getItem("from");
+
+            if (customer && orders && from === "CustomerDetails") {
               navigate("/admin/customer-details", {
                 state: { customer, orders },
               });
             } else if (customerId) {
               navigate("/admin/orders", {
                 state: { showOrdersList: true, customerId },
+              });
+            } else if (from === "BillDetails") {
+              const stored = sessionStorage.getItem("ordersState");
+              const parsed = stored ? JSON.parse(stored) : null;
+              const restoredOrders = parsed?.orders || [];
+
+              navigate("/admin/bill-details", {
+                state: {
+                  showOrdersList: true,
+                  customerId,
+                  orders: restoredOrders,
+                },
               });
             } else {
               navigate("/admin");

@@ -19,6 +19,7 @@ import Orders from "@/pages/admin/Orders";
 import GenerateBill from "./admin/GenerateBill";
 import CustomerDetails from "./admin/CustomerDetails";
 import OrderDetails from "./admin/OrderDetails";
+import BillDetails from "./admin/BillDetails";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
@@ -89,6 +90,7 @@ const AdminPanel: React.FC = () => {
   // Force Customers icon active on hidden sub-pages
   if (
     location.pathname === "/admin/customer-details" ||
+    location.pathname === "/admin/bill-details" ||
     location.pathname === "/admin/generate-bill" ||
     location.pathname === "/admin/orders" ||
     location.pathname === "/admin/customers" ||
@@ -135,6 +137,8 @@ const AdminPanel: React.FC = () => {
             <Route path="orders" element={<Orders />} />
             <Route path="generate-bill" element={<GenerateBill />} />
             <Route path="customer-details" element={<CustomerDetails />} />
+            <Route path="bill-details" element={<BillDetails />} />
+
             <Route path="order-details/:orderId" element={<OrderDetails />} />
 
             <Route path="*" element={<p>Select a menu option</p>} />

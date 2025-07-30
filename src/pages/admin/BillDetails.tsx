@@ -1,4 +1,4 @@
-// Final Updated CustomerDetails.tsx
+// Final Updated BillDetails.tsx
 import React, { useEffect, useState } from "react";
 import {
   TextField,
@@ -23,7 +23,7 @@ import { toast } from "react-toastify";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton } from "@mui/material";
 
-interface Order {
+interface selectedOrders {
   orderId: number;
   orderDate: string;
   itemName: string;
@@ -37,15 +37,18 @@ interface Order {
 
 export interface Customer {
   customerId: number;
+  billNumber: string;
   name: string;
   village: string;
   phoneNumber: string;
   emailId: string;
-  numberOfOrders: number;
-  finalAmount: number;
-  totalDueAmount: number;
+  billTotalAmount: number;
+  billDiscountAmount: number;
+  exchangeAmount: number;
+  billPaidAmount: number;
+  billDueAmount: number;
   version: number;
-  orders: Order[]; // <== Ensure this line exists
+  selectedOrders: selectedOrders[]; // <== Ensure this line exists
 }
 
 interface Worker {
@@ -53,12 +56,12 @@ interface Worker {
   fullName: string;
 }
 
-const CustomerDetails: React.FC = () => {
+const BillDetails: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<selectedOrders[]>([]);
   const [workerList, setWorkerList] = useState<Worker[]>([]);
 
   const [payDialogOpen, setPayDialogOpen] = useState(false);
@@ -69,31 +72,36 @@ const CustomerDetails: React.FC = () => {
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
   const [workerPayAmount, setWorkerPayAmount] = useState("");
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
+  const [customerId, setCustomerId] = useState<number | null>(null);
 
   const token = localStorage.getItem("token");
   const apiBase = "http://15.207.98.116:8081";
-  const phoneNumber = localStorage.getItem("phnNumber");
-  console.log("phoneNumber   ::        " + phoneNumber);
+  const billNumber = localStorage.getItem("billNumber");
+  console.log("billNumber   ::        " + billNumber);
 
   useEffect(() => {
-    if (!phoneNumber || !token) return;
+    if (!billNumber || !token) return;
 
     const fetchCustomerDetails = async () => {
       try {
         const res = await axios.get(
-          `${apiBase}/admin/getByCusPhnNumber/${phoneNumber}`,
+          `${apiBase}/admin/getDataByBillNumber/${billNumber}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
         const customerData = res.data as Customer;
+        sessionStorage.removeItem("customer");
+        sessionStorage.removeItem("orders");
+        setCustomerId(customerData.customerId);
         setCustomer(customerData);
-        setOrders(customerData.orders || []);
+        setOrders(customerData.selectedOrders || []);
+
         sessionStorage.setItem("customer", JSON.stringify(customerData));
         sessionStorage.setItem(
           "orders",
-          JSON.stringify(customerData.orders || [])
+          JSON.stringify(customerData.selectedOrders || [])
         );
       } catch (err) {
         console.error("Error fetching customer details:", err);
@@ -127,31 +135,20 @@ const CustomerDetails: React.FC = () => {
   }, []);
 
   const handleViewMore = (orderId: number) => {
-    sessionStorage.removeItem("customer");
-    sessionStorage.removeItem("orders");
+    sessionStorage.removeItem("ordersState");
     sessionStorage.removeItem("from");
-    sessionStorage.setItem("from", "CustomerDetails");
-    sessionStorage.setItem("customer", JSON.stringify(customer));
-    sessionStorage.setItem("orders", JSON.stringify(orders));
+    sessionStorage.setItem("ordersState", JSON.stringify({ orders }));
+    sessionStorage.setItem("from", "BillDetails");
+
+    // Navigate to order details
     navigate(`/admin/order-details/${orderId}`, {
-      state: { customer, orders },
+      replace: true,
+      state: { from: "BillDetails" },
     });
   };
 
   const handleBackClick = () => {
     navigate("/admin/customers");
-  };
-
-  const handleAddOrder = () => {
-    localStorage.removeItem("from");
-    localStorage.setItem("CusDetailsCustomerId", String(customer?.customerId));
-    sessionStorage.setItem("customer", JSON.stringify(customer));
-    sessionStorage.setItem("orders", JSON.stringify(orders));
-    localStorage.setItem("from", "customerDetails");
-    navigate("/admin/orders", {
-      replace: true,
-      state: { fromCustomerDetails: true, customerId: customer?.customerId },
-    });
   };
 
   const formatDate = (isoString: string) => {
@@ -178,28 +175,53 @@ const CustomerDetails: React.FC = () => {
             </Typography>
           </div>
 
-          <Button variant="outlined" onClick={handleAddOrder}>
-            Add Order
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              sessionStorage.removeItem("ordersState");
+              sessionStorage.setItem(
+                "ordersState",
+                JSON.stringify({ orders, customerId })
+              );
+              sessionStorage.removeItem("billingFrom");
+              sessionStorage.setItem("billingFrom", "BillDetails");
+              console.log("Ids :" + orders.map((order) => order.orderId));
+              navigate("/admin/generate-bill", {
+                replace: true,
+
+                state: {
+                  selectedOrders: orders.map((order) => order.orderId),
+                  billingFrom: "BillDetails",
+                },
+              });
+            }}
+          >
+            Bill Generate
           </Button>
         </div>
 
         <Grid container spacing={3}>
-          {["name", "village", "phoneNumber", "emailId"].map((key) => (
-            <Grid item xs={12} sm={6} key={key}>
-              <TextField
-                label={key.charAt(0).toUpperCase() + key.slice(1)}
-                value={(customer as any)[key] || "-"}
-                fullWidth
-                InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
-              />
-            </Grid>
-          ))}
+          {["billNumber", "name", "village", "phoneNumber", "emailId"].map(
+            (key) => (
+              <Grid item xs={12} sm={6} key={key}>
+                <TextField
+                  label={key.charAt(0).toUpperCase() + key.slice(1)}
+                  value={(customer as any)[key] || "-"}
+                  fullWidth
+                  InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
+                />
+              </Grid>
+            )
+          )}
 
           {[
             "customerId",
-            "numberOfOrders",
-            "finalAmount",
-            "totalDueAmount",
+            "billTotalAmount",
+            "billDiscountAmount",
+            "exchangeAmount",
+            "billPaidAmount",
+            "billDueAmount",
           ].map((key) => (
             <Grid item xs={12} sm={6} key={key}>
               <TextField
@@ -230,6 +252,7 @@ const CustomerDetails: React.FC = () => {
                 <TableCell>Paid</TableCell>
                 <TableCell>Due</TableCell>
                 <TableCell>Worker</TableCell>
+                <TableCell>Pay</TableCell>
                 <TableCell>Action</TableCell>
               </TableRow>
             </TableHead>
@@ -262,7 +285,23 @@ const CustomerDetails: React.FC = () => {
                       </Button>
                     )}
                   </TableCell>
-
+                  <TableCell>
+                    {order.dueAmount > 0 ? (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => {
+                          setSelectedOrderId(order.orderId);
+                          setPayAmount("");
+                          setPayDialogOpen(true);
+                        }}
+                      >
+                        Pay
+                      </Button>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="text"
@@ -278,6 +317,52 @@ const CustomerDetails: React.FC = () => {
           </Table>
         </Paper>
       )}
+
+      {/* Pay Dialog */}
+      <Dialog open={payDialogOpen} onClose={() => setPayDialogOpen(false)}>
+        <DialogTitle>Enter Payment Amount</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            label="Amount"
+            type="number"
+            fullWidth
+            value={payAmount}
+            onChange={(e) => setPayAmount(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPayDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              if (!selectedOrderId || !payAmount) return;
+              try {
+                await axios.post(
+                  `${apiBase}/admin/payCustomer/${selectedOrderId}?amount=${payAmount}`,
+                  {},
+                  { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const updatedOrders = orders.map((o) =>
+                  o.orderId === selectedOrderId
+                    ? {
+                        ...o,
+                        paidAmount: o.paidAmount + Number(payAmount),
+                        dueAmount: Math.max(o.dueAmount - Number(payAmount), 0),
+                      }
+                    : o
+                );
+                setOrders(updatedOrders);
+                setPayDialogOpen(false);
+              } catch (error) {
+                alert("Payment failed");
+              }
+            }}
+          >
+            Pay Now
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Assign Worker Dialog */}
       <Dialog
@@ -352,4 +437,4 @@ const CustomerDetails: React.FC = () => {
   );
 };
 
-export default CustomerDetails;
+export default BillDetails;
