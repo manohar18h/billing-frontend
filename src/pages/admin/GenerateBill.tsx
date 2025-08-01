@@ -150,7 +150,7 @@ const GenerateBill: React.FC = () => {
                 <td className="border px-2 py-1">{item.gross_weight}</td>
                 <td className="border px-2 py-1">{item.stone_weight}</td>
                 <td className="border px-2 py-1">{item.metal_weight}</td>
-                <td className="border px-2 py-1">{item.stone_weight}</td>
+                <td className="border px-2 py-1">{item.stone_amount}</td>
                 <td className="border px-2 py-1">{item.wastage}%</td>
                 <td className="border px-2 py-1">{item.making_charges}</td>
                 <td className="border px-2 py-1">

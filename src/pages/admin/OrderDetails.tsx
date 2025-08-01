@@ -101,13 +101,14 @@ const OrderDetails: React.FC = () => {
               ["Metal Price", order.metalPrice],
               ["Metal Weight", order.metal_weight],
               ["Wastage", order.wastage],
+              ["Making Charges", order.making_charges],
+              ["Stone Weight", order.stone_weight],
+              ["Stone Amount", order.stone_amount],
             ].map(([label, value]) => displayField(label, value))}
           </div>
 
           <div className="pl-4">
             {[
-              ["Making Charges", order.making_charges],
-              ["Stone Weight", order.stone_weight],
               ["Diamond Weight", order.diamond_weight],
               ["Bits Weight", order.bits_weight],
               ["Enamel Weight", order.enamel_weight],

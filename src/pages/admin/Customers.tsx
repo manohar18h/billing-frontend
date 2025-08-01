@@ -18,6 +18,8 @@ const SearchAddCustomer: React.FC = () => {
   const [searchType, setSearchType] = useState("");
   const navigate = useNavigate();
 
+  localStorage.removeItem("billNumber");
+
   const emptyCustomer = {
     customerId: "",
     name: "",
@@ -58,7 +60,6 @@ const SearchAddCustomer: React.FC = () => {
     }
 
     if (searchType === "Bill Number") {
-      localStorage.removeItem("billNumber");
       localStorage.setItem("billNumber", trimmedQuery);
       navigate("/admin/bill-details");
     } else if (searchType === "Phone Number") {

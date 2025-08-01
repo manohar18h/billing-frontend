@@ -94,6 +94,8 @@ const BillDetails: React.FC = () => {
         const customerData = res.data as Customer;
         sessionStorage.removeItem("customer");
         sessionStorage.removeItem("orders");
+        sessionStorage.removeItem("billingFrom");
+
         setCustomerId(customerData.customerId);
         setCustomer(customerData);
         setOrders(customerData.selectedOrders || []);
@@ -171,7 +173,7 @@ const BillDetails: React.FC = () => {
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="h4" fontWeight="bold" color="primary">
-              Customer Details
+              Bill Details
             </Typography>
           </div>
 
@@ -184,12 +186,10 @@ const BillDetails: React.FC = () => {
                 "ordersState",
                 JSON.stringify({ orders, customerId })
               );
-              sessionStorage.removeItem("billingFrom");
               sessionStorage.setItem("billingFrom", "BillDetails");
               console.log("Ids :" + orders.map((order) => order.orderId));
               navigate("/admin/generate-bill", {
                 replace: true,
-
                 state: {
                   selectedOrders: orders.map((order) => order.orderId),
                   billingFrom: "BillDetails",

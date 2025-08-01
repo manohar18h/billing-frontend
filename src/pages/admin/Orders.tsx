@@ -76,8 +76,6 @@ const Orders: React.FC = () => {
       gross_weight: 0.0,
       total_item_amount: 5000.0,
       discount: 0.0,
-      paidAmount: 0.0,
-      dueAmount: 0.0,
       delivery_status: "",
       deliveryDate: "06-25-2025",
     });
@@ -97,7 +95,6 @@ const Orders: React.FC = () => {
     making_charges: 0.0,
     stone_weight: 0.0,
     stone_amount: 0.0,
-
     diamond_weight: 0.0,
     bits_weight: 0.0,
     enamel_weight: 0.0,
@@ -107,8 +104,6 @@ const Orders: React.FC = () => {
     gross_weight: 0.0,
     total_item_amount: 5000.0,
     discount: 0.0,
-    paidAmount: 0.0,
-    dueAmount: 0.0,
     delivery_status: "",
     deliveryDate: "06-25-2025",
   });
@@ -377,7 +372,9 @@ const Orders: React.FC = () => {
         wastage: data.wastage ?? prev.wastage,
         making_charges: data.making_charges ?? prev.making_charges,
         stone_weight: data.stone_weight ?? prev.stone_weight,
+        stone_amount: data.stone_amount ?? prev.stone_amount,
         diamond_weight: data.diamond_weight ?? prev.diamond_weight,
+
         bits_weight: data.bits_weight ?? prev.bits_weight,
         enamel_weight: data.enamel_weight ?? prev.enamel_weight,
         pearls_weight: data.pearls_weight ?? prev.pearls_weight,
@@ -495,7 +492,7 @@ const Orders: React.FC = () => {
                       metal: e.target.value,
                     })
                   }
-                  disabled={isPrefilled} // ✅ add this
+                  disabled={isPrefilled && (key as string) !== "discount"} // ✅ add this
                   error={!!orderErrors.metal}
                   helperText={orderErrors.metal || ""}
                   fullWidth
@@ -609,7 +606,7 @@ const Orders: React.FC = () => {
                       itemName: e.target.value,
                     })
                   }
-                  disabled={isPrefilled} // ✅ add this
+                  disabled={isPrefilled && (key as string) !== "discount"} // ✅ add this
                   error={!!orderErrors.itemName}
                   helperText={orderErrors.itemName || ""}
                   fullWidth
@@ -669,7 +666,7 @@ const Orders: React.FC = () => {
                       setOrderErrors((prev) => ({ ...prev, [key]: "" }));
                     }
                   }}
-                  disabled={isPrefilled}
+                  disabled={isPrefilled && (key as string) !== "discount"}
                 />
               )}
             </Grid>
@@ -914,6 +911,7 @@ const Orders: React.FC = () => {
           variant="contained"
           color="primary"
           onClick={() => {
+            sessionStorage.removeItem("billingFrom");
             sessionStorage.removeItem("ordersState");
             sessionStorage.setItem(
               "ordersState",
