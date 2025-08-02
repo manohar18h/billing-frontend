@@ -4,9 +4,9 @@ import {
   Users,
   Package,
   HardHat,
-  Hammer,
-  Wrench,
   LogOut,
+  Boxes,
+  Tag,
   Sun,
   Moon,
 } from "lucide-react";
@@ -20,13 +20,22 @@ import GenerateBill from "./admin/GenerateBill";
 import CustomerDetails from "./admin/CustomerDetails";
 import OrderDetails from "./admin/OrderDetails";
 import BillDetails from "./admin/BillDetails";
+import Workers from "./admin/Workers";
+import Products from "./admin/Products";
+import WorkerStock from "./admin/WorkerStock";
+import RepairWork from "./admin/RepairWork";
+import LotWork from "./admin/LotWork";
+import WorkerTransaction from "./admin/WorkerTransaction";
+import WorkerDetails from "./admin/WorkerDetails";
+import AdminService from "./admin/Service";
+import { WorkersProvider } from "@/contexts/WorkersContext";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
   { icon: Users, label: "Customers", path: "/admin/Customers" },
   { icon: HardHat, label: "Workers", path: "/admin/workers" },
-  { icon: Hammer, label: "LotWork", path: "/admin/lotwork" },
-  { icon: Wrench, label: "RepairWork", path: "/admin/repairwork" },
+  { icon: Boxes, label: "Worker Stock", path: "/admin/service" },
+  { icon: Tag, label: "Products", path: "/admin/products" },
 ];
 
 const Sidebar = ({ activeIndex }: { activeIndex: number }) => {
@@ -78,7 +87,7 @@ const Sidebar = ({ activeIndex }: { activeIndex: number }) => {
   );
 };
 
-const AdminPanel: React.FC = () => {
+function AdminPanelContent() {
   const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
 
@@ -138,8 +147,18 @@ const AdminPanel: React.FC = () => {
             <Route path="generate-bill" element={<GenerateBill />} />
             <Route path="customer-details" element={<CustomerDetails />} />
             <Route path="bill-details" element={<BillDetails />} />
-
             <Route path="order-details/:orderId" element={<OrderDetails />} />
+            <Route path="workers" element={<Workers />} />
+            <Route path="service" element={<AdminService />} />
+            <Route path="products" element={<Products />} />
+            <Route path="worker-stock" element={<WorkerStock />} />
+            <Route path="repair-work" element={<RepairWork />} />
+            <Route path="lot-work" element={<LotWork />} />
+            <Route path="worker-transaction" element={<WorkerTransaction />} />
+            <Route
+              path="worker-details/:workerId"
+              element={<WorkerDetails />}
+            />
 
             <Route path="*" element={<p>Select a menu option</p>} />
           </Routes>
@@ -170,6 +189,12 @@ const AdminPanel: React.FC = () => {
       </div>
     </div>
   );
-};
+}
+
+const AdminPanel: React.FC = () => (
+  <WorkersProvider>
+    <AdminPanelContent />
+  </WorkersProvider>
+);
 
 export default AdminPanel;

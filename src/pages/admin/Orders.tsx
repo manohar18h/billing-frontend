@@ -313,6 +313,7 @@ const Orders: React.FC = () => {
   const goldItems = [
     "Pusthela Thadu",
     "Mattalu",
+    "Ring",
     "Finger Ring",
     "Vaddanam",
     "Bracelet",
