@@ -49,13 +49,14 @@ const WorkerDetails: React.FC = () => {
             {line("Phone", worker.phnNumber)}
             {line("Village", worker.village)}
             {line("Username", worker.userName)}
+            {line("Earned Amount", `₹${worker.earnedAmount}`)}
           </div>
           <div className="pl-4">
-            {line("Earned Amount", `₹${worker.earnedAmount}`)}
             {line("Received Amount", `₹${worker.receivedAmount}`)}
             {line("Pending Amount", `₹${worker.pendingAmount}`)}
             {line("Gold Stock", `${worker.goldStock} g`)}
             {line("Silver Stock", `${worker.silverStock} g`)}
+            {line("Copper Stock", `₹${worker.copperStock} g`)}
           </div>
         </div>
 

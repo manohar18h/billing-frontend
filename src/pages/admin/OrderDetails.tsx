@@ -104,16 +104,21 @@ const OrderDetails: React.FC = () => {
               ["Making Charges", order.making_charges],
               ["Stone Weight", order.stone_weight],
               ["Stone Amount", order.stone_amount],
+              ["Diamond Weight", order.diamond_weight],
+              ["Diamond Amount", order.diamond_amount],
             ].map(([label, value]) => displayField(label, value))}
           </div>
 
           <div className="pl-4">
             {[
-              ["Diamond Weight", order.diamond_weight],
               ["Bits Weight", order.bits_weight],
+              ["Bits Amount", order.bits_amount],
               ["Enamel Weight", order.enamel_weight],
+              ["Enamel Amount", order.enamel_amount],
               ["Pearls Weight", order.pearls_weight],
+              ["Pearls Amount", order.pearls_amount],
               ["Other Weight", order.other_weight],
+              ["Other Amount", order.other_amount],
               ["Stock Box", order.stock_box],
               ["Gross Weight", order.gross_weight],
               ["Total Item Amount", order.total_item_amount],
@@ -137,9 +142,10 @@ const OrderDetails: React.FC = () => {
                 <div className="pr-4 border-r border-gray-300 dark:border-gray-600">
                   {displayField("Metal Name", item.exchange_metal_name)}
                   {displayField("Item Name", item.exchange_metal)}
+                  {displayField("Weight", item.exchange_metal_weight)}
                 </div>
                 <div className="pl-4">
-                  {displayField("Weight", item.exchange_metal_weight)}
+                  {displayField("Mtal Price", item.exchange_metal_price)}
                   {displayField(
                     "Total Amount",
                     item.exchange_item_amount + "₹"

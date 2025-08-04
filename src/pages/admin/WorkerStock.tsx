@@ -126,6 +126,7 @@ const WorkerStock: React.FC = () => {
                 </MenuItem>
                 <MenuItem value="Gold">Gold</MenuItem>
                 <MenuItem value="Silver">Silver</MenuItem>
+                <MenuItem value="Copper">Copper</MenuItem>
               </TextField>
             </Grid>
 

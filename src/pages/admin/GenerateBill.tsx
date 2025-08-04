@@ -11,6 +11,15 @@ const GenerateBill: React.FC = () => {
 
   const [bill, setBill] = useState<any>(null);
 
+  const dynamicWeightKeys = [
+    "stone",
+    "diamond",
+    "bits",
+    "enamel",
+    "pearls",
+    "other",
+  ];
+
   useEffect(() => {
     if (selectedOrders.length === 0) return;
     const billingFrom = sessionStorage.getItem("billingFrom");
@@ -51,6 +60,18 @@ const GenerateBill: React.FC = () => {
     fetchBillSummary();
   }, [selectedOrders, token]);
 
+  const activeWeightKeys = React.useMemo(() => {
+    if (!bill || !bill.selectedOrders) return [];
+
+    return dynamicWeightKeys.filter((key) =>
+      bill.selectedOrders.some(
+        (item: any) => item[`${key}_weight`] > 0 || item[`${key}_amount`] > 0
+      )
+    );
+  }, [bill]);
+
+  const nonZeroColCount = activeWeightKeys.length * 2;
+
   if (!bill) return <p className="p-6">Loading Bill Summary...</p>;
 
   return (
@@ -58,11 +79,21 @@ const GenerateBill: React.FC = () => {
       {/* PRINT CSS */}
       <style>
         {`
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-      #print-section, #print-section * {
+  @media print {
+  body {
+   -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0;
+    zoom: 0.75; /* Shrink content to fit horizontally */
+            visibility: hidden;
+
+  }
+
+  .no-print-scroll {
+    overflow: visible !important;
+  }
+
+  #print-section, #print-section * {
         visibility: visible;
       }
       #print-section {
@@ -76,6 +107,16 @@ const GenerateBill: React.FC = () => {
         print-color-adjust: exact !important;
       }
     }
+
+  table {
+    min-width: 100% !important;
+    font-size: 10px !important;
+  }
+
+  th, td {
+    padding: 2px !important;
+  }
+}
   `}
       </style>
 
@@ -125,76 +166,102 @@ const GenerateBill: React.FC = () => {
         </div>
 
         {/* Table */}
-        <table className="w-full border border-collapse text-sm mb-6">
-          <thead>
-            <tr className="bg-orange-500 text-white">
-              <th className="border px-2 py-1">Item Name</th>
-              <th className="border px-2 py-1">Metal</th>
-              <th className="border px-2 py-1">Rate (G-22k) (S-999)</th>
-              <th className="border px-2 py-1">Gross Weight</th>
-              <th className="border px-2 py-1">Stone Weight</th>
-              <th className="border px-2 py-1">Item Weight</th>
-              <th className="border px-2 py-1">Stone Amount</th>
-              <th className="border px-2 py-1">Wastage</th>
-              <th className="border px-2 py-1">Making Charges</th>
-              <th className="border px-2 py-1">Paid</th>
-              <th className="border px-2 py-1">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bill.selectedOrders.map((item: any, index: number) => (
-              <tr key={index} className="border">
-                <td className="border px-2 py-1">{item.itemName}</td>
-                <td className="border px-2 py-1">{item.metal}</td>
-                <td className="border px-2 py-1">{item.metalPrice}</td>
-                <td className="border px-2 py-1">{item.gross_weight}</td>
-                <td className="border px-2 py-1">{item.stone_weight}</td>
-                <td className="border px-2 py-1">{item.metal_weight}</td>
-                <td className="border px-2 py-1">{item.stone_amount}</td>
-                <td className="border px-2 py-1">{item.wastage}%</td>
-                <td className="border px-2 py-1">{item.making_charges}</td>
-                <td className="border px-2 py-1">
-                  {item.transactions?.length > 0
-                    ? item.transactions.map((tx: any, i: number) => (
-                        <div key={i}>
-                          ₹{tx.paidAmount} on{" "}
-                          {new Date(tx.paymentDate).toLocaleDateString()}
-                        </div>
-                      ))
-                    : "-"}
-                </td>
-                <td className="border px-2 py-1">₹{item.total_item_amount}</td>
+        <div className="overflow-x-auto no-print-scroll">
+          <table className="w-full border border-collapse text-sm mb-6 min-w-[1000px] print:min-w-full">
+            <thead>
+              <tr className="bg-orange-500 text-white">
+                <th className="border px-2 py-1">Item Name</th>
+                <th className="border px-2 py-1">Metal</th>
+                <th className="border px-2 py-1">Rate (G-22k) (S-999)</th>
+                <th className="border px-2 py-1">Gross Weight</th>
+                <th className="border px-2 py-1">Item Weight</th>
+                {activeWeightKeys.map((key) => (
+                  <React.Fragment key={key}>
+                    <th className="border px-2 py-1">
+                      {key.charAt(0).toUpperCase() + key.slice(1)} Weight
+                    </th>
+                    <th className="border px-2 py-1">
+                      {key.charAt(0).toUpperCase() + key.slice(1)} Amount
+                    </th>
+                  </React.Fragment>
+                ))}
+                <th className="border px-2 py-1">Wastage</th>
+                <th className="border px-2 py-1">Making Charges</th>
+                <th className="border px-2 py-1">Paid</th>
+                <th className="border px-2 py-1">Amount</th>
               </tr>
-            ))}
+            </thead>
+            <tbody>
+              {bill.selectedOrders.map((item: any, index: number) => (
+                <tr key={index} className="border">
+                  <td className="border px-2 py-1">{item.itemName}</td>
+                  <td className="border px-2 py-1">{item.metal}</td>
+                  <td className="border px-2 py-1">{item.metalPrice}</td>
+                  <td className="border px-2 py-1">{item.gross_weight}</td>
+                  <td className="border px-2 py-1">{item.metal_weight}</td>
+                  {activeWeightKeys.map((key) => (
+                    <React.Fragment key={key}>
+                      <td className="border px-2 py-1">
+                        {item[`${key}_weight`] || "-"}
+                      </td>
+                      <td className="border px-2 py-1">
+                        {item[`${key}_amount`] || "-"}
+                      </td>
+                    </React.Fragment>
+                  ))}
+                  <td className="border px-2 py-1">{item.wastage}%</td>
+                  <td className="border px-2 py-1">{item.making_charges}</td>
+                  <td className="border px-2 py-1">
+                    {item.transactions?.length > 0
+                      ? item.transactions.map((tx: any, i: number) => (
+                          <div key={i}>
+                            ₹{tx.paidAmount} on{" "}
+                            {new Date(tx.paymentDate).toLocaleDateString()}
+                          </div>
+                        ))
+                      : "-"}
+                  </td>
+                  <td className="border px-2 py-1">
+                    ₹{item.total_item_amount}
+                  </td>
+                </tr>
+              ))}
 
-            {bill.selectedOrders.flatMap(
-              (item: any) =>
-                item.oldItems?.map((ex: any, index: number) => (
-                  <tr key={`ex-${index}`} className="border bg-gray-100">
-                    <td className="border px-2 py-1">
-                      {ex.exchange_metal_name + "  ( Ex )"}
-                    </td>
-                    <td className="border px-2 py-1">{ex.exchange_metal}</td>
-                    <td className="border px-2 py-1">-</td>
-                    <td className="border px-2 py-1">
-                      {ex.exchange_metal_weight}
-                    </td>
-                    <td className="border px-2 py-1">-</td>
-                    <td className="border px-2 py-1">
-                      {ex.exchange_purity_weight}
-                    </td>
-                    <td className="border px-2 py-1">-</td>
-                    <td className="border px-2 py-1">-</td>
-                    <td className="border px-2 py-1">-</td>
-                    <td className="border px-2 py-1">-</td>
-                    <td className="border px-2 py-1">
-                      ₹{ex.exchange_item_amount}
-                    </td>
-                  </tr>
-                )) || []
-            )}
-          </tbody>
-        </table>
+              {bill.selectedOrders.flatMap(
+                (item: any) =>
+                  item.oldItems?.map((ex: any, index: number) => (
+                    <tr key={`ex-${index}`} className="border bg-gray-100">
+                      <td className="border px-2 py-1">
+                        {ex.exchange_metal_name + "  ( Ex )"}
+                      </td>
+                      <td className="border px-2 py-1">{ex.exchange_metal}</td>
+                      <td className="border px-2 py-1">
+                        {ex.exchange_metal_price}
+                      </td>
+                      <td className="border px-2 py-1">
+                        {ex.exchange_metal_weight}
+                      </td>
+
+                      <td className="border px-2 py-1">
+                        {ex.exchange_purity_weight}
+                      </td>
+                      {Array.from({ length: nonZeroColCount }).map((_, i) => (
+                        <td key={`empty-${i}`} className="border px-2 py-1">
+                          -
+                        </td>
+                      ))}
+                      <td className="border px-2 py-1">-</td>
+                      <td className="border px-2 py-1">-</td>
+                      <td className="border px-2 py-1">-</td>
+                      <td className="border px-2 py-1">
+                        ₹{ex.exchange_item_amount}
+                      </td>
+                    </tr>
+                  )) || []
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {/* Totals */}
         <div className="flex justify-end">

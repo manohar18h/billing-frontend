@@ -46,9 +46,9 @@ const RepairWork: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            metal: repairData.metal,
+            metal: repairData.metal || "",
             itemName: repairData.itemName,
-            metalWeight: parseFloat(repairData.metalWeight),
+            metalWeight: parseFloat(repairData.metalWeight) || 0.0,
             customerPay: parseFloat(repairData.customerPay),
             workerPay: parseFloat(repairData.workerPay),
             deliveryDate: formatDate(repairData.deliveryDate),
@@ -129,8 +129,10 @@ const RepairWork: React.FC = () => {
               <MenuItem value="" disabled>
                 -- Select Metal --
               </MenuItem>
+              <MenuItem value="Non Metal">Non Metal</MenuItem>
               <MenuItem value="Gold">Gold</MenuItem>
               <MenuItem value="Silver">Silver</MenuItem>
+              <MenuItem value="Copper">Copper</MenuItem>
             </TextField>
           </Grid>
 

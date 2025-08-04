@@ -40,10 +40,15 @@ type BarcodeProduct = {
   stone_weight: number;
   stone_amount: number;
   diamond_weight: number;
+  diamond_amount: number;
   bits_weight: number;
+  bits_amount: number;
   enamel_weight: number;
+  enamel_amount: number;
   pearls_weight: number;
+  pearls_amount: number;
   other_weight: number;
+  other_amount: number;
   gross_weight: number;
   total_item_amount: number;
 };
@@ -68,10 +73,15 @@ const Orders: React.FC = () => {
       stone_weight: 0.0,
       stone_amount: 0.0,
       diamond_weight: 0.0,
+      diamond_amount: 0.0,
       bits_weight: 0.0,
+      bits_amount: 0.0,
       enamel_weight: 0.0,
+      enamel_amount: 0.0,
       pearls_weight: 0.0,
+      pearls_amount: 0.0,
       other_weight: 0.0,
+      other_amount: 0.0,
       stock_box: 0.0,
       gross_weight: 0.0,
       total_item_amount: 5000.0,
@@ -96,16 +106,21 @@ const Orders: React.FC = () => {
     stone_weight: 0.0,
     stone_amount: 0.0,
     diamond_weight: 0.0,
+    diamond_amount: 0.0,
     bits_weight: 0.0,
+    bits_amount: 0.0,
     enamel_weight: 0.0,
+    enamel_amount: 0.0,
     pearls_weight: 0.0,
+    pearls_amount: 0.0,
     other_weight: 0.0,
+    other_amount: 0.0,
     stock_box: 0.0,
     gross_weight: 0.0,
     total_item_amount: 5000.0,
     discount: 0.0,
     delivery_status: "",
-    deliveryDate: "06-25-2025",
+    deliveryDate: "",
   });
 
   const [orderErrors, setOrderErrors] = useState<{ [key: string]: string }>({});
@@ -135,6 +150,7 @@ const Orders: React.FC = () => {
     exchange_metal_name: "",
     exchange_metal_weight: 0,
     exchange_purity_weight: 0,
+    exchange_metal_price: 0,
     exchange_item_amount: 0,
   });
 
@@ -332,6 +348,7 @@ const Orders: React.FC = () => {
     "Kadiyam",
     "Finger Ring",
     "Ring",
+    "Ring2",
     "Neck Chains",
     "Pattilu",
     "Bangles",
@@ -375,11 +392,15 @@ const Orders: React.FC = () => {
         stone_weight: data.stone_weight ?? prev.stone_weight,
         stone_amount: data.stone_amount ?? prev.stone_amount,
         diamond_weight: data.diamond_weight ?? prev.diamond_weight,
-
+        diamond_amount: data.diamond_amount ?? prev.diamond_amount,
         bits_weight: data.bits_weight ?? prev.bits_weight,
+        bits_amount: data.bits_amount ?? prev.bits_amount,
         enamel_weight: data.enamel_weight ?? prev.enamel_weight,
+        enamel_amount: data.enamel_amount ?? prev.enamel_amount,
         pearls_weight: data.pearls_weight ?? prev.pearls_weight,
+        pearls_amount: data.pearls_amount ?? prev.pearls_amount,
         other_weight: data.other_weight ?? prev.other_weight,
+        other_amount: data.other_amount ?? prev.other_amount,
         gross_weight: data.gross_weight ?? prev.gross_weight,
         total_item_amount: data.total_item_amount ?? prev.total_item_amount,
       }));
@@ -667,7 +688,7 @@ const Orders: React.FC = () => {
                       setOrderErrors((prev) => ({ ...prev, [key]: "" }));
                     }
                   }}
-                  disabled={isPrefilled && (key as string) !== "discount"}
+                  disabled={isPrefilled && (key as string) !== "deliveryDate"}
                 />
               )}
             </Grid>
@@ -888,6 +909,7 @@ const Orders: React.FC = () => {
                 <TableCell>Name</TableCell>
                 <TableCell>Weight</TableCell>
                 <TableCell>Purity</TableCell>
+                <TableCell>Metal Price</TableCell>
                 <TableCell>Amount</TableCell>
               </TableRow>
             </TableHead>
@@ -900,6 +922,7 @@ const Orders: React.FC = () => {
                   <TableCell>{ex.exchange_metal_name}</TableCell>
                   <TableCell>{ex.exchange_metal_weight}</TableCell>
                   <TableCell>{ex.exchange_purity_weight}</TableCell>
+                  <TableCell>{ex.exchange_metal_price}</TableCell>
                   <TableCell>{ex.exchange_item_amount}</TableCell>
                 </TableRow>
               ))}
