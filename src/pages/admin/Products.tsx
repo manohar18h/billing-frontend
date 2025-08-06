@@ -637,27 +637,26 @@ const Products: React.FC = () => {
         <Box display="flex" justifyContent="flex-end" mt={3}>
           <Button
             variant="contained"
-            onClick={addProductStock}
-            disabled={topLoading}
-            sx={{ minWidth: 120 }}
-          >
-            {topLoading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              "Add Product"
-            )}
-          </Button>
-
-          <Button
-            variant="contained"
             onClick={searchTop}
             disabled={topLoading}
-            sx={{ minWidth: 120, ml: 2 }} // <- margin-left to add space
+            sx={{ minWidth: 120 }} // <- margin-left to add space
           >
             {topLoading ? (
               <CircularProgress size={20} color="inherit" />
             ) : (
               "Search"
+            )}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={addProductStock}
+            disabled={topLoading}
+            sx={{ minWidth: 120, ml: 2 }}
+          >
+            {topLoading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              "Add Product"
             )}
           </Button>
         </Box>

@@ -19,6 +19,8 @@ const SearchAddCustomer: React.FC = () => {
   const navigate = useNavigate();
 
   localStorage.removeItem("billNumber");
+  localStorage.removeItem("bill-phnNumber");
+  localStorage.removeItem("phnNumber");
 
   const emptyCustomer = {
     customerId: "",
@@ -60,8 +62,15 @@ const SearchAddCustomer: React.FC = () => {
     }
 
     if (searchType === "Bill Number") {
-      localStorage.setItem("billNumber", trimmedQuery);
-      navigate("/admin/bill-details");
+      if (trimmedQuery.toUpperCase().startsWith("HJ-")) {
+        localStorage.removeItem("billNumber");
+        localStorage.setItem("billNumber", trimmedQuery);
+        navigate("/admin/bill-details");
+      } else if (/^\d{10}$/.test(trimmedQuery)) {
+        localStorage.removeItem("bill-phnNumber");
+        localStorage.setItem("bill-phnNumber", trimmedQuery);
+        navigate("/admin/bill-Data");
+      }
     } else if (searchType === "Phone Number") {
       localStorage.removeItem("phnNumber");
       localStorage.setItem("phnNumber", trimmedQuery);

@@ -237,7 +237,12 @@ const BillDetails: React.FC = () => {
 
       {orders.length > 0 && (
         <Paper className="p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-md">
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
+          <Typography
+            variant="h5"
+            fontWeight="bold"
+            gutterBottom
+            color="primary"
+          >
             Orders
           </Typography>
           <Table>
