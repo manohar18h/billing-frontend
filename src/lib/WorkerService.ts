@@ -60,6 +60,7 @@ export interface Worker {
 const LS_KEY = "allWorkers";
 
 export async function fetchWorkers(force = false): Promise<Worker[]> {
+  localStorage.removeItem(LS_KEY);
   if (!force) {
     const cached = localStorage.getItem(LS_KEY);
     if (cached) return JSON.parse(cached) as Worker[];
@@ -74,6 +75,7 @@ export async function fetchWorkers(force = false): Promise<Worker[]> {
 
   if (!res.ok) throw new Error("Failed to fetch workers");
   const data = (await res.json()) as Worker[];
+  localStorage.removeItem(LS_KEY);
   localStorage.setItem(LS_KEY, JSON.stringify(data));
   return data;
 }

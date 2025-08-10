@@ -64,7 +64,6 @@ const Orders: React.FC = () => {
       metal: "",
       metalPrice: 0.0,
       itemName: "",
-      occasion: "",
       design: "",
       size: "",
       metal_weight: 0.0,
@@ -93,11 +92,16 @@ const Orders: React.FC = () => {
     setIsPrefilled(false);
   };
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
+  const [editingExchangeId, setEditingExchangeId] = useState<number | null>(
+    null
+  );
+
   const [order, setOrder] = useState({
     metal: "",
     metalPrice: 0.0,
     itemName: "",
-    occasion: "",
     design: "",
     size: "",
     metal_weight: 0.0,
@@ -363,6 +367,94 @@ const Orders: React.FC = () => {
     return [];
   };
 
+  const handleUpdateExchange = async () => {
+    if (!setEditingExchangeId) return;
+
+    const orderId = ordersList[ordersList.length - 1]?.orderId;
+    const exchangeItemAmount = exchange.exchange_item_amount;
+
+    try {
+      await axios.put(
+        `${apiBase}/admin/updateExchangeOrder/${editingExchangeId}`,
+        exchange,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Update table in UI without reload
+      const updatedExchange = exchangeList.map((o) =>
+        o.oldItemId === editingExchangeId ? { ...o, ...exchange } : o
+      );
+
+      const updatedOrders = ordersList.map((order) => {
+        if (order.orderId === orderId) {
+          const newDue = Math.max(
+            order.total_item_amount - exchangeItemAmount,
+            0
+          );
+          return { ...order, dueAmount: newDue };
+        }
+        return order;
+      });
+
+      setOrdersList(updatedOrders);
+
+      setExchangeList(updatedExchange);
+      sessionStorage.setItem(
+        "ordersState",
+        JSON.stringify({ exchangeList: updatedExchange })
+      );
+
+      // Reset form
+      // handleClearExchange();
+      setIsEditing(false);
+      setEditingExchangeId(null);
+
+      alert("Exchange Data updated successfully");
+    } catch (error: any) {
+      if (error.response?.data) {
+        setExchangeErrors(error.response.data);
+      } else {
+        alert("Failed to update exchange");
+      }
+    }
+  };
+
+  const handleUpdateOrder = async () => {
+    if (!editingOrderId) return;
+
+    try {
+      await axios.put(`${apiBase}/admin/updateOrder/${editingOrderId}`, order, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Update table in UI without reload
+      const updatedOrders = ordersList.map((o) =>
+        o.orderId === editingOrderId ? { ...o, ...order } : o
+      );
+
+      setOrdersList(updatedOrders);
+      sessionStorage.setItem(
+        "ordersState",
+        JSON.stringify({ ordersList: updatedOrders, exchangeList })
+      );
+
+      // Reset form
+      handleClearOrder();
+      setIsEditing(false);
+      setEditingOrderId(null);
+
+      alert("Order updated successfully");
+    } catch (error: any) {
+      if (error.response?.data) {
+        setOrderErrors(error.response.data);
+      } else {
+        alert("Failed to update order");
+      }
+    }
+  };
+
   const handleSearch = async () => {
     if (!searchQuery) {
       alert("Please enter barcode value");
@@ -576,47 +668,6 @@ const Orders: React.FC = () => {
                   <MenuItem value="Deliverd">Deliverd</MenuItem>
                   <MenuItem value="Pending">Pending</MenuItem>
                 </TextField>
-              ) : key === "occasion" ? (
-                <TextField
-                  select
-                  label="Occasion"
-                  value={order.occasion}
-                  onChange={(e) =>
-                    setOrder({
-                      ...order,
-                      occasion: e.target.value,
-                    })
-                  }
-                  error={!!orderErrors.occasion}
-                  helperText={orderErrors.occasion || ""}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    style: { color: "#333" },
-                    shrink: true, // ✅ ensures label is always visible
-                  }}
-                  InputProps={{
-                    style: { fontWeight: 500 },
-                  }}
-                  sx={{
-                    minWidth: "200px",
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderWidth: "2px",
-                      borderColor: "gray",
-                    },
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>Select Occasion</em>
-                  </MenuItem>
-                  <MenuItem value="Wedding and Engagement">
-                    Wedding and Engagement
-                  </MenuItem>
-                  <MenuItem value="Party wear">Party wear</MenuItem>
-                  <MenuItem value="Religious">Religious</MenuItem>
-                  <MenuItem value="Work wear">Work wear</MenuItem>
-                  <MenuItem value="Daily wear">Daily wear</MenuItem>
-                </TextField>
               ) : key === "itemName" ? (
                 <TextField
                   select
@@ -688,7 +739,9 @@ const Orders: React.FC = () => {
                       setOrderErrors((prev) => ({ ...prev, [key]: "" }));
                     }
                   }}
-                  disabled={isPrefilled && (key as string) !== "deliveryDate"}
+                  disabled={
+                    isPrefilled && key !== "deliveryDate" && key !== "discount"
+                  }
                 />
               )}
             </Grid>
@@ -703,8 +756,11 @@ const Orders: React.FC = () => {
           >
             Clear
           </Button>
-          <Button variant="contained" onClick={handleOrderSubmit}>
-            Submit
+          <Button
+            variant="contained"
+            onClick={isEditing ? handleUpdateOrder : handleOrderSubmit}
+          >
+            {isEditing ? "Update" : "Submit"}
           </Button>
         </Box>
       </Paper>
@@ -730,6 +786,7 @@ const Orders: React.FC = () => {
                 <TableCell>Worker</TableCell>
                 <TableCell>Pay</TableCell>
                 <TableCell>Action</TableCell>
+                <TableCell>Edit</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -782,6 +839,24 @@ const Orders: React.FC = () => {
                   <TableCell>
                     <Button onClick={() => handleViewMore(ord.orderId)}>
                       View More
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="warning"
+                      onClick={() => {
+                        setOrder({
+                          ...ord,
+                          size: String(ord.size), // ensure dropdown works if needed
+                        });
+                        setIsEditing(true);
+                        setEditingOrderId(ord.orderId);
+                        setOrderErrors({});
+                      }}
+                    >
+                      Edit
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -886,7 +961,14 @@ const Orders: React.FC = () => {
               ))}
             </Grid>
             <Box display="flex" justifyContent="flex-end" mt={4}>
-              <Button onClick={handleExchangeSubmit}>Submit Exchange</Button>
+              <Button
+                variant="contained"
+                onClick={
+                  isEditing ? handleUpdateExchange : handleExchangeSubmit
+                }
+              >
+                {isEditing ? "Update Exchange" : "Submit Exchange"}
+              </Button>
             </Box>
           </Paper>
         </div>
@@ -924,6 +1006,24 @@ const Orders: React.FC = () => {
                   <TableCell>{ex.exchange_purity_weight}</TableCell>
                   <TableCell>{ex.exchange_metal_price}</TableCell>
                   <TableCell>{ex.exchange_item_amount}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="warning"
+                      onClick={() => {
+                        setExchange({
+                          ...ex, // ensure dropdown works if needed
+                        });
+                        setShowExchangeForm((prev) => !prev);
+                        setIsEditing(true);
+                        setEditingExchangeId(ex.oldItemId);
+                        setExchangeErrors({});
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

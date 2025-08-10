@@ -54,6 +54,12 @@ const possibleWeightKeys = [
   "enamel_weight",
   "pearls_weight",
   "other_weight",
+  "stone_amount",
+  "diamond_amount",
+  "bits_amount",
+  "enamel_amount",
+  "pearls_amount",
+  "other_amount",
 ];
 
 const prettySelectSx = {
@@ -376,11 +382,33 @@ const Products: React.FC = () => {
         const next = { ...prev, [k]: val };
 
         // Auto-calc gross_weight = metal_weight + stone_weight
-        if (k === "metal_weight" || k === "stone_weight") {
+        if (
+          k === "metal_weight" ||
+          k === "stone_weight" ||
+          k === "bits_weight" ||
+          k === "diamond_weight" ||
+          k === "enamel_weight" ||
+          k === "pearls_weight" ||
+          k === "other_weight"
+        ) {
           const mw = toNum(k === "metal_weight" ? val : next.metal_weight);
           const sw = toNum(k === "stone_weight" ? val : next.stone_weight);
+          const bw = toNum(k === "bits_weight" ? val : next.bits_weight);
+          const dw = toNum(k === "diamond_weight" ? val : next.diamond_weight);
+          const ew = toNum(k === "enamel_weight" ? val : next.enamel_weight);
+          const pw = toNum(k === "pearls_weight" ? val : next.pearls_weight);
+          const ow = toNum(k === "other_weight" ? val : next.other_weight);
+
           next.gross_weight =
-            Number.isNaN(mw) || Number.isNaN(sw) ? "" : String(mw + sw);
+            Number.isNaN(mw) ||
+            Number.isNaN(sw) ||
+            Number.isNaN(bw) ||
+            Number.isNaN(dw) ||
+            Number.isNaN(ew) ||
+            Number.isNaN(pw) ||
+            Number.isNaN(ow)
+              ? ""
+              : String(mw + sw + bw + dw + ew + pw + ow);
         }
         return next;
       });

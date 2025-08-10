@@ -42,7 +42,6 @@ export interface Customer {
   phoneNumber: string;
   emailId: string;
   numberOfOrders: number;
-  finalAmount: number;
   totalDueAmount: number;
   version: number;
   orders: Order[]; // <== Ensure this line exists
@@ -195,12 +194,7 @@ const CustomerDetails: React.FC = () => {
             </Grid>
           ))}
 
-          {[
-            "customerId",
-            "numberOfOrders",
-            "finalAmount",
-            "totalDueAmount",
-          ].map((key) => (
+          {["customerId", "numberOfOrders", "totalDueAmount"].map((key) => (
             <Grid item xs={12} sm={6} key={key}>
               <TextField
                 label={key.replace(/([A-Z])/g, " $1")}
