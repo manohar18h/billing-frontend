@@ -13,20 +13,20 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  MenuItem,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
-} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 type BarcodeProduct = {
   metal: string;
@@ -367,11 +367,50 @@ const Orders: React.FC = () => {
     return [];
   };
 
+  const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const handleClickOpen = (id: number) => {
+    setSelectedId(id);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedId(null);
+  };
+
+  const handleDelete = async () => {
+    console.log("selectedId  :" + selectedId);
+    if (selectedId === null) return;
+
+    try {
+      const response = await axios.delete(
+        `${apiBase}/admin/deleteOldExItem/${selectedId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.status === 200) {
+        console.log(response.data); // "Yes Its Deleted"
+
+        // Remove deleted item from the state
+        setExchangeList((prev) =>
+          prev.filter((item) => item.oldItemId !== selectedId)
+        );
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+    } finally {
+      handleClose();
+    }
+  };
+
   const handleUpdateExchange = async () => {
     if (!setEditingExchangeId) return;
 
     const orderId = ordersList[ordersList.length - 1]?.orderId;
-    const exchangeItemAmount = exchange.exchange_item_amount;
 
     try {
       await axios.put(
@@ -389,21 +428,42 @@ const Orders: React.FC = () => {
 
       const updatedOrders = ordersList.map((order) => {
         if (order.orderId === orderId) {
-          const newDue = Math.max(
-            order.total_item_amount - exchangeItemAmount,
+          const relatedOldItems = updatedExchange.filter(
+            (item) => item.orderId === orderId
+          );
+
+          // Calculate total old item amount
+          const totalOldItemAmount = relatedOldItems.reduce(
+            (sum, item) => sum + (item.exchange_item_amount || 0),
             0
           );
-          return { ...order, dueAmount: newDue };
+
+          console.log("totalOldItemAmount :" + totalOldItemAmount);
+
+          // New due calculation from scratch
+          const newDue =
+            (order.total_item_amount || 0) -
+            (order.discount || 0) -
+            totalOldItemAmount;
+          console.log("totalAmount :" + order.totalAmount);
+          console.log("discount :" + order.discount);
+          console.log("newDue :" + newDue);
+          return { ...order, dueAmount: Math.max(newDue, 0) };
         }
+
         return order;
       });
 
       setOrdersList(updatedOrders);
 
       setExchangeList(updatedExchange);
+
       sessionStorage.setItem(
         "ordersState",
-        JSON.stringify({ exchangeList: updatedExchange })
+        JSON.stringify({
+          ordersList: updatedOrders,
+          exchangeList: updatedExchange,
+        })
       );
 
       // Reset form
@@ -842,8 +902,7 @@ const Orders: React.FC = () => {
                     </Button>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outlined"
+                    <IconButton
                       size="small"
                       color="warning"
                       onClick={() => {
@@ -856,8 +915,8 @@ const Orders: React.FC = () => {
                         setOrderErrors({});
                       }}
                     >
-                      Edit
-                    </Button>
+                      <EditIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -993,6 +1052,8 @@ const Orders: React.FC = () => {
                 <TableCell>Purity</TableCell>
                 <TableCell>Metal Price</TableCell>
                 <TableCell>Amount</TableCell>
+                <TableCell>Edit</TableCell>
+                <TableCell>Delete</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1007,8 +1068,7 @@ const Orders: React.FC = () => {
                   <TableCell>{ex.exchange_metal_price}</TableCell>
                   <TableCell>{ex.exchange_item_amount}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outlined"
+                    <IconButton
                       size="small"
                       color="warning"
                       onClick={() => {
@@ -1021,11 +1081,37 @@ const Orders: React.FC = () => {
                         setExchangeErrors({});
                       }}
                     >
-                      Edit
-                    </Button>
+                      <EditIcon />
+                    </IconButton>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      color="warning"
+                      onClick={() => handleClickOpen(ex.oldItemId)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
+              <Dialog open={open} onClose={handleClose}>
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent>
+                  <DialogContentText>
+                    Are you sure you want to delete this exchange / old item
+                    with ID: <strong>{selectedId}</strong>?
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleClose} color="primary">
+                    No
+                  </Button>
+                  <Button onClick={handleDelete} color="error" autoFocus>
+                    Yes, Delete
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </TableBody>
           </Table>
         </Paper>

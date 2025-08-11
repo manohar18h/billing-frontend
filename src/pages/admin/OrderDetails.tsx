@@ -145,6 +145,8 @@ const OrderDetails: React.FC = () => {
                   {displayField("Weight", item.exchange_metal_weight)}
                 </div>
                 <div className="pl-4">
+                  {displayField("Metal Purity", item.exchange_purity_weight)}
+
                   {displayField("Mtal Price", item.exchange_metal_price)}
                   {displayField(
                     "Total Amount",
