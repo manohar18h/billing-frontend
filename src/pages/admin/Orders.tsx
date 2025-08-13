@@ -144,7 +144,13 @@ const Orders: React.FC = () => {
   const customerId =
     location.state?.customerId ||
     localStorage.getItem("CusDetailsCustomerId") ||
+    localStorage.getItem("BillCustomerId") ||
     localStorage.getItem("customerId");
+
+  const fromBillDetails = location.state?.fromBillDetails || false;
+  const numericOrderId = location.state?.orderId || null; // read from state
+
+  console.log("📦 Received numericOrderId from navigation:", numericOrderId);
 
   const token = localStorage.getItem("token");
   const apiBase = "http://15.207.98.116:8081";
@@ -203,6 +209,30 @@ const Orders: React.FC = () => {
       setExchangeList(exchangeList || []);
     }
   }, [location.key]);
+
+  useEffect(() => {
+    if (fromBillDetails && numericOrderId) {
+      fetchOrderDetails();
+    }
+  }, [location.key]);
+
+  const fetchOrderDetails = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://15.207.98.116:8081/admin/getOrderByOrdId/${numericOrderId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await response.json();
+
+      setOrdersList([data]);
+      setExchangeList(data.oldItems || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleOrderSubmit = async () => {
     console.log("customerid  in order  :  " + customerId);
@@ -367,26 +397,73 @@ const Orders: React.FC = () => {
     return [];
   };
 
-  const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [slectOrderId, setSlectOrderId] = useState<number | null>(null);
 
-  const handleClickOpen = (id: number) => {
-    setSelectedId(id);
-    setOpen(true);
+  const [oldItemOpen, setOldItemOpen] = useState(false);
+  const [slectOldItemId, setSlectOldItemId] = useState<number | null>(null);
+
+  const handleClickOrderOpen = (id: number) => {
+    setSlectOrderId(id);
+    setOrderOpen(true);
   };
 
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedId(null);
+  const handleClickOldItemOpen = (id: number) => {
+    setSlectOldItemId(id);
+    setOldItemOpen(true);
   };
 
-  const handleDelete = async () => {
-    console.log("selectedId  :" + selectedId);
-    if (selectedId === null) return;
+  const handleOrderClose = () => {
+    setOrderOpen(false);
+    setSlectOrderId(null);
+  };
+
+  const handleOldItemClose = () => {
+    setOldItemOpen(false);
+    setSlectOldItemId(null);
+  };
+
+  const handleOrderDelete = async () => {
+    console.log("selectedId  :" + slectOrderId);
+    if (slectOrderId === null) return;
 
     try {
       const response = await axios.delete(
-        `${apiBase}/admin/deleteOldExItem/${selectedId}`,
+        `${apiBase}/admin/deleteOrder/${slectOrderId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.status === 200) {
+        const message = response.data; // The backend message
+        console.log("Server message:", message);
+
+        if (message === "Yes, It's Deleted") {
+          // Remove deleted item from the state
+          setOrdersList((prev) =>
+            prev.filter((item) => item.orderId !== slectOrderId)
+          );
+        }
+
+        // Show message on the screen
+        alert(message);
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Error deleting order. Please try again.");
+    } finally {
+      handleOrderClose();
+    }
+  };
+
+  const handleOldDelete = async () => {
+    console.log("selectedId  :" + slectOldItemId);
+    if (slectOldItemId === null) return;
+
+    try {
+      const response = await axios.delete(
+        `${apiBase}/admin/deleteOldExItem/${slectOldItemId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -397,13 +474,13 @@ const Orders: React.FC = () => {
 
         // Remove deleted item from the state
         setExchangeList((prev) =>
-          prev.filter((item) => item.oldItemId !== selectedId)
+          prev.filter((item) => item.oldItemId !== slectOldItemId)
         );
       }
     } catch (error) {
       console.error("Delete failed:", error);
     } finally {
-      handleClose();
+      handleOldItemClose();
     }
   };
 
@@ -847,6 +924,7 @@ const Orders: React.FC = () => {
                 <TableCell>Pay</TableCell>
                 <TableCell>Action</TableCell>
                 <TableCell>Edit</TableCell>
+                <TableCell>Delete</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -918,8 +996,35 @@ const Orders: React.FC = () => {
                       <EditIcon />
                     </IconButton>
                   </TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      color="warning"
+                      onClick={() => handleClickOrderOpen(ord.orderId)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
               ))}
+              <Dialog open={orderOpen} onClose={handleOrderClose}>
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent>
+                  <DialogContentText>
+                    Are you sure you want to delete this order item with ID:
+                    {slectOrderId}
+                    <strong>{selectedOrderId}</strong>?
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleOrderClose} color="primary">
+                    No
+                  </Button>
+                  <Button onClick={handleOrderDelete} color="error" autoFocus>
+                    Yes, Delete
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </TableBody>
           </Table>
         </Paper>
@@ -1088,26 +1193,26 @@ const Orders: React.FC = () => {
                     <IconButton
                       size="small"
                       color="warning"
-                      onClick={() => handleClickOpen(ex.oldItemId)}
+                      onClick={() => handleClickOldItemOpen(ex.oldItemId)}
                     >
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
-              <Dialog open={open} onClose={handleClose}>
+              <Dialog open={oldItemOpen} onClose={handleOldItemClose}>
                 <DialogTitle>Confirm Deletion</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
                     Are you sure you want to delete this exchange / old item
-                    with ID: <strong>{selectedId}</strong>?
+                    with ID: <strong>{slectOldItemId}</strong>?
                   </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                  <Button onClick={handleClose} color="primary">
+                  <Button onClick={handleOldItemClose} color="primary">
                     No
                   </Button>
-                  <Button onClick={handleDelete} color="error" autoFocus>
+                  <Button onClick={handleOldDelete} color="error" autoFocus>
                     Yes, Delete
                   </Button>
                 </DialogActions>

@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  DialogContentText,
   MenuItem,
   IconButton,
 } from "@mui/material";
@@ -22,6 +23,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 interface selectedOrders {
   orderId: number;
@@ -73,6 +76,7 @@ const BillDetails: React.FC = () => {
   const [workerPayAmount, setWorkerPayAmount] = useState("");
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<number | null>(null);
+  const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
 
   const token = localStorage.getItem("token");
   const apiBase = "http://15.207.98.116:8081";
@@ -158,6 +162,71 @@ const BillDetails: React.FC = () => {
     return new Date(isoString).toLocaleString("en-IN", {
       dateStyle: "short",
       timeStyle: "short",
+    });
+  };
+
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [slectOrderId, setSlectOrderId] = useState<number | null>(null);
+
+  const handleClickOrderOpen = (id: number) => {
+    setSlectOrderId(id);
+    setOrderOpen(true);
+  };
+
+  const handleOrderClose = () => {
+    setOrderOpen(false);
+    setSlectOrderId(null);
+  };
+
+  const handleOrderDelete = async () => {
+    console.log("selectedId  :" + slectOrderId);
+    if (slectOrderId === null) return;
+
+    try {
+      const response = await axios.delete(
+        `${apiBase}/admin/deleteDirectOrder/${slectOrderId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.status === 200) {
+        const message = response.data; // The backend message
+        console.log("Server message:", message);
+
+        if (message === "Yes, It's Deleted") {
+          // Remove deleted item from the state
+          setOrders((prev) =>
+            prev.filter((item) => item.orderId !== slectOrderId)
+          );
+        }
+
+        // Show message on the screen
+        alert(message);
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Error deleting order. Please try again.");
+    } finally {
+      handleOrderClose();
+    }
+  };
+
+  const handleEditOrder = () => {
+    if (!editingOrderId) {
+      console.error("❌ editingOrderId is missing before navigation");
+      return;
+    }
+
+    console.log("✅ Navigating to Orders page with orderId:", editingOrderId);
+
+    navigate(`/admin/orders/`, {
+      replace: true,
+      state: {
+        fromBillDetails: true,
+        customerId: customer?.customerId,
+        orderId: editingOrderId, // pass orderId directly
+      },
     });
   };
 
@@ -259,6 +328,8 @@ const BillDetails: React.FC = () => {
                 <TableCell>Worker</TableCell>
                 <TableCell>Pay</TableCell>
                 <TableCell>Action</TableCell>
+                <TableCell>Edit</TableCell>
+                <TableCell>Delete</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -316,8 +387,47 @@ const BillDetails: React.FC = () => {
                       View More
                     </Button>
                   </TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      color="warning"
+                      onClick={() => {
+                        handleEditOrder();
+                        setEditingOrderId(order.orderId);
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      color="warning"
+                      onClick={() => handleClickOrderOpen(order.orderId)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
               ))}
+              <Dialog open={orderOpen} onClose={handleOrderClose}>
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent>
+                  <DialogContentText>
+                    Are you sure you want to delete this order item with ID:
+                    {slectOrderId}
+                    <strong>{selectedOrderId}</strong>?
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleOrderClose} color="primary">
+                    No
+                  </Button>
+                  <Button onClick={handleOrderDelete} color="error" autoFocus>
+                    Yes, Delete
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </TableBody>
           </Table>
         </Paper>
