@@ -6,6 +6,7 @@ export interface Worker {
   village: string;
 
   earnedAmount: number;
+  earnedWastage: number;
   receivedAmount: number;
   pendingAmount: number;
 
@@ -27,6 +28,7 @@ export interface Worker {
     itemName: string;
     itemWeight: number;
     pieces: number;
+    wastage: number;
     amount: number;
     deliveryDate: string | null;
   }[];

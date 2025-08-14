@@ -32,6 +32,7 @@ type BarcodeProduct = {
   metal: string;
   metalPrice: number;
   itemName: string;
+  catalogue: string;
   design: string;
   size: number;
   metal_weight: number;
@@ -39,6 +40,8 @@ type BarcodeProduct = {
   making_charges: number;
   stone_weight: number;
   stone_amount: number;
+  wax_weight: number;
+  wax_amount: number;
   diamond_weight: number;
   diamond_amount: number;
   bits_weight: number;
@@ -64,6 +67,7 @@ const Orders: React.FC = () => {
       metal: "",
       metalPrice: 0.0,
       itemName: "",
+      catalogue: "",
       design: "",
       size: "",
       metal_weight: 0.0,
@@ -71,6 +75,8 @@ const Orders: React.FC = () => {
       making_charges: 0.0,
       stone_weight: 0.0,
       stone_amount: 0.0,
+      wax_weight: 0.0,
+      wax_amount: 0.0,
       diamond_weight: 0.0,
       diamond_amount: 0.0,
       bits_weight: 0.0,
@@ -86,7 +92,6 @@ const Orders: React.FC = () => {
       total_item_amount: 5000.0,
       discount: 0.0,
       delivery_status: "",
-      deliveryDate: "06-25-2025",
     });
     setOrderErrors({});
     setIsPrefilled(false);
@@ -102,6 +107,7 @@ const Orders: React.FC = () => {
     metal: "",
     metalPrice: 0.0,
     itemName: "",
+    catalogue: "",
     design: "",
     size: "",
     metal_weight: 0.0,
@@ -109,6 +115,8 @@ const Orders: React.FC = () => {
     making_charges: 0.0,
     stone_weight: 0.0,
     stone_amount: 0.0,
+    wax_weight: 0.0,
+    wax_amount: 0.0,
     diamond_weight: 0.0,
     diamond_amount: 0.0,
     bits_weight: 0.0,
@@ -124,7 +132,6 @@ const Orders: React.FC = () => {
     total_item_amount: 5000.0,
     discount: 0.0,
     delivery_status: "",
-    deliveryDate: "",
   });
 
   const [orderErrors, setOrderErrors] = useState<{ [key: string]: string }>({});
@@ -613,6 +620,7 @@ const Orders: React.FC = () => {
         metal: data.metal ?? prev.metal,
         metalPrice: data.metalPrice ?? prev.metalPrice,
         itemName: data.itemName ?? prev.itemName,
+        catalogue: data.catalogue ?? prev.catalogue,
         design: data.design ?? prev.design,
         size: String(data.size ?? prev.size), // convert number to string if needed
         metal_weight: data.metal_weight ?? prev.metal_weight,
@@ -620,6 +628,8 @@ const Orders: React.FC = () => {
         making_charges: data.making_charges ?? prev.making_charges,
         stone_weight: data.stone_weight ?? prev.stone_weight,
         stone_amount: data.stone_amount ?? prev.stone_amount,
+        wax_weight: data.wax_weight ?? prev.wax_weight,
+        wax_amount: data.wax_amount ?? prev.wax_amount,
         diamond_weight: data.diamond_weight ?? prev.diamond_weight,
         diamond_amount: data.diamond_amount ?? prev.diamond_amount,
         bits_weight: data.bits_weight ?? prev.bits_weight,
@@ -769,6 +779,43 @@ const Orders: React.FC = () => {
                   <MenuItem value="Gold">Gold</MenuItem>
                   <MenuItem value="Silver">Silver</MenuItem>
                 </TextField>
+              ) : key === "catalogue" ? (
+                <TextField
+                  select
+                  label="Catalogue"
+                  value={order.catalogue}
+                  onChange={(e) =>
+                    setOrder({
+                      ...order,
+                      catalogue: e.target.value,
+                    })
+                  }
+                  error={!!orderErrors.catalogue}
+                  helperText={orderErrors.catalogue || ""}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    style: { color: "#333" },
+                    shrink: true, // ✅ ensures label is always visible
+                  }}
+                  InputProps={{
+                    style: { fontWeight: 500 },
+                  }}
+                  sx={{
+                    minWidth: "200px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderWidth: "2px",
+                      borderColor: "gray",
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select Catalogue</em>
+                  </MenuItem>
+                  <MenuItem value="Royal Gold">Royal Gold</MenuItem>
+                  <MenuItem value="Star">Star</MenuItem>
+                  <MenuItem value="SSP">SSP</MenuItem>
+                </TextField>
               ) : key === "delivery_status" ? (
                 <TextField
                   select
@@ -851,13 +898,7 @@ const Orders: React.FC = () => {
                   label={key
                     .replace(/_/g, " ")
                     .replace(/\b\w/g, (c) => c.toUpperCase())}
-                  type={
-                    typeof value === "number"
-                      ? "number"
-                      : key.includes("date")
-                      ? "date"
-                      : "text"
-                  }
+                  type={typeof value === "number" ? "number" : "text"}
                   InputLabelProps={
                     key.includes("date") ? { shrink: true } : undefined
                   }
@@ -876,9 +917,7 @@ const Orders: React.FC = () => {
                       setOrderErrors((prev) => ({ ...prev, [key]: "" }));
                     }
                   }}
-                  disabled={
-                    isPrefilled && key !== "deliveryDate" && key !== "discount"
-                  }
+                  disabled={isPrefilled && key !== "discount"}
                 />
               )}
             </Grid>
@@ -1098,13 +1137,7 @@ const Orders: React.FC = () => {
                       label={key
                         .replace(/_/g, " ")
                         .replace(/\b\w/g, (c) => c.toUpperCase())}
-                      type={
-                        typeof value === "number"
-                          ? "number"
-                          : key.includes("date")
-                          ? "date"
-                          : "text"
-                      }
+                      type={typeof value === "number" ? "number" : "text"}
                       InputLabelProps={
                         key.includes("date") ? { shrink: true } : undefined
                       }

@@ -95,6 +95,7 @@ const OrderDetails: React.FC = () => {
               ["Delivery Date", order.deliveryDate],
               ["Item Name", order.itemName],
               ["Occasion", order.occasion],
+              ["catalogue", order.catalogue],
               ["Design", order.design],
               ["Size", order.size],
               ["Metal", order.metal],
@@ -104,13 +105,15 @@ const OrderDetails: React.FC = () => {
               ["Making Charges", order.making_charges],
               ["Stone Weight", order.stone_weight],
               ["Stone Amount", order.stone_amount],
+              ["Wax Weight", order.wax_weight],
+              ["Wax Amount", order.wax_amount],
               ["Diamond Weight", order.diamond_weight],
-              ["Diamond Amount", order.diamond_amount],
             ].map(([label, value]) => displayField(label, value))}
           </div>
 
           <div className="pl-4">
             {[
+              ["Diamond Amount", order.diamond_amount],
               ["Bits Weight", order.bits_weight],
               ["Bits Amount", order.bits_amount],
               ["Enamel Weight", order.enamel_weight],
@@ -146,7 +149,6 @@ const OrderDetails: React.FC = () => {
                 </div>
                 <div className="pl-4">
                   {displayField("Metal Purity", item.exchange_purity_weight)}
-
                   {displayField("Mtal Price", item.exchange_metal_price)}
                   {displayField(
                     "Total Amount",

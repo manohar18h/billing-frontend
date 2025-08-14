@@ -17,6 +17,7 @@ const LotWork: React.FC = () => {
     weight: "",
     date: "",
     pieces: "",
+    wastage: "",
     amount: "",
   });
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
@@ -45,6 +46,7 @@ const LotWork: React.FC = () => {
             itemWeight: parseFloat(lotData.weight),
             date: lotData.date,
             pieces: parseInt(lotData.pieces),
+            wastage: parseInt(lotData.wastage),
             amount: parseFloat(lotData.amount),
           }),
         }
@@ -63,6 +65,7 @@ const LotWork: React.FC = () => {
         weight: "",
         date: "",
         pieces: "",
+        wastage: "",
         amount: "",
       });
       setSelectedWorkerId("");
@@ -177,7 +180,16 @@ const LotWork: React.FC = () => {
             />
           </Grid>
 
-          {/* Amount */}
+          <Grid item xs={12} md={3}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Wastage"
+              value={lotData.wastage}
+              onChange={(e) => handleChange("wastage", e.target.value)}
+            />
+          </Grid>
+
           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
@@ -185,7 +197,6 @@ const LotWork: React.FC = () => {
               label="Amount"
               value={lotData.amount}
               onChange={(e) => handleChange("amount", e.target.value)}
-              required
             />
           </Grid>
         </Grid>

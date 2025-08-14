@@ -49,6 +49,7 @@ const silverItems = [
 
 const possibleWeightKeys = [
   "stone_weight",
+  "wax_weight",
   "diamond_weight",
   "bits_weight",
   "enamel_weight",
@@ -80,6 +81,7 @@ const prettySelectSx = {
 type ProductQuery = {
   metal: string;
   itemName: string;
+  catalogue: string;
   design: string;
   size: string;
   weightRange: string;
@@ -89,11 +91,14 @@ type StockProduct = {
   stockProductId: number;
   metal: string;
   itemName: string;
+  catalogue: string;
   design: number | string;
   size: number | string;
   metal_weight: number;
   stone_weight: number;
   stone_amount: number;
+  wax_weight: number;
+  wax_amount: number;
   diamond_weight: number;
   diamond_amount: number;
   bits_weight: number;
@@ -114,6 +119,7 @@ type ProductForm = {
   metal: string;
   metalPrice: string;
   itemName: string;
+  catalogue: string;
   design: string;
   size: string;
   metal_weight: string;
@@ -121,6 +127,8 @@ type ProductForm = {
   making_charges: string;
   stone_weight: string;
   stone_amount: string;
+  wax_weight: string;
+  wax_amount: string;
   diamond_weight: string;
   diamond_amount: string;
   bits_weight: string;
@@ -145,6 +153,7 @@ const toNum = (s: string) => (s.trim() === "" ? 0 : Number(s));
 const initialQuery: ProductQuery = {
   metal: "",
   itemName: "",
+  catalogue: "",
   design: "",
   size: "",
   weightRange: "",
@@ -154,6 +163,7 @@ const initialProduct: ProductForm = {
   metal: "",
   metalPrice: "",
   itemName: "",
+  catalogue: "",
   design: "",
   size: "",
   metal_weight: "",
@@ -161,6 +171,8 @@ const initialProduct: ProductForm = {
   making_charges: "",
   stone_weight: "",
   stone_amount: "",
+  wax_weight: "",
+  wax_amount: "",
   diamond_weight: "",
   diamond_amount: "",
   bits_weight: "",
@@ -180,6 +192,7 @@ const requiredProductKeys: (keyof ProductForm)[] = [
   "metal",
   "metalPrice",
   "itemName",
+  "catalogue",
   "design",
   "size",
   "metal_weight",
@@ -194,6 +207,8 @@ const numericKeys: (keyof ProductForm)[] = [
   "making_charges",
   "stone_weight",
   "stone_amount",
+  "wax_weight",
+  "wax_amount",
   "diamond_weight",
   "diamond_amount",
   "bits_weight",
@@ -257,8 +272,8 @@ const Products: React.FC = () => {
       const url = `${API_BASE}/admin/getStockProduct/${encodeURIComponent(
         q.metal.trim()
       )}/${encodeURIComponent(q.itemName.trim())}/${encodeURIComponent(
-        q.design.trim()
-      )}/${q.size.trim()}/${min}/${max}`;
+        q.catalogue.trim()
+      )}/${encodeURIComponent(q.design.trim())}/${q.size.trim()}/${min}/${max}`;
 
       const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -385,6 +400,7 @@ const Products: React.FC = () => {
         if (
           k === "metal_weight" ||
           k === "stone_weight" ||
+          k === "wax_weight" ||
           k === "bits_weight" ||
           k === "diamond_weight" ||
           k === "enamel_weight" ||
@@ -393,6 +409,7 @@ const Products: React.FC = () => {
         ) {
           const mw = toNum(k === "metal_weight" ? val : next.metal_weight);
           const sw = toNum(k === "stone_weight" ? val : next.stone_weight);
+          const ww = toNum(k === "wax_weight" ? val : next.wax_weight);
           const bw = toNum(k === "bits_weight" ? val : next.bits_weight);
           const dw = toNum(k === "diamond_weight" ? val : next.diamond_weight);
           const ew = toNum(k === "enamel_weight" ? val : next.enamel_weight);
@@ -402,13 +419,14 @@ const Products: React.FC = () => {
           next.gross_weight =
             Number.isNaN(mw) ||
             Number.isNaN(sw) ||
+            Number.isNaN(ww) ||
             Number.isNaN(bw) ||
             Number.isNaN(dw) ||
             Number.isNaN(ew) ||
             Number.isNaN(pw) ||
             Number.isNaN(ow)
               ? ""
-              : String(mw + sw + bw + dw + ew + pw + ow);
+              : String(mw + sw + ww + bw + dw + ew + pw + ow);
         }
         return next;
       });
@@ -441,6 +459,7 @@ const Products: React.FC = () => {
       metal: product.metal.trim(),
       metalPrice: toNum(product.metalPrice),
       itemName: product.itemName.trim(),
+      catalogue: product.catalogue.trim(),
       design: product.design.trim(),
       size: product.size.trim(),
       metal_weight: toNum(product.metal_weight),
@@ -448,6 +467,8 @@ const Products: React.FC = () => {
       making_charges: toNum(product.making_charges),
       stone_weight: toNum(product.stone_weight),
       stone_amount: toNum(product.stone_amount),
+      wax_weight: toNum(product.wax_weight),
+      wax_amount: toNum(product.wax_amount),
       diamond_weight: toNum(product.diamond_weight),
       diamond_amount: toNum(product.diamond_amount),
       bits_weight: toNum(product.bits_weight),
@@ -584,6 +605,36 @@ const Products: React.FC = () => {
               ))}
             </TextField>
           </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              select
+              label="catalogue"
+              value={q.catalogue}
+              onChange={onQChange("catalogue")}
+              fullWidth
+              sx={prettySelectSx}
+              InputLabelProps={{ shrink: true }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (val) =>
+                  val ? (
+                    (val as string)
+                  ) : (
+                    <span style={{ color: "#9aa0a6" }}>Select Catalogue</span>
+                  ),
+                MenuProps: {
+                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Catalogue</em>
+              </MenuItem>
+              <MenuItem value="Royal Gold">Royal Gold</MenuItem>
+              <MenuItem value="Star">Star</MenuItem>
+              <MenuItem value="SSP">SSP</MenuItem>
+            </TextField>
+          </Grid>
 
           {/* Design */}
           <Grid item xs={12} sm={6} md={3}>
@@ -712,6 +763,7 @@ const Products: React.FC = () => {
                 <TableCell>ID</TableCell>
                 <TableCell>Metal</TableCell>
                 <TableCell>Item</TableCell>
+                <TableCell>catalogue</TableCell>
                 <TableCell>Design</TableCell>
                 <TableCell>Size</TableCell>
                 <TableCell>Weight</TableCell>
@@ -727,6 +779,7 @@ const Products: React.FC = () => {
                     <TableCell>{p.stockProductId}</TableCell>
                     <TableCell>{p.metal}</TableCell>
                     <TableCell>{p.itemName}</TableCell>
+                    <TableCell>{p.catalogue}</TableCell>
                     <TableCell>{p.design}</TableCell>
                     <TableCell>{p.size}</TableCell>
                     <TableCell>{p.metal_weight}</TableCell>
@@ -880,6 +933,36 @@ const Products: React.FC = () => {
                 />
               </Grid>
 
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  select
+                  label="catalogue"
+                  value={product.catalogue}
+                  onChange={onProductChange("catalogue")}
+                  fullWidth
+                  sx={prettySelectSx}
+                  InputLabelProps={{ shrink: true }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (val) =>
+                      val ? (
+                        (val as string)
+                      ) : (
+                        <span style={{ color: "#9aa0a6" }}>
+                          Select Catalogue
+                        </span>
+                      ),
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select Catalogue</em>
+                  </MenuItem>
+                  <MenuItem value="Royal Gold">Royal Gold</MenuItem>
+                  <MenuItem value="Star">Star</MenuItem>
+                  <MenuItem value="SSP">SSP</MenuItem>
+                </TextField>
+              </Grid>
+
               {/* Design */}
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
@@ -967,6 +1050,31 @@ const Products: React.FC = () => {
                   fullWidth
                   error={!!errors.stone_amount}
                   helperText={errors.stone_amount || ""}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  label="Wax Weight"
+                  type="number"
+                  inputProps={{ step: "any" }}
+                  value={product.wax_weight}
+                  onChange={onProductChange("wax_weight")}
+                  fullWidth
+                  error={!!errors.wax_weight}
+                  helperText={errors.wax_weight || ""}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  label="Wax Amount"
+                  type="number"
+                  inputProps={{ step: "any" }}
+                  value={product.wax_amount}
+                  onChange={onProductChange("wax_amount")}
+                  fullWidth
+                  error={!!errors.wax_amount}
+                  helperText={errors.wax_amount || ""}
                 />
               </Grid>
 
