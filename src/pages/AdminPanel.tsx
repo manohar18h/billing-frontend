@@ -8,6 +8,7 @@ import {
   Tag,
   Sun,
   Moon,
+  ReceiptText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo2 from "../assets/logo2.png";
@@ -23,6 +24,7 @@ import OrderDetails from "./admin/OrderDetails";
 import BillDetails from "./admin/BillDetails";
 import Workers from "./admin/Workers";
 import Products from "./admin/Products";
+import AllBillingOrders from "./admin/AllBillingOrders"
 import WorkerStock from "./admin/WorkerStock";
 import RepairWork from "./admin/RepairWork";
 import LotWork from "./admin/LotWork";
@@ -31,6 +33,7 @@ import WorkerDetails from "./admin/WorkerDetails";
 import AdminService from "./admin/Service";
 import { WorkersProvider } from "@/contexts/WorkersContext";
 import BillData from "./admin/BillData";
+import { Label } from "@mui/icons-material";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
@@ -38,6 +41,7 @@ const menuItems = [
   { icon: HardHat, label: "Workers", path: "/admin/workers" },
   { icon: Boxes, label: "Worker Stock", path: "/admin/service" },
   { icon: Tag, label: "Products", path: "/admin/products" },
+  {icon: ReceiptText, label: "AllBillingOrders", path: "/admin/billing-orders"}
 ];
 
 const Sidebar = ({ activeIndex }: { activeIndex: number }) => {
@@ -152,7 +156,7 @@ function AdminPanelContent() {
 
         <div>
           <Routes>
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="Dashboard" element={<Dashboard />} />
             <Route path="customers" element={<Customers />} />
             <Route path="orders" element={<Orders />} />
             <Route path="generate-bill" element={<GenerateBill />} />
@@ -163,6 +167,7 @@ function AdminPanelContent() {
             <Route path="workers" element={<Workers />} />
             <Route path="service" element={<AdminService />} />
             <Route path="products" element={<Products />} />
+            <Route path="billing-orders" element={<AllBillingOrders />} />
             <Route path="worker-stock" element={<WorkerStock />} />
             <Route path="repair-work" element={<RepairWork />} />
             <Route path="lot-work" element={<LotWork />} />
