@@ -27,8 +27,20 @@ const DashboardMain: React.FC = () => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(prices);
   const saveEdit = () => {
+    // setPrices(draft);
+    // setEditing(false);
+
     setPrices(draft);
     setEditing(false);
+
+    localStorage.removeItem("GoldPrice");
+    localStorage.removeItem("SilverPrice");
+
+    // Save to localStorage
+    localStorage.setItem("GoldPrice", draft.gold.toString());
+    localStorage.setItem("SilverPrice", draft.silver.toString());
+
+    console.log("Updated Prices => Gold:", draft.gold, "Silver:", draft.silver);
   };
 
   /* ───────── helper card components ───────── */

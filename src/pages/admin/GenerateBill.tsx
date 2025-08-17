@@ -88,6 +88,10 @@ const GenerateBill: React.FC = () => {
             visibility: hidden;
 
   }
+             @page {
+    size: A4 portrait;   /* Or A5 portrait */
+    margin: 5mm;        /* Adjust as needed */
+  }
 
   .no-print-scroll {
     overflow: visible !important;
@@ -108,14 +112,18 @@ const GenerateBill: React.FC = () => {
       }
     }
 
+ 
+
   table {
-    min-width: 100% !important;
-    font-size: 10px !important;
-  }
+  min-width: 100% !important;
+  font-size: 13px !important; /* Bigger and clearer */
+}
+
+
 
   th, td {
-    padding: 2px !important;
-  }
+  padding: 6px 4px !important; /* more breathing space */
+}
 }
   `}
       </style>
@@ -124,7 +132,7 @@ const GenerateBill: React.FC = () => {
       <div
         id="print-section"
         ref={printRef}
-        className="p-6 bg-gray-100 shadow-2xl rounded-md max-w-4xl mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
+        className="p-6 bg-gray-100 shadow-2xl rounded-md max-w-[800px] mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
       >
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 pb-4 mb-4">

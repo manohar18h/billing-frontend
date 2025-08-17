@@ -32,6 +32,14 @@ const WorkerStock: React.FC = () => {
       return;
     }
     try {
+      console.log(
+        "requestBody",
+        JSON.stringify({
+          metal: stockData.metal,
+          metalWeight: Number(stockData.weight),
+          todaysDate: stockData.date,
+        })
+      );
       const res = await fetch(
         `http://15.207.98.116:8081/admin/addWorkerStock/${selectedWorkerId}`,
         {

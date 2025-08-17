@@ -117,7 +117,6 @@ type StockProduct = {
 
 type ProductForm = {
   metal: string;
-  metalPrice: string;
   itemName: string;
   catalogue: string;
   design: string;
@@ -141,7 +140,6 @@ type ProductForm = {
   other_amount: string;
   stock: string;
   gross_weight: string; // auto (metal_weight + stone_weight)
-  total_item_amount: string;
 };
 
 /* ---------- Helpers ---------- */
@@ -161,7 +159,6 @@ const initialQuery: ProductQuery = {
 
 const initialProduct: ProductForm = {
   metal: "",
-  metalPrice: "",
   itemName: "",
   catalogue: "",
   design: "",
@@ -185,23 +182,19 @@ const initialProduct: ProductForm = {
   other_amount: "",
   stock: "",
   gross_weight: "",
-  total_item_amount: "",
 };
 
 const requiredProductKeys: (keyof ProductForm)[] = [
   "metal",
-  "metalPrice",
   "itemName",
   "catalogue",
   "design",
   "size",
   "metal_weight",
   "stone_weight", // added because gross depends on it
-  "total_item_amount",
 ];
 
 const numericKeys: (keyof ProductForm)[] = [
-  "metalPrice",
   "metal_weight",
   "wastage",
   "making_charges",
@@ -221,7 +214,6 @@ const numericKeys: (keyof ProductForm)[] = [
   "other_amount",
   "stock",
   "gross_weight",
-  "total_item_amount",
 ];
 
 /* ============================ Component ============================ */
@@ -457,7 +449,6 @@ const Products: React.FC = () => {
     // numeric payload
     const payload = {
       metal: product.metal.trim(),
-      metalPrice: toNum(product.metalPrice),
       itemName: product.itemName.trim(),
       catalogue: product.catalogue.trim(),
       design: product.design.trim(),
@@ -481,7 +472,6 @@ const Products: React.FC = () => {
       other_amount: toNum(product.other_amount),
       stock: toNum(product.stock),
       gross_weight: toNum(product.gross_weight),
-      total_item_amount: toNum(product.total_item_amount),
     };
 
     try {
@@ -919,20 +909,6 @@ const Products: React.FC = () => {
                 </TextField>
               </Grid>
 
-              {/* MetalPrice */}
-              <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  label="MetalPrice"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.metalPrice}
-                  onChange={onProductChange("metalPrice")}
-                  fullWidth
-                  error={!!errors.metalPrice}
-                  helperText={errors.metalPrice || ""}
-                />
-              </Grid>
-
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
                   select
@@ -1224,20 +1200,6 @@ const Products: React.FC = () => {
                   onChange={onProductChange("gross_weight")}
                   fullWidth
                   disabled
-                />
-              </Grid>
-
-              {/* Total Item Amount */}
-              <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  label="Total Item Amount"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.total_item_amount}
-                  onChange={onProductChange("total_item_amount")}
-                  fullWidth
-                  error={!!errors.total_item_amount}
-                  helperText={errors.total_item_amount || ""}
                 />
               </Grid>
             </Grid>

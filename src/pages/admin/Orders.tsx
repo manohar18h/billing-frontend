@@ -30,7 +30,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 type BarcodeProduct = {
   metal: string;
-  metalPrice: number;
   itemName: string;
   catalogue: string;
   design: string;
@@ -53,7 +52,6 @@ type BarcodeProduct = {
   other_weight: number;
   other_amount: number;
   gross_weight: number;
-  total_item_amount: number;
 };
 
 type AppWorker = {
@@ -89,9 +87,9 @@ const Orders: React.FC = () => {
       other_amount: 0.0,
       stock_box: 0.0,
       gross_weight: 0.0,
-      total_item_amount: 5000.0,
       discount: 0.0,
       delivery_status: "",
+      total_item_amount: 0,
     });
     setOrderErrors({});
     setIsPrefilled(false);
@@ -129,9 +127,9 @@ const Orders: React.FC = () => {
     other_amount: 0.0,
     stock_box: 0.0,
     gross_weight: 0.0,
-    total_item_amount: 5000.0,
     discount: 0.0,
     delivery_status: "",
+    total_item_amount: 0,
   });
 
   const [orderErrors, setOrderErrors] = useState<{ [key: string]: string }>({});
@@ -430,6 +428,48 @@ const Orders: React.FC = () => {
     setSlectOldItemId(null);
   };
 
+  const calculateTotals = (data: typeof order) => {
+    let metalPrice = 0;
+
+    // Pick price based on selected metal
+    if (data.metal === "Gold") {
+      metalPrice = Number(localStorage.getItem("GoldPrice")) || 0;
+    } else if (data.metal === "Silver") {
+      metalPrice = Number(localStorage.getItem("SilverPrice")) || 0;
+    }
+
+    // Calculate wastage weight
+    const wastageWeight = (data.wastage / 100) * data.metal_weight;
+
+    // If no wastage/extra → simple calculation
+    let total_item_amount = 0;
+    if (
+      data.wastage === 0 &&
+      data.stone_amount === 0 &&
+      data.wax_amount === 0 &&
+      data.diamond_amount === 0 &&
+      data.bits_amount === 0 &&
+      data.enamel_amount === 0 &&
+      data.pearls_amount === 0 &&
+      data.other_amount === 0
+    ) {
+      total_item_amount = data.metal_weight * metalPrice + data.making_charges;
+    } else {
+      total_item_amount =
+        (data.metal_weight + wastageWeight) * metalPrice +
+        data.making_charges +
+        (data.stone_amount +
+          data.wax_amount +
+          data.diamond_amount +
+          data.bits_amount +
+          data.enamel_amount +
+          data.pearls_amount +
+          data.other_amount);
+    }
+
+    return { total_item_amount };
+  };
+
   const handleOrderDelete = async () => {
     console.log("selectedId  :" + slectOrderId);
     if (slectOrderId === null) return;
@@ -527,6 +567,7 @@ const Orders: React.FC = () => {
           // New due calculation from scratch
           const newDue =
             (order.total_item_amount || 0) -
+            (order.paidAmount || 0) -
             (order.discount || 0) -
             totalOldItemAmount;
           console.log("totalAmount :" + order.totalAmount);
@@ -550,6 +591,8 @@ const Orders: React.FC = () => {
         })
       );
 
+      setShowExchangeForm(false);
+
       // Reset form
       // handleClearExchange();
       setIsEditing(false);
@@ -569,13 +612,17 @@ const Orders: React.FC = () => {
     if (!editingOrderId) return;
 
     try {
-      await axios.put(`${apiBase}/admin/updateOrder/${editingOrderId}`, order, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data: updatedOrderFromBackend } = await axios.put(
+        `${apiBase}/admin/updateOrder/${editingOrderId}`,
+        order,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-      // Update table in UI without reload
+      // Replace the updated order with backend response (contains dueAmount)
       const updatedOrders = ordersList.map((o) =>
-        o.orderId === editingOrderId ? { ...o, ...order } : o
+        o.orderId === editingOrderId ? updatedOrderFromBackend : o
       );
 
       setOrdersList(updatedOrders);
@@ -584,11 +631,9 @@ const Orders: React.FC = () => {
         JSON.stringify({ ordersList: updatedOrders, exchangeList })
       );
 
-      // Reset form
       handleClearOrder();
       setIsEditing(false);
       setEditingOrderId(null);
-
       alert("Order updated successfully");
     } catch (error: any) {
       if (error.response?.data) {
@@ -615,14 +660,62 @@ const Orders: React.FC = () => {
 
       const data = response.data;
 
+      // ✅ figure out metal price from localStorage
+      let getMetalPrice = 0;
+      if (data.metal === "Gold") {
+        getMetalPrice = Number(localStorage.getItem("GoldPrice")) || 0;
+      } else if (data.metal === "Silver") {
+        getMetalPrice = Number(localStorage.getItem("SilverPrice")) || 0;
+      }
+
+      // ✅ calculate total item amount
+      const metalWeight = data.metal_weight || 0;
+      const wastage = data.wastage || 0;
+      const makingCharges = data.making_charges || 0;
+
+      const stoneAmount = data.stone_amount || 0;
+      const waxAmount = data.wax_amount || 0;
+      const diamondAmount = data.diamond_amount || 0;
+      const bitsAmount = data.bits_amount || 0;
+      const enamelAmount = data.enamel_amount || 0;
+      const pearlsAmount = data.pearls_amount || 0;
+      const otherAmount = data.other_amount || 0;
+
+      let total_item_amount = 0;
+
+      if (
+        wastage ||
+        stoneAmount ||
+        waxAmount ||
+        diamondAmount ||
+        bitsAmount ||
+        enamelAmount ||
+        pearlsAmount ||
+        otherAmount
+      ) {
+        total_item_amount =
+          (metalWeight + (wastage / 100) * metalWeight) * getMetalPrice +
+          makingCharges +
+          (stoneAmount +
+            waxAmount +
+            diamondAmount +
+            bitsAmount +
+            enamelAmount +
+            pearlsAmount +
+            otherAmount);
+      } else {
+        total_item_amount = metalWeight * getMetalPrice + makingCharges;
+      }
+
+      // ✅ now update state with metal_price and total_item_amount too
       setOrder((prev) => ({
         ...prev,
         metal: data.metal ?? prev.metal,
-        metalPrice: data.metalPrice ?? prev.metalPrice,
+        metalPrice: getMetalPrice,
         itemName: data.itemName ?? prev.itemName,
         catalogue: data.catalogue ?? prev.catalogue,
         design: data.design ?? prev.design,
-        size: String(data.size ?? prev.size), // convert number to string if needed
+        size: String(data.size ?? prev.size),
         metal_weight: data.metal_weight ?? prev.metal_weight,
         wastage: data.wastage ?? prev.wastage,
         making_charges: data.making_charges ?? prev.making_charges,
@@ -641,16 +734,128 @@ const Orders: React.FC = () => {
         other_weight: data.other_weight ?? prev.other_weight,
         other_amount: data.other_amount ?? prev.other_amount,
         gross_weight: data.gross_weight ?? prev.gross_weight,
-        total_item_amount: data.total_item_amount ?? prev.total_item_amount,
+
+        // ✅ newly added
+
+        total_item_amount: total_item_amount,
       }));
 
-      setIsPrefilled(true); // ✅ disable fields now
+      setIsPrefilled(true);
       setOrderErrors({});
     } catch (error) {
       console.error("Failed to fetch barcode data:", error);
       alert("Barcode not found or error occurred");
     }
   };
+
+  const [formData, setFormData] = useState({
+    metal_weight: "",
+    stone_weight: "",
+    wax_weight: "",
+    diamond_weight: "",
+    bits_weight: "",
+    enamel_weight: "",
+    pearls_weight: "",
+    other_weight: "",
+    gross_weight: "",
+  });
+
+  const parseNumber = (val: any) =>
+    isNaN(Number(val)) || val === "" ? 0 : Number(val);
+
+  // Auto-calculate gross weight whenever dependencies change
+  useEffect(() => {
+    const {
+      metal_weight,
+      stone_weight,
+      wax_weight,
+      diamond_weight,
+      bits_weight,
+      enamel_weight,
+      pearls_weight,
+      other_weight,
+    } = formData;
+
+    const total =
+      parseNumber(metal_weight) +
+      parseNumber(stone_weight) +
+      parseNumber(wax_weight) +
+      parseNumber(diamond_weight) +
+      parseNumber(bits_weight) +
+      parseNumber(enamel_weight) +
+      parseNumber(pearls_weight) +
+      parseNumber(other_weight);
+
+    setFormData((prev) => ({
+      ...prev,
+      gross_weight: total.toString(),
+    }));
+  }, [
+    formData.metal_weight,
+    formData.stone_weight,
+    formData.wax_weight,
+    formData.diamond_weight,
+    formData.bits_weight,
+    formData.enamel_weight,
+    formData.pearls_weight,
+    formData.other_weight,
+  ]);
+
+  // Handle input changes
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const calculateGrossWeight = (updatedOrder: typeof order) => {
+    return (
+      parseNumber(updatedOrder.metal_weight) +
+      parseNumber(updatedOrder.stone_weight) +
+      parseNumber(updatedOrder.wax_weight) +
+      parseNumber(updatedOrder.diamond_weight) +
+      parseNumber(updatedOrder.bits_weight) +
+      parseNumber(updatedOrder.enamel_weight) +
+      parseNumber(updatedOrder.pearls_weight) +
+      parseNumber(updatedOrder.other_weight)
+    );
+  };
+
+  useEffect(() => {
+    const { total_item_amount } = calculateTotals(order);
+    setOrder((prev) => ({
+      ...prev,
+      total_item_amount,
+    }));
+  }, [
+    order.metal,
+    order.metal_weight,
+    order.wastage,
+    order.making_charges,
+    order.stone_amount,
+    order.wax_amount,
+    order.diamond_amount,
+    order.bits_amount,
+    order.enamel_amount,
+    order.pearls_amount,
+    order.other_amount,
+  ]);
+
+  useEffect(() => {
+    let price = 0;
+    if (exchange.exchange_metal === "Gold") {
+      price = Number(localStorage.getItem("GoldPrice") || 0) - 500;
+    } else if (exchange.exchange_metal === "Silver") {
+      price = Number(localStorage.getItem("SilverPrice") || 0) - 15;
+    }
+
+    setExchange((prev) => ({
+      ...prev,
+      exchange_metal_price: price,
+      exchange_item_amount: price * prev.exchange_purity_weight,
+    }));
+  }, [exchange.exchange_metal, exchange.exchange_purity_weight]);
 
   return (
     <Box>
@@ -747,12 +952,25 @@ const Orders: React.FC = () => {
                   select
                   label="Metal"
                   value={order.metal}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const selectedMetal = e.target.value;
+                    let metalPrice = 0;
+
+                    if (selectedMetal === "Gold") {
+                      metalPrice = parseFloat(
+                        localStorage.getItem("GoldPrice") || "0"
+                      );
+                    } else if (selectedMetal === "Silver") {
+                      metalPrice = parseFloat(
+                        localStorage.getItem("SilverPrice") || "0"
+                      );
+                    }
                     setOrder({
                       ...order,
-                      metal: e.target.value,
-                    })
-                  }
+                      metal: selectedMetal,
+                      metalPrice: metalPrice,
+                    });
+                  }}
                   disabled={isPrefilled && (key as string) !== "discount"} // ✅ add this
                   error={!!orderErrors.metal}
                   helperText={orderErrors.metal || ""}
@@ -911,13 +1129,38 @@ const Orders: React.FC = () => {
                         ? Number(e.target.value)
                         : e.target.value;
 
-                    setOrder({ ...order, [key]: newValue });
+                    const updatedOrder = { ...order, [key]: newValue };
+
+                    // If one of the weight fields changes → recalc gross_weight
+                    if (
+                      [
+                        "metal_weight",
+                        "stone_weight",
+                        "wax_weight",
+                        "diamond_weight",
+                        "bits_weight",
+                        "enamel_weight",
+                        "pearls_weight",
+                        "other_weight",
+                      ].includes(key)
+                    ) {
+                      updatedOrder.gross_weight =
+                        calculateGrossWeight(updatedOrder);
+                    }
+
+                    setOrder(updatedOrder);
 
                     if (orderErrors[key]) {
                       setOrderErrors((prev) => ({ ...prev, [key]: "" }));
                     }
                   }}
-                  disabled={isPrefilled && key !== "discount"}
+                  disabled={
+                    key === "gross_weight" ||
+                    (isPrefilled && key !== "discount")
+                  }
+                  InputProps={{
+                    readOnly: key === "gross_weight",
+                  }}
                 />
               )}
             </Grid>
@@ -1024,11 +1267,48 @@ const Orders: React.FC = () => {
                       color="warning"
                       onClick={() => {
                         setOrder({
-                          ...ord,
-                          size: String(ord.size), // ensure dropdown works if needed
+                          metal: ord.metal || "",
+                          metalPrice:
+                            ord.metal === "Gold"
+                              ? parseFloat(
+                                  localStorage.getItem("GoldPrice") || "0"
+                                )
+                              : ord.metal === "Silver"
+                              ? parseFloat(
+                                  localStorage.getItem("SilverPrice") || "0"
+                                )
+                              : 0,
+                          itemName: ord.itemName || "",
+                          catalogue: ord.catalogue || "",
+                          design: ord.design || "",
+                          size: String(ord.size || ""),
+                          metal_weight: ord.metal_weight || 0,
+                          wastage: ord.wastage || 0,
+                          making_charges: ord.making_charges || 0,
+                          stone_weight: ord.stone_weight || 0,
+                          stone_amount: ord.stone_amount || 0,
+                          wax_weight: ord.wax_weight || 0,
+                          wax_amount: ord.wax_amount || 0,
+                          diamond_weight: ord.diamond_weight || 0,
+                          diamond_amount: ord.diamond_amount || 0,
+                          bits_weight: ord.bits_weight || 0,
+                          bits_amount: ord.bits_amount || 0,
+                          enamel_weight: ord.enamel_weight || 0,
+                          enamel_amount: ord.enamel_amount || 0,
+                          pearls_weight: ord.pearls_weight || 0,
+                          pearls_amount: ord.pearls_amount || 0,
+                          other_weight: ord.other_weight || 0,
+                          other_amount: ord.other_amount || 0,
+                          gross_weight: ord.gross_weight || 0,
+                          stock_box: ord.stock_box || 0,
+                          discount: ord.discount || 0,
+                          delivery_status: ord.delivery_status || "",
+                          total_item_amount:
+                            calculateTotals(ord).total_item_amount,
                         });
+
                         setIsEditing(true);
-                        setEditingOrderId(ord.orderId);
+                        setEditingOrderId(ord.orderId); // still keep the orderId in a separate state
                         setOrderErrors({});
                       }}
                     >

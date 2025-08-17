@@ -24,6 +24,12 @@ const LotWork: React.FC = () => {
 
   const handleChange = (field: string, value: string) =>
     setLotData((prev) => ({ ...prev, [field]: value }));
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}-${d.getFullYear()}`;
+  };
   const handleSubmit = async () => {
     if (!selectedWorkerId) {
       alert("Please select a worker.");
@@ -32,6 +38,20 @@ const LotWork: React.FC = () => {
 
     try {
       const token = localStorage.getItem("token");
+
+      console.log(
+        "requestBody",
+        JSON.stringify({
+          metal: lotData.metal,
+          itemName: lotData.itemName,
+          itemWeight: parseFloat(lotData.weight),
+          deliveryDate: formatDate(lotData.date),
+          pieces: parseInt(lotData.pieces),
+          wastage: parseInt(lotData.wastage),
+          amount: parseFloat(lotData.amount),
+        })
+      );
+
       const res = await fetch(
         `http://15.207.98.116:8081/admin/addLotWork/${selectedWorkerId}`,
         {
@@ -44,7 +64,7 @@ const LotWork: React.FC = () => {
             metal: lotData.metal,
             itemName: lotData.itemName,
             itemWeight: parseFloat(lotData.weight),
-            date: lotData.date,
+            deliveryDate: formatDate(lotData.date),
             pieces: parseInt(lotData.pieces),
             wastage: parseInt(lotData.wastage),
             amount: parseFloat(lotData.amount),

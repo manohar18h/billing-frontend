@@ -37,6 +37,17 @@ const RepairWork: React.FC = () => {
     }
     try {
       const token = localStorage.getItem("token");
+      console.log(
+        "RequestBody Reapir",
+        JSON.stringify({
+          metal: repairData.metal || "",
+          itemName: repairData.itemName,
+          metalWeight: parseFloat(repairData.metalWeight) || 0.0,
+          customerPay: parseFloat(repairData.customerPay),
+          workerPay: parseFloat(repairData.workerPay),
+          deliveryDate: formatDate(repairData.deliveryDate),
+        })
+      );
       const res = await fetch(
         `http://15.207.98.116:8081/admin/saveRepairWork/${selectedWorkerId}`,
         {
