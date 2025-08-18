@@ -7,7 +7,11 @@ const GenerateBill: React.FC = () => {
   const location = useLocation();
   const selectedOrders = location.state?.selectedOrders || [];
   const token = localStorage.getItem("token");
-  const billNumber = localStorage.getItem("billNumber");
+  const fromBillDetails = location.state?.fromBillDetails || false;
+  const billNumber =
+    location.state?.billNumber || localStorage.getItem("billNumber");
+  const billingFrom = sessionStorage.getItem("billingFrom");
+  const editBill = localStorage.getItem("editBill");
 
   const [bill, setBill] = useState<any>(null);
 
@@ -22,24 +26,33 @@ const GenerateBill: React.FC = () => {
 
   useEffect(() => {
     if (selectedOrders.length === 0) return;
-    const billingFrom = sessionStorage.getItem("billingFrom");
 
     const fetchBillSummary = async () => {
-      if (billingFrom === "BillDetails") {
-        try {
-          const res = await axios.get(
-            `http://15.207.98.116:8081/admin/getDataByBillNumber/${billNumber}`,
+      try {
+        console.log("editBill : ", editBill);
+
+        if (
+          billingFrom === "BillDetails" ||
+          fromBillDetails ||
+          editBill === "editBill"
+        ) {
+          console.log("Updating existing bill with billNumber:", billNumber);
+
+          const res = await axios.put(
+            `http://15.207.98.116:8081/admin/bill-updateData/${billNumber}`,
+            { orderId: selectedOrders }, // send array of orderIds
             {
-              headers: { Authorization: `Bearer ${token}` },
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
             }
           );
 
           setBill(res.data);
-        } catch (err) {
-          console.error("Error fetching customer details:", err);
-        }
-      } else {
-        try {
+        } else {
+          console.log("Creating new bill...");
+
           const response = await axios.post(
             "http://15.207.98.116:8081/admin/bill-summary",
             { orderId: selectedOrders },
@@ -51,9 +64,9 @@ const GenerateBill: React.FC = () => {
             }
           );
           setBill(response.data);
-        } catch (error) {
-          console.error("Error fetching bill summary:", error);
         }
+      } catch (error) {
+        console.error("Error fetching bill summary/update:", error);
       }
     };
 

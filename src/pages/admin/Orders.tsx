@@ -1547,7 +1547,11 @@ const Orders: React.FC = () => {
             );
             navigate("/admin/generate-bill", {
               state: {
+                fromBillDetails: location.state?.fromBillDetails || false,
                 selectedOrders: ordersList.map((order) => order.orderId),
+                billNumber:
+                  location.state?.billNumber ||
+                  localStorage.getItem("billNumber"),
               },
             });
           }}

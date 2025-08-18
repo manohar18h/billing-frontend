@@ -212,20 +212,24 @@ const BillDetails: React.FC = () => {
     }
   };
 
-  const handleEditOrder = () => {
-    if (!editingOrderId) {
+  const handleEditOrder = (orderId: number) => {
+    localStorage.removeItem("editBill");
+
+    if (!orderId) {
       console.error("❌ editingOrderId is missing before navigation");
       return;
     }
 
-    console.log("✅ Navigating to Orders page with orderId:", editingOrderId);
+    console.log("✅ Navigating to Orders page with orderId:", orderId);
+
+    localStorage.setItem("editBill", "editBill");
 
     navigate(`/admin/orders/`, {
       replace: true,
       state: {
         fromBillDetails: true,
         customerId: customer?.customerId,
-        orderId: editingOrderId, // pass orderId directly
+        orderId: orderId, // pass orderId directly
       },
     });
   };
@@ -392,8 +396,8 @@ const BillDetails: React.FC = () => {
                       size="small"
                       color="warning"
                       onClick={() => {
-                        handleEditOrder();
                         setEditingOrderId(order.orderId);
+                        handleEditOrder(order.orderId);
                       }}
                     >
                       <EditIcon />
