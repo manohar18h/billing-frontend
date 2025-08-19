@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   TextField,
   Grid,
+  Box,
   Typography,
   Table,
   TableHead,
@@ -77,6 +78,7 @@ const BillDetails: React.FC = () => {
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
+  const [payMethod, setPayMethod] = useState("");
 
   const token = localStorage.getItem("token");
   const apiBase = "http://15.207.98.116:8081";
@@ -234,6 +236,13 @@ const BillDetails: React.FC = () => {
     });
   };
 
+  const asNumber = (v: any) => (v == null || v === "" ? 0 : Number(v));
+
+  const formatMoney = (v: any) =>
+    asNumber(v).toLocaleString("en-IN", {
+      maximumFractionDigits: 0, // no decimals
+    });
+
   if (!customer) return null;
 
   return (
@@ -346,7 +355,17 @@ const BillDetails: React.FC = () => {
                   <TableCell>{order.metal_weight}</TableCell>
                   <TableCell>{order.total_item_amount}</TableCell>
                   <TableCell>{order.paidAmount}</TableCell>
-                  <TableCell>{order.dueAmount}</TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 400,
+                      color:
+                        asNumber(order.dueAmount) < 0
+                          ? "error.main"
+                          : "inherit",
+                    }}
+                  >
+                    {formatMoney(order.dueAmount)}
+                  </TableCell>
                   <TableCell>
                     {order.workerPay ? (
                       order.workerPay.fullName
@@ -366,10 +385,11 @@ const BillDetails: React.FC = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    {order.dueAmount > 0 ? (
+                    {asNumber(order.dueAmount) !== 0 ? (
                       <Button
                         variant="outlined"
                         size="small"
+                        color="secondary"
                         onClick={() => {
                           setSelectedOrderId(order.orderId);
                           setPayAmount("");
@@ -440,43 +460,92 @@ const BillDetails: React.FC = () => {
       {/* Pay Dialog */}
       <Dialog open={payDialogOpen} onClose={() => setPayDialogOpen(false)}>
         <DialogTitle>Enter Payment Amount</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            label="Amount"
-            type="number"
-            fullWidth
-            value={payAmount}
-            onChange={(e) => setPayAmount(e.target.value)}
-          />
+        <DialogContent
+          sx={{
+            px: 4,
+            py: 3,
+          }}
+        >
+          <Grid container spacing={3} direction="column">
+            {/* Payment Type */}
+            <Grid item xs={12}>
+              <TextField
+                select
+                label="Payment Type"
+                value={payMethod}
+                onChange={(e) => setPayMethod(e.target.value)}
+                fullWidth
+              >
+                <MenuItem value="">
+                  <em>Select Payment Method</em>
+                </MenuItem>
+                <MenuItem value="Phone Pay">Phone Pay</MenuItem>
+                <MenuItem value="Cash">Cash</MenuItem>
+              </TextField>
+            </Grid>
+
+            {/* Amount */}
+            <Grid item xs={12}>
+              <TextField
+                label="Amount"
+                type="number"
+                fullWidth
+                value={payAmount}
+                onChange={(e) => setPayAmount(e.target.value)}
+              />
+            </Grid>
+          </Grid>
         </DialogContent>
+
         <DialogActions>
           <Button onClick={() => setPayDialogOpen(false)}>Cancel</Button>
+
           <Button
-            variant="contained"
             onClick={async () => {
               if (!selectedOrderId || !payAmount) return;
               try {
-                await axios.post(
-                  `${apiBase}/admin/payCustomer/${selectedOrderId}?amount=${payAmount}`,
+                const response = await axios.post(
+                  `${apiBase}/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
                   {},
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                const updatedOrders = orders.map((o) =>
-                  o.orderId === selectedOrderId
-                    ? {
-                        ...o,
-                        paidAmount: o.paidAmount + Number(payAmount),
-                        dueAmount: Math.max(o.dueAmount - Number(payAmount), 0),
-                      }
-                    : o
-                );
+
+                const updatedOrders = orders.map((o) => {
+                  if (o.orderId === selectedOrderId) {
+                    const existingDue = Number(o.dueAmount);
+                    const paid = Number(payAmount);
+
+                    let newDue;
+                    if (existingDue < 0) {
+                      // Negative = advance → paying back increases due towards 0
+                      newDue = existingDue + paid;
+                    } else {
+                      // Positive = customer owes → normal subtraction
+                      newDue = existingDue - paid;
+                    }
+
+                    // Fix floating point rounding (-0.0001 → 0)
+                    if (Math.abs(newDue) < 0.01) newDue = 0;
+
+                    return {
+                      ...o,
+                      paidAmount: Number(o.paidAmount) + paid,
+                      dueAmount: newDue,
+                    };
+                  }
+                  return o;
+                });
+
                 setOrders(updatedOrders);
+
                 setPayDialogOpen(false);
-              } catch (error) {
+              } catch (err) {
+                console.error("Payment failed:", err);
                 alert("Payment failed");
               }
             }}
+            color="primary"
+            variant="contained"
           >
             Pay Now
           </Button>

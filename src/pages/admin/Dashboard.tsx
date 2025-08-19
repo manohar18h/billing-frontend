@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
 import {
   Box,
   Card,
@@ -21,26 +23,61 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 
+interface MetalRates {
+  metalPriceId: number;
+  goldRate: number;
+  silverRate: number;
+}
+
 const DashboardMain: React.FC = () => {
   /* ───────── state for precious‑metal prices ───────── */
-  const [prices, setPrices] = useState({ gold: 5850, silver: 72 });
+
+  const [prices, setPrices] = useState({
+    gold: Number(localStorage.getItem("GoldPrice")) || 0,
+    silver: Number(localStorage.getItem("SilverPrice")) || 0,
+  });
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(prices);
+
+  const token = localStorage.getItem("token"); // your JWT token
+
+  useEffect(() => {
+    axios
+      .get<MetalRates>("http://15.207.98.116:8081/admin/getRates", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const { goldRate, silverRate } = res.data;
+        setPrices({ gold: goldRate, silver: silverRate });
+        setDraft({ gold: goldRate, silver: silverRate });
+
+        // save in localStorage
+        localStorage.setItem("GoldPrice", goldRate.toString());
+        localStorage.setItem("SilverPrice", silverRate.toString());
+      })
+      .catch((err) => console.error("Error fetching rates:", err));
+  }, [token]);
+
   const saveEdit = () => {
-    // setPrices(draft);
-    // setEditing(false);
+    axios
+      .put<MetalRates>(
+        `http://15.207.98.116:8081/admin/updateRates?goldRate=${draft.gold}&silverRate=${draft.silver}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      .then((res) => {
+        const { goldRate, silverRate } = res.data;
+        setPrices({ gold: goldRate, silver: silverRate });
+        setEditing(false);
 
-    setPrices(draft);
-    setEditing(false);
+        localStorage.setItem("GoldPrice", goldRate.toString());
+        localStorage.setItem("SilverPrice", silverRate.toString());
 
-    localStorage.removeItem("GoldPrice");
-    localStorage.removeItem("SilverPrice");
-
-    // Save to localStorage
-    localStorage.setItem("GoldPrice", draft.gold.toString());
-    localStorage.setItem("SilverPrice", draft.silver.toString());
-
-    console.log("Updated Prices => Gold:", draft.gold, "Silver:", draft.silver);
+        console.log("Updated Prices =>", goldRate, silverRate);
+      })
+      .catch((err) => console.error("Error updating rates:", err));
   };
 
   /* ───────── helper card components ───────── */
@@ -81,7 +118,7 @@ const DashboardMain: React.FC = () => {
         {/* METAL PRICE WIDGET + REVENUE TREND PLACEHOLDER */}
         <Grid container spacing={2} mb={3}>
           {/* editable metal prices */}
-          <Grid xs={12} md={4}>
+          <Grid item xs={12} md={4}>
             <Card variant="outlined" sx={{ p: 2, height: "100%" }}>
               <Box
                 display="flex"
@@ -213,7 +250,7 @@ const DashboardMain: React.FC = () => {
         </Grid>
 
         {/* low stock */}
-        <Grid xs={12} md={4}>
+        <Grid item xs={12} md={4}>
           <Card variant="outlined">
             <CardHeader title="Low Stock Products" sx={{ pb: 0 }} />
             <Table size="small">

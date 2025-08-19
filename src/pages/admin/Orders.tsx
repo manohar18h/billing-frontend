@@ -27,6 +27,7 @@ import { IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { Order } from "@/models/Order";
 
 type BarcodeProduct = {
   metal: string;
@@ -60,6 +61,19 @@ type AppWorker = {
 };
 
 const Orders: React.FC = () => {
+  const handleClearExchange = () => {
+    setExchange({
+      exchange_metal: "",
+      exchange_metal_name: "",
+      exchange_metal_weight: 0,
+      exchange_purity_weight: 0,
+      exchange_metal_price: 0,
+      exchange_item_amount: 0,
+    });
+    setExchangeErrors({});
+    setIsPrefilled(false);
+  };
+
   const handleClearOrder = () => {
     setOrder({
       metal: "",
@@ -171,6 +185,8 @@ const Orders: React.FC = () => {
 
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [payAmount, setPayAmount] = useState("");
+  const [payMethod, setPayMethod] = useState("");
+
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [workerList, setWorkerList] = useState<AppWorker[]>([]);
 
@@ -254,6 +270,9 @@ const Orders: React.FC = () => {
 
       setOrdersList([...ordersList, response.data]);
       setOrderErrors({});
+
+      handleClearOrder();
+
       sessionStorage.setItem(
         "ordersState",
         JSON.stringify({
@@ -292,15 +311,19 @@ const Orders: React.FC = () => {
       const newExchangeList = [...exchangeList, response.data];
       setExchangeList(newExchangeList);
 
-      const updatedOrders = ordersList.map((order) => {
-        if (order.orderId === orderId) {
-          const newDue = Math.max(order.dueAmount - exchangeItemAmount, 0);
-          return { ...order, dueAmount: newDue };
+      const updatedOrders = ordersList.map((o) => {
+        if (o.orderId === orderId) {
+          const newDue = Number(o.dueAmount) - Number(exchangeItemAmount); // allow negative
+          return { ...o, dueAmount: newDue };
         }
-        return order;
+        return o;
       });
 
       setOrdersList(updatedOrders);
+
+      handleClearExchange();
+
+      setShowExchangeForm(false);
 
       sessionStorage.setItem(
         "ordersState",
@@ -531,8 +554,17 @@ const Orders: React.FC = () => {
     }
   };
 
+  const calculateDueAmount = (order: any) => {
+    const totalItemAmount = Number(order.totalItemAmount) || 0;
+    const paidAmount = Number(order.paidAmount) || 0;
+    const discount = Number(order.discount) || 0;
+    const exchangeAmount = Number(order.exchange_item_amount) || 0;
+
+    return totalItemAmount - paidAmount - discount - exchangeAmount;
+  };
+
   const handleUpdateExchange = async () => {
-    if (!setEditingExchangeId) return;
+    if (!editingExchangeId) return;
 
     const orderId = ordersList[ordersList.length - 1]?.orderId;
 
@@ -550,38 +582,40 @@ const Orders: React.FC = () => {
         o.oldItemId === editingExchangeId ? { ...o, ...exchange } : o
       );
 
-      const updatedOrders = ordersList.map((order) => {
-        if (order.orderId === orderId) {
-          const relatedOldItems = updatedExchange.filter(
-            (item) => item.orderId === orderId
-          );
+      setExchangeList(updatedExchange);
 
-          // Calculate total old item amount
-          const totalOldItemAmount = relatedOldItems.reduce(
-            (sum, item) => sum + (item.exchange_item_amount || 0),
-            0
-          );
-
-          console.log("totalOldItemAmount :" + totalOldItemAmount);
-
-          // New due calculation from scratch
-          const newDue =
-            (order.total_item_amount || 0) -
-            (order.paidAmount || 0) -
-            (order.discount || 0) -
-            totalOldItemAmount;
-          console.log("totalAmount :" + order.totalAmount);
-          console.log("discount :" + order.discount);
-          console.log("newDue :" + newDue);
-          return { ...order, dueAmount: Math.max(newDue, 0) };
+      // 🔹 Get updated order from backend again (since dueAmount changes after exchange)
+      const { data: updatedOrderFromBackend } = await axios.get<Order>(
+        `${apiBase}/admin/getOrderByOrdId/${orderId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
+      );
 
-        return order;
-      });
+      // find the exchange just updated
+      const newExchange = updatedExchange.find(
+        (ex) => ex.oldItemId === editingExchangeId
+      );
+
+      let recalculatedDue = updatedOrderFromBackend.dueAmount;
+
+      if (exchange && newExchange) {
+        recalculatedDue =
+          updatedOrderFromBackend.dueAmount +
+          (exchange.exchange_item_amount || 0) -
+          (newExchange.exchange_item_amount || 0);
+      }
+
+      const orderWithDue = {
+        ...updatedOrderFromBackend,
+        dueAmount: recalculatedDue,
+      };
+
+      const updatedOrders = ordersList.map((order) =>
+        order.orderId === orderId ? { ...order, ...orderWithDue } : order
+      );
 
       setOrdersList(updatedOrders);
-
-      setExchangeList(updatedExchange);
 
       sessionStorage.setItem(
         "ordersState",
@@ -592,9 +626,6 @@ const Orders: React.FC = () => {
       );
 
       setShowExchangeForm(false);
-
-      // Reset form
-      // handleClearExchange();
       setIsEditing(false);
       setEditingExchangeId(null);
 
@@ -620,9 +651,12 @@ const Orders: React.FC = () => {
         }
       );
 
-      // Replace the updated order with backend response (contains dueAmount)
+      const updatedOrder: any = updatedOrderFromBackend; // 👈 cast
+
       const updatedOrders = ordersList.map((o) =>
-        o.orderId === editingOrderId ? updatedOrderFromBackend : o
+        o.orderId === editingOrderId
+          ? { ...updatedOrder, dueAmount: updatedOrder.dueAmount }
+          : o
       );
 
       setOrdersList(updatedOrders);
@@ -801,13 +835,12 @@ const Orders: React.FC = () => {
     formData.other_weight,
   ]);
 
-  // Handle input changes
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  const asNumber = (v: any) => (v == null || v === "" ? 0 : Number(v));
+
+  const formatMoney = (v: any) =>
+    asNumber(v).toLocaleString("en-IN", {
+      maximumFractionDigits: 0, // no decimals
+    });
 
   const calculateGrossWeight = (updatedOrder: typeof order) => {
     return (
@@ -1177,7 +1210,16 @@ const Orders: React.FC = () => {
           </Button>
           <Button
             variant="contained"
-            onClick={isEditing ? handleUpdateOrder : handleOrderSubmit}
+            onClick={() => {
+              window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+
+              if (isEditing) {
+                handleUpdateOrder();
+              } else {
+                handleOrderSubmit();
+              }
+              // 👇 scroll down after action
+            }}
           >
             {isEditing ? "Update" : "Submit"}
           </Button>
@@ -1218,7 +1260,15 @@ const Orders: React.FC = () => {
                   <TableCell>{ord.metal_weight}</TableCell>
                   <TableCell>{ord.total_item_amount}</TableCell>
                   <TableCell>{ord.paidAmount}</TableCell>
-                  <TableCell>{ord.dueAmount}</TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 400,
+                      color:
+                        asNumber(ord.dueAmount) < 0 ? "error.main" : "inherit",
+                    }}
+                  >
+                    {formatMoney(ord.dueAmount)}
+                  </TableCell>
                   <TableCell>
                     {ord.workerPay ? (
                       ord.workerPay.fullName
@@ -1239,14 +1289,14 @@ const Orders: React.FC = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    {ord.dueAmount > 0 ? (
+                    {asNumber(ord.dueAmount) !== 0 ? (
                       <Button
                         variant="outlined"
                         size="small"
                         color="secondary"
                         onClick={() => {
                           setSelectedOrderId(ord.orderId);
-                          setPayAmount(""); // reset input
+                          setPayAmount("");
                           setPayDialogOpen(true);
                         }}
                       >
@@ -1562,15 +1612,50 @@ const Orders: React.FC = () => {
       <Dialog open={payDialogOpen} onClose={() => setPayDialogOpen(false)}>
         <DialogTitle>Enter Payment Amount</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Amount"
-            type="number"
-            fullWidth
-            value={payAmount}
-            onChange={(e) => setPayAmount(e.target.value)}
-          />
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap={3} // ✅ space between inputs
+          >
+            <TextField
+              select
+              label="Payment Type"
+              value={payMethod}
+              onChange={(e) => setPayMethod(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{
+                style: { color: "#333" },
+                shrink: true, // ✅ ensures label is always visible
+              }}
+              InputProps={{
+                style: { fontWeight: 500 },
+              }}
+              sx={{
+                minWidth: "200px",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderWidth: "2px",
+                  borderColor: "gray",
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Payment Method</em>
+              </MenuItem>
+              <MenuItem value="Phone Pay">Phone Pay</MenuItem>
+              <MenuItem value="Cash">Cash</MenuItem>
+            </TextField>
+
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Amount"
+              type="number"
+              fullWidth
+              value={payAmount}
+              onChange={(e) => setPayAmount(e.target.value)}
+            />
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPayDialogOpen(false)} color="secondary">
@@ -1581,20 +1666,36 @@ const Orders: React.FC = () => {
               if (!selectedOrderId || !payAmount) return;
               try {
                 const response = await axios.post(
-                  `${apiBase}/admin/payCustomer/${selectedOrderId}?amount=${payAmount}`,
+                  `${apiBase}/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
                   {},
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
 
-                const updatedOrders = ordersList.map((o) =>
-                  o.orderId === selectedOrderId
-                    ? {
-                        ...o,
-                        paidAmount: o.paidAmount + Number(payAmount),
-                        dueAmount: Math.max(o.dueAmount - Number(payAmount), 0),
-                      }
-                    : o
-                );
+                const updatedOrders = ordersList.map((o) => {
+                  if (o.orderId === selectedOrderId) {
+                    const existingDue = Number(o.dueAmount);
+                    const paid = Number(payAmount);
+
+                    let newDue;
+                    if (existingDue < 0) {
+                      // Negative = advance → paying back increases due towards 0
+                      newDue = existingDue + paid;
+                    } else {
+                      // Positive = customer owes → normal subtraction
+                      newDue = existingDue - paid;
+                    }
+
+                    // Fix floating point rounding (-0.0001 → 0)
+                    if (Math.abs(newDue) < 0.01) newDue = 0;
+
+                    return {
+                      ...o,
+                      paidAmount: Number(o.paidAmount) + paid,
+                      dueAmount: newDue,
+                    };
+                  }
+                  return o;
+                });
 
                 setOrdersList(updatedOrders);
                 sessionStorage.setItem(

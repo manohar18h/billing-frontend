@@ -108,12 +108,12 @@ const OrderDetails: React.FC = () => {
               ["Wax Weight", order.wax_weight],
               ["Wax Amount", order.wax_amount],
               ["Diamond Weight", order.diamond_weight],
+              ["Diamond Amount", order.diamond_amount],
             ].map(([label, value]) => displayField(label, value))}
           </div>
 
           <div className="pl-4">
             {[
-              ["Diamond Amount", order.diamond_amount],
               ["Bits Weight", order.bits_weight],
               ["Bits Amount", order.bits_amount],
               ["Enamel Weight", order.enamel_weight],
@@ -129,6 +129,8 @@ const OrderDetails: React.FC = () => {
               ["Old Exchange Item Price", order.oldExItemPrice],
               ["Paid Amount", order.paidAmount],
               ["Due Amount", order.dueAmount],
+              ["Received Amount", order.receivedAmount],
+
               ["Delivery Status", order.delivery_status],
             ].map(([label, value]) => displayField(label, value))}
           </div>
@@ -189,7 +191,7 @@ const OrderDetails: React.FC = () => {
               {order.transactions.map((tx: any) => (
                 <li key={tx.transactionId}>
                   ₹{tx.paidAmount} on{" "}
-                  {new Date(tx.paymentDate).toLocaleString()}
+                  {new Date(tx.paymentDate).toLocaleString()}-{tx.paymentType}
                 </li>
               ))}
             </ul>
