@@ -7,13 +7,102 @@ const GenerateBill: React.FC = () => {
   const location = useLocation();
   const selectedOrders = location.state?.selectedOrders || [];
   const token = localStorage.getItem("token");
-  const fromBillDetails = location.state?.fromBillDetails || false;
   const billNumber =
     location.state?.billNumber || localStorage.getItem("billNumber");
-  const billingFrom = sessionStorage.getItem("billingFrom");
   const editBill = localStorage.getItem("editBill");
 
-  const [bill, setBill] = useState<any>(null);
+  // Transaction model
+  interface Transaction {
+    transactionId: number;
+    paymentMethod: string;
+    paymentType: string;
+    paidAmount: number;
+    paymentDate: string;
+    orderId: number;
+  }
+
+  // Old item model
+  interface OldItem {
+    oldItemId: number;
+    exchange_metal: string;
+    exchange_metal_name: string;
+    exchange_metal_weight: string;
+    exchange_purity_weight: string;
+    exchange_metal_price: number;
+    exchange_item_amount: number;
+    orderId: number;
+  }
+
+  interface Order {
+    orderId: number;
+    orderDate: string;
+    metal: string;
+    metalPrice: number;
+    itemName: string;
+    catalogue: string | null;
+    design: string;
+    size: string;
+    metal_weight: number;
+    wastage: number;
+    making_charges: number;
+    stone_weight: number;
+    stone_amount: number;
+    wax_weight: number | null;
+    wax_amount: number | null;
+    diamond_weight: number;
+    diamond_amount: number;
+    bits_weight: number;
+    bits_amount: number;
+    enamel_weight: number;
+    enamel_amount: number;
+    pearls_weight: number;
+    pearls_amount: number;
+    other_weight: number;
+    other_amount: number;
+    stock_box: number;
+    gross_weight: number;
+    total_item_amount: number;
+    discount: number;
+    oldExItemPrice: number;
+    paidAmount: number;
+    dueAmount: number;
+    receivedAmount: number | null;
+    delivery_status: string;
+    workerPay: number | null;
+    transactions: Transaction[];
+    oldItems: OldItem[];
+    version: number;
+    [key: string]:
+      | string
+      | number
+      | number[]
+      | null
+      | Transaction[]
+      | OldItem[];
+  }
+
+  interface Bill {
+    billId: number;
+    billNumber: string;
+    customerId: number;
+    name: string;
+    village: string;
+    phoneNumber: string;
+    emailId: string;
+    deliveryStatus: string;
+    numberOfOrders: number;
+    billTotalAmount: number;
+    billDiscountAmount: number;
+    exchangeAmount: number;
+    billPaidAmount: number;
+    billResAmount: number;
+    billDueAmount: number;
+    selectedOrderIds: string;
+    billingDate: string;
+    selectedOrders: Order[]; // keep string since it’s coming in this format
+  }
+
+  const [bill, setBill] = useState<Bill | null>(null);
 
   const dynamicWeightKeys = [
     "stone",
@@ -31,14 +120,10 @@ const GenerateBill: React.FC = () => {
       try {
         console.log("editBill : ", editBill);
 
-        if (
-          billingFrom === "BillDetails" ||
-          fromBillDetails ||
-          editBill === "editBill"
-        ) {
+        if (editBill === "editBill") {
           console.log("Updating existing bill with billNumber:", billNumber);
 
-          const res = await axios.put(
+          const res = await axios.put<Bill>(
             `http://15.207.98.116:8081/admin/bill-updateData/${billNumber}`,
             { orderId: selectedOrders }, // send array of orderIds
             {
@@ -53,7 +138,7 @@ const GenerateBill: React.FC = () => {
         } else {
           console.log("Creating new bill...");
 
-          const response = await axios.post(
+          const response = await axios.post<Bill>(
             "http://15.207.98.116:8081/admin/bill-summary",
             { orderId: selectedOrders },
             {
@@ -73,12 +158,18 @@ const GenerateBill: React.FC = () => {
     fetchBillSummary();
   }, [selectedOrders, token]);
 
+  function getNumericField(item: Order, field: keyof Order): number | null {
+    return (item[field] as number | null) ?? null;
+  }
+
   const activeWeightKeys = React.useMemo(() => {
     if (!bill || !bill.selectedOrders) return [];
 
     return dynamicWeightKeys.filter((key) =>
       bill.selectedOrders.some(
-        (item: any) => item[`${key}_weight`] > 0 || item[`${key}_amount`] > 0
+        (item) =>
+          (item[`${key}_weight`] as number) > 0 ||
+          (item[`${key}_amount`] as number) > 0
       )
     );
   }, [bill]);
@@ -213,7 +304,7 @@ const GenerateBill: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {bill.selectedOrders.map((item: any, index: number) => (
+              {bill.selectedOrders.map((item: Order, index: number) => (
                 <tr key={index} className="border">
                   <td className="border px-2 py-1">{item.itemName}</td>
                   <td className="border px-2 py-1">{item.metal}</td>
@@ -223,10 +314,16 @@ const GenerateBill: React.FC = () => {
                   {activeWeightKeys.map((key) => (
                     <React.Fragment key={key}>
                       <td className="border px-2 py-1">
-                        {item[`${key}_weight`] || "-"}
+                        {getNumericField(
+                          item,
+                          `${key}_weight` as keyof Order
+                        ) ?? "-"}
                       </td>
                       <td className="border px-2 py-1">
-                        {item[`${key}_amount`] || "-"}
+                        {getNumericField(
+                          item,
+                          `${key}_amount` as keyof Order
+                        ) ?? "-"}
                       </td>
                     </React.Fragment>
                   ))}
@@ -234,7 +331,7 @@ const GenerateBill: React.FC = () => {
                   <td className="border px-2 py-1">{item.making_charges}</td>
                   <td className="border px-2 py-1">
                     {item.transactions?.length > 0
-                      ? item.transactions.map((tx: any, i: number) => (
+                      ? item.transactions.map((tx: Transaction, i: number) => (
                           <div key={i}>
                             ₹{tx.paidAmount} on{" "}
                             {new Date(tx.paymentDate).toLocaleDateString()}
@@ -249,8 +346,8 @@ const GenerateBill: React.FC = () => {
               ))}
 
               {bill.selectedOrders.flatMap(
-                (item: any) =>
-                  item.oldItems?.map((ex: any, index: number) => (
+                (item: Order) =>
+                  item.oldItems?.map((ex: OldItem, index: number) => (
                     <tr key={`ex-${index}`} className="border bg-gray-100">
                       <td className="border px-2 py-1">
                         {ex.exchange_metal_name + "  ( Ex )"}
@@ -285,34 +382,43 @@ const GenerateBill: React.FC = () => {
         </div>
 
         {/* Totals */}
-        <div className="flex justify-end">
+        <div className="flex justify-end mt-10">
           <div className="bg-orange-100 p-4 rounded-md border border-orange-400">
             <table className="text-sm w-64 table-fixed">
               <tbody>
                 <tr>
-                  <td className="px-3 py-2">Bill Total:</td>
+                  <td className="px-3 py-2">Bill Total :</td>
                   <td className="text-right font-semibold px-3 py-2">
                     ₹{bill.billTotalAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2">Exchange Amount:</td>
+                  <td className="px-3 py-2">Exchange Amount :</td>
                   <td className="text-right px-3 py-2">
                     ₹{bill.exchangeAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2">Discount:</td>
+                  <td className="px-3 py-2">Discount :</td>
                   <td className="text-right px-3 py-2">
                     ₹{bill.billDiscountAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2">Paid:</td>
+                  <td className="px-3 py-2">Paid :</td>
                   <td className="text-right px-3 py-2">
                     ₹{bill.billPaidAmount}
                   </td>
                 </tr>
+                {/* ✅ Conditionally render Received row */}
+                {bill.billResAmount > 0 && (
+                  <tr>
+                    <td className="px-3 py-2">Received :</td>
+                    <td className="text-right px-3 py-2">
+                      ₹{bill.billResAmount}
+                    </td>
+                  </tr>
+                )}
                 <tr className="border-t border-black">
                   <td className="px-3 py-2 font-bold text-red-600">Due:</td>
                   <td className="text-right font-bold text-red-600 px-3 py-2">

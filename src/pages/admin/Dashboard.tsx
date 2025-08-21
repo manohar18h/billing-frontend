@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-
 import {
   Box,
   Card,
-  CardContent,
   CardHeader,
   Typography,
   IconButton,
@@ -105,20 +102,14 @@ const DashboardMain: React.FC = () => {
     </Card>
   );
 
-  const PlaceholderCard = ({ children }: { children: React.ReactNode }) => (
-    <Card variant="outlined" sx={{ height: 280 }}>
-      <CardContent>{children}</CardContent>
-    </Card>
-  );
-
   return (
-    <Box sx={{ width: "100%", p: { xs: 2, md: 4 } }}>
+    <Box sx={{ width: "100%", p: { xs: 4, md: 6 } }}>
       {/* SUMMARY CARDS ROW */}
-      <Grid container spacing={2} mb={3}>
+      <Grid container spacing={2} mb={6}>
         {/* METAL PRICE WIDGET + REVENUE TREND PLACEHOLDER */}
         <Grid container spacing={2} mb={3}>
           {/* editable metal prices */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 6, md: 15 }}>
             <Card variant="outlined" sx={{ p: 2, height: "100%" }}>
               <Box
                 display="flex"
@@ -196,20 +187,20 @@ const DashboardMain: React.FC = () => {
           </Grid>
         </Grid>
 
-        <Grid xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Summary title="Total Customers" value="1,250" />
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Summary
             title="Orders Overview"
             value="320"
             small="12 new / 3 pending"
           />
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Summary title="Pending Bills" value="$15,200" small="35 customers" />
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Summary title="Total Revenue" value="$45,300" small="(This Month)" />
         </Grid>
       </Grid>
@@ -217,7 +208,7 @@ const DashboardMain: React.FC = () => {
       {/* RECENT ORDERS & LOW‑STOCK */}
       <Grid container spacing={2}>
         {/* recent orders */}
-        <Grid xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card variant="outlined">
             <CardHeader title="Recent Orders" sx={{ pb: 0 }} />
             <Table size="small">
@@ -250,7 +241,7 @@ const DashboardMain: React.FC = () => {
         </Grid>
 
         {/* low stock */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card variant="outlined">
             <CardHeader title="Low Stock Products" sx={{ pb: 0 }} />
             <Table size="small">

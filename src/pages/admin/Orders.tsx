@@ -554,14 +554,14 @@ const Orders: React.FC = () => {
     }
   };
 
-  const calculateDueAmount = (order: any) => {
-    const totalItemAmount = Number(order.totalItemAmount) || 0;
-    const paidAmount = Number(order.paidAmount) || 0;
-    const discount = Number(order.discount) || 0;
-    const exchangeAmount = Number(order.exchange_item_amount) || 0;
+  // const calculateDueAmount = (order: any) => {
+  //   const totalItemAmount = Number(order.totalItemAmount) || 0;
+  //   const paidAmount = Number(order.paidAmount) || 0;
+  //   const discount = Number(order.discount) || 0;
+  //   const exchangeAmount = Number(order.exchange_item_amount) || 0;
 
-    return totalItemAmount - paidAmount - discount - exchangeAmount;
-  };
+  //   return totalItemAmount - paidAmount - discount - exchangeAmount;
+  // };
 
   const handleUpdateExchange = async () => {
     if (!editingExchangeId) return;
@@ -794,8 +794,8 @@ const Orders: React.FC = () => {
     gross_weight: "",
   });
 
-  const parseNumber = (val: any) =>
-    isNaN(Number(val)) || val === "" ? 0 : Number(val);
+  const parseNumber = (val: string | number | null | undefined): number =>
+    val === "" || val == null || isNaN(Number(val)) ? 0 : Number(val);
 
   // Auto-calculate gross weight whenever dependencies change
   useEffect(() => {
@@ -835,12 +835,17 @@ const Orders: React.FC = () => {
     formData.other_weight,
   ]);
 
-  const asNumber = (v: any) => (v == null || v === "" ? 0 : Number(v));
+  const asNumber = (v: number | string | null | undefined): number =>
+    v == null || v === "" ? 0 : Number(v);
+  const formatMoney = (v: number | string): string => {
+    const num = Number(v);
 
-  const formatMoney = (v: any) =>
-    asNumber(v).toLocaleString("en-IN", {
+    if (isNaN(num)) return "0"; // fallback if not a valid number
+
+    return num.toLocaleString("en-IN", {
       maximumFractionDigits: 0, // no decimals
     });
+  };
 
   const calculateGrossWeight = (updatedOrder: typeof order) => {
     return (
@@ -979,7 +984,7 @@ const Orders: React.FC = () => {
 
         <Grid container spacing={3}>
           {Object.entries(order).map(([key, value]) => (
-            <Grid item xs={12} sm={6} key={key}>
+            <Grid size={{ xs: 12, sm: 6 }} key={key}>
               {key === "metal" ? (
                 <TextField
                   select
@@ -1424,7 +1429,7 @@ const Orders: React.FC = () => {
             </Typography>
             <Grid container spacing={3}>
               {Object.entries(exchange).map(([key, value]) => (
-                <Grid item xs={12} sm={12} key={key}>
+                <Grid size={{ xs: 12, sm: 12 }} key={key}>
                   {key === "exchange_metal" ? (
                     <TextField
                       select
@@ -1665,7 +1670,7 @@ const Orders: React.FC = () => {
             onClick={async () => {
               if (!selectedOrderId || !payAmount) return;
               try {
-                const response = await axios.post(
+                await axios.post(
                   `${apiBase}/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
                   {},
                   { headers: { Authorization: `Bearer ${token}` } }

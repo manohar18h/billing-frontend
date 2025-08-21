@@ -19,7 +19,6 @@ import {
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton } from "@mui/material";
 
@@ -60,10 +59,6 @@ const CustomerDetails: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [workerList, setWorkerList] = useState<Worker[]>([]);
 
-  const [payDialogOpen, setPayDialogOpen] = useState(false);
-  const [payAmount, setPayAmount] = useState("");
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
   const [workerPayAmount, setWorkerPayAmount] = useState("");
@@ -87,6 +82,18 @@ const CustomerDetails: React.FC = () => {
         );
 
         const customerData = res.data as Customer;
+
+        // ✅ check if data is empty/null
+        if (!customerData || !customerData.customerId) {
+          navigate("/admin/customers", {
+            replace: true,
+            state: {
+              errorMessage: `No customer data found for phone number: ${phoneNumber}`,
+            },
+          });
+          return;
+        }
+
         setCustomer(customerData);
         setOrders(customerData.orders || []);
         sessionStorage.setItem("customer", JSON.stringify(customerData));
@@ -96,7 +103,12 @@ const CustomerDetails: React.FC = () => {
         );
       } catch (err) {
         console.error("Error fetching customer details:", err);
-        toast.error("Failed to load customer data");
+        navigate("/admin/customers", {
+          replace: true,
+          state: {
+            errorMessage: `No customer data found for phone number: ${phoneNumber}`,
+          },
+        });
       }
     };
 
@@ -143,6 +155,7 @@ const CustomerDetails: React.FC = () => {
 
   const handleAddOrder = () => {
     localStorage.removeItem("from");
+    localStorage.removeItem("editBill");
     localStorage.setItem("CusDetailsCustomerId", String(customer?.customerId));
     sessionStorage.setItem("customer", JSON.stringify(customer));
     sessionStorage.setItem("orders", JSON.stringify(orders));
@@ -184,10 +197,10 @@ const CustomerDetails: React.FC = () => {
 
         <Grid container spacing={3}>
           {["name", "village", "phoneNumber", "emailId"].map((key) => (
-            <Grid item xs={12} sm={6} key={key}>
+            <Grid key={key} size={{ xs: 6, sm: 4 }}>
               <TextField
                 label={key.charAt(0).toUpperCase() + key.slice(1)}
-                value={(customer as any)[key] || "-"}
+                value={(customer[key as keyof Customer] ?? "-").toString()}
                 fullWidth
                 InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
               />
@@ -195,10 +208,10 @@ const CustomerDetails: React.FC = () => {
           ))}
 
           {["customerId", "numberOfOrders", "totalDueAmount"].map((key) => (
-            <Grid item xs={12} sm={6} key={key}>
+            <Grid key={key} size={{ xs: 6, sm: 4 }}>
               <TextField
                 label={key.replace(/([A-Z])/g, " $1")}
-                value={(customer as any)[key] || "-"}
+                value={(customer[key as keyof Customer] ?? "-").toString()}
                 fullWidth
                 InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
               />
@@ -334,6 +347,7 @@ const CustomerDetails: React.FC = () => {
                 setOrders(updatedOrders);
                 setAssignDialogOpen(false);
               } catch (error) {
+                console.error("Assign worker failed:", error);
                 alert("Failed to assign worker");
               }
             }}

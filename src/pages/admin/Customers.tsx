@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TextField,
   Box,
@@ -12,17 +12,31 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useLocation } from "react-router-dom";
 
 const SearchAddCustomer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   localStorage.removeItem("billNumber");
   localStorage.removeItem("bill-phnNumber");
   localStorage.removeItem("phnNumber");
 
-  const emptyCustomer = {
+  interface Customer {
+    customerId: string;
+    name: string;
+    village: string;
+    phoneNumber: string;
+    emailId: string;
+    numberOfOrders: number;
+    finalAmount: number;
+    totalDueAmount: number;
+    password: string;
+  }
+
+  const emptyCustomer: Customer = {
     customerId: "",
     name: "",
     village: "",
@@ -34,8 +48,10 @@ const SearchAddCustomer: React.FC = () => {
     password: "",
   };
 
-  const [customer, setCustomer] = useState({ ...emptyCustomer });
-  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+  const [customer, setCustomer] = useState<Customer>({ ...emptyCustomer });
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof Customer, string>>
+  >({});
 
   const handleChange = (field: string, value: string | number) => {
     setCustomer({ ...customer, [field]: value });
@@ -87,6 +103,8 @@ const SearchAddCustomer: React.FC = () => {
 
       setFieldErrors({});
 
+      console.log("requestbody : ", JSON.stringify(customer));
+
       const response = await fetch(
         "http://15.207.98.116:8081/admin/addCustomer",
         {
@@ -99,31 +117,55 @@ const SearchAddCustomer: React.FC = () => {
         }
       );
 
-      const result = await response.json();
-      if (!response.ok) {
-        if (result.message?.includes("Phone number is already registered")) {
+      let result;
+      const contentType = response.headers.get("content-type");
+
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+      } else {
+        result = await response.text(); // fallback if backend sends plain text
+      }
+
+      console.log("result: ", result);
+
+      if (response.ok) {
+        localStorage.setItem("customerId", result.customerId);
+        localStorage.setItem("from", "customer");
+        console.log("customerid in customer  :  " + result.customerId);
+        navigate("/admin/orders", {
+          replace: true,
+          state: { fromCustomer: true },
+        });
+      } else {
+        if (
+          typeof result === "string" &&
+          result.includes("Phone number is already registered")
+        ) {
+          toast.error(result);
+        } else if (result?.message) {
           toast.error(result.message);
         } else if (typeof result === "object") {
           setFieldErrors(result);
         } else {
           toast.error("Failed to add customer");
         }
-        return;
       }
-
-      localStorage.setItem("customerId", result.customerId);
-      localStorage.setItem("from", "customer");
-      console.log("customerid in customer  :  " + result.customerId);
-
-      navigate("/admin/orders", {
-        replace: true,
-        state: { fromCustomer: true },
-      });
     } catch (error) {
       console.error("Error adding customer:", error);
       toast.error("Something went wrong");
     }
   };
+
+  useEffect(() => {
+    if (location.state?.errorMessage) {
+      toast.error(location.state.errorMessage);
+
+      // clear the state so toast doesn’t repeat on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  localStorage.removeItem("editBill");
 
   return (
     <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6">
@@ -216,27 +258,33 @@ const SearchAddCustomer: React.FC = () => {
         </Box>
 
         <Grid container spacing={3}>
-          {["name", "village", "phoneNumber", "emailId", "password"].map(
-            (key) => (
-              <Grid item xs={12} sm={6} key={key}>
-                <TextField
-                  {...thickTextFieldProps}
-                  label={
-                    key === "phoneNumber"
-                      ? "Phone Number"
-                      : key === "emailId"
-                      ? "Email ID"
-                      : key.charAt(0).toUpperCase() + key.slice(1)
-                  }
-                  type={key === "password" ? "password" : "text"}
-                  value={customer[key]}
-                  onChange={(e) => handleChange(key, e.target.value)}
-                  error={!!fieldErrors[key]}
-                  helperText={fieldErrors[key]}
-                />
-              </Grid>
-            )
-          )}
+          {(
+            [
+              "name",
+              "village",
+              "phoneNumber",
+              "emailId",
+              "password",
+            ] as (keyof Customer)[]
+          ).map((key) => (
+            <Grid key={key} size={{ xs: 6, sm: 4 }}>
+              <TextField
+                {...thickTextFieldProps}
+                label={
+                  key === "phoneNumber"
+                    ? "Phone Number"
+                    : key === "emailId"
+                    ? "Email ID"
+                    : key.charAt(0).toUpperCase() + key.slice(1)
+                }
+                type={key === "password" ? "password" : "text"}
+                value={customer[key]}
+                onChange={(e) => handleChange(key, e.target.value)}
+                error={!!fieldErrors[key]}
+                helperText={fieldErrors[key]}
+              />
+            </Grid>
+          ))}
         </Grid>
 
         <Box display="flex" justifyContent="flex-end" mt={4}>

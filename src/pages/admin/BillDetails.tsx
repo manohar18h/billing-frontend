@@ -2,8 +2,6 @@
 import React, { useEffect, useState } from "react";
 import {
   TextField,
-  Grid,
-  Box,
   Typography,
   Table,
   TableHead,
@@ -22,10 +20,10 @@ import {
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Grid from "@mui/material/Grid";
 
 interface selectedOrders {
   orderId: number;
@@ -77,7 +75,7 @@ const BillDetails: React.FC = () => {
   const [workerPayAmount, setWorkerPayAmount] = useState("");
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<number | null>(null);
-  const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
+  const [, setEditingOrderId] = useState<number | null>(null);
   const [payMethod, setPayMethod] = useState("");
 
   const token = localStorage.getItem("token");
@@ -98,6 +96,18 @@ const BillDetails: React.FC = () => {
         );
 
         const customerData = res.data as Customer;
+
+        // ✅ check if no valid data
+        if (!customerData || !customerData.customerId) {
+          navigate("/admin/customers", {
+            replace: true,
+            state: {
+              errorMessage: `No data found for Bill Number: ${billNumber}`,
+            },
+          });
+          return;
+        }
+
         sessionStorage.removeItem("customer");
         sessionStorage.removeItem("orders");
         sessionStorage.removeItem("billingFrom");
@@ -112,8 +122,13 @@ const BillDetails: React.FC = () => {
           JSON.stringify(customerData.selectedOrders || [])
         );
       } catch (err) {
-        console.error("Error fetching customer details:", err);
-        toast.error("Failed to load customer data");
+        console.error("Error fetching bill details:", err);
+        navigate("/admin/customers", {
+          replace: true,
+          state: {
+            errorMessage: `No data found for Bill Number: ${billNumber}`,
+          },
+        });
       }
     };
 
@@ -215,8 +230,6 @@ const BillDetails: React.FC = () => {
   };
 
   const handleEditOrder = (orderId: number) => {
-    localStorage.removeItem("editBill");
-
     if (!orderId) {
       console.error("❌ editingOrderId is missing before navigation");
       return;
@@ -236,9 +249,10 @@ const BillDetails: React.FC = () => {
     });
   };
 
-  const asNumber = (v: any) => (v == null || v === "" ? 0 : Number(v));
+  const asNumber = (v: string | number | null | undefined): number =>
+    v == null || v === "" ? 0 : Number(v);
 
-  const formatMoney = (v: any) =>
+  const formatMoney = (v: string | number | null | undefined): string =>
     asNumber(v).toLocaleString("en-IN", {
       maximumFractionDigits: 0, // no decimals
     });
@@ -270,6 +284,8 @@ const BillDetails: React.FC = () => {
               );
               sessionStorage.setItem("billingFrom", "BillDetails");
               console.log("Ids :" + orders.map((order) => order.orderId));
+              localStorage.setItem("editBill", "editBill");
+
               navigate("/admin/generate-bill", {
                 replace: true,
                 state: {
@@ -286,10 +302,10 @@ const BillDetails: React.FC = () => {
         <Grid container spacing={3}>
           {["billNumber", "name", "village", "phoneNumber", "emailId"].map(
             (key) => (
-              <Grid item xs={12} sm={6} key={key}>
+              <Grid key={key} size={{ xs: 6, sm: 4 }}>
                 <TextField
                   label={key.charAt(0).toUpperCase() + key.slice(1)}
-                  value={(customer as any)[key] || "-"}
+                  value={(customer[key as keyof Customer] ?? "-").toString()}
                   fullWidth
                   InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
                 />
@@ -305,10 +321,10 @@ const BillDetails: React.FC = () => {
             "billPaidAmount",
             "billDueAmount",
           ].map((key) => (
-            <Grid item xs={12} sm={6} key={key}>
+            <Grid key={key} size={{ xs: 6, sm: 4 }}>
               <TextField
                 label={key.replace(/([A-Z])/g, " $1")}
-                value={(customer as any)[key] || "-"}
+                value={(customer[key as keyof Customer] ?? "-").toString()}
                 fullWidth
                 InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
               />
@@ -468,7 +484,7 @@ const BillDetails: React.FC = () => {
         >
           <Grid container spacing={3} direction="column">
             {/* Payment Type */}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 select
                 label="Payment Type"
@@ -485,7 +501,7 @@ const BillDetails: React.FC = () => {
             </Grid>
 
             {/* Amount */}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 label="Amount"
                 type="number"
@@ -504,7 +520,7 @@ const BillDetails: React.FC = () => {
             onClick={async () => {
               if (!selectedOrderId || !payAmount) return;
               try {
-                const response = await axios.post(
+                await axios.post(
                   `${apiBase}/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
                   {},
                   { headers: { Authorization: `Bearer ${token}` } }
@@ -613,6 +629,7 @@ const BillDetails: React.FC = () => {
                 setOrders(updatedOrders);
                 setAssignDialogOpen(false);
               } catch (error) {
+                console.error("Assign worker failed:", error);
                 alert("Failed to assign worker");
               }
             }}

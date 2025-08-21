@@ -88,8 +88,9 @@ const AllBillingOrders: React.FC = () => {
         console.error("Failed to fetch all bills:", e);
         setErr("Failed to load billing orders.");
       } finally {
-        if (!alive) return;
-        setLoading(false);
+        if (alive) {
+          setLoading(false);
+        }
       }
     })();
     return () => {
@@ -156,44 +157,44 @@ const AllBillingOrders: React.FC = () => {
             mb: 3,
           }}
         >
-        <TextField
-    label="From"
-    type="date"
-    size="small"
-    value={fromDate}
-    onChange={(e) => setFromDate(e.target.value)}
-    InputLabelProps={{ shrink: true }}
-    sx={{
-      width: 180,                 // <= compact width
-      "& .MuiOutlinedInput-input": {
-        py: 0.75,                 // <= less inner vertical padding
-      },
-    }}
-  />
+          <TextField
+            label="From"
+            type="date"
+            size="small"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{
+              width: 180, // <= compact width
+              "& .MuiOutlinedInput-input": {
+                py: 0.75, // <= less inner vertical padding
+              },
+            }}
+          />
 
-  <TextField
-    label="To"
-    type="date"
-    size="small"
-    value={toDate}
-    onChange={(e) => setToDate(e.target.value)}
-    InputLabelProps={{ shrink: true }}
-    sx={{
-      width: 180,                 // <= compact width
-      "& .MuiOutlinedInput-input": {
-        py: 0.75,                 // <= less inner vertical padding
-      },
-    }}
-  />
+          <TextField
+            label="To"
+            type="date"
+            size="small"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{
+              width: 180, // <= compact width
+              "& .MuiOutlinedInput-input": {
+                py: 0.75, // <= less inner vertical padding
+              },
+            }}
+          />
 
-  <Button
-    variant="outlined"
-    size="small"
-    onClick={clearDates}
-    sx={{ whiteSpace: "nowrap" }}
-  >
-    Clear
-  </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={clearDates}
+            sx={{ whiteSpace: "nowrap" }}
+          >
+            Clear
+          </Button>
         </Box>
 
         {loading ? (
@@ -212,7 +213,9 @@ const AllBillingOrders: React.FC = () => {
                 <tr>
                   <th className="border px-3 py-2 text-left">Billing Date</th>
                   <th className="border px-3 py-2 text-left">Bill Number</th>
-                  <th className="border px-3 py-2 text-left">Delivery Status</th>
+                  <th className="border px-3 py-2 text-left">
+                    Delivery Status
+                  </th>
                   <th className="border px-3 py-2 text-right"># Orders</th>
                   <th className="border px-3 py-2 text-right">Total Amount</th>
                   <th className="border px-3 py-2 text-right">Due Amount</th>

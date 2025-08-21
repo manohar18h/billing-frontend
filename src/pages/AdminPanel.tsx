@@ -24,7 +24,7 @@ import OrderDetails from "./admin/OrderDetails";
 import BillDetails from "./admin/BillDetails";
 import Workers from "./admin/Workers";
 import Products from "./admin/Products";
-import AllBillingOrders from "./admin/AllBillingOrders"
+import AllBillingOrders from "./admin/AllBillingOrders";
 import WorkerStock from "./admin/WorkerStock";
 import RepairWork from "./admin/RepairWork";
 import LotWork from "./admin/LotWork";
@@ -41,7 +41,11 @@ const menuItems = [
   { icon: HardHat, label: "Workers", path: "/admin/workers" },
   { icon: Boxes, label: "Worker Stock", path: "/admin/service" },
   { icon: Tag, label: "Products", path: "/admin/products" },
-  {icon: ReceiptText, label: "AllBillingOrders", path: "/admin/billing-orders"}
+  {
+    icon: ReceiptText,
+    label: "AllBillingOrders",
+    path: "/admin/billing-orders",
+  },
 ];
 
 const Sidebar = ({ activeIndex }: { activeIndex: number }) => {
@@ -156,7 +160,9 @@ function AdminPanelContent() {
 
         <div>
           <Routes>
-            <Route path="Dashboard" element={<Dashboard />} />
+            <Route index element={<Dashboard />} />{" "}
+            {/* ✅ default when path = /admin */}
+            <Route path="dashboard" element={<Dashboard />} />{" "}
             <Route path="customers" element={<Customers />} />
             <Route path="orders" element={<Orders />} />
             <Route path="generate-bill" element={<GenerateBill />} />
@@ -176,7 +182,6 @@ function AdminPanelContent() {
               path="worker-details/:workerId"
               element={<WorkerDetails />}
             />
-
             <Route path="*" element={<p>Select a menu option</p>} />
           </Routes>
         </div>

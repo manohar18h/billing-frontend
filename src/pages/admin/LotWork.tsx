@@ -110,7 +110,7 @@ const LotWork: React.FC = () => {
       <Box component="form" noValidate autoComplete="off">
         <Grid container spacing={2}>
           {/* Worker */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               select
               fullWidth
@@ -133,7 +133,7 @@ const LotWork: React.FC = () => {
           </Grid>
 
           {/* Metal */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               select
               fullWidth
@@ -153,7 +153,7 @@ const LotWork: React.FC = () => {
           </Grid>
 
           {/* Item name */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               label="Item Name"
@@ -164,7 +164,7 @@ const LotWork: React.FC = () => {
           </Grid>
 
           {/* Item weight */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
@@ -176,7 +176,7 @@ const LotWork: React.FC = () => {
           </Grid>
 
           {/* Date */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="date"
@@ -189,7 +189,7 @@ const LotWork: React.FC = () => {
           </Grid>
 
           {/* Pieces */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
@@ -200,7 +200,7 @@ const LotWork: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
@@ -210,7 +210,7 @@ const LotWork: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               type="number"

@@ -54,11 +54,34 @@ const BillData: React.FC = () => {
           }
         )
         .then((response) => {
-          setBillingData(response.data);
+          if (response.data.length === 0) {
+            // ❌ No billing data → redirect to customers with error message
+            navigate("/admin/customers", {
+              replace: true,
+              state: {
+                errorMessage: "No billing data found for this phone number.",
+              },
+            });
+          } else {
+            setBillingData(response.data);
+          }
         })
-        .catch((error) => console.error("Error fetching billing data:", error));
+        .catch((error) => {
+          console.error("Error fetching billing data:", error);
+          navigate("/admin/customers", {
+            replace: true,
+            state: {
+              errorMessage: "No billing data found for this phone number.",
+            },
+          });
+        });
+    } else {
+      navigate("/admin/customers", {
+        replace: true,
+        state: { errorMessage: "Phone number is missing." },
+      });
     }
-  }, []);
+  }, [navigate]);
 
   if (billingData.length === 0) {
     return <p className="p-4">No billing data found for this phone number.</p>;

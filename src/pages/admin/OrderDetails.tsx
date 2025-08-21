@@ -2,6 +2,95 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 const OrderDetails: React.FC = () => {
+  // Transaction model
+  // Transaction details
+  interface Transaction {
+    transactionId: number;
+    paymentMethod: string;
+    paymentType: string;
+    paidAmount: number;
+    paymentDate: string; // ISO date string
+    orderId: number;
+  }
+
+  // Old exchanged items
+  interface OldItem {
+    oldItemId: number;
+    exchange_metal: string;
+    exchange_metal_name: string;
+    exchange_metal_weight: string;
+    exchange_purity_weight: string;
+    exchange_metal_price: number;
+    exchange_item_amount: number;
+    orderId: number;
+  }
+
+  interface WorkerPay {
+    workPay: number;
+    date: string; // you can make this `Date` if you parse it
+    wpid: number;
+    workerId: number;
+    fullName: string;
+    orderId: number;
+    metal: string;
+    metal_weight: number;
+  }
+
+  // Main order interface
+  interface Order {
+    orderId: number;
+    orderDate: string; // ISO date string
+    metal: string;
+    metalPrice: number;
+    itemName: string;
+    catalogue: string;
+    design: string;
+    size: string;
+
+    metal_weight: number;
+    wastage: number;
+    making_charges: number;
+
+    stone_weight: number;
+    stone_amount: number;
+
+    wax_weight: number;
+    wax_amount: number;
+
+    diamond_weight: number;
+    diamond_amount: number;
+
+    bits_weight: number;
+    bits_amount: number;
+
+    enamel_weight: number;
+    enamel_amount: number;
+
+    pearls_weight: number;
+    pearls_amount: number;
+
+    other_weight: number;
+    other_amount: number;
+
+    stock_box: number;
+    gross_weight: number;
+    total_item_amount: number;
+    discount: number;
+
+    oldExItemPrice: number;
+    paidAmount: number | null;
+    dueAmount: number;
+    receivedAmount: number;
+    delivery_status: string;
+
+    workerPay: WorkerPay;
+
+    transactions: Transaction[];
+    oldItems: OldItem[];
+
+    version: number;
+  }
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -10,7 +99,7 @@ const OrderDetails: React.FC = () => {
 
   const { customerId, customer, orders } = location.state || {};
 
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,7 +130,10 @@ const OrderDetails: React.FC = () => {
   if (loading) return <div className="p-6 text-center">Loading...</div>;
   if (!order) return <div className="p-6 text-center">Order not found</div>;
 
-  const displayField = (label: string, value: any) => (
+  const displayField = (
+    label: string,
+    value: string | number | boolean | null | undefined
+  ) => (
     <div className="flex justify-between border-b py-1 text-sm">
       <span className="font-medium text-gray-600">{label}:</span>
       <span className="text-gray-800">{String(value)}</span>
@@ -92,9 +184,7 @@ const OrderDetails: React.FC = () => {
           <div className="pr-4 border-r border-gray-300 dark:border-gray-600">
             {[
               ["Order Date", new Date(order.orderDate).toLocaleString()],
-              ["Delivery Date", order.deliveryDate],
               ["Item Name", order.itemName],
-              ["Occasion", order.occasion],
               ["catalogue", order.catalogue],
               ["Design", order.design],
               ["Size", order.size],
@@ -109,7 +199,7 @@ const OrderDetails: React.FC = () => {
               ["Wax Amount", order.wax_amount],
               ["Diamond Weight", order.diamond_weight],
               ["Diamond Amount", order.diamond_amount],
-            ].map(([label, value]) => displayField(label, value))}
+            ].map(([label, value]) => displayField(String(label), value))}
           </div>
 
           <div className="pl-4">
@@ -132,7 +222,7 @@ const OrderDetails: React.FC = () => {
               ["Received Amount", order.receivedAmount],
 
               ["Delivery Status", order.delivery_status],
-            ].map(([label, value]) => displayField(label, value))}
+            ].map(([label, value]) => displayField(String(label), value))}
           </div>
         </div>
 
@@ -142,8 +232,8 @@ const OrderDetails: React.FC = () => {
               Old Exchanged Items
             </h2>
 
-            {order.oldItems.map((item: any) => (
-              <div className="grid grid-cols-2 gap-4 mb-8 relative">
+            {order?.oldItems.map((item: OldItem, index: number) => (
+              <div key={index} className="grid grid-cols-2 gap-4 mb-8 relative">
                 <div className="pr-4 border-r border-gray-300 dark:border-gray-600">
                   {displayField("Metal Name", item.exchange_metal_name)}
                   {displayField("Item Name", item.exchange_metal)}
@@ -188,7 +278,7 @@ const OrderDetails: React.FC = () => {
               Transactions
             </h2>
             <ul className="mb-8 pl-5 list-disc">
-              {order.transactions.map((tx: any) => (
+              {order.transactions.map((tx: Transaction) => (
                 <li key={tx.transactionId}>
                   ₹{tx.paidAmount} on{" "}
                   {new Date(tx.paymentDate).toLocaleString()}-{tx.paymentType}

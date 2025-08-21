@@ -107,7 +107,7 @@ const WorkerDetails: React.FC = () => {
 
                 <div className="pl-4">
                   {line("Date", l.deliveryDate)}
-                  {line("Amount", `${l.wastage} %`)}
+                  {line("Wastage", `${l.wastage} %`)}
                   {line("Amount", `₹${l.amount}`)}
                   {line("Lot ID", l.lotId)}
                 </div>
@@ -161,6 +161,7 @@ const WorkerDetails: React.FC = () => {
                   {line("Weight", `${p.metal_weight} g`)}
                 </div>
                 <div className="pl-4">
+                  {line("Date", `${p.date}`)}
                   {line("Pay", `₹${p.workPay}`)}
                   {line("WP ID", p.wpid)}
                 </div>
@@ -179,7 +180,7 @@ const WorkerDetails: React.FC = () => {
               {worker.workerTransactionHistories.map((t) => (
                 <li key={t.wtid}>
                   ₹{t.paidAmount} on&nbsp;
-                  {new Date(t.paymentDate).toLocaleString()} (ID {t.wtid})
+                  {new Date(t.paymentDate).toLocaleString()}
                 </li>
               ))}
             </ul>
