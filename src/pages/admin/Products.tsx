@@ -380,7 +380,6 @@ const Products: React.FC = () => {
   const [bottomResults, setBottomResults] = useState<StockProduct[] | null>(
     null
   );
-  const [bottomLoading, setBottomLoading] = useState(false);
 
   const onProductChange =
     (k: keyof ProductForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -526,7 +525,7 @@ const Products: React.FC = () => {
 
         <Grid container spacing={2}>
           {/* Metal (select) */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               select
               label="Metal"
@@ -557,7 +556,7 @@ const Products: React.FC = () => {
           </Grid>
 
           {/* ItemName (select depends on metal) */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               select
               label="ItemName"
@@ -595,7 +594,7 @@ const Products: React.FC = () => {
               ))}
             </TextField>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               select
               label="catalogue"
@@ -627,7 +626,7 @@ const Products: React.FC = () => {
           </Grid>
 
           {/* Design */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               label="Design"
               value={q.design}
@@ -637,7 +636,7 @@ const Products: React.FC = () => {
           </Grid>
 
           {/* Size */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               label="Size"
               type="number"
@@ -649,7 +648,7 @@ const Products: React.FC = () => {
           </Grid>
 
           {/* Weight */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               select
               label="Weight Range"
@@ -690,7 +689,7 @@ const Products: React.FC = () => {
           </Grid>
 
           {totalStock > 0 && (
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 label="Total Stock"
                 value={totalStock}
@@ -845,7 +844,7 @@ const Products: React.FC = () => {
 
             <Grid container spacing={2}>
               {/* Metal select */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   select
                   label="Metal"
@@ -873,7 +872,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* ItemName select (depends on metal) */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   select
                   label="ItemName"
@@ -909,7 +908,7 @@ const Products: React.FC = () => {
                 </TextField>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   select
                   label="catalogue"
@@ -940,7 +939,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Design */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Design"
                   value={product.design}
@@ -952,7 +951,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Size */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Size"
                   type="number"
@@ -966,7 +965,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Metal Weight */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Metal Weight"
                   type="number"
@@ -980,7 +979,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Wastage */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Wastage"
                   type="number"
@@ -992,7 +991,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Making Charges */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Making Charges"
                   type="number"
@@ -1004,7 +1003,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Stone Weight */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Stone Weight"
                   type="number"
@@ -1016,7 +1015,7 @@ const Products: React.FC = () => {
                   helperText={errors.stone_weight || ""}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Stone Amount"
                   type="number"
@@ -1029,7 +1028,7 @@ const Products: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Wax Weight"
                   type="number"
@@ -1041,7 +1040,7 @@ const Products: React.FC = () => {
                   helperText={errors.wax_weight || ""}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Wax Amount"
                   type="number"
@@ -1055,7 +1054,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Diamond Weight */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Diamond Weight"
                   type="number"
@@ -1066,7 +1065,7 @@ const Products: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Diamond Amount"
                   type="number"
@@ -1080,7 +1079,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Bits Weight */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Bits Weight"
                   type="number"
@@ -1090,7 +1089,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Bits Amount"
                   type="number"
@@ -1104,7 +1103,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Enamel Weight */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Enamel Weight"
                   type="number"
@@ -1115,7 +1114,7 @@ const Products: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Enamel Amount"
                   type="number"
@@ -1129,7 +1128,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Pearls Weight */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Pearls Weight"
                   type="number"
@@ -1140,7 +1139,7 @@ const Products: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Pearls Amount"
                   type="number"
@@ -1154,7 +1153,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Other Weight */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Other Weight"
                   type="number"
@@ -1165,7 +1164,7 @@ const Products: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Other Amount"
                   type="number"
@@ -1179,7 +1178,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Stock */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Stock"
                   type="number"
@@ -1191,7 +1190,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Gross Weight (auto) */}
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Gross Weight (auto)"
                   type="number"
@@ -1244,56 +1243,52 @@ const Products: React.FC = () => {
           <Typography variant="h6" fontWeight={600} mb={2}>
             Result (Products Submit)
           </Typography>
-
-          {bottomLoading ? (
-            <CircularProgress size={22} />
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Gross Weight</TableCell>
-                  <TableCell>Metal Weight</TableCell>
-                  {bottomResults?.[0] &&
-                    possibleWeightKeys.map((key) => {
-                      const val = bottomResults[0][key as keyof StockProduct];
-                      return typeof val === "number" && val > 0 ? (
-                        <TableCell key={key}>{labelize(key)}</TableCell>
-                      ) : null;
-                    })}
-                  <TableCell>Barcode Value</TableCell>
-                  <TableCell>Barcode Image</TableCell>
+          =
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>Gross Weight</TableCell>
+                <TableCell>Metal Weight</TableCell>
+                {bottomResults?.[0] &&
+                  possibleWeightKeys.map((key) => {
+                    const val = bottomResults[0][key as keyof StockProduct];
+                    return typeof val === "number" && val > 0 ? (
+                      <TableCell key={key}>{labelize(key)}</TableCell>
+                    ) : null;
+                  })}
+                <TableCell>Barcode Value</TableCell>
+                <TableCell>Barcode Image</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {bottomResults.map((r) => (
+                <TableRow key={r.stockProductId}>
+                  <TableCell>{r.stockProductId}</TableCell>
+                  <TableCell>{r.gross_weight}</TableCell>
+                  <TableCell>{r.metal_weight}</TableCell>
+                  {possibleWeightKeys.map((key) => {
+                    const val = r[key as keyof StockProduct];
+                    return typeof val === "number" && val > 0 ? (
+                      <TableCell key={key}>{val}</TableCell>
+                    ) : null;
+                  })}
+                  <TableCell>{r.barcodeValue ?? "-"}</TableCell>
+                  <TableCell>
+                    {r.barcodeImageBase64 ? (
+                      <img
+                        alt="barcode"
+                        src={`data:image/png;base64,${r.barcodeImageBase64}`}
+                        style={{ height: 60 }}
+                      />
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {bottomResults.map((r) => (
-                  <TableRow key={r.stockProductId}>
-                    <TableCell>{r.stockProductId}</TableCell>
-                    <TableCell>{r.gross_weight}</TableCell>
-                    <TableCell>{r.metal_weight}</TableCell>
-                    {possibleWeightKeys.map((key) => {
-                      const val = r[key as keyof StockProduct];
-                      return typeof val === "number" && val > 0 ? (
-                        <TableCell key={key}>{val}</TableCell>
-                      ) : null;
-                    })}
-                    <TableCell>{r.barcodeValue ?? "-"}</TableCell>
-                    <TableCell>
-                      {r.barcodeImageBase64 ? (
-                        <img
-                          alt="barcode"
-                          src={`data:image/png;base64,${r.barcodeImageBase64}`}
-                          style={{ height: 60 }}
-                        />
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+              ))}
+            </TableBody>
+          </Table>
         </Paper>
       )}
     </Box>

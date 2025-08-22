@@ -33,7 +33,6 @@ import WorkerDetails from "./admin/WorkerDetails";
 import AdminService from "./admin/Service";
 import { WorkersProvider } from "@/contexts/WorkersContext";
 import BillData from "./admin/BillData";
-import { Label } from "@mui/icons-material";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },

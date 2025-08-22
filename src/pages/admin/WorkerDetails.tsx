@@ -2,6 +2,7 @@ import React from "react";
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useWorkers } from "@/contexts/WorkersContext";
+import { WorkerData } from "@/pages/admin/WorkerData";
 
 const WorkerDetails: React.FC = () => {
   const { workerId } = useParams<{ workerId: string }>();
@@ -12,7 +13,10 @@ const WorkerDetails: React.FC = () => {
     refresh(); // pulls newest list on mount
   }, []);
 
-  const worker = workers.find((w) => w.workerId === Number(workerId));
+  // Explicitly type worker
+  const worker: WorkerData | undefined = workers.find(
+    (w) => w.workerId === Number(workerId)
+  );
 
   if (!worker)
     return (
@@ -21,10 +25,10 @@ const WorkerDetails: React.FC = () => {
       </div>
     );
 
-  const line = (label: string, value: any) => (
+  const line = (label: string, value: string | number | null | undefined) => (
     <div className="flex justify-between border-b py-1 text-sm">
       <span className="font-medium text-gray-600">{label}:</span>
-      <span className="text-gray-800">{String(value)}</span>
+      <span className="text-gray-800">{value ?? "-"}</span>
     </div>
   );
 
@@ -161,7 +165,7 @@ const WorkerDetails: React.FC = () => {
                   {line("Weight", `${p.metal_weight} g`)}
                 </div>
                 <div className="pl-4">
-                  {line("Date", `${p.date}`)}
+                  {line("Date", p.date ?? "-")}
                   {line("Pay", `₹${p.workPay}`)}
                   {line("WP ID", p.wpid)}
                 </div>

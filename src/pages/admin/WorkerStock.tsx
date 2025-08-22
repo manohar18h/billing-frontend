@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   TextField,
@@ -87,7 +87,7 @@ const WorkerStock: React.FC = () => {
         <Box component="form" noValidate autoComplete="off">
           <Grid container spacing={3}>
             {/* Full Name */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -110,7 +110,7 @@ const WorkerStock: React.FC = () => {
             </Grid>
 
             {/* Metal Type */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -131,7 +131,7 @@ const WorkerStock: React.FC = () => {
             </Grid>
 
             {/* Metal Weight */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 required
@@ -143,7 +143,7 @@ const WorkerStock: React.FC = () => {
             </Grid>
 
             {/* Date */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 required

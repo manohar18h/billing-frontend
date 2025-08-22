@@ -80,7 +80,8 @@ const WorkerTransaction: React.FC = () => {
       <Box component="form" noValidate autoComplete="off">
         <Grid container spacing={3}>
           {/* Worker selector */}
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               select
               fullWidth
@@ -103,7 +104,7 @@ const WorkerTransaction: React.FC = () => {
           </Grid>
 
           {/* Pending amount (read-only) */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Pending Amount"
@@ -113,7 +114,7 @@ const WorkerTransaction: React.FC = () => {
           </Grid>
 
           {/* Amount to pay */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               type="number"

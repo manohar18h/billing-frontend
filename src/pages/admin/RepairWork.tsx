@@ -103,7 +103,7 @@ const RepairWork: React.FC = () => {
       <Box component="form" noValidate autoComplete="off">
         <Grid container spacing={3}>
           {/* Worker Name */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               select
               fullWidth
@@ -126,7 +126,7 @@ const RepairWork: React.FC = () => {
           </Grid>
 
           {/* Metal */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               select
               fullWidth
@@ -148,7 +148,7 @@ const RepairWork: React.FC = () => {
           </Grid>
 
           {/* Item name */}
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               label="Item Name"
@@ -159,7 +159,7 @@ const RepairWork: React.FC = () => {
           </Grid>
 
           {/* Weight */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
@@ -171,7 +171,7 @@ const RepairWork: React.FC = () => {
           </Grid>
 
           {/* Delivery date */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="date"
@@ -184,7 +184,7 @@ const RepairWork: React.FC = () => {
           </Grid>
 
           {/* Pays */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
@@ -194,7 +194,7 @@ const RepairWork: React.FC = () => {
               required
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
