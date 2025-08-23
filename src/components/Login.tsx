@@ -18,6 +18,11 @@ const LoginScreen: React.FC = () => {
     const payload = { username, password };
 
     try {
+      console.log(
+        "check Api: ",
+        await api.post<LoginResponse>("/auth/login", payload)
+      );
+
       const response = await api.post<LoginResponse>("/auth/login", payload); // ← use api
       const data = response.data;
 
