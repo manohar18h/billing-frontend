@@ -40,6 +40,15 @@ const WorkerStock: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
 
+      console.log(
+        "datacheck : " +
+          stockData.metal +
+          ", " +
+          Number(stockData.weight) +
+          ", " +
+          stockData.date
+      );
+
       const res = await api.post<ApiResponse>(
         `/admin/addWorkerStock/${selectedWorkerId}`,
         {

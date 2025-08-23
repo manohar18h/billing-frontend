@@ -25,10 +25,9 @@ const RepairWork: React.FC = () => {
   const handleChange = (field: string, val: string) =>
     setRepairData((prev) => ({ ...prev, [field]: val }));
   const formatDate = (iso: string) => {
-    const d = new Date(iso);
-    return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-      d.getDate()
-    ).padStart(2, "0")}-${d.getFullYear()}`;
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-"); // directly split "2025-08-23"
+    return `${m}-${d}-${y}`; // MM-DD-YYYY
   };
 
   const handleSubmit = async () => {

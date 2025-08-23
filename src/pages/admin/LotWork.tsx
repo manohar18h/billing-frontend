@@ -26,10 +26,9 @@ const LotWork: React.FC = () => {
   const handleChange = (field: string, value: string) =>
     setLotData((prev) => ({ ...prev, [field]: value }));
   const formatDate = (iso: string) => {
-    const d = new Date(iso);
-    return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-      d.getDate()
-    ).padStart(2, "0")}-${d.getFullYear()}`;
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-"); // directly split "2025-08-23"
+    return `${m}-${d}-${y}`; // MM-DD-YYYY
   };
   const handleSubmit = async () => {
     if (!selectedWorkerId) {
@@ -39,6 +38,8 @@ const LotWork: React.FC = () => {
 
     try {
       const token = localStorage.getItem("token");
+
+      console.log("checkRB : " + formatDate(lotData.date));
 
       const requestBody = {
         metal: lotData.metal,

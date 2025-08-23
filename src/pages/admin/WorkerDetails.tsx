@@ -4,6 +4,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useWorkers } from "@/contexts/WorkersContext";
 import { WorkerData } from "@/pages/admin/WorkerData";
 
+const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return "-";
+  const [y, m, d] = dateStr.split("T")[0].split("-");
+  return `${m}/${d}/${y}`;
+};
+
 const WorkerDetails: React.FC = () => {
   const { workerId } = useParams<{ workerId: string }>();
   const navigate = useNavigate();
@@ -82,7 +88,7 @@ const WorkerDetails: React.FC = () => {
                   {line("Weight", `${s.metalWeight} g`)}
                 </div>
                 <div className="pl-4">
-                  {line("Date", new Date(s.todaysDate).toLocaleDateString())}
+                  {line("Date", formatDate(s.todaysDate))}
                   {line("Stock ID", s.wstockId)}
                 </div>
               </div>
@@ -140,7 +146,7 @@ const WorkerDetails: React.FC = () => {
                 <div className="pl-4">
                   {line("Customer Pay", `₹${r.customerPay}`)}
                   {line("Worker Pay", `₹${r.workerPay}`)}
-                  {line("Date", r.deliveryDate ?? "-")}
+                  {line("Date", r.deliveryDate)}
                 </div>
               </div>
             ))}
