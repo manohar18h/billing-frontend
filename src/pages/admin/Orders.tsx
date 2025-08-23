@@ -1680,8 +1680,8 @@ const Orders: React.FC = () => {
             onClick={async () => {
               if (!selectedOrderId || !payAmount) return;
               try {
-                await axios.post(
-                  `${apiBase}/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
+                await api.post(
+                  `/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
                   {},
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -1776,8 +1776,8 @@ const Orders: React.FC = () => {
 
               try {
                 // ✅ 1. Make API call
-                await axios.post(
-                  `${apiBase}/admin/addWorkerPay/${assignOrderId}`,
+                await api.post(
+                  `/admin/addWorkerPay/${assignOrderId}`,
                   {
                     workPay: Number(workerPayAmount),
                     workerId: selectedWorkerId,
