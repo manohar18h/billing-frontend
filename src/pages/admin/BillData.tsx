@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Typography, IconButton } from "@mui/material";
+import api from "@/services/api"; // ← import your api.ts
 
 interface SelectedOrder {
   orderId: number;
@@ -44,15 +44,12 @@ const BillData: React.FC = () => {
   useEffect(() => {
     const phnNumber = localStorage.getItem("bill-phnNumber");
     if (phnNumber) {
-      axios
-        .get<Billing[]>(
-          `http://15.207.98.116:8081/admin/by-phone/${phnNumber}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        )
+      api
+        .get<Billing[]>(`/admin/by-phone/${phnNumber}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
         .then((response) => {
           if (response.data.length === 0) {
             // ❌ No billing data → redirect to customers with error message

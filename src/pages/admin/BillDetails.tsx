@@ -19,11 +19,11 @@ import {
   IconButton,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Grid from "@mui/material/Grid";
+import api from "@/services/api"; // ← import your api.ts
 
 interface selectedOrders {
   orderId: number;
@@ -79,7 +79,6 @@ const BillDetails: React.FC = () => {
   const [payMethod, setPayMethod] = useState("");
 
   const token = localStorage.getItem("token");
-  const apiBase = "http://15.207.98.116:8081";
   const billNumber = localStorage.getItem("billNumber");
   console.log("billNumber   ::        " + billNumber);
 
@@ -88,12 +87,9 @@ const BillDetails: React.FC = () => {
 
     const fetchCustomerDetails = async () => {
       try {
-        const res = await axios.get(
-          `${apiBase}/admin/getDataByBillNumber/${billNumber}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await api.get(`/admin/getDataByBillNumber/${billNumber}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         const customerData = res.data as Customer;
 
@@ -134,8 +130,8 @@ const BillDetails: React.FC = () => {
 
     fetchCustomerDetails();
 
-    axios
-      .get(`${apiBase}/admin/getAllWorkers`, {
+    api
+      .get(`/admin/getAllWorkers`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -200,8 +196,8 @@ const BillDetails: React.FC = () => {
     if (slectOrderId === null) return;
 
     try {
-      const response = await axios.delete(
-        `${apiBase}/admin/deleteDirectOrder/${slectOrderId}`,
+      const response = await api.delete(
+        `/admin/deleteDirectOrder/${slectOrderId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -520,8 +516,8 @@ const BillDetails: React.FC = () => {
             onClick={async () => {
               if (!selectedOrderId || !payAmount) return;
               try {
-                await axios.post(
-                  `${apiBase}/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
+                await api.post(
+                  `/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
                   {},
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -605,8 +601,8 @@ const BillDetails: React.FC = () => {
               if (!assignOrderId || !selectedWorkerId || !workerPayAmount)
                 return;
               try {
-                await axios.post(
-                  `${apiBase}/admin/addWorkerPay/${assignOrderId}`,
+                await api.post(
+                  `/admin/addWorkerPay/${assignOrderId}`,
                   {
                     workPay: Number(workerPayAmount),
                     workerId: selectedWorkerId,

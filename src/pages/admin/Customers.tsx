@@ -13,6 +13,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
+import api from "@/services/api"; // ← import your api.ts
 
 const SearchAddCustomer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,57 +106,42 @@ const SearchAddCustomer: React.FC = () => {
 
       console.log("requestbody : ", JSON.stringify(customer));
 
-      const response = await fetch(
-        "http://15.207.98.116:8081/admin/addCustomer",
+      const response = await api.post<Customer>(
+        "/admin/addCustomer",
+        customer,
         {
-          method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(customer),
         }
       );
 
-      let result;
-      const contentType = response.headers.get("content-type");
+      const result = response.data;
 
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        result = await response.text(); // fallback if backend sends plain text
-      }
-
-      console.log("result: ", result);
-
-      if (response.ok) {
+      if (result?.customerId) {
         localStorage.setItem("customerId", result.customerId);
         localStorage.setItem("from", "customer");
-        console.log("customerid in customer  :  " + result.customerId);
+        console.log("customerId in customer:", result.customerId);
+
         navigate("/admin/orders", {
           replace: true,
           state: { fromCustomer: true },
         });
       } else {
-        if (
-          typeof result === "string" &&
-          result.includes("Phone number is already registered")
-        ) {
-          toast.error(result);
-        } else if (result?.message) {
-          toast.error(result.message);
-        } else if (typeof result === "object") {
-          setFieldErrors(result);
-        } else {
-          toast.error("Failed to add customer");
-        }
+        toast.error("Failed to add customer");
       }
-    } catch (error) {
-      console.error("Error adding customer:", error);
-      toast.error("Something went wrong");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        // covers both network errors and general JS errors
+        console.error("Error adding customer:", error.message);
+        toast.error(error.message);
+      } else {
+        // fallback for unexpected error shapes
+        console.error("Unexpected error:", error);
+        toast.error("Something went wrong");
+      }
     }
   };
-
   useEffect(() => {
     if (location.state?.errorMessage) {
       toast.error(location.state.errorMessage);

@@ -15,8 +15,7 @@ import {
   TableBody,
   MenuItem,
 } from "@mui/material";
-
-const API_BASE = "http://15.207.98.116:8081";
+import api from "@/services/api";
 
 const goldItems = [
   "Pusthela Thadu",
@@ -114,6 +113,19 @@ type StockProduct = {
   barcodeValue?: string;
   barcodeImageBase64?: string;
 };
+
+interface StockProductResponse {
+  totalStock: number;
+  products: StockProduct[];
+}
+
+type StockApiResponse =
+  | number
+  | {
+      stock?: number;
+      newStock?: number;
+      count?: number;
+    };
 
 type ProductForm = {
   metal: string;
@@ -252,35 +264,27 @@ const Products: React.FC = () => {
 
     try {
       const range = q.weightRange.trim();
-
       const [minStr, maxStr] = range.split("-");
-      const min: number = parseInt(minStr, 10);
-      const max: number = parseInt(maxStr, 10);
+      const min = parseInt(minStr, 10);
+      const max = parseInt(maxStr, 10);
 
-      console.log(min); // 10
-      console.log(max); // 20
       setTopLoading(true);
       const token = localStorage.getItem("token") ?? "";
-      const url = `${API_BASE}/admin/getStockProduct/${encodeURIComponent(
+
+      // ✅ axios auto-prepends VITE_API_URL
+      const url = `/admin/getStockProduct/${encodeURIComponent(
         q.metal.trim()
       )}/${encodeURIComponent(q.itemName.trim())}/${encodeURIComponent(
         q.catalogue.trim()
       )}/${encodeURIComponent(q.design.trim())}/${q.size.trim()}/${min}/${max}`;
 
-      const res = await fetch(url, {
+      const res = await api.get<StockProductResponse>(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
 
-      if (!res.ok) {
-        // Not found → show the form
-        alert("No data found. Please add it below.");
-        setTopResults(null);
-        setShowProductForm(true);
-        return;
-      }
-
-      const data = await res.json();
+      const data = res.data;
       setTotalStock(data.totalStock);
+
       const list = Array.isArray(data.products) ? data.products : [];
       if (list.length) {
         setTopResults(list);
@@ -311,42 +315,37 @@ const Products: React.FC = () => {
       alert("Stock must be a number.");
       return;
     }
-    if (newStock == 0) {
-      alert("please enter a Non Zero Number to add.");
+    if (newStock === 0) {
+      alert("Please enter a non-zero number to add.");
       return;
     }
+
     const current = Number(row.stock ?? 0);
-    //const newTotal = current + newStock;
 
     try {
       setSavingId(row.stockProductId);
+
       const token = localStorage.getItem("token") ?? "";
-      const res = await fetch(
-        `${API_BASE}/admin/addStockCount/${
-          row.stockProductId
-        }?stock=${encodeURIComponent(String(newStock))}`,
+
+      const response = await api.post<StockApiResponse>(
+        `/admin/addStockCount/${row.stockProductId}`,
+        null, // no body
         {
-          method: "POST",
+          params: { stock: newStock },
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         }
       );
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        console.error("Update stock failed:", txt);
-        alert("Failed to update stock.");
-        return;
-      }
       let newTotal = current + newStock;
-      try {
-        const data = await res.json();
-        // accept number or { stock: X } / { newStock: X } / { count: X }
-        if (typeof data === "number") newTotal = Number(data);
-        else if (data && (data.stock ?? data.newStock ?? data.count) != null) {
-          newTotal = Number(data.stock ?? data.newStock ?? data.count);
-        }
-      } catch {
-        // response might be empty; keep computed newTotal
+
+      const data = response.data;
+
+      if (typeof data === "number") {
+        newTotal = data;
+      } else if (data && typeof data === "object") {
+        newTotal = Number(
+          data.stock ?? data.newStock ?? data.count ?? newTotal
+        );
       }
 
       setTopResults((prev) =>
@@ -361,14 +360,17 @@ const Products: React.FC = () => {
 
       setEditingId(null);
       setEditValue("");
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Stock update failed:", err.message);
+      } else {
+        console.error("Stock update failed:", err);
+      }
       alert("Something went wrong while updating.");
     } finally {
       setSavingId(null);
     }
   };
-
   /* --------- PRODUCTS form (bottom) --------- */
   const [product, setProduct] = useState<ProductForm>(initialProduct);
   const [errors, setErrors] = useState<
@@ -445,7 +447,6 @@ const Products: React.FC = () => {
       return;
     }
 
-    // numeric payload
     const payload = {
       metal: product.metal.trim(),
       itemName: product.itemName.trim(),
@@ -476,34 +477,31 @@ const Products: React.FC = () => {
     try {
       setSubmitLoading(true);
       const token = localStorage.getItem("token") ?? "";
-      const res = await fetch(`${API_BASE}/admin/addStockProduct`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(payload),
-      });
 
-      if (!res.ok) {
-        const txt = await res.text();
-        console.error("Add product failed:", txt);
-        alert("Failed to submit the product.");
-        return;
-      }
+      const res = await api.post<StockProduct | StockProduct[]>(
+        "/admin/addStockProduct",
+        payload,
+        {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        }
+      );
 
       alert("Submitted!");
-      const data: StockProduct | StockProduct[] = await res.json();
+      const data = res.data;
       setBottomResults(Array.isArray(data) ? data : [data]);
-      // await fetchBottomTable(); // show Table B rows
-    } catch (err) {
-      console.error(err);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Add product failed:", err.message);
+      } else {
+        console.error("Add product failed:", err);
+      }
       alert("Something went wrong while submitting.");
     } finally {
       setSubmitLoading(false);
     }
   };
-
   /* ------------------------------ UI ----------------------------- */
   return (
     <Box>

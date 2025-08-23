@@ -8,6 +8,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import { useWorkers } from "@/contexts/WorkersContext";
+import api from "@/services/api";
 
 const LotWork: React.FC = () => {
   const { workers, invalidate, refresh } = useWorkers();
@@ -39,45 +40,35 @@ const LotWork: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
 
-      console.log(
-        "requestBody",
-        JSON.stringify({
-          metal: lotData.metal,
-          itemName: lotData.itemName,
-          itemWeight: parseFloat(lotData.weight),
-          deliveryDate: formatDate(lotData.date),
-          pieces: parseInt(lotData.pieces),
-          wastage: parseInt(lotData.wastage),
-          amount: parseFloat(lotData.amount),
-        })
-      );
+      const requestBody = {
+        metal: lotData.metal,
+        itemName: lotData.itemName,
+        itemWeight: parseFloat(lotData.weight),
+        deliveryDate: formatDate(lotData.date),
+        pieces: parseInt(lotData.pieces),
+        wastage: parseInt(lotData.wastage),
+        amount: parseFloat(lotData.amount),
+      };
 
-      const res = await fetch(
-        `http://15.207.98.116:8081/admin/addLotWork/${selectedWorkerId}`,
+      console.log("requestBody", JSON.stringify(requestBody));
+
+      const res = await api.post(
+        `/admin/addLotWork/${selectedWorkerId}`,
+        requestBody,
         {
-          method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            metal: lotData.metal,
-            itemName: lotData.itemName,
-            itemWeight: parseFloat(lotData.weight),
-            deliveryDate: formatDate(lotData.date),
-            pieces: parseInt(lotData.pieces),
-            wastage: parseInt(lotData.wastage),
-            amount: parseFloat(lotData.amount),
-          }),
         }
       );
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result?.message || "Failed to submit");
+      const result = res.data;
+      console.log("API result:", result);
 
       alert("Lot work added successfully.");
       await invalidate();
       await refresh();
+
       // optional: clear form
       setLotData({
         metal: "",
@@ -89,9 +80,14 @@ const LotWork: React.FC = () => {
         amount: "",
       });
       setSelectedWorkerId("");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to submit lot work.");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error submitting lot work:", error.message);
+        alert(error.message);
+      } else {
+        console.error("Unexpected error:", error);
+        alert("Failed to submit lot work.");
+      }
     }
   };
 

@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useWorkers } from "@/contexts/WorkersContext";
+import api from "@/services/api";
 
 const Workers: React.FC = () => {
   const navigate = useNavigate();
@@ -47,28 +48,23 @@ const Workers: React.FC = () => {
     try {
       setFieldErrors({});
       const token = localStorage.getItem("token");
-      const res = await fetch("http://15.207.98.116:8081/admin/addWorker", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(worker),
-      });
-      const data = await res.json();
 
-      if (!res.ok) {
-        if (typeof data === "object") setFieldErrors(data);
-        else alert(data.message || "Failed to add worker");
-        return;
-      }
+      await api.post("/admin/addWorker", worker, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       alert("Worker added successfully!");
       await invalidate();
       await refresh();
       navigate("/admin/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Something went wrong.");
+
+      if (err.response?.data && typeof err.response.data === "object") {
+        setFieldErrors(err.response.data);
+      } else {
+        alert(err.response?.data?.message || "Failed to add worker");
+      }
     }
   };
 

@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 
 import { useWorkers } from "@/contexts/WorkersContext";
+import api from "@/services/api";
 
 const WorkerStock: React.FC = () => {
   const [stockData, setStockData] = useState({
@@ -21,43 +22,53 @@ const WorkerStock: React.FC = () => {
   const { invalidate, refresh } = useWorkers();
   const { workers, loading, error } = useWorkers();
   //console.log(workers);
-  const token = localStorage.getItem("token");
 
   const handleChange = (field: string, value: string) =>
     setStockData((s) => ({ ...s, [field]: value }));
+
+  interface ApiResponse {
+    message?: string;
+    [key: string]: any;
+  }
 
   const handleSubmit = async () => {
     if (!selectedWorkerId) {
       alert("Please select a worker name.");
       return;
     }
+
     try {
-      const res = await fetch(
-        `http://15.207.98.116:8081/admin/addWorkerStock/${selectedWorkerId}`,
+      const token = localStorage.getItem("token");
+
+      const res = await api.post<ApiResponse>(
+        `/admin/addWorkerStock/${selectedWorkerId}`,
         {
-          method: "POST",
+          metal: stockData.metal,
+          metalWeight: Number(stockData.weight),
+          todaysDate: stockData.date,
+        },
+        {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            metal: stockData.metal,
-            metalWeight: Number(stockData.weight),
-            todaysDate: stockData.date,
-          }),
         }
       );
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Failed to submit");
 
-      alert("Stock successfully added!");
+      alert(res.data.message ?? "Stock successfully added!");
       setStockData({ metal: "", weight: "", date: "" });
       setSelectedWorkerId("");
       await invalidate();
       await refresh();
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Check console for details.");
+    } catch (err: any) {
+      if (err.response?.data) {
+        const data: ApiResponse = err.response.data;
+        alert(data.message ?? "Failed to submit");
+      } else {
+        console.error(err);
+        alert(
+          err.message ?? "Something went wrong. Check console for details."
+        );
+      }
     }
   };
 

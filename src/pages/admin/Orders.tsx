@@ -21,13 +21,13 @@ import {
   MenuItem,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Order } from "@/models/Order";
+import api from "@/services/api";
 
 type BarcodeProduct = {
   metal: string;
@@ -172,7 +172,6 @@ const Orders: React.FC = () => {
   console.log("📦 Received numericOrderId from navigation:", numericOrderId);
 
   const token = localStorage.getItem("token");
-  const apiBase = "http://15.207.98.116:8081";
 
   const [exchange, setExchange] = useState({
     exchange_metal: "",
@@ -200,8 +199,8 @@ const Orders: React.FC = () => {
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
 
   useEffect(() => {
-    axios
-      .get<AppWorker[]>(`${apiBase}/admin/getAllWorkers`, {
+    api
+      .get<AppWorker[]>(`/admin/getAllWorkers`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -237,21 +236,37 @@ const Orders: React.FC = () => {
     }
   }, [location.key]);
 
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = async (): Promise<void> => {
     try {
+      if (!numericOrderId) return;
+
       const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found");
+        return;
+      }
+
       const response = await fetch(
         `http://15.207.98.116:8081/admin/getOrderByOrdId/${numericOrderId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch order: ${response.statusText}`);
+      }
+
       const data = await response.json();
 
       setOrdersList([data]);
-      setExchangeList(data.oldItems || []);
+      setExchangeList(data.oldItems ?? []);
     } catch (err) {
-      console.error(err);
+      if (err instanceof Error) {
+        console.error("Error fetching order:", err.message);
+      } else {
+        console.error("Unexpected error:", err);
+      }
     }
   };
 
@@ -261,11 +276,9 @@ const Orders: React.FC = () => {
     console.log("Request Body:", JSON.stringify(order, null, 2));
 
     try {
-      const response = await axios.post(
-        `${apiBase}/admin/addOrder/${customerId}`,
-        order,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post(`/admin/addOrder/${customerId}`, order, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const updatedOrders = [...ordersList, response.data];
 
       setOrdersList([...ordersList, response.data]);
@@ -302,8 +315,8 @@ const Orders: React.FC = () => {
       localStorage.setItem("exchangeItemAmount", exchangeItemAmount.toString());
       localStorage.setItem("exchangeOrderId", orderId.toString());
 
-      const response = await axios.post(
-        `${apiBase}/admin/addOldExItem/${orderId}`,
+      const response = await api.post(
+        `/admin/addOldExItem/${orderId}`,
         exchange,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -498,12 +511,9 @@ const Orders: React.FC = () => {
     if (slectOrderId === null) return;
 
     try {
-      const response = await axios.delete(
-        `${apiBase}/admin/deleteOrder/${slectOrderId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await api.delete(`/admin/deleteOrder/${slectOrderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (response.status === 200) {
         const message = response.data; // The backend message
@@ -532,8 +542,8 @@ const Orders: React.FC = () => {
     if (slectOldItemId === null) return;
 
     try {
-      const response = await axios.delete(
-        `${apiBase}/admin/deleteOldExItem/${slectOldItemId}`,
+      const response = await api.delete(
+        `/admin/deleteOldExItem/${slectOldItemId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -569,8 +579,8 @@ const Orders: React.FC = () => {
     const orderId = ordersList[ordersList.length - 1]?.orderId;
 
     try {
-      await axios.put(
-        `${apiBase}/admin/updateExchangeOrder/${editingExchangeId}`,
+      await api.put(
+        `/admin/updateExchangeOrder/${editingExchangeId}`,
         exchange,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -585,8 +595,8 @@ const Orders: React.FC = () => {
       setExchangeList(updatedExchange);
 
       // 🔹 Get updated order from backend again (since dueAmount changes after exchange)
-      const { data: updatedOrderFromBackend } = await axios.get<Order>(
-        `${apiBase}/admin/getOrderByOrdId/${orderId}`,
+      const { data: updatedOrderFromBackend } = await api.get<Order>(
+        `/admin/getOrderByOrdId/${orderId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -643,8 +653,8 @@ const Orders: React.FC = () => {
     if (!editingOrderId) return;
 
     try {
-      const { data: updatedOrderFromBackend } = await axios.put(
-        `${apiBase}/admin/updateOrder/${editingOrderId}`,
+      const { data: updatedOrderFromBackend } = await api.put(
+        `/admin/updateOrder/${editingOrderId}`,
         order,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -685,8 +695,8 @@ const Orders: React.FC = () => {
     }
 
     try {
-      const response = await axios.get<BarcodeProduct>(
-        `${apiBase}/admin/getByBarcode?barcodeValue=${searchQuery}`,
+      const response = await api.get<BarcodeProduct>(
+        `/admin/getByBarcode?barcodeValue=${searchQuery}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

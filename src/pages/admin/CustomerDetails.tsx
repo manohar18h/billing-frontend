@@ -18,9 +18,9 @@ import {
   MenuItem,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton } from "@mui/material";
+import api from "@/services/api";
 
 interface Order {
   orderId: number;
@@ -65,7 +65,6 @@ const CustomerDetails: React.FC = () => {
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
 
   const token = localStorage.getItem("token");
-  const apiBase = "http://15.207.98.116:8081";
   const phoneNumber = localStorage.getItem("phnNumber");
   console.log("phoneNumber   ::        " + phoneNumber);
 
@@ -74,12 +73,9 @@ const CustomerDetails: React.FC = () => {
 
     const fetchCustomerDetails = async () => {
       try {
-        const res = await axios.get(
-          `${apiBase}/admin/getByCusPhnNumber/${phoneNumber}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await api.get(`/admin/getByCusPhnNumber/${phoneNumber}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         const customerData = res.data as Customer;
 
@@ -114,8 +110,8 @@ const CustomerDetails: React.FC = () => {
 
     fetchCustomerDetails();
 
-    axios
-      .get(`${apiBase}/admin/getAllWorkers`, {
+    api
+      .get(`/admin/getAllWorkers`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -323,8 +319,8 @@ const CustomerDetails: React.FC = () => {
               if (!assignOrderId || !selectedWorkerId || !workerPayAmount)
                 return;
               try {
-                await axios.post(
-                  `${apiBase}/admin/addWorkerPay/${assignOrderId}`,
+                await api.post(
+                  `/admin/addWorkerPay/${assignOrderId}`,
                   {
                     workPay: Number(workerPayAmount),
                     workerId: selectedWorkerId,

@@ -1,7 +1,6 @@
 // src/pages/admin/AllBillingOrders.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import {
   Paper,
   Typography,
@@ -10,8 +9,7 @@ import {
   TextField,
   Box,
 } from "@mui/material";
-
-const API_BASE = "http://15.207.98.116:8081";
+import api from "@/services/api"; // ← import your api.ts
 
 type Billing = {
   billId: number;
@@ -77,10 +75,9 @@ const AllBillingOrders: React.FC = () => {
       setErr(null);
       try {
         const token = localStorage.getItem("token") ?? "";
-        const { data } = await axios.get<Billing[]>(
-          `${API_BASE}/admin/getALlBills`,
-          { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
-        );
+        const { data } = await api.get<Billing[]>(`/admin/getALlBills`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         if (!alive) return;
         setRows(Array.isArray(data) ? data : []);
       } catch (e) {

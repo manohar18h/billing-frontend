@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
 import { useLocation } from "react-router-dom";
+import api from "@/services/api";
 
 const GenerateBill: React.FC = () => {
   const printRef = useRef<HTMLDivElement>(null);
@@ -123,8 +123,8 @@ const GenerateBill: React.FC = () => {
         if (editBill === "editBill") {
           console.log("Updating existing bill with billNumber:", billNumber);
 
-          const res = await axios.put<Bill>(
-            `http://15.207.98.116:8081/admin/bill-updateData/${billNumber}`,
+          const res = await api.put<Bill>(
+            `/admin/bill-updateData/${billNumber}`,
             { orderId: selectedOrders }, // send array of orderIds
             {
               headers: {
@@ -138,8 +138,8 @@ const GenerateBill: React.FC = () => {
         } else {
           console.log("Creating new bill...");
 
-          const response = await axios.post<Bill>(
-            "http://15.207.98.116:8081/admin/bill-summary",
+          const response = await api.post<Bill>(
+            "/admin/bill-summary",
             { orderId: selectedOrders },
             {
               headers: {

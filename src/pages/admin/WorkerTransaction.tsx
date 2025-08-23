@@ -8,11 +8,19 @@ import {
   Grid,
 } from "@mui/material";
 import { useWorkers } from "@/contexts/WorkersContext";
+import api from "@/services/api";
 
 type FormState = {
   workerId: string;
   amount: string;
 };
+
+interface WorkerPaymentResponse {
+  paidAmount: number;
+  paymentDate: string;
+  wtid: number;
+  message?: string;
+}
 
 const WorkerTransaction: React.FC = () => {
   const { workers, invalidate, refresh } = useWorkers();
@@ -37,16 +45,16 @@ const WorkerTransaction: React.FC = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(
-        `http://15.207.98.116:8081/admin/addAmountWorker/${workerId}?paidAmount=${amount}`,
+
+      const res = await api.post<WorkerPaymentResponse>(
+        `/admin/addAmountWorker/${workerId}?paidAmount=${amount}`,
+        {}, // empty body since params are in URL
         {
-          method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result?.message || "Submit failed");
+      const result = res.data;
 
       alert(
         `✅ Transaction successful!\nPaid: ₹${
@@ -59,9 +67,13 @@ const WorkerTransaction: React.FC = () => {
       setForm({ workerId: "", amount: "" });
       await invalidate();
       await refresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("❌ Error submitting transaction.");
+      alert(
+        `❌ Error submitting transaction: ${
+          err.response?.data?.message || err.message
+        }`
+      );
     }
   };
 

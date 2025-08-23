@@ -19,8 +19,7 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-
-import axios from "axios"; // ✅ must be here
+import api from "@/services/api";
 
 interface MetalRates {
   metalPriceId: number;
@@ -41,8 +40,8 @@ const DashboardMain: React.FC = () => {
   const token = localStorage.getItem("token"); // your JWT token
 
   useEffect(() => {
-    axios
-      .get<MetalRates>("http://15.207.98.116:8081/admin/getRates", {
+    api
+      .get<MetalRates>("/admin/getRates", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -58,9 +57,9 @@ const DashboardMain: React.FC = () => {
   }, [token]);
 
   const saveEdit = () => {
-    axios
+    api
       .put<MetalRates>(
-        `http://15.207.98.116:8081/admin/updateRates?goldRate=${draft.gold}&silverRate=${draft.silver}`,
+        `/admin/updateRates?goldRate=${draft.gold}&silverRate=${draft.silver}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

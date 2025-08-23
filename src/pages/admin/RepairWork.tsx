@@ -8,6 +8,7 @@ import {
   Grid,
 } from "@mui/material";
 import { useWorkers } from "@/contexts/WorkersContext";
+import api from "@/services/api";
 
 const RepairWork: React.FC = () => {
   const { workers, invalidate, refresh } = useWorkers();
@@ -35,40 +36,27 @@ const RepairWork: React.FC = () => {
       alert("Please select a worker first.");
       return;
     }
+
     try {
       const token = localStorage.getItem("token");
-      console.log(
-        "RequestBody Reapir",
-        JSON.stringify({
-          metal: repairData.metal || "",
-          itemName: repairData.itemName,
-          metalWeight: parseFloat(repairData.metalWeight) || 0.0,
-          customerPay: parseFloat(repairData.customerPay),
-          workerPay: parseFloat(repairData.workerPay),
-          deliveryDate: formatDate(repairData.deliveryDate),
-        })
-      );
-      const res = await fetch(
-        `http://15.207.98.116:8081/admin/saveRepairWork/${selectedWorkerId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            metal: repairData.metal || "",
-            itemName: repairData.itemName,
-            metalWeight: parseFloat(repairData.metalWeight) || 0.0,
-            customerPay: parseFloat(repairData.customerPay),
-            workerPay: parseFloat(repairData.workerPay),
-            deliveryDate: formatDate(repairData.deliveryDate),
-          }),
-        }
-      );
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result?.message || "Failed to submit");
+      const body = {
+        metal: repairData.metal || "",
+        itemName: repairData.itemName,
+        metalWeight: parseFloat(repairData.metalWeight) || 0.0,
+        customerPay: parseFloat(repairData.customerPay),
+        workerPay: parseFloat(repairData.workerPay),
+        deliveryDate: formatDate(repairData.deliveryDate),
+      };
+
+      console.log("RequestBody Repair", body);
+
+      await api.post(`/admin/saveRepairWork/${selectedWorkerId}`, body, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       alert("Repair work submitted successfully.");
       setRepairData({
@@ -82,9 +70,14 @@ const RepairWork: React.FC = () => {
       setSelectedWorkerId("");
       await invalidate();
       await refresh();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to add repair work.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Repair work submit failed:", err.message);
+        alert(err.message);
+      } else {
+        console.error("Unexpected error:", err);
+        alert("Failed to add repair work.");
+      }
     }
   };
 

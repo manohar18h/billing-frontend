@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import api from "@/services/api";
 
 const OrderDetails: React.FC = () => {
   // Transaction model
@@ -102,23 +103,32 @@ const OrderDetails: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Assuming you already have an Order interface
+  // interface Order { ... }
+
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
         if (!numericOrderId) return;
+
         const token = localStorage.getItem("token");
-        const response = await fetch(
-          `http://15.207.98.116:8081/admin/getOrderByOrdId/${numericOrderId}`,
+
+        const response = await api.get<Order>( // 👈 tell Axios the response type
+          `/admin/getOrderByOrdId/${numericOrderId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-        const data = await response.json();
-        setOrder(data);
-      } catch (err) {
-        console.error(err);
+
+        setOrder(response.data); // ✅ now TypeScript knows response.data is Order
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error("Error fetching order details:", err.message);
+        } else {
+          console.error("Unexpected error:", err);
+        }
       } finally {
         setLoading(false);
       }
