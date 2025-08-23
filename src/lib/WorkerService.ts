@@ -1,3 +1,4 @@
+import api from "@/services/api";
 export interface Worker {
   workerId: number;
   fullName: string;
@@ -63,7 +64,6 @@ export interface Worker {
 const LS_KEY = "allWorkers";
 
 export async function fetchWorkers(force = false): Promise<Worker[]> {
-  localStorage.removeItem(LS_KEY);
   if (!force) {
     const cached = localStorage.getItem(LS_KEY);
     if (cached) return JSON.parse(cached) as Worker[];
@@ -71,13 +71,15 @@ export async function fetchWorkers(force = false): Promise<Worker[]> {
 
   const token = localStorage.getItem("token");
   console.log("[fetchWorkers] token →", token);
-  const res = await fetch("http://15.207.98.116:8081/admin/getAllWorkers", {
+
+  const res = await api.get<Worker[]>("/admin/getAllWorkers", {
     headers: { Authorization: `Bearer ${token}` },
   });
+
   console.log("[fetchWorkers] HTTP status →", res.status);
 
-  if (!res.ok) throw new Error("Failed to fetch workers");
-  const data = (await res.json()) as Worker[];
+  const data = res.data;
+
   localStorage.removeItem(LS_KEY);
   localStorage.setItem(LS_KEY, JSON.stringify(data));
   return data;
