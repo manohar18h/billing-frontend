@@ -116,6 +116,11 @@ function AdminPanelContent() {
     location.pathname.startsWith("/admin/order-details")
   ) {
     activeIndex = 1;
+  } else if (
+    location.pathname.startsWith("/admin/workers") ||
+    location.pathname.startsWith("/admin/worker-details")
+  ) {
+    activeIndex = 2;
   }
 
   if (activeIndex === -1) activeIndex = 0;

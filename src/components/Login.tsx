@@ -1,6 +1,12 @@
 // src/components/LoginScreen.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; // ← import this
+import api from "@/services/api"; // ← import your api.ts
+
+interface LoginResponse {
+  token: string;
+  role: string;
+}
 
 const LoginScreen: React.FC = () => {
   const [username, setUserName] = useState("");
@@ -9,36 +15,25 @@ const LoginScreen: React.FC = () => {
   const navigate = useNavigate(); // ← initialize
 
   const handleLogin = async () => {
-    const payLoad = {
-      username, // use lowercase 'username'
-      password,
-    };
-
-    console.log("Sending Login Payload:", payLoad);
+    const payload = { username, password };
 
     try {
-      const response = await fetch("http://15.207.98.116:8081/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payLoad),
-      });
-      if (!response.ok) {
-        throw new Error("Invalid Credentials or Server Error");
-      }
-      const data = await response.json();
-      console.log(" Login Success:", data);
+      const response = await api.post<LoginResponse>("/auth/login", payload); // ← use api
+      const data = response.data;
+
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
       setSuccess("Login Successful!");
 
-      // ⏩ Redirect to Admin Panel
-      setTimeout(() => {
-        navigate("/admin"); // ← change this path to match your AdminPanel route
-      }, 1000); // optional delay for user feedback
-    } catch (error) {
-      console.error("Login error:", error);
+      setTimeout(() => navigate("/admin"), 1000);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Login error:", error.message);
+        alert(`Login failed: ${error.message}`);
+      } else {
+        console.error("Login error:", error);
+        alert("Login failed! Unknown error occurred.");
+      }
     }
   };
 

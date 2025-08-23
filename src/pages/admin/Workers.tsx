@@ -121,7 +121,7 @@ const Workers: React.FC = () => {
         </Stack>
 
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 6, sm: 4 }}>
             <TextField
               label="Full Name"
               value={worker.fullName}
@@ -131,7 +131,7 @@ const Workers: React.FC = () => {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 6, sm: 4 }}>
             <TextField
               label="Username"
               value={worker.userName}
@@ -141,7 +141,7 @@ const Workers: React.FC = () => {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 6, sm: 4 }}>
             <TextField
               type="password"
               label="Password"
@@ -152,7 +152,7 @@ const Workers: React.FC = () => {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 6, sm: 4 }}>
             <TextField
               label="Phone Number"
               value={worker.phnNumber}
@@ -162,7 +162,7 @@ const Workers: React.FC = () => {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 6, sm: 4 }}>
             <TextField
               label="Village"
               value={worker.village}

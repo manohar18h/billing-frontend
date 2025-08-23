@@ -984,7 +984,7 @@ const Orders: React.FC = () => {
 
         <Grid container spacing={3}>
           {Object.entries(order).map(([key, value]) => (
-            <Grid size={{ xs: 12, sm: 6 }} key={key}>
+            <Grid size={{ xs: 4, sm: 2 }} key={key}>
               {key === "metal" ? (
                 <TextField
                   select
@@ -1429,7 +1429,7 @@ const Orders: React.FC = () => {
             </Typography>
             <Grid container spacing={3}>
               {Object.entries(exchange).map(([key, value]) => (
-                <Grid size={{ xs: 12, sm: 12 }} key={key}>
+                <Grid size={{ xs: 4, sm: 2 }} key={key}>
                   {key === "exchange_metal" ? (
                     <TextField
                       select

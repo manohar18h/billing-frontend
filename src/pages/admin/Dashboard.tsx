@@ -20,6 +20,8 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 
+import axios from "axios"; // ✅ must be here
+
 interface MetalRates {
   metalPriceId: number;
   goldRate: number;
