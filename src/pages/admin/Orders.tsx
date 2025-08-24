@@ -29,6 +29,78 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { Order } from "@/models/Order";
 import api from "@/services/api";
 
+interface WorkerPay {
+  workPay: number;
+  date: string;
+  wpid: number;
+  workerId: number;
+  fullName: string;
+  orderId: number;
+  metal: string;
+  metal_weight: number;
+}
+
+interface Transaction {
+  transactionId: number;
+  paymentMethod: string | null;
+  paymentType: string | null;
+  paidAmount: number;
+  paymentDate: string;
+  orderId: number;
+}
+
+interface OldItem {
+  oldItemId: number;
+  exchange_metal: string;
+  exchange_metal_name: string;
+  exchange_metal_weight: string;
+  exchange_purity_weight: string;
+  exchange_metal_price: number;
+  exchange_item_amount: number;
+  orderId: number;
+}
+
+interface Order {
+  orderId: number;
+  orderDate: string;
+  metal: string;
+  metalPrice: number;
+  itemName: string;
+  catalogue: string;
+  design: string;
+  size: string;
+  metal_weight: number;
+  wastage: number;
+  making_charges: number;
+  stone_weight: number;
+  stone_amount: number;
+  wax_weight: number;
+  wax_amount: number;
+  diamond_weight: number;
+  diamond_amount: number;
+  bits_weight: number;
+  bits_amount: number;
+  enamel_weight: number;
+  enamel_amount: number;
+  pearls_weight: number;
+  pearls_amount: number;
+  other_weight: number;
+  other_amount: number;
+  stock_box: number;
+  gross_weight: number;
+  total_item_amount: number;
+  discount: number;
+  oldExItemPrice: number;
+  paidAmount: number;
+  dueAmount: number;
+  receivedAmount: number | null;
+  delivery_status: string;
+  workerPay?: WorkerPay | null;
+  transactions: Transaction[];
+  oldItems?: OldItem[];
+  version: number;
+}
+
 type BarcodeProduct = {
   metal: string;
   itemName: string;
@@ -246,18 +318,14 @@ const Orders: React.FC = () => {
         return;
       }
 
-      const response = await fetch(
-        `http://15.207.98.116:8081/admin/getOrderByOrdId/${numericOrderId}`,
+      const response = await api.get<Order>(
+        `/admin/getOrderByOrdId/${numericOrderId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch order: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
 
       setOrdersList([data]);
       setExchangeList(data.oldItems ?? []);
@@ -477,8 +545,8 @@ const Orders: React.FC = () => {
     // Calculate wastage weight
     const wastageWeight = (data.wastage / 100) * data.metal_weight;
 
-    // If no wastage/extra → simple calculation
     let total_item_amount = 0;
+
     if (
       data.wastage === 0 &&
       data.stone_amount === 0 &&
@@ -489,10 +557,11 @@ const Orders: React.FC = () => {
       data.pearls_amount === 0 &&
       data.other_amount === 0
     ) {
-      total_item_amount = data.metal_weight * metalPrice + data.making_charges;
+      total_item_amount =
+        (data.metal_weight * metalPrice) / 10 + data.making_charges;
     } else {
       total_item_amount =
-        (data.metal_weight + wastageWeight) * metalPrice +
+        ((data.metal_weight + wastageWeight) * metalPrice) / 10 +
         data.making_charges +
         (data.stone_amount +
           data.wax_amount +
@@ -502,6 +571,9 @@ const Orders: React.FC = () => {
           data.pearls_amount +
           data.other_amount);
     }
+
+    // Remove decimals → integer only
+    total_item_amount = Math.round(total_item_amount);
 
     return { total_item_amount };
   };
@@ -807,6 +879,11 @@ const Orders: React.FC = () => {
   const parseNumber = (val: string | number | null | undefined): number =>
     val === "" || val == null || isNaN(Number(val)) ? 0 : Number(val);
 
+  const formatWeight = (value: number): string => {
+    const rounded = Math.round(value * 1000) / 1000; // max 3 decimals
+    return Number.isInteger(rounded) ? rounded.toString() : rounded.toString();
+  };
+
   // Auto-calculate gross weight whenever dependencies change
   useEffect(() => {
     const {
@@ -832,7 +909,7 @@ const Orders: React.FC = () => {
 
     setFormData((prev) => ({
       ...prev,
-      gross_weight: total.toString(),
+      gross_weight: formatWeight(total),
     }));
   }, [
     formData.metal_weight,
@@ -858,7 +935,7 @@ const Orders: React.FC = () => {
   };
 
   const calculateGrossWeight = (updatedOrder: typeof order) => {
-    return (
+    const total =
       parseNumber(updatedOrder.metal_weight) +
       parseNumber(updatedOrder.stone_weight) +
       parseNumber(updatedOrder.wax_weight) +
@@ -866,8 +943,9 @@ const Orders: React.FC = () => {
       parseNumber(updatedOrder.bits_weight) +
       parseNumber(updatedOrder.enamel_weight) +
       parseNumber(updatedOrder.pearls_weight) +
-      parseNumber(updatedOrder.other_weight)
-    );
+      parseNumber(updatedOrder.other_weight);
+
+    return Math.round(total * 1000) / 1000;
   };
 
   useEffect(() => {
@@ -901,7 +979,9 @@ const Orders: React.FC = () => {
     setExchange((prev) => ({
       ...prev,
       exchange_metal_price: price,
-      exchange_item_amount: price * prev.exchange_purity_weight,
+      exchange_item_amount: Math.round(
+        (price * prev.exchange_purity_weight) / 10
+      ),
     }));
   }, [exchange.exchange_metal, exchange.exchange_purity_weight]);
 
@@ -1168,13 +1248,19 @@ const Orders: React.FC = () => {
                   InputLabelProps={
                     key.includes("date") ? { shrink: true } : undefined
                   }
-                  value={value}
+                  value={
+                    typeof value === "number" && value === 0
+                      ? "" // show empty instead of 0
+                      : value
+                  }
                   error={!!orderErrors[key]}
                   helperText={orderErrors[key] || ""}
                   onChange={(e) => {
                     const newValue =
                       typeof value === "number"
-                        ? Number(e.target.value)
+                        ? e.target.value === "" // allow clearing
+                          ? 0
+                          : Number(e.target.value)
                         : e.target.value;
 
                     const updatedOrder = { ...order, [key]: newValue };
@@ -1486,13 +1572,19 @@ const Orders: React.FC = () => {
                       InputLabelProps={
                         key.includes("date") ? { shrink: true } : undefined
                       }
-                      value={value}
+                      value={
+                        typeof value === "number" && value === 0
+                          ? "" // show empty instead of 0
+                          : value
+                      }
                       error={!!exchangeErrors[key]}
                       helperText={exchangeErrors[key] || ""}
                       onChange={(e) => {
                         const newValue =
                           typeof value === "number"
-                            ? Number(e.target.value)
+                            ? e.target.value === "" // allow clearing
+                              ? 0
+                              : Number(e.target.value)
                             : e.target.value;
 
                         setExchange({ ...exchange, [key]: newValue });

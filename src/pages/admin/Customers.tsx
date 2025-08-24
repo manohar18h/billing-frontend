@@ -79,14 +79,14 @@ const SearchAddCustomer: React.FC = () => {
     }
 
     if (searchType === "Bill Number") {
-      if (trimmedQuery.toUpperCase().startsWith("HJ-")) {
-        localStorage.removeItem("billNumber");
-        localStorage.setItem("billNumber", trimmedQuery);
-        navigate("/admin/bill-details");
-      } else if (/^\d{10}$/.test(trimmedQuery)) {
+      if (/^\d{10}$/.test(trimmedQuery)) {
         localStorage.removeItem("bill-phnNumber");
         localStorage.setItem("bill-phnNumber", trimmedQuery);
         navigate("/admin/bill-Data");
+      } else {
+        localStorage.removeItem("billNumber");
+        localStorage.setItem("billNumber", "HJ-" + trimmedQuery);
+        navigate("/admin/bill-details");
       }
     } else if (searchType === "Phone Number") {
       localStorage.removeItem("phnNumber");
