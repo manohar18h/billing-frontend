@@ -2,12 +2,13 @@ import React, { useRef, useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Users,
-  HardHat,
+  PersonStanding,
   LogOut,
   Boxes,
-  Tag,
+  PackagePlus,
   Sun,
   Moon,
+  Gem,
   ReceiptText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,13 +34,20 @@ import WorkerDetails from "./admin/WorkerDetails";
 import AdminService from "./admin/Service";
 import { WorkersProvider } from "@/contexts/WorkersContext";
 import BillData from "./admin/BillData";
+import ShowroomMetalStock from "./admin/ShowroomMetalStock";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
   { icon: Users, label: "Customers", path: "/admin/Customers" },
-  { icon: HardHat, label: "Workers", path: "/admin/workers" },
+  { icon: PersonStanding, label: "Workers", path: "/admin/workers" },
   { icon: Boxes, label: "Worker Stock", path: "/admin/service" },
-  { icon: Tag, label: "Products", path: "/admin/products" },
+  { icon: PackagePlus, label: "Products", path: "/admin/products" },
+  {
+    icon: Gem,
+    label: "Showroom MetalStock",
+    path: "/admin/showroom-metal-stock",
+  },
+
   {
     icon: ReceiptText,
     label: "AllBillingOrders",
@@ -182,6 +190,10 @@ function AdminPanelContent() {
             <Route path="repair-work" element={<RepairWork />} />
             <Route path="lot-work" element={<LotWork />} />
             <Route path="worker-transaction" element={<WorkerTransaction />} />
+            <Route
+              path="showroom-metal-stock"
+              element={<ShowroomMetalStock />}
+            />
             <Route
               path="worker-details/:workerId"
               element={<WorkerDetails />}

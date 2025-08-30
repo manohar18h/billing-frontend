@@ -26,9 +26,14 @@ const WorkerStock: React.FC = () => {
   const handleChange = (field: string, value: string) =>
     setStockData((s) => ({ ...s, [field]: value }));
 
-  interface ApiResponse {
-    message?: string;
-    [key: string]: any;
+  interface AssignStockResponse {
+    metal: string;
+    metalWeight: number;
+    goldMetalWeight: number;
+    silverMetalWeight: number;
+    copperMetalWeight: number;
+    todaysDate: string;
+    wstockId: number;
   }
 
   const handleSubmit = async () => {
@@ -49,13 +54,12 @@ const WorkerStock: React.FC = () => {
           stockData.date
       );
 
-      const res = await api.post<ApiResponse>(
-        `/admin/addWorkerStock/${selectedWorkerId}`,
-        {
-          metal: stockData.metal,
-          metalWeight: Number(stockData.weight),
-          todaysDate: stockData.date,
-        },
+      // Updated API call
+      const res = await api.post<AssignStockResponse>(
+        `/admin/assign?workerId=${selectedWorkerId}&metal=${
+          stockData.metal
+        }&weight=${Number(stockData.weight)}`,
+        null, // no body since backend uses query params
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -63,15 +67,21 @@ const WorkerStock: React.FC = () => {
         }
       );
 
-      alert(res.data.message ?? "Stock successfully added!");
+      // Show the updated stock info from response
+      const data = res.data;
+      alert(
+        `Stock assigned successfully!\nMetal: ${data.metal}\nWeight: ${data.metalWeight}\n`
+      );
+
+      // Reset form
       setStockData({ metal: "", weight: "", date: "" });
       setSelectedWorkerId("");
-      await invalidate();
+
+      await invalidate(); // refresh data if using react-query or custom logic
       await refresh();
     } catch (err: any) {
       if (err.response?.data) {
-        const data: ApiResponse = err.response.data;
-        alert(data.message ?? "Failed to submit");
+        alert("Failed to submit stock: " + JSON.stringify(err.response.data));
       } else {
         console.error(err);
         alert(
