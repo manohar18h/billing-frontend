@@ -136,7 +136,7 @@ const ShowroomMetalStock: React.FC = () => {
           <Box mb={6} display="flex" justifyContent="center">
             <Grid container spacing={4} maxWidth={400} textAlign="center">
               {/* Row 1: Gold & Silver */}
-              <Grid item xs={6}>
+              <Grid size={{ xs: 3 }}>
                 <Typography variant="subtitle1">
                   <span style={{ color: "#8847FF", fontWeight: 600 }}>
                     Gold:{" "}
@@ -146,7 +146,7 @@ const ShowroomMetalStock: React.FC = () => {
                   </span>
                 </Typography>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 3 }}>
                 <Typography variant="subtitle1">
                   <span style={{ color: "#8847FF", fontWeight: 600 }}>
                     Silver:{" "}
@@ -158,7 +158,7 @@ const ShowroomMetalStock: React.FC = () => {
               </Grid>
 
               {/* Row 2: Copper */}
-              <Grid item xs={6}>
+              <Grid size={{ xs: 3 }}>
                 <Typography variant="subtitle1">
                   <span style={{ color: "#8847FF", fontWeight: 600 }}>
                     Copper:{" "}
