@@ -31,7 +31,6 @@ const WorkerStock: React.FC = () => {
     metalWeight: number;
     goldMetalWeight: number;
     silverMetalWeight: number;
-    copperMetalWeight: number;
     todaysDate: string;
     wstockId: number;
   }
@@ -156,7 +155,6 @@ const WorkerStock: React.FC = () => {
                 </MenuItem>
                 <MenuItem value="Gold">Gold</MenuItem>
                 <MenuItem value="Silver">Silver</MenuItem>
-                <MenuItem value="Copper">Copper</MenuItem>
               </TextField>
             </Grid>
 

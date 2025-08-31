@@ -564,15 +564,6 @@ const Orders: React.FC = () => {
     }
   };
 
-  // const calculateDueAmount = (order: any) => {
-  //   const totalItemAmount = Number(order.totalItemAmount) || 0;
-  //   const paidAmount = Number(order.paidAmount) || 0;
-  //   const discount = Number(order.discount) || 0;
-  //   const exchangeAmount = Number(order.exchange_item_amount) || 0;
-
-  //   return totalItemAmount - paidAmount - discount - exchangeAmount;
-  // };
-
   const handleUpdateExchange = async () => {
     if (!editingExchangeId) return;
 

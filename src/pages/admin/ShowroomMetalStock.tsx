@@ -34,7 +34,6 @@ interface MetalStock {
   metalStockId: number;
   totalGoldStock: number;
   totalSilverStock: number;
-  totalCopperStock: number;
   metalStockHistoryData: ShowroomHistory[];
 }
 
@@ -136,7 +135,7 @@ const ShowroomMetalStock: React.FC = () => {
           <Box mb={6} display="flex" justifyContent="center">
             <Grid container spacing={4} maxWidth={400} textAlign="center">
               {/* Row 1: Gold & Silver */}
-              <Grid size={{ xs: 3 }}>
+              <Grid size={{ xs: 4 }}>
                 <Typography variant="subtitle1">
                   <span style={{ color: "#8847FF", fontWeight: 600 }}>
                     Gold:{" "}
@@ -146,25 +145,13 @@ const ShowroomMetalStock: React.FC = () => {
                   </span>
                 </Typography>
               </Grid>
-              <Grid size={{ xs: 3 }}>
+              <Grid size={{ xs: 4 }}>
                 <Typography variant="subtitle1">
                   <span style={{ color: "#8847FF", fontWeight: 600 }}>
                     Silver:{" "}
                   </span>
                   <span style={{ color: "#FF8C00", fontWeight: 700 }}>
                     {metalStock.totalSilverStock} g
-                  </span>
-                </Typography>
-              </Grid>
-
-              {/* Row 2: Copper */}
-              <Grid size={{ xs: 3 }}>
-                <Typography variant="subtitle1">
-                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
-                    Copper:{" "}
-                  </span>
-                  <span style={{ color: "#FF8C00", fontWeight: 700 }}>
-                    {metalStock.totalCopperStock} g
                   </span>
                 </Typography>
               </Grid>
@@ -200,7 +187,6 @@ const ShowroomMetalStock: React.FC = () => {
               </MenuItem>
               <MenuItem value="Gold">Gold</MenuItem>
               <MenuItem value="Silver">Silver</MenuItem>
-              <MenuItem value="Copper">Copper</MenuItem>
             </TextField>
           </Grid>
 

@@ -60,14 +60,13 @@ const WorkerDetails: React.FC = () => {
             {line("Village", worker.village)}
             {line("Username", worker.userName)}
             {line("Earned Amount", `₹${worker.earnedAmount}`)}
-            {line("Earned Wastage", `${worker.earnedWastage}%`)}
           </div>
           <div className="pl-4">
+            {line("Earned Wastage", `${worker.earnedWastage}%`)}
             {line("Received Amount", `₹${worker.receivedAmount}`)}
             {line("Pending Amount", `₹${worker.pendingAmount}`)}
             {line("Gold Stock", `${worker.goldStock} g`)}
             {line("Silver Stock", `${worker.silverStock} g`)}
-            {line("Copper Stock", `₹${worker.copperStock} g`)}
           </div>
         </div>
 

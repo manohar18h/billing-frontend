@@ -12,7 +12,6 @@ export interface WorkerData {
 
   goldStock: number;
   silverStock: number;
-  copperStock: number;
 
   workerStocks: {
     metal: string;

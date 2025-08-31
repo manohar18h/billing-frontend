@@ -13,7 +13,6 @@ export interface Worker {
 
   goldStock: number;
   silverStock: number;
-  copperStock: number;
 
   /* --- nested collections --- */
   workerStocks: {

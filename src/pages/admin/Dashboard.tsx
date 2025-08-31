@@ -35,8 +35,13 @@ const DashboardMain: React.FC = () => {
     silver: Number(localStorage.getItem("SilverPrice")) || 0,
   });
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(prices);
-
+  const [draft, setDraft] = useState<{
+    gold: string | number;
+    silver: string | number;
+  }>({
+    gold: "",
+    silver: "",
+  });
   const token = localStorage.getItem("token"); // your JWT token
 
   useEffect(() => {
@@ -47,7 +52,7 @@ const DashboardMain: React.FC = () => {
       .then((res) => {
         const { goldRate, silverRate } = res.data;
         setPrices({ gold: goldRate, silver: silverRate });
-        setDraft({ gold: goldRate, silver: silverRate });
+        setDraft({ gold: String(goldRate), silver: String(silverRate) });
 
         // save in localStorage
         localStorage.setItem("GoldPrice", goldRate.toString());
@@ -160,18 +165,24 @@ const DashboardMain: React.FC = () => {
                     size="small"
                     type="number"
                     label="Gold ₹/g"
-                    value={draft.gold}
+                    value={draft.gold ?? ""} // show empty if null/undefined
                     onChange={(e) =>
-                      setDraft({ ...draft, gold: +e.target.value })
+                      setDraft({
+                        ...draft,
+                        gold: e.target.value, // can be "" or a number-like string
+                      })
                     }
                   />
                   <TextField
                     size="small"
                     type="number"
                     label="Silver ₹/g"
-                    value={draft.silver}
+                    value={draft.silver ?? ""}
                     onChange={(e) =>
-                      setDraft({ ...draft, silver: +e.target.value })
+                      setDraft({
+                        ...draft,
+                        silver: e.target.value,
+                      })
                     }
                   />
                   <Button

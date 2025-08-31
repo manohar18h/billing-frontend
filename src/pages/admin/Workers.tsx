@@ -37,7 +37,6 @@ const Workers: React.FC = () => {
     pendingAmount: 0.0,
     goldStock: 0.0,
     silverStock: 0.0,
-    copperStock: 0.0,
   });
   const [fieldErrors, setFieldErrors] = useState<{ [k: string]: string }>({});
 
