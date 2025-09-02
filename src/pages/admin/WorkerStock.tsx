@@ -169,19 +169,6 @@ const WorkerStock: React.FC = () => {
                 onChange={(e) => handleChange("weight", e.target.value)}
               />
             </Grid>
-
-            {/* Date */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <TextField
-                fullWidth
-                required
-                type="date"
-                label="Date"
-                value={stockData.date}
-                onChange={(e) => handleChange("date", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
           </Grid>
 
           {/* Submit */}
