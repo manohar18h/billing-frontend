@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // import React from "react";
 // import { useEffect } from "react";
 // import { useParams, useNavigate } from "react-router-dom";
@@ -202,6 +203,8 @@
 
 // export default WorkerDetails;
 
+=======
+>>>>>>> adf3d4952fd8fab804f9173d1b94a390e626c3d5
 // src/pages/admin/WorkerDetails.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
