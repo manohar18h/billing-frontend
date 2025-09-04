@@ -33,6 +33,8 @@ interface ShowroomHistory {
 
 interface MetalStock {
   metalStockId: number;
+  total24GoldStock: number;
+  total999SilverStock: number;
   totalGoldStock: number;
   totalSilverStock: number;
   metalStockHistoryData: ShowroomHistory[];
@@ -56,7 +58,11 @@ function normalizeYMD(raw: unknown): string | null {
       const mm = String(Number(parts[0])).padStart(2, "0");
       const dd = String(Number(parts[1])).padStart(2, "0");
       const yy = String(Number(parts[2]));
-      if (!Number.isNaN(Number(mm)) && !Number.isNaN(Number(dd)) && yy.length === 4) {
+      if (
+        !Number.isNaN(Number(mm)) &&
+        !Number.isNaN(Number(dd)) &&
+        yy.length === 4
+      ) {
         return `${yy}-${mm}-${dd}`;
       }
     }
@@ -75,17 +81,21 @@ function normalizeYMD(raw: unknown): string | null {
 }
 
 /** Exact-day and/or inclusive range logic used for both tables. */
-function inRangeExact(rawDate: unknown, fromDate: string, toDate: string): boolean {
+function inRangeExact(
+  rawDate: unknown,
+  fromDate: string,
+  toDate: string
+): boolean {
   const day = normalizeYMD(rawDate);
   if (!day) return false;
 
   const f = fromDate.trim();
   const t = toDate.trim();
 
-  if (!f && !t) return true;         // no filter → include all
+  if (!f && !t) return true; // no filter → include all
   if (f && t) return day >= f && day <= t; // inclusive range
-  if (f && !t) return day === f;    // exact single-day
-  if (!f && t) return day === t;    // exact single-day
+  if (f && !t) return day === f; // exact single-day
+  if (!f && t) return day === t; // exact single-day
   return true;
 }
 
@@ -139,15 +149,22 @@ const ShowroomMetalStock: React.FC = () => {
   const fetchShowroomHistory = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await api.get<ShowroomHistory[]>("/admin/history/showroom", {
-        headers: { Authorization: { Authorization: `Bearer ${token}` } as any }, // fallback if your api wrapper expects different shape
-      }).catch(async () => {
-        // Retry with normal header if the wrapper above doesn't like nested Authorization
-        const res2 = await api.get<ShowroomHistory[]>("/admin/history/showroom", {
-          headers: { Authorization: `Bearer ${token}` },
+      const res = await api
+        .get<ShowroomHistory[]>("/admin/history/showroom", {
+          headers: {
+            Authorization: { Authorization: `Bearer ${token}` } as any,
+          }, // fallback if your api wrapper expects different shape
+        })
+        .catch(async () => {
+          // Retry with normal header if the wrapper above doesn't like nested Authorization
+          const res2 = await api.get<ShowroomHistory[]>(
+            "/admin/history/showroom",
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          return res2;
         });
-        return res2;
-      });
       setHistoryResults(res.data || []);
     } catch (error) {
       console.error("Error fetching showroom history:", error);
@@ -187,13 +204,17 @@ const ShowroomMetalStock: React.FC = () => {
   // FILTERED VIEWS (applied to both tables)
   const filteredWorkerResults = useMemo(
     () =>
-      (workerResults || []).filter((w) => inRangeExact(w.date, fromDate, toDate)),
+      (workerResults || []).filter((w) =>
+        inRangeExact(w.date, fromDate, toDate)
+      ),
     [workerResults, fromDate, toDate]
   );
 
   const filteredHistoryResults = useMemo(
     () =>
-      (historyResults || []).filter((h) => inRangeExact(h.date, fromDate, toDate)),
+      (historyResults || []).filter((h) =>
+        inRangeExact(h.date, fromDate, toDate)
+      ),
     [historyResults, fromDate, toDate]
   );
 
@@ -223,10 +244,34 @@ const ShowroomMetalStock: React.FC = () => {
 
         {metalStock && (
           <Box mb={6} display="flex" justifyContent="center">
+            <Grid container spacing={5} maxWidth={400} textAlign="center">
+              <Grid size={{ xs: 5 }}>
+                <Typography variant="subtitle1">
+                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
+                    24 Gold:{" "}
+                  </span>
+                  <span style={{ color: "#00FF00", fontWeight: 700 }}>
+                    {metalStock.total24GoldStock} g
+                  </span>
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 5 }}>
+                <Typography variant="subtitle1">
+                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
+                    999 Silver:{" "}
+                  </span>
+                  <span style={{ color: "#00FF00", fontWeight: 700 }}>
+                    {metalStock.total999SilverStock} g
+                  </span>
+                </Typography>
+              </Grid>
+            </Grid>
             <Grid container spacing={4} maxWidth={400} textAlign="center">
               <Grid size={{ xs: 4 }}>
                 <Typography variant="subtitle1">
-                  <span style={{ color: "#8847FF", fontWeight: 600 }}>Gold: </span>
+                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
+                    Gold:{" "}
+                  </span>
                   <span style={{ color: "#FF8C00", fontWeight: 700 }}>
                     {metalStock.totalGoldStock} g
                   </span>
@@ -234,7 +279,9 @@ const ShowroomMetalStock: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 4 }}>
                 <Typography variant="subtitle1">
-                  <span style={{ color: "#8847FF", fontWeight: 600 }}>Silver: </span>
+                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
+                    Silver:{" "}
+                  </span>
                   <span style={{ color: "#FF8C00", fontWeight: 700 }}>
                     {metalStock.totalSilverStock} g
                   </span>
@@ -270,6 +317,8 @@ const ShowroomMetalStock: React.FC = () => {
               <MenuItem value="">
                 <em>Select Metal</em>
               </MenuItem>
+              <MenuItem value="24 Gold">24 Gold </MenuItem>
+              <MenuItem value="999 Silver">999 Silver</MenuItem>
               <MenuItem value="Gold">Gold</MenuItem>
               <MenuItem value="Silver">Silver</MenuItem>
             </TextField>
@@ -328,7 +377,12 @@ const ShowroomMetalStock: React.FC = () => {
       >
         <Typography
           variant="h6"
-          sx={{ fontWeight: 800, letterSpacing: 0.3, color: "primary.main", mb: 2 }}
+          sx={{
+            fontWeight: 800,
+            letterSpacing: 0.3,
+            color: "primary.main",
+            mb: 2,
+          }}
         >
           Filter by Date
         </Typography>
@@ -374,18 +428,18 @@ const ShowroomMetalStock: React.FC = () => {
                 fontWeight: 700,
                 borderColor: "#8847FF",
                 color: "#8847FF",
-                "&:hover": { bgcolor: "#8847FF", color: "#fff", borderColor: "#8847FF" },
+                "&:hover": {
+                  bgcolor: "#8847FF",
+                  color: "#fff",
+                  borderColor: "#8847FF",
+                },
               }}
             >
               Clear
             </Button>
           </Grid>
         </Grid>
-
-
       </Paper>
-
-
 
       {/* ---------- Worker Stock Table ---------- */}
       {filteredWorkerResults.length > 0 && (
@@ -406,16 +460,24 @@ const ShowroomMetalStock: React.FC = () => {
           <Table size="medium">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
                   Worker Name
                 </TableCell>
-                <TableCell sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
                   Metal
                 </TableCell>
-                <TableCell sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
                   Weight Assigned
                 </TableCell>
-                <TableCell sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
                   Date
                 </TableCell>
               </TableRow>
@@ -423,11 +485,21 @@ const ShowroomMetalStock: React.FC = () => {
             <TableBody>
               {filteredWorkerResults.map((p, idx) => (
                 <TableRow key={idx}>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>{p.workerName}</TableCell>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>{p.metalType}</TableCell>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>{p.weightAssigned}</TableCell>
+                  <TableCell sx={{ fontSize: "0.95rem" }}>
+                    {p.workerName}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.95rem" }}>
+                    {p.metalType}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.95rem" }}>
+                    {p.weightAssigned}
+                  </TableCell>
                   <TableCell
-                    sx={{ fontSize: "0.95rem", cursor: "pointer", textDecoration: "underline" }}
+                    sx={{
+                      fontSize: "0.95rem",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                    }}
                     title="Click to filter to this day"
                     onClick={() => drillToExactDate(p.date)}
                   >
@@ -459,13 +531,19 @@ const ShowroomMetalStock: React.FC = () => {
           <Table size="medium">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
                   Metal
                 </TableCell>
-                <TableCell sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
                   Weight
                 </TableCell>
-                <TableCell sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
                   Date
                 </TableCell>
               </TableRow>
@@ -474,9 +552,15 @@ const ShowroomMetalStock: React.FC = () => {
               {filteredHistoryResults.map((r) => (
                 <TableRow key={r.metalStockHisId}>
                   <TableCell sx={{ fontSize: "0.95rem" }}>{r.metal}</TableCell>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>{r.metalWeight}</TableCell>
+                  <TableCell sx={{ fontSize: "0.95rem" }}>
+                    {r.metalWeight}
+                  </TableCell>
                   <TableCell
-                    sx={{ fontSize: "0.95rem", cursor: "pointer", textDecoration: "underline" }}
+                    sx={{
+                      fontSize: "0.95rem",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                    }}
                     title="Click to filter to this day"
                     onClick={() => drillToExactDate(r.date)}
                   >
