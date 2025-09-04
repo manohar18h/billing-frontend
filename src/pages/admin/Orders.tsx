@@ -52,6 +52,7 @@ type BarcodeProduct = {
   pearls_amount: number;
   other_weight: number;
   other_amount: number;
+  stockBox: string;
   gross_weight: number;
 };
 
@@ -99,7 +100,7 @@ const Orders: React.FC = () => {
       pearls_amount: 0.0,
       other_weight: 0.0,
       other_amount: 0.0,
-      stock_box: 0.0,
+      stockBox: "",
       gross_weight: 0.0,
       discount: 0.0,
       delivery_status: "",
@@ -139,7 +140,7 @@ const Orders: React.FC = () => {
     pearls_amount: 0.0,
     other_weight: 0.0,
     other_amount: 0.0,
-    stock_box: 0.0,
+    stockBox: "",
     gross_weight: 0.0,
     discount: 0.0,
     delivery_status: "",
@@ -768,6 +769,7 @@ const Orders: React.FC = () => {
         pearls_amount: data.pearls_amount ?? prev.pearls_amount,
         other_weight: data.other_weight ?? prev.other_weight,
         other_amount: data.other_amount ?? prev.other_amount,
+        stockBox: data.stockBox ?? prev.stockBox,
         gross_weight: data.gross_weight ?? prev.gross_weight,
 
         // ✅ newly added
@@ -777,9 +779,16 @@ const Orders: React.FC = () => {
 
       setIsPrefilled(true);
       setOrderErrors({});
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch barcode data:", error);
-      alert("Barcode not found or error occurred");
+
+      // Check if backend returned a response with error message
+      if (error.response && error.response.data && error.response.data.error) {
+        const backendError = error.response.data.error;
+        alert(backendError); // or show in a UI component instead of alert
+      } else {
+        alert("Barcode not found or error occurred");
+      }
     }
   };
 
@@ -1370,7 +1379,7 @@ const Orders: React.FC = () => {
                           other_weight: ord.other_weight || 0,
                           other_amount: ord.other_amount || 0,
                           gross_weight: ord.gross_weight || 0,
-                          stock_box: ord.stock_box || 0,
+                          stockBox: ord.stockBox || 0,
                           discount: ord.discount || 0,
                           delivery_status: ord.delivery_status || "",
                           total_item_amount:

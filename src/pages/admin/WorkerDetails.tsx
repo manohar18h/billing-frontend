@@ -202,7 +202,6 @@
 
 // export default WorkerDetails;
 
-
 // src/pages/admin/WorkerDetails.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -228,7 +227,11 @@ function normalizeYMD(raw: unknown): string | null {
       const mm = String(Number(parts[0])).padStart(2, "0");
       const dd = String(Number(parts[1])).padStart(2, "0");
       const yy = String(Number(parts[2]));
-      if (!Number.isNaN(Number(mm)) && !Number.isNaN(Number(dd)) && yy.length === 4) {
+      if (
+        !Number.isNaN(Number(mm)) &&
+        !Number.isNaN(Number(dd)) &&
+        yy.length === 4
+      ) {
         return `${yy}-${mm}-${dd}`;
       }
     }
@@ -255,30 +258,38 @@ function displayFromRaw(raw: unknown): string {
 }
 
 /** Generic inRange (keeps your prior exact-match behavior for single date) */
-function inRangeExact(rawDate: unknown, fromDate: string, toDate: string): boolean {
+function inRangeExact(
+  rawDate: unknown,
+  fromDate: string,
+  toDate: string
+): boolean {
   const day = normalizeYMD(rawDate);
   if (!day) return false;
   const f = fromDate.trim();
   const t = toDate.trim();
 
   if (!f && !t) return true;
-  if (f && t)   return day >= f && day <= t;
-  if (f && !t)  return day === f; // exact single-day
-  if (!f && t)  return day === t; // exact single-day
+  if (f && t) return day >= f && day <= t;
+  if (f && !t) return day === f; // exact single-day
+  if (!f && t) return day === t; // exact single-day
   return true;
 }
 
 /** For Worker Stocks only: single “From” means ≥ From; single “To” means ≤ To */
-function inRangeOpenStart(rawDate: unknown, fromDate: string, toDate: string): boolean {
+function inRangeOpenStart(
+  rawDate: unknown,
+  fromDate: string,
+  toDate: string
+): boolean {
   const day = normalizeYMD(rawDate);
   if (!day) return false;
   const f = fromDate.trim();
   const t = toDate.trim();
 
   if (!f && !t) return true;
-  if (f && t)   return day >= f && day <= t;
-  if (f && !t)  return day >= f;   // OPEN-ENDED START
-  if (!f && t)  return day <= t;   // OPEN-ENDED END
+  if (f && t) return day >= f && day <= t;
+  if (f && !t) return day >= f; // OPEN-ENDED START
+  if (!f && t) return day <= t; // OPEN-ENDED END
   return true;
 }
 
@@ -314,15 +325,15 @@ const WorkerDetails: React.FC = () => {
   );
 
   // Filtered views
-const filteredStocks = useMemo(
-  () =>
-    fromDate || toDate
-      ? (worker.workerStocks ?? []).filter((s) =>
-          inRangeExact(s.todaysDate as any, fromDate, toDate)
-        )
-      : worker.workerStocks ?? [],
-  [worker.workerStocks, fromDate, toDate]
-);
+  const filteredStocks = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker.workerStocks ?? []).filter((s) =>
+            inRangeExact(s.todaysDate as any, fromDate, toDate)
+          )
+        : worker.workerStocks ?? [],
+    [worker.workerStocks, fromDate, toDate]
+  );
 
   const filteredLots = useMemo(
     () =>
@@ -561,17 +572,17 @@ const filteredStocks = useMemo(
         )}
 
         {/* If filters selected but nothing matched */}
-        {fromDate || toDate ? (
-          (filteredStocks?.length ?? 0) === 0 &&
-          (filteredLots?.length ?? 0) === 0 &&
-          (filteredRepairs?.length ?? 0) === 0 &&
-          (filteredPays?.length ?? 0) === 0 &&
-          (filteredTxs?.length ?? 0) === 0 && (
-            <p className="text-center text-sm text-gray-600">
-              No records found for the selected date range.
-            </p>
-          )
-        ) : null}
+        {fromDate || toDate
+          ? (filteredStocks?.length ?? 0) === 0 &&
+            (filteredLots?.length ?? 0) === 0 &&
+            (filteredRepairs?.length ?? 0) === 0 &&
+            (filteredPays?.length ?? 0) === 0 &&
+            (filteredTxs?.length ?? 0) === 0 && (
+              <p className="text-center text-sm text-gray-600">
+                No records found for the selected date range.
+              </p>
+            )
+          : null}
       </div>
     </div>
   );

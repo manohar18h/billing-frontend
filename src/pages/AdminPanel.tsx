@@ -7,6 +7,7 @@ import {
   Boxes,
   PackagePlus,
   Sun,
+  Box,
   Moon,
   Gem,
   ReceiptText,
@@ -35,6 +36,8 @@ import AdminService from "./admin/Service";
 import { WorkersProvider } from "@/contexts/WorkersContext";
 import BillData from "./admin/BillData";
 import ShowroomMetalStock from "./admin/ShowroomMetalStock";
+import StockBoxData from "./admin/StockBoxData";
+import StockBoxDetails from "./admin/StockBoxDetails";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
@@ -47,6 +50,8 @@ const menuItems = [
     label: "Showroom MetalStock",
     path: "/admin/showroom-metal-stock",
   },
+
+  { icon: Box, label: "Stock Box", path: "/admin/stockBox" },
 
   {
     icon: ReceiptText,
@@ -182,10 +187,15 @@ function AdminPanelContent() {
             <Route path="bill-details" element={<BillDetails />} />
             <Route path="bill-data" element={<BillData />} />
             <Route path="order-details/:orderId" element={<OrderDetails />} />
+            <Route
+              path="StockBoxDetails/:stockBoxId"
+              element={<StockBoxDetails />}
+            />
             <Route path="workers" element={<Workers />} />
             <Route path="service" element={<AdminService />} />
             <Route path="products" element={<Products />} />
             <Route path="billing-orders" element={<AllBillingOrders />} />
+            <Route path="stockBox" element={<StockBoxData />} />
             <Route path="worker-stock" element={<WorkerStock />} />
             <Route path="repair-work" element={<RepairWork />} />
             <Route path="lot-work" element={<LotWork />} />

@@ -110,6 +110,7 @@ type StockProduct = {
   other_amount: number;
   gross_weight: number;
   stock?: number;
+  stockBox: string;
   barcodeValue?: string;
   barcodeImageBase64?: string;
 };
@@ -151,6 +152,7 @@ type ProductForm = {
   other_weight: string;
   other_amount: string;
   stock: string;
+  stockBox: string;
   gross_weight: string; // auto (metal_weight + stone_weight)
 };
 
@@ -193,6 +195,7 @@ const initialProduct: ProductForm = {
   other_weight: "",
   other_amount: "",
   stock: "",
+  stockBox: "",
   gross_weight: "",
 };
 
@@ -471,6 +474,7 @@ const Products: React.FC = () => {
       other_weight: toNum(product.other_weight),
       other_amount: toNum(product.other_amount),
       stock: toNum(product.stock),
+      stockBox: product.stockBox.trim(),
       gross_weight: toNum(product.gross_weight),
     };
 
@@ -1183,6 +1187,17 @@ const Products: React.FC = () => {
                   inputProps={{ step: "any" }}
                   value={product.stock}
                   onChange={onProductChange("stock")}
+                  fullWidth
+                />
+              </Grid>
+
+              {/* Stock */}
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <TextField
+                  label="Stock Box"
+                  inputProps={{ step: "any" }}
+                  value={product.stockBox}
+                  onChange={onProductChange("stockBox")}
                   fullWidth
                 />
               </Grid>
