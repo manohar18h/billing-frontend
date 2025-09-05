@@ -275,7 +275,7 @@ const SalesPage: React.FC = () => {
                   return null;
                 }
                 return (
-                  <Grid item xs={12} sm={6} md={4} key={key}>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={key}>
                     <TextField
                       label={key.replace(/_/g, " ")}
                       value={value}
@@ -287,7 +287,7 @@ const SalesPage: React.FC = () => {
               })}
 
               {/* Metal Price */}
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   label="Metal Price"
                   value={metalPrice}
