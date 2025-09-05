@@ -18,7 +18,7 @@ type StockDataBox = {
   stockBoxData: StockBoxDataEntry[];
 };
 
-const StockBoxDetails: React.FC = () => {
+const SalesStockBoxDetails: React.FC = () => {
   const navigate = useNavigate();
 
   const stored = localStorage.getItem("selectedStockBox");
@@ -29,7 +29,7 @@ const StockBoxDetails: React.FC = () => {
       <div className="p-6 text-center">
         <p className="text-red-600">No stock box selected</p>
         <button
-          onClick={() => navigate("/admin/stockBox")}
+          onClick={() => navigate("/sales")}
           className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg"
         >
           Back
@@ -93,4 +93,4 @@ const StockBoxDetails: React.FC = () => {
   );
 };
 
-export default StockBoxDetails;
+export default SalesStockBoxDetails;

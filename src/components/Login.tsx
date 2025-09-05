@@ -18,14 +18,25 @@ const LoginScreen: React.FC = () => {
     const payload = { username, password };
 
     try {
-      const response = await api.post<LoginResponse>("/auth/login", payload); // ← use api
+      const response = await api.post<LoginResponse>("/auth/login", payload);
       const data = response.data;
 
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+
+      // Save token & role to localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
       setSuccess("Login Successful!");
 
-      setTimeout(() => navigate("/admin"), 1000);
+      // Redirect based on role returned by backend
+      if (data.role === "SALES") {
+        setTimeout(() => navigate("/sales"), 1000);
+      } else if (data.role === "ADMIN") {
+        setTimeout(() => navigate("/admin"), 1000);
+      } else {
+        alert("Unknown role, please contact support.");
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Login error:", error.message);
