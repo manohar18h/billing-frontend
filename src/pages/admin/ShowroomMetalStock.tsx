@@ -31,13 +31,34 @@ interface ShowroomHistory {
   date: string;
 }
 
+interface SellingMetal {
+  metalSellingId: number;
+  sellingMetal: string;
+  sellingMetalWeight: number;
+  sellingMetalAmount: number;
+  date: string;
+}
+
+interface OldReturnMetals {
+  oldMetalReturnId: number;
+  onlyExchange_metal: string;
+  onlyExchange_metal_name: string;
+  onlyExchange_metal_weight: number;
+  onlyExchange_item_amount: number;
+  date: string;
+}
+
 interface MetalStock {
   metalStockId: number;
   total24GoldStock: number;
   total999SilverStock: number;
   totalGoldStock: number;
   totalSilverStock: number;
+  totalOldGoldStock: number;
+  totalOldSilverStock: number;
   metalStockHistoryData: ShowroomHistory[];
+  sellingMetals: SellingMetal[];
+  oldReturnMetals: OldReturnMetals[];
 }
 
 /** Normalize many possible date strings to YYYY-MM-DD (no timezone shifts). */
@@ -100,13 +121,27 @@ function inRangeExact(
 }
 
 const ShowroomMetalStock: React.FC = () => {
-  // Form fields
-  const [metal, setMetal] = useState<string>("");
-  const [weight, setWeight] = useState<number | "">("");
+  // Add Metal Stock form
+  const [addMetal, setAddMetal] = useState<string>("");
+  const [addWeight, setAddWeight] = useState<number | "">("");
+
+  // Selling form
+  const [sellMetal, setSellMetal] = useState<string>("");
+  const [sellWeight, setSellWeight] = useState<number | "">("");
+  const [sellAmount, setSellAmount] = useState<number>(0);
+
+  // Old Return form
+  const [returnMetal, setReturnMetal] = useState<string>("");
+  const [returnMetalName, setReturnMetalName] = useState<string>("");
+  const [returnWeight, setReturnWeight] = useState<number | "">("");
+  const [returnAmount, setReturnAmount] = useState<number>(0);
 
   // Results
   const [workerResults, setWorkerResults] = useState<WorkerStock[]>([]);
   const [historyResults, setHistoryResults] = useState<ShowroomHistory[]>([]);
+  const [sellingData, setSellingData] = useState<SellingMetal[]>([]);
+  const [oldReturnData, setOldReturnData] = useState<OldReturnMetals[]>([]);
+
   const [metalStock, setMetalStock] = useState<MetalStock | null>(null);
 
   // Date filter (YYYY-MM-DD)
@@ -118,6 +153,8 @@ const ShowroomMetalStock: React.FC = () => {
     fetchWorkerStock();
     fetchShowroomHistory();
     fetchMetalStock();
+    fetchOldReturnData();
+    fetchSellingData();
   }, []);
 
   const fetchWorkerStock = async () => {
@@ -131,7 +168,28 @@ const ShowroomMetalStock: React.FC = () => {
       console.error("Error fetching worker stock:", error);
     }
   };
-
+  const fetchSellingData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.get<SellingMetal[]>("/admin/sellingData", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSellingData(res.data || []);
+    } catch (error) {
+      console.error("Error fetching worker stock:", error);
+    }
+  };
+  const fetchOldReturnData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.get<OldReturnMetals[]>("/admin/oldReturnData", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOldReturnData(res.data || []);
+    } catch (error) {
+      console.error("Error fetching worker stock:", error);
+    }
+  };
   const fetchMetalStock = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -172,8 +230,37 @@ const ShowroomMetalStock: React.FC = () => {
   };
 
   // Add Submit
-  const handleAddSubmit = async () => {
-    if (!metal || !weight) {
+  const handleSellingSubmit = async () => {
+    if (!sellMetal || !sellWeight || !sellAmount) {
+      alert("Please select metal and enter weight and amount");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await api.post(
+        `/admin/sellingMetal?sellingMetal=${sellMetal}&sellingMetalWeight=${sellWeight}&sellingMetalAmount=${sellAmount}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Submitted successfully!");
+
+      // refresh
+      fetchMetalStock();
+      fetchSellingData();
+
+      setSellMetal("");
+      setSellWeight("");
+      setSellAmount(0);
+    } catch (error) {
+      console.error("Error adding stock:", error);
+      alert("Failed to add stock");
+    }
+  };
+
+  // Add Submit
+  const handleOldReturnSubmit = async () => {
+    if (!returnMetal || !returnWeight || !returnAmount || !returnMetalName) {
       alert("Please select metal and enter weight");
       return;
     }
@@ -181,20 +268,48 @@ const ShowroomMetalStock: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       await api.post(
-        `/admin/add?metal=${metal}&weight=${weight}`,
+        `/admin/oldReturnMetal?onlyExchange_metal=${returnMetal}&onlyExchange_metal_name=${returnMetalName}&onlyExchange_metal_weight=${returnWeight}&onlyExchange_item_amount=${returnAmount}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Submitted successfully!");
+
+      fetchMetalStock();
+      fetchOldReturnData();
+
+      // clear
+      setReturnMetal("");
+      setReturnWeight("");
+      setReturnMetalName("");
+      setReturnAmount(0);
+    } catch (error) {
+      console.error("Error adding stock:", error);
+      alert("Failed to add stock");
+    }
+  };
+
+  // Add Submit
+  const handleAddSubmit = async () => {
+    if (!addMetal || !addWeight) {
+      alert("Please select metal and enter weight");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await api.post(
+        `/admin/add?metal=${addMetal}&weight=${addWeight}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert("Stock added successfully!");
 
-      // refresh
-      fetchWorkerStock();
       fetchShowroomHistory();
       fetchMetalStock();
 
       // clear
-      setMetal("");
-      setWeight("");
+      setAddMetal("");
+      setAddWeight("");
     } catch (error) {
       console.error("Error adding stock:", error);
       alert("Failed to add stock");
@@ -218,6 +333,20 @@ const ShowroomMetalStock: React.FC = () => {
     [historyResults, fromDate, toDate]
   );
 
+  const filteredSellingResult = useMemo(
+    () =>
+      (sellingData || []).filter((h) => inRangeExact(h.date, fromDate, toDate)),
+    [sellingData, fromDate, toDate]
+  );
+
+  const filteredOldReturnData = useMemo(
+    () =>
+      (oldReturnData || []).filter((h) =>
+        inRangeExact(h.date, fromDate, toDate)
+      ),
+    [oldReturnData, fromDate, toDate]
+  );
+
   const clearDates = () => {
     setFromDate("");
     setToDate("");
@@ -231,6 +360,33 @@ const ShowroomMetalStock: React.FC = () => {
     setToDate("");
   };
 
+  const [showAllOldReturn, setShowAllOldReturn] = useState(false);
+
+  const visibleOldReturnData = showAllOldReturn
+    ? filteredOldReturnData
+    : filteredOldReturnData.slice(0, 5); // show only 5 rows initially
+
+  const [showAllSelling, setShowAllSelling] = useState(false);
+
+  const visibleSellingResult = showAllSelling
+    ? filteredSellingResult
+    : filteredSellingResult.slice(0, 4); // 👈 show only 4 initially
+
+  const [showAllWorker, setShowAllWorker] = useState(false);
+
+  // 👇 Control visible rows
+  const visibleWorkerResults = showAllWorker
+    ? filteredWorkerResults
+    : filteredWorkerResults.slice(0, 4);
+
+  // State to control expand/collapse
+  const [showAllHistory, setShowAllHistory] = useState(false);
+
+  // Only show 4 rows initially
+  const visibleHistoryResults = showAllHistory
+    ? filteredHistoryResults
+    : filteredHistoryResults.slice(0, 4);
+
   return (
     <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6">
       {/* ---------- Add Stock Form ---------- */}
@@ -238,14 +394,23 @@ const ShowroomMetalStock: React.FC = () => {
         elevation={4}
         className="relative p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
       >
-        <Typography variant="h5" fontWeight={700} color="primary" mb={3}>
-          Showroom Metal Stock
-        </Typography>
-
         {metalStock && (
           <Box mb={6} display="flex" justifyContent="center">
-            <Grid container spacing={5} maxWidth={400} textAlign="center">
-              <Grid size={{ xs: 5 }}>
+            <Grid container spacing={3} maxWidth={600} textAlign="center">
+              {/* Title */}
+              <Grid size={{ xs: 12 }}>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  color="primary"
+                  mb={3}
+                >
+                  Showroom Metal Stock
+                </Typography>
+              </Grid>
+
+              {/* First Row */}
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="subtitle1">
                   <span style={{ color: "#8847FF", fontWeight: 600 }}>
                     24 Gold:{" "}
@@ -255,7 +420,7 @@ const ShowroomMetalStock: React.FC = () => {
                   </span>
                 </Typography>
               </Grid>
-              <Grid size={{ xs: 5 }}>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="subtitle1">
                   <span style={{ color: "#8847FF", fontWeight: 600 }}>
                     999 Silver:{" "}
@@ -265,9 +430,9 @@ const ShowroomMetalStock: React.FC = () => {
                   </span>
                 </Typography>
               </Grid>
-            </Grid>
-            <Grid container spacing={4} maxWidth={400} textAlign="center">
-              <Grid size={{ xs: 4 }}>
+
+              {/* Second Row */}
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="subtitle1">
                   <span style={{ color: "#8847FF", fontWeight: 600 }}>
                     Gold:{" "}
@@ -277,7 +442,7 @@ const ShowroomMetalStock: React.FC = () => {
                   </span>
                 </Typography>
               </Grid>
-              <Grid size={{ xs: 4 }}>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="subtitle1">
                   <span style={{ color: "#8847FF", fontWeight: 600 }}>
                     Silver:{" "}
@@ -287,9 +452,37 @@ const ShowroomMetalStock: React.FC = () => {
                   </span>
                 </Typography>
               </Grid>
+
+              {/* Third Row */}
+              <Grid size={{ xs: 6 }}>
+                <Typography variant="subtitle1">
+                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
+                    Old Gold:{" "}
+                  </span>
+                  <span style={{ color: "#FF8C00", fontWeight: 700 }}>
+                    {metalStock.totalOldGoldStock} g
+                  </span>
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <Typography variant="subtitle1">
+                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
+                    Old Silver:{" "}
+                  </span>
+                  <span style={{ color: "#FF8C00", fontWeight: 700 }}>
+                    {metalStock.totalOldSilverStock} g
+                  </span>
+                </Typography>
+              </Grid>
             </Grid>
           </Box>
         )}
+
+        <Box display="flex" mt={4}>
+          <Typography variant="h6" fontWeight={200} color="primary" mb={3}>
+            Add Metal Stock
+          </Typography>
+        </Box>
 
         <Grid container spacing={2}>
           {/* Metal Select */}
@@ -297,8 +490,8 @@ const ShowroomMetalStock: React.FC = () => {
             <TextField
               select
               label="Metal"
-              value={metal}
-              onChange={(e) => setMetal(e.target.value)}
+              value={addMetal}
+              onChange={(e) => setAddMetal(e.target.value)}
               fullWidth
               InputLabelProps={{ shrink: true }}
               SelectProps={{
@@ -330,9 +523,11 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Metal Weight (g)"
-              value={weight}
+              value={addWeight}
               onChange={(e) =>
-                setWeight(e.target.value === "" ? "" : Number(e.target.value))
+                setAddWeight(
+                  e.target.value === "" ? "" : Number(e.target.value)
+                )
               }
               required
             />
@@ -356,7 +551,192 @@ const ShowroomMetalStock: React.FC = () => {
               "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
             }}
           >
-            ADD
+            ADD Stock
+          </Button>
+        </Box>
+
+        <Box display="flex" mt={4}>
+          <Typography variant="h6" fontWeight={200} color="primary" mb={3}>
+            Selling Metal
+          </Typography>
+        </Box>
+
+        <Grid container spacing={2}>
+          {/* Metal Select */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              select
+              label="Selling Metal"
+              value={sellMetal}
+              onChange={(e) => setSellMetal(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (val: unknown): React.ReactNode =>
+                  val ? (
+                    <>{val as string}</>
+                  ) : (
+                    <span style={{ color: "#9aa0a6" }}>Select metal</span>
+                  ),
+                MenuProps: {
+                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Metal</em>
+              </MenuItem>
+              <MenuItem value="24 Gold">24 Gold </MenuItem>
+              <MenuItem value="999 Silver">999 Silver</MenuItem>
+              <MenuItem value="Gold">Gold</MenuItem>
+              <MenuItem value="Silver">Silver</MenuItem>
+            </TextField>
+          </Grid>
+
+          {/* Weight */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Metal Weight (g)"
+              value={sellWeight}
+              onChange={(e) =>
+                setSellWeight(
+                  e.target.value === "" ? "" : Number(e.target.value)
+                )
+              }
+              required
+            />
+          </Grid>
+          {/* Amount */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Amount"
+              value={sellAmount}
+              onChange={(e) => setSellAmount(Number(e.target.value))}
+              required
+            />
+          </Grid>
+        </Grid>
+
+        {/* Submit Button */}
+        <Box display="flex" justifyContent="center" mt={4}>
+          <Button
+            onClick={handleSellingSubmit}
+            variant="outlined"
+            sx={{
+              px: 4,
+              py: 1.5,
+              borderRadius: "12px",
+              fontWeight: "bold",
+              boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+              borderColor: "#8847FF",
+              color: "#8847FF",
+              transition: "all 0.3s",
+              "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+            }}
+          >
+            Submit
+          </Button>
+        </Box>
+
+        <Box display="flex" mt={4}>
+          <Typography variant="h6" fontWeight={200} color="primary" mb={3}>
+            Old Return Metal
+          </Typography>
+        </Box>
+
+        <Grid container spacing={2}>
+          {/* Metal Select */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              select
+              label="Metal"
+              value={returnMetal}
+              onChange={(e) => setReturnMetal(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (val: unknown): React.ReactNode =>
+                  val ? (
+                    <>{val as string}</>
+                  ) : (
+                    <span style={{ color: "#9aa0a6" }}>Select metal</span>
+                  ),
+                MenuProps: {
+                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Metal</em>
+              </MenuItem>
+              <MenuItem value="Gold">Gold</MenuItem>
+              <MenuItem value="Silver">Silver</MenuItem>
+            </TextField>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              type="text"
+              label="Metal Name"
+              value={returnMetalName}
+              onChange={(e) => setReturnMetalName(e.target.value)}
+              required
+            />
+          </Grid>
+
+          {/* Weight */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Metal Weight (g)"
+              value={returnWeight}
+              onChange={(e) =>
+                setReturnWeight(
+                  e.target.value === "" ? "" : Number(e.target.value)
+                )
+              }
+              required
+            />
+          </Grid>
+          {/* Amount */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Amount"
+              value={returnAmount}
+              onChange={(e) => setReturnAmount(Number(e.target.value))}
+              required
+            />
+          </Grid>
+        </Grid>
+
+        {/* Submit Button */}
+        <Box display="flex" justifyContent="center" mt={4}>
+          <Button
+            onClick={handleOldReturnSubmit}
+            variant="outlined"
+            sx={{
+              px: 4,
+              py: 1.5,
+              borderRadius: "12px",
+              fontWeight: "bold",
+              boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+              borderColor: "#8847FF",
+              color: "#8847FF",
+              transition: "all 0.3s",
+              "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+            }}
+          >
+            Submit Old Return
           </Button>
         </Box>
       </Paper>
@@ -441,7 +821,6 @@ const ShowroomMetalStock: React.FC = () => {
         </Grid>
       </Paper>
 
-      {/* ---------- Worker Stock Table ---------- */}
       {filteredWorkerResults.length > 0 && (
         <Paper
           elevation={4}
@@ -483,7 +862,7 @@ const ShowroomMetalStock: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredWorkerResults.map((p, idx) => (
+              {visibleWorkerResults.map((p: any, idx: number) => (
                 <TableRow key={idx}>
                   <TableCell sx={{ fontSize: "0.95rem" }}>
                     {p.workerName}
@@ -509,6 +888,23 @@ const ShowroomMetalStock: React.FC = () => {
               ))}
             </TableBody>
           </Table>
+
+          {/* 👇 Toggle Expand/Collapse */}
+          {filteredWorkerResults.length > 4 && (
+            <Typography
+              onClick={() => setShowAllWorker(!showAllWorker)}
+              sx={{
+                cursor: "pointer",
+                textAlign: "center",
+                marginTop: 2,
+                color: "#8847FF",
+                fontWeight: 600,
+                textDecoration: "underline",
+              }}
+            >
+              {showAllWorker ? "View Less" : "View More"}
+            </Typography>
+          )}
         </Paper>
       )}
 
@@ -549,7 +945,7 @@ const ShowroomMetalStock: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredHistoryResults.map((r) => (
+              {visibleHistoryResults.map((r) => (
                 <TableRow key={r.metalStockHisId}>
                   <TableCell sx={{ fontSize: "0.95rem" }}>{r.metal}</TableCell>
                   <TableCell sx={{ fontSize: "0.95rem" }}>
@@ -570,13 +966,211 @@ const ShowroomMetalStock: React.FC = () => {
               ))}
             </TableBody>
           </Table>
+
+          {/* Toggle Button */}
+          {filteredHistoryResults.length > 4 && (
+            <Typography
+              onClick={() => setShowAllHistory(!showAllHistory)}
+              sx={{
+                cursor: "pointer",
+                textAlign: "center",
+                marginTop: 2,
+                color: "#8847FF",
+                fontWeight: 600,
+                textDecoration: "underline",
+              }}
+            >
+              {showAllHistory ? "View Less" : "View More"}
+            </Typography>
+          )}
         </Paper>
       )}
+
+      {/* ---------- Selling Table ---------- */}
+      {filteredSellingResult.length > 0 && (
+        <Paper
+          elevation={4}
+          className="relative p-8 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
+        >
+          <Typography
+            variant="h5"
+            fontWeight={700}
+            color="primary"
+            mb={3}
+            align="center"
+          >
+            Selling Data
+          </Typography>
+
+          <Table size="medium">
+            <TableHead>
+              <TableRow>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  Metal
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  Weight
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  Amount
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  Date
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {visibleSellingResult.map((r) => (
+                <TableRow key={r.metalSellingId}>
+                  <TableCell sx={{ fontSize: "0.95rem" }}>
+                    {r.sellingMetal}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.95rem" }}>
+                    {r.sellingMetalWeight}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.95rem" }}>
+                    {r.sellingMetalAmount}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontSize: "0.95rem",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                    }}
+                    title="Click to filter to this day"
+                    onClick={() => drillToExactDate(r.date)}
+                  >
+                    {r.date}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {filteredSellingResult.length > 4 && (
+            <Typography
+              onClick={() => setShowAllSelling(!showAllSelling)}
+              sx={{
+                cursor: "pointer",
+                textAlign: "center",
+                marginTop: 2,
+                color: "#8847FF",
+                fontWeight: 600,
+                textDecoration: "underline",
+              }}
+            >
+              {showAllSelling ? "View Less" : "View More"}
+            </Typography>
+          )}
+        </Paper>
+      )}
+
+      <Paper
+        elevation={4}
+        className="relative p-8 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
+      >
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          color="primary"
+          mb={3}
+          align="center"
+        >
+          Old Return Data
+        </Typography>
+
+        <Table size="medium">
+          <TableHead>
+            <TableRow>
+              <TableCell
+                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+              >
+                Metal
+              </TableCell>
+              <TableCell
+                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+              >
+                Item Name
+              </TableCell>
+              <TableCell
+                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+              >
+                Weight
+              </TableCell>
+              <TableCell
+                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+              >
+                Amount
+              </TableCell>
+              <TableCell
+                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+              >
+                Date
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {visibleOldReturnData.map((r) => (
+              <TableRow key={r.oldMetalReturnId}>
+                <TableCell sx={{ fontSize: "0.95rem" }}>
+                  {r.onlyExchange_metal}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.95rem" }}>
+                  {r.onlyExchange_metal_name}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.95rem" }}>
+                  {r.onlyExchange_metal_weight}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.95rem" }}>
+                  {r.onlyExchange_item_amount}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontSize: "0.95rem",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                  }}
+                  title="Click to filter to this day"
+                  onClick={() => drillToExactDate(r.date)}
+                >
+                  {r.date}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        {filteredOldReturnData.length > 5 && (
+          <Typography
+            onClick={() => setShowAllOldReturn(!showAllOldReturn)}
+            sx={{
+              cursor: "pointer",
+              textAlign: "center",
+              marginTop: 2,
+              color: "#8847FF",
+              fontWeight: 600,
+              textDecoration: "underline",
+            }}
+          >
+            {showAllOldReturn ? "View Less" : "View More"}
+          </Typography>
+        )}
+      </Paper>
 
       {/* If filters selected but nothing matched */}
       {(fromDate || toDate) &&
         filteredWorkerResults.length === 0 &&
-        filteredHistoryResults.length === 0 && (
+        filteredHistoryResults.length === 0 &&
+        filteredSellingResult.length === 0 &&
+        filteredOldReturnData.length === 0 && (
           <p className="text-center text-sm text-gray-600">
             No records found for the selected date{toDate ? " range" : ""}.
           </p>
