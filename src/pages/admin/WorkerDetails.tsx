@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useWorkers } from "@/contexts/WorkersContext";
-import { WorkerData } from "@/pages/admin/WorkerData";
+import { WorkerData } from "@/lib/WorkerData";
 import { TextField, Button, Box } from "@mui/material";
 
 /** String-only normalizer: returns YYYY-MM-DD with NO timezone shifts */
