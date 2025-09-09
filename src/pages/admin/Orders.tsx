@@ -66,6 +66,7 @@ const Orders: React.FC = () => {
     setExchange({
       exchange_metal: "",
       exchange_metal_name: "",
+      exchange_metal_gross_weight: 0,
       exchange_metal_weight: 0,
       exchange_purity_weight: 0,
       exchange_metal_price: 0,
@@ -177,6 +178,7 @@ const Orders: React.FC = () => {
   const [exchange, setExchange] = useState({
     exchange_metal: "",
     exchange_metal_name: "",
+    exchange_metal_gross_weight: 0,
     exchange_metal_weight: 0,
     exchange_purity_weight: 0,
     exchange_metal_price: 0,
@@ -430,8 +432,10 @@ const Orders: React.FC = () => {
   ];
 
   const getItemOptions = () => {
-    if (order.metal === "Gold") return goldItems;
-    if (order.metal === "Silver") return silverItems;
+    if (order.metal === "24 Gold" || order.metal === "22 Gold")
+      return goldItems;
+    if (order.metal === "999 Silver" || order.metal === "995 Silver")
+      return silverItems;
     return [];
   };
 
@@ -465,9 +469,9 @@ const Orders: React.FC = () => {
     let metalPrice = 0;
 
     // Pick price based on selected metal
-    if (data.metal === "Gold") {
+    if (data.metal === "24 Gold" || data.metal === "22 Gold") {
       metalPrice = Number(localStorage.getItem("GoldPrice")) || 0;
-    } else if (data.metal === "Silver") {
+    } else if (data.metal === "999 Silver" || data.metal === "995 Silver") {
       metalPrice = Number(localStorage.getItem("SilverPrice")) || 0;
     }
 
@@ -698,9 +702,9 @@ const Orders: React.FC = () => {
 
       // ✅ figure out metal price from localStorage
       let getMetalPrice = 0;
-      if (data.metal === "Gold") {
+      if (data.metal === "24 Gold" || data.metal === "22 Gold") {
         getMetalPrice = Number(localStorage.getItem("GoldPrice")) || 0;
-      } else if (data.metal === "Silver") {
+      } else if (data.metal === "999 Silver" || data.metal === "995 Silver") {
         getMetalPrice = Number(localStorage.getItem("SilverPrice")) || 0;
       }
 
@@ -1010,17 +1014,22 @@ const Orders: React.FC = () => {
                   value={order.metal}
                   onChange={(e) => {
                     const selectedMetal = e.target.value;
-                    let metalPrice = 0;
 
-                    if (selectedMetal === "Gold") {
-                      metalPrice = parseFloat(
-                        localStorage.getItem("GoldPrice") || "0"
-                      );
-                    } else if (selectedMetal === "Silver") {
-                      metalPrice = parseFloat(
-                        localStorage.getItem("SilverPrice") || "0"
-                      );
+                    let metalPrice = 0;
+                    if (
+                      selectedMetal === "22 Gold" ||
+                      selectedMetal === "24 Gold"
+                    ) {
+                      metalPrice =
+                        Number(localStorage.getItem("GoldPrice")) || 0;
+                    } else if (
+                      selectedMetal === "995 Silver" ||
+                      selectedMetal === "999 Silver"
+                    ) {
+                      metalPrice =
+                        Number(localStorage.getItem("SilverPrice")) || 0;
                     }
+
                     setOrder({
                       ...order,
                       metal: selectedMetal,
@@ -1050,8 +1059,10 @@ const Orders: React.FC = () => {
                   <MenuItem value="">
                     <em>Select Metal</em>
                   </MenuItem>
-                  <MenuItem value="Gold">Gold</MenuItem>
-                  <MenuItem value="Silver">Silver</MenuItem>
+                  <MenuItem value="22 Gold">22 Gold</MenuItem>
+                  <MenuItem value="995 Silver">995 Silver</MenuItem>
+                  <MenuItem value="24 Gold">24 Gold</MenuItem>
+                  <MenuItem value="999 Silver">999 Silver</MenuItem>
                 </TextField>
               ) : key === "catalogue" ? (
                 <TextField
@@ -1218,10 +1229,11 @@ const Orders: React.FC = () => {
                   }}
                   disabled={
                     key === "gross_weight" ||
+                    key === "metalPrice" ||
                     (isPrefilled && key !== "discount")
                   }
                   InputProps={{
-                    readOnly: key === "gross_weight",
+                    readOnly: key === "gross_weight" || key === "metalPrice",
                   }}
                 />
               )}
@@ -1348,11 +1360,12 @@ const Orders: React.FC = () => {
                         setOrder({
                           metal: ord.metal || "",
                           metalPrice:
-                            ord.metal === "Gold"
+                            ord.metal === "24 Gold" || ord.metal === "22 Gold"
                               ? parseFloat(
                                   localStorage.getItem("GoldPrice") || "0"
                                 )
-                              : ord.metal === "Silver"
+                              : ord.metal === "999 Silver" ||
+                                ord.metal === "995 Silver"
                               ? parseFloat(
                                   localStorage.getItem("SilverPrice") || "0"
                                 )
@@ -1551,6 +1564,7 @@ const Orders: React.FC = () => {
                 <TableCell>Order Id</TableCell>
                 <TableCell>Metal</TableCell>
                 <TableCell>Name</TableCell>
+                <TableCell>Gross Weight</TableCell>
                 <TableCell>Weight</TableCell>
                 <TableCell>Purity</TableCell>
                 <TableCell>Metal Price</TableCell>
@@ -1566,6 +1580,7 @@ const Orders: React.FC = () => {
                   <TableCell>{ex.orderId}</TableCell>
                   <TableCell>{ex.exchange_metal}</TableCell>
                   <TableCell>{ex.exchange_metal_name}</TableCell>
+                  <TableCell>{ex.exchange_metal_gross_weight}</TableCell>
                   <TableCell>{ex.exchange_metal_weight}</TableCell>
                   <TableCell>{ex.exchange_purity_weight}</TableCell>
                   <TableCell>{ex.exchange_metal_price}</TableCell>
@@ -1578,6 +1593,7 @@ const Orders: React.FC = () => {
                         setExchange({
                           ...ex, // ensure dropdown works if needed
                         });
+
                         setShowExchangeForm((prev) => !prev);
                         setIsEditing(true);
                         setEditingExchangeId(ex.oldItemId);

@@ -552,8 +552,10 @@ const Products: React.FC = () => {
               <MenuItem value="">
                 <em>Select Metal</em>
               </MenuItem>
-              <MenuItem value="Gold">Gold</MenuItem>
-              <MenuItem value="Silver">Silver</MenuItem>
+              <MenuItem value="24 Gold">24 Gold</MenuItem>
+              <MenuItem value="999 Silver">999 Silver</MenuItem>
+              <MenuItem value="22 Gold">22 Gold</MenuItem>
+              <MenuItem value="995 Silver">995 Silver</MenuItem>
             </TextField>
           </Grid>
 
@@ -584,9 +586,11 @@ const Products: React.FC = () => {
               <MenuItem value="">
                 <em>Select Item</em>
               </MenuItem>
-              {(q.metal.toLowerCase() === "gold"
+              {(q.metal.toLowerCase() === "24 gold" ||
+              q.metal.toLowerCase() === "22 gold"
                 ? goldItems
-                : q.metal.toLowerCase() === "silver"
+                : q.metal.toLowerCase() === "999 silver" ||
+                  q.metal.toLocaleLowerCase() === "995 silver"
                 ? silverItems
                 : []
               ).map((it) => (
@@ -868,8 +872,10 @@ const Products: React.FC = () => {
                   <MenuItem value="">
                     <em>Select Metal</em>
                   </MenuItem>
-                  <MenuItem value="Gold">Gold</MenuItem>
-                  <MenuItem value="Silver">Silver</MenuItem>
+                  <MenuItem value="24 Gold">24 Gold</MenuItem>
+                  <MenuItem value="999 Silver">999 Silver</MenuItem>
+                  <MenuItem value="22 Gold">22 Gold</MenuItem>
+                  <MenuItem value="995 Silver">995 Silver</MenuItem>
                 </TextField>
               </Grid>
 
@@ -897,9 +903,11 @@ const Products: React.FC = () => {
                   <MenuItem value="">
                     <em>Select Item</em>
                   </MenuItem>
-                  {(product.metal.toLowerCase() === "gold"
+                  {(product.metal.toLowerCase() === "24 gold" ||
+                  product.metal.toLowerCase() === "22 gold"
                     ? goldItems
-                    : product.metal.toLowerCase() === "silver"
+                    : product.metal.toLowerCase() === "999 silver" ||
+                      product.metal.toLowerCase() === "995 silver"
                     ? silverItems
                     : []
                   ).map((it) => (

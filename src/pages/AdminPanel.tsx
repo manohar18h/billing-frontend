@@ -98,7 +98,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       ref={containerRef}
-      className="fixed left-0 top-0 h-screen w-[80px] z-20 bg-[rgb(136,71,255)] flex flex-col items-center py-4 rounded-tr-3xl rounded-br-3xl overflow-hidden"
+      className="fixed left-0 top-0 h-screen w-[80px] z-20 
+bg-gradient-to-b from-black via-gray-900 to-amber-700
+             flex flex-col items-center py-4 
+             rounded-tr-3xl rounded-br-3xl overflow-hidden shadow-xl"
     >
       {/* White curved highlight (same width as item = w-14) */}
       <div
@@ -147,7 +150,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           className="text-white hover:bg-white/15 rounded-xl"
           title="Toggle theme"
         >
-          {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+          {darkMode ? (
+            <Sun className="w-6 h-6" />
+          ) : (
+            <Moon className="w-6 h-6" />
+          )}
         </Button>
         <Button
           variant="ghost"
@@ -213,7 +220,7 @@ function AdminPanelContent() {
       />
 
       <main className="p-6 text-gray-800 dark:text-white">
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center">
+        <div className="bg-gradient-to-r from-gray-900 to-amber-700 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center ">
           <div>
             <h1 className="text-2xl font-bold">Hambire Jewellery</h1>
             <p className="text-sm opacity-80">
@@ -221,7 +228,11 @@ function AdminPanelContent() {
             </p>
           </div>
           <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200">
-            <img src={logo2} alt="HJ Logo" className="w-12 h-12 object-contain" />
+            <img
+              src={logo2}
+              alt="HJ Logo"
+              className="w-12 h-12 object-contain"
+            />
           </div>
         </div>
 
@@ -237,7 +248,10 @@ function AdminPanelContent() {
             <Route path="bill-details" element={<BillDetails />} />
             <Route path="bill-data" element={<BillData />} />
             <Route path="order-details/:orderId" element={<OrderDetails />} />
-            <Route path="StockBoxDetails/:stockBoxId" element={<StockBoxDetails />} />
+            <Route
+              path="StockBoxDetails/:stockBoxId"
+              element={<StockBoxDetails />}
+            />
             <Route path="workers" element={<Workers />} />
             <Route path="service" element={<AdminService />} />
             <Route path="products" element={<Products />} />
@@ -247,8 +261,14 @@ function AdminPanelContent() {
             <Route path="repair-work" element={<RepairWork />} />
             <Route path="lot-work" element={<LotWork />} />
             <Route path="worker-transaction" element={<WorkerTransaction />} />
-            <Route path="showroom-metal-stock" element={<ShowroomMetalStock />} />
-            <Route path="worker-details/:workerId" element={<WorkerDetails />} />
+            <Route
+              path="showroom-metal-stock"
+              element={<ShowroomMetalStock />}
+            />
+            <Route
+              path="worker-details/:workerId"
+              element={<WorkerDetails />}
+            />
             <Route path="*" element={<p>Select a menu option</p>} />
           </Routes>
         </div>

@@ -11,8 +11,10 @@ export interface Worker {
   receivedAmount: number;
   pendingAmount: number;
 
-  goldStock: number;
-  silverStock: number;
+  total24GoldStock: number;
+  total999SilverStock: number;
+  total22GoldStock: number;
+  total995SilverStock: number;
 
   /* --- nested collections --- */
   workerStocks: {

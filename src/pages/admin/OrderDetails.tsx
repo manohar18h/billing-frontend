@@ -152,7 +152,8 @@ const OrderDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
-      <div className="w-full max-w-5xl bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-8 relative">
+      <div className="w-full max-w-6xl bg-gradient-to-r  from-[#0f172a] via-[#1e1b4b] to-[#3b0764] text-white rounded-3xl shadow-2xl p-10 relative">
+        {/* Close button */}
         <button
           onClick={() => {
             const from = sessionStorage.getItem("from");
@@ -181,21 +182,23 @@ const OrderDetails: React.FC = () => {
               navigate("/admin");
             }
           }}
-          className="absolute top-4 right-4 bg-purple-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-purple-700"
+          className="absolute top-5 right-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-lg text-sm hover:opacity-90"
         >
-          Close
+          ✕ Close
         </button>
 
-        <h1 className="text-2xl font-bold text-purple-700 dark:text-purple-300 mb-6">
+        {/* Title */}
+        <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-8">
           Order Details (#{order.orderId})
         </h1>
 
-        <div className="grid grid-cols-2 gap-4 mb-8 relative">
-          <div className="pr-4 border-r border-gray-300 dark:border-gray-600">
+        {/* Order Info Grid */}
+        <div className="grid grid-cols-2 gap-8 mb-10">
+          <div className="pr-6 border-r border-purple-300/40">
             {[
               ["Order Date", new Date(order.orderDate).toLocaleString()],
               ["Item Name", order.itemName],
-              ["catalogue", order.catalogue],
+              ["Catalogue", order.catalogue],
               ["Design", order.design],
               ["Size", order.size],
               ["Metal", order.metal],
@@ -209,10 +212,17 @@ const OrderDetails: React.FC = () => {
               ["Wax Amount", order.wax_amount],
               ["Diamond Weight", order.diamond_weight],
               ["Diamond Amount", order.diamond_amount],
-            ].map(([label, value]) => displayField(String(label), value))}
+            ].map(([label, value]) => (
+              <p key={label} className="mb-2 text-lg">
+                <span className="text-purple-300 font-semibold">{label}:</span>{" "}
+                <span className="text-emerald-300 font-bold">
+                  {value || "—"}
+                </span>
+              </p>
+            ))}
           </div>
 
-          <div className="pl-4">
+          <div className="pl-6">
             {[
               ["Bits Weight", order.bits_weight],
               ["Bits Amount", order.bits_amount],
@@ -230,68 +240,134 @@ const OrderDetails: React.FC = () => {
               ["Paid Amount", order.paidAmount],
               ["Due Amount", order.dueAmount],
               ["Received Amount", order.receivedAmount],
-
               ["Delivery Status", order.delivery_status],
-            ].map(([label, value]) => displayField(String(label), value))}
+            ].map(([label, value]) => (
+              <p key={label} className="mb-2 text-lg">
+                <span className="text-pink-300 font-semibold">{label}:</span>{" "}
+                <span className="text-yellow-300 font-bold">
+                  {value || "—"}
+                </span>
+              </p>
+            ))}
           </div>
         </div>
 
+        {/* Old Exchanged Items */}
         {order.oldItems?.length > 0 && (
           <>
-            <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
+            <h2 className="text-2xl font-bold text-purple-300 mb-4">
               Old Exchanged Items
             </h2>
-
-            {order?.oldItems.map((item: OldItem, index: number) => (
-              <div key={index} className="grid grid-cols-2 gap-4 mb-8 relative">
-                <div className="pr-4 border-r border-gray-300 dark:border-gray-600">
-                  {displayField("Metal Name", item.exchange_metal_name)}
-                  {displayField("Item Name", item.exchange_metal)}
-                  {displayField("Weight", item.exchange_metal_weight)}
+            {order.oldItems.map((item: OldItem, index: number) => (
+              <div key={index} className="grid grid-cols-2 gap-6 mb-10">
+                <div className="pr-6 border-r border-purple-300/40">
+                  <p>
+                    <span className="text-purple-200">Metal Name:</span>{" "}
+                    <span className="text-emerald-300">
+                      {item.exchange_metal_name}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-purple-200">Item Name:</span>{" "}
+                    <span className="text-emerald-300">
+                      {item.exchange_metal}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-purple-200">Weight:</span>{" "}
+                    <span className="text-emerald-300">
+                      {item.exchange_metal_weight}
+                    </span>
+                  </p>
                 </div>
-                <div className="pl-4">
-                  {displayField("Metal Purity", item.exchange_purity_weight)}
-                  {displayField("Mtal Price", item.exchange_metal_price)}
-                  {displayField(
-                    "Total Amount",
-                    item.exchange_item_amount + "₹"
-                  )}
+                <div className="pl-6">
+                  <p>
+                    <span className="text-pink-200">Metal Purity:</span>{" "}
+                    <span className="text-yellow-300">
+                      {item.exchange_purity_weight}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-pink-200">Metal Price:</span>{" "}
+                    <span className="text-yellow-300">
+                      {item.exchange_metal_price}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-pink-200">Total Amount:</span>{" "}
+                    <span className="text-yellow-300">
+                      {item.exchange_item_amount} ₹
+                    </span>
+                  </p>
                 </div>
               </div>
             ))}
           </>
         )}
 
+        {/* Worker Details */}
         {order.workerPay && (
           <>
-            <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
+            <h2 className="text-2xl font-bold text-purple-300 mb-4">
               Worker Details
             </h2>
-            <div className="grid grid-cols-2 gap-4 mb-8 relative">
-              <div className="pr-4 border-r border-gray-300 dark:border-gray-600">
-                {displayField("Name", order.workerPay.fullName)}
-                {displayField("Work Pay", order.workerPay.workPay)}
-                {displayField("Metal", order.workerPay.metal)}
+            <div className="grid grid-cols-2 gap-6 mb-10">
+              <div className="pr-6 border-r border-purple-300/40">
+                <p>
+                  <span className="text-purple-200">Name:</span>{" "}
+                  <span className="text-emerald-300">
+                    {order.workerPay.fullName}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-purple-200">Work Pay:</span>{" "}
+                  <span className="text-emerald-300">
+                    {order.workerPay.workPay}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-purple-200">Metal:</span>{" "}
+                  <span className="text-emerald-300">
+                    {order.workerPay.metal}
+                  </span>
+                </p>
               </div>
-              <div className="pl-4">
-                {displayField("Metal Weight", order.workerPay.metal_weight)}
-                {displayField("Worker ID", order.workerPay.workerId)}
-                {displayField("WP ID", order.workerPay.wpid)}
+              <div className="pl-6">
+                <p>
+                  <span className="text-pink-200">Metal Weight:</span>{" "}
+                  <span className="text-yellow-300">
+                    {order.workerPay.metal_weight}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-pink-200">Worker ID:</span>{" "}
+                  <span className="text-yellow-300">
+                    {order.workerPay.workerId}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-pink-200">WP ID:</span>{" "}
+                  <span className="text-yellow-300">
+                    {order.workerPay.wpid}
+                  </span>
+                </p>
               </div>
             </div>
           </>
         )}
 
+        {/* Transactions */}
         {order.transactions?.length > 0 && (
           <>
-            <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
+            <h2 className="text-2xl font-bold text-purple-300 mb-4">
               Transactions
             </h2>
-            <ul className="mb-8 pl-5 list-disc">
+            <ul className="mb-10 pl-5 list-disc space-y-2">
               {order.transactions.map((tx: Transaction) => (
-                <li key={tx.transactionId}>
+                <li key={tx.transactionId} className="text-emerald-300">
                   ₹{tx.paidAmount} on{" "}
-                  {new Date(tx.paymentDate).toLocaleString()}-{tx.paymentType}
+                  {new Date(tx.paymentDate).toLocaleString()} -{" "}
+                  <span className="text-yellow-300">{tx.paymentType}</span>
                 </li>
               ))}
             </ul>
@@ -301,5 +377,4 @@ const OrderDetails: React.FC = () => {
     </div>
   );
 };
-
 export default OrderDetails;

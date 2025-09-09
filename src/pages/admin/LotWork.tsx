@@ -144,8 +144,10 @@ const LotWork: React.FC = () => {
               <MenuItem value="" disabled>
                 -- Select Metal --
               </MenuItem>
-              <MenuItem value="Gold">Gold</MenuItem>
-              <MenuItem value="Silver">Silver</MenuItem>
+              <MenuItem value="24 Gold">24 Gold</MenuItem>
+              <MenuItem value="999 Silver">999 Silver</MenuItem>
+              <MenuItem value="22 Gold">22 Gold</MenuItem>
+              <MenuItem value="995 Silver">995 Silver</MenuItem>
             </TextField>
           </Grid>
 

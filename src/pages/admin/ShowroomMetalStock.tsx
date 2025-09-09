@@ -13,8 +13,10 @@ import {
   TableCell,
   TableBody,
   MenuItem,
+  IconButton,
 } from "@mui/material";
 import api from "@/services/api"; // ✅ adjust path if needed
+import DeleteIcon from "@mui/icons-material/Delete";
 
 // Types
 interface WorkerStock {
@@ -44,6 +46,7 @@ interface OldReturnMetals {
   onlyExchange_metal: string;
   onlyExchange_metal_name: string;
   onlyExchange_metal_weight: number;
+  onlyExchange_metal_purity_weight: number;
   onlyExchange_item_amount: number;
   date: string;
 }
@@ -56,6 +59,8 @@ interface MetalStock {
   totalSilverStock: number;
   totalOldGoldStock: number;
   totalOldSilverStock: number;
+  totalOldPuritySilverWeight: number;
+  totalOldPurityGoldWeight: number;
   metalStockHistoryData: ShowroomHistory[];
   sellingMetals: SellingMetal[];
   oldReturnMetals: OldReturnMetals[];
@@ -134,6 +139,7 @@ const ShowroomMetalStock: React.FC = () => {
   const [returnMetal, setReturnMetal] = useState<string>("");
   const [returnMetalName, setReturnMetalName] = useState<string>("");
   const [returnWeight, setReturnWeight] = useState<number | "">("");
+  const [returnPurityWeight, setreturnPurityWeight] = useState<number>(0);
   const [returnAmount, setReturnAmount] = useState<number>(0);
 
   // Results
@@ -268,7 +274,7 @@ const ShowroomMetalStock: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       await api.post(
-        `/admin/oldReturnMetal?onlyExchange_metal=${returnMetal}&onlyExchange_metal_name=${returnMetalName}&onlyExchange_metal_weight=${returnWeight}&onlyExchange_item_amount=${returnAmount}`,
+        `/admin/oldReturnMetal?onlyExchange_metal=${returnMetal}&onlyExchange_metal_name=${returnMetalName}&onlyExchange_metal_weight=${returnWeight}&onlyExchange_metal_purity_weight=${returnPurityWeight}&onlyExchange_item_amount=${returnAmount}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -387,6 +393,29 @@ const ShowroomMetalStock: React.FC = () => {
     ? filteredHistoryResults
     : filteredHistoryResults.slice(0, 4);
 
+  const handleDeleteAll = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete all old return data?"
+    );
+
+    const token = localStorage.getItem("token");
+    if (!confirmDelete) return;
+    try {
+      await api.delete("/admin/deleteAllOldReturn", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      alert("All old return data deleted successfully ✅");
+      fetchMetalStock();
+      fetchOldReturnData();
+      window.location.reload(); // refresh data OR trigger re-fetch
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("❌ Failed to delete old return data");
+    }
+  };
+
   return (
     <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6">
       {/* ---------- Add Stock Form ---------- */}
@@ -395,87 +424,89 @@ const ShowroomMetalStock: React.FC = () => {
         className="relative p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
       >
         {metalStock && (
-          <Box mb={6} display="flex" justifyContent="center">
-            <Grid container spacing={3} maxWidth={600} textAlign="center">
+          <div className="mb-12 flex justify-center">
+            <div
+              className="w-full max-w-3xl rounded-2xl shadow-xl p-6"
+              style={{
+                background: "linear-gradient(135deg, #1e293b, #0f172a)", // dark gradient
+                color: "#fff",
+              }}
+            >
               {/* Title */}
-              <Grid size={{ xs: 12 }}>
-                <Typography
-                  variant="h5"
-                  fontWeight={700}
-                  color="primary"
-                  mb={3}
-                >
-                  Showroom Metal Stock
-                </Typography>
-              </Grid>
+              <h2 className="text-2xl font-bold text-center mb-6 text-amber-300">
+                Showroom Metal Stock
+              </h2>
 
-              {/* First Row */}
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle1">
-                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
-                    24 Gold:{" "}
-                  </span>
-                  <span style={{ color: "#00FF00", fontWeight: 700 }}>
-                    {metalStock.total24GoldStock} g
-                  </span>
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle1">
-                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
-                    999 Silver:{" "}
-                  </span>
-                  <span style={{ color: "#00FF00", fontWeight: 700 }}>
-                    {metalStock.total999SilverStock} g
-                  </span>
-                </Typography>
-              </Grid>
+              {/* Grid */}
+              <div className="grid grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-3 pr-4 border-r border-white/20">
+                  <p className="flex justify-between">
+                    <span className="text-gray-300 font-medium">24 Gold:</span>
+                    <span className="text-emerald-300 font-bold">
+                      {metalStock.total24GoldStock} g
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-gray-300 font-medium">22 Gold:</span>
+                    <span className="text-orange-300 font-bold">
+                      {metalStock.totalGoldStock} g
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-gray-300 font-medium">Old Gold:</span>
+                    <span className="text-yellow-400 font-bold">
+                      {metalStock.totalOldGoldStock} g
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-gray-300 font-medium">
+                      Old Purity Gold:
+                    </span>
+                    <span className="text-red-400 font-bold">
+                      {metalStock.totalOldPurityGoldWeight} g
+                    </span>
+                  </p>
+                </div>
 
-              {/* Second Row */}
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle1">
-                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
-                    Gold:{" "}
-                  </span>
-                  <span style={{ color: "#FF8C00", fontWeight: 700 }}>
-                    {metalStock.totalGoldStock} g
-                  </span>
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle1">
-                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
-                    Silver:{" "}
-                  </span>
-                  <span style={{ color: "#FF8C00", fontWeight: 700 }}>
-                    {metalStock.totalSilverStock} g
-                  </span>
-                </Typography>
-              </Grid>
-
-              {/* Third Row */}
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle1">
-                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
-                    Old Gold:{" "}
-                  </span>
-                  <span style={{ color: "#FF8C00", fontWeight: 700 }}>
-                    {metalStock.totalOldGoldStock} g
-                  </span>
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="subtitle1">
-                  <span style={{ color: "#8847FF", fontWeight: 600 }}>
-                    Old Silver:{" "}
-                  </span>
-                  <span style={{ color: "#FF8C00", fontWeight: 700 }}>
-                    {metalStock.totalOldSilverStock} g
-                  </span>
-                </Typography>
-              </Grid>
-            </Grid>
-          </Box>
+                {/* Right Column */}
+                <div className="space-y-3 pl-4">
+                  <p className="flex justify-between">
+                    <span className="text-gray-300 font-medium">
+                      999 Silver:
+                    </span>
+                    <span className="text-emerald-300 font-bold">
+                      {metalStock.total999SilverStock} g
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-gray-300 font-medium">
+                      995 Silver:
+                    </span>
+                    <span className="text-orange-300 font-bold">
+                      {metalStock.totalSilverStock} g
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-gray-300 font-medium">
+                      Old Silver:
+                    </span>
+                    <span className="text-yellow-400 font-bold">
+                      {metalStock.totalOldSilverStock} g
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-gray-300 font-medium">
+                      Old Purity Silver:
+                    </span>
+                    <span className="text-red-400 font-bold">
+                      {metalStock.totalOldPuritySilverWeight} g
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         <Box display="flex" mt={4}>
@@ -512,8 +543,8 @@ const ShowroomMetalStock: React.FC = () => {
               </MenuItem>
               <MenuItem value="24 Gold">24 Gold </MenuItem>
               <MenuItem value="999 Silver">999 Silver</MenuItem>
-              <MenuItem value="Gold">Gold</MenuItem>
-              <MenuItem value="Silver">Silver</MenuItem>
+              <MenuItem value="22 Gold">22 Gold</MenuItem>
+              <MenuItem value="995 Silver">995 Silver</MenuItem>
             </TextField>
           </Grid>
 
@@ -589,8 +620,8 @@ const ShowroomMetalStock: React.FC = () => {
               </MenuItem>
               <MenuItem value="24 Gold">24 Gold </MenuItem>
               <MenuItem value="999 Silver">999 Silver</MenuItem>
-              <MenuItem value="Gold">Gold</MenuItem>
-              <MenuItem value="Silver">Silver</MenuItem>
+              <MenuItem value="22 Gold">22 Gold</MenuItem>
+              <MenuItem value="995 Silver">995 Silver</MenuItem>
             </TextField>
           </Grid>
 
@@ -701,6 +732,22 @@ const ShowroomMetalStock: React.FC = () => {
               onChange={(e) =>
                 setReturnWeight(
                   e.target.value === "" ? "" : Number(e.target.value)
+                )
+              }
+              required
+            />
+          </Grid>
+
+          {/*Purity Weight */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Purity Metal Weight (g)"
+              value={returnPurityWeight}
+              onChange={(e) =>
+                setreturnPurityWeight(
+                  e.target.value === "" ? NaN : Number(e.target.value)
                 )
               }
               required
@@ -1077,6 +1124,20 @@ const ShowroomMetalStock: React.FC = () => {
         elevation={4}
         className="relative p-8 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
       >
+        {/* Delete Icon (top right) */}
+        <IconButton
+          onClick={handleDeleteAll}
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            color: "red",
+            background: "#fef2f2",
+            "&:hover": { background: "#fee2e2" },
+          }}
+        >
+          <DeleteIcon />
+        </IconButton>
         <Typography
           variant="h5"
           fontWeight={700}
@@ -1103,7 +1164,12 @@ const ShowroomMetalStock: React.FC = () => {
               <TableCell
                 sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
               >
-                Weight
+                Gross Weight
+              </TableCell>
+              <TableCell
+                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+              >
+                Purity Weight
               </TableCell>
               <TableCell
                 sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
@@ -1128,6 +1194,9 @@ const ShowroomMetalStock: React.FC = () => {
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.95rem" }}>
                   {r.onlyExchange_metal_weight}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.95rem" }}>
+                  {r.onlyExchange_metal_purity_weight}
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.95rem" }}>
                   {r.onlyExchange_item_amount}

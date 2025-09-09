@@ -190,6 +190,90 @@ const WorkerDetails: React.FC = () => {
           Worker Details #{worker.workerId}
         </h1>
 
+        <div className="mb-20 flex justify-center">
+          <div
+            className="w-full max-w-3xl rounded-2xl shadow-xl p-6"
+            style={{
+              background: "linear-gradient(135deg, #0f172a, #334155)", // dark gradient
+              color: "#fff",
+            }}
+          >
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-center mb-6 text-amber-300">
+              Worker Basic Information
+            </h2>
+
+            {/* Grid */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-3 pr-4 border-r border-white/20">
+                {[
+                  ["Full Name", worker.fullName, "text-amber-200"],
+                  ["Phone", worker.phnNumber, "text-teal-300"],
+                  ["Village", worker.village, "text-green-300"],
+                  ["Username", worker.userName, "text-purple-300"],
+                  [
+                    "Earned Amount",
+                    `₹${worker.earnedAmount}`,
+                    "text-emerald-400 font-bold",
+                  ],
+                  [
+                    "Earned Wastage",
+                    `${worker.earnedWastage}%`,
+                    "text-pink-300 font-semibold",
+                  ],
+                ].map(([label, value, color], i) => (
+                  <p key={i} className="flex justify-between">
+                    <span className="text-gray-300 font-medium">{label}:</span>
+                    <span className={`${color}`}>{value}</span>
+                  </p>
+                ))}
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-3 pl-4">
+                {[
+                  [
+                    "Received Amount",
+                    `₹${worker.receivedAmount}`,
+                    "text-emerald-300 font-bold",
+                  ],
+                  [
+                    "Pending Amount",
+                    `₹${worker.pendingAmount}`,
+                    "text-red-400 font-bold",
+                  ],
+                  [
+                    "24 Gold Stock",
+                    `${worker.total24GoldStock} g`,
+                    "text-yellow-300 font-bold",
+                  ],
+                  [
+                    "999 Silver Stock",
+                    `${worker.total999SilverStock} g`,
+                    "text-slate-200 font-bold",
+                  ],
+                  [
+                    "22 Gold Stock",
+                    `${worker.total22GoldStock} g`,
+                    "text-yellow-300 font-bold",
+                  ],
+                  [
+                    "995 Silver Stock",
+                    `${worker.total995SilverStock} g`,
+                    "text-slate-200 font-bold",
+                  ],
+                ].map(([label, value, color], i) => (
+                  <p key={i} className="flex justify-between">
+                    <span className="text-gray-300 font-medium">{label}:</span>
+                    <span className={`${color}`}>{value}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Date Filters (above sections) */}
         <Box
           sx={{
@@ -228,24 +312,6 @@ const WorkerDetails: React.FC = () => {
             CLEAR
           </Button>
         </Box>
-
-        {/* Basic Info */}
-        <div className="grid grid-cols-2 gap-4 mb-4 border-2 border-gray-400 p-3 rounded-lg">
-          <div className="pr-4 border-r border-gray-300 dark:border-gray-600">
-            {line("Full Name", worker.fullName)}
-            {line("Phone", worker.phnNumber)}
-            {line("Village", worker.village)}
-            {line("Username", worker.userName)}
-            {line("Earned Amount", `₹${worker.earnedAmount}`)}
-          </div>
-          <div className="pl-4">
-            {line("Earned Wastage", `${worker.earnedWastage}%`)}
-            {line("Received Amount", `₹${worker.receivedAmount}`)}
-            {line("Pending Amount", `₹${worker.pendingAmount}`)}
-            {line("Gold Stock", `${worker.goldStock} g`)}
-            {line("Silver Stock", `${worker.silverStock} g`)}
-          </div>
-        </div>
 
         {/* Worker Stocks */}
         {filteredStocks?.length > 0 && (

@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import {
   TextField,
-  Grid,
   Typography,
   Table,
   TableHead,
@@ -174,46 +173,81 @@ const CustomerDetails: React.FC = () => {
 
   return (
     <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6">
-      <Paper className="p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-md">
-        <div className="flex justify-between items-center mb-5">
-          <div className="flex">
-            {" "}
-            <IconButton color="primary" onClick={handleBackClick}>
-              <ArrowBackIcon />
+      <Paper
+        className="p-8 rounded-2xl w-full max-w-6xl mx-auto shadow-xl"
+        sx={{
+          background: "linear-gradient(135deg, #111827, #1e293b)", // dark gradient
+          color: "#fff",
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center">
+            <IconButton onClick={handleBackClick}>
+              <ArrowBackIcon className="text-yellow-400" />
             </IconButton>
-            <Typography variant="h4" fontWeight="bold" color="primary">
+            <h2 className="text-2xl font-bold text-yellow-400 ml-2">
               Customer Details
-            </Typography>
+            </h2>
           </div>
 
-          <Button variant="outlined" onClick={handleAddOrder}>
+          <Button
+            variant="contained"
+            sx={{
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              borderRadius: "12px",
+              textTransform: "none",
+              fontWeight: "600",
+              boxShadow: "0 8px 20px rgba(99,102,241,0.35)",
+            }}
+            onClick={handleAddOrder}
+          >
             Add Order
           </Button>
         </div>
 
-        <Grid container spacing={3}>
-          {["name", "village", "phoneNumber", "emailId"].map((key) => (
-            <Grid key={key} size={{ xs: 6, sm: 4 }}>
-              <TextField
-                label={key.charAt(0).toUpperCase() + key.slice(1)}
-                value={(customer[key as keyof Customer] ?? "-").toString()}
-                fullWidth
-                InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
-              />
-            </Grid>
-          ))}
+        {/* Info Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-12">
+          <p className="text-lg">
+            <span className="text-gray-300 font-semibold">Name :</span>{" "}
+            <span className="text-emerald-300 font-bold">{customer.name}</span>
+          </p>
 
-          {["customerId", "numberOfOrders", "totalDueAmount"].map((key) => (
-            <Grid key={key} size={{ xs: 6, sm: 4 }}>
-              <TextField
-                label={key.replace(/([A-Z])/g, " $1")}
-                value={(customer[key as keyof Customer] ?? "-").toString()}
-                fullWidth
-                InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
-              />
-            </Grid>
-          ))}
-        </Grid>
+          <p className="text-lg">
+            <span className="text-gray-300 font-semibold">Phone :</span>{" "}
+            <span className="text-orange-300 font-bold">
+              {customer.phoneNumber}
+            </span>
+          </p>
+
+          <p className="text-lg">
+            <span className="text-gray-300 font-semibold">Village :</span>{" "}
+            <span className="text-purple-300 font-bold">
+              {customer.village}
+            </span>
+          </p>
+
+          <p className="text-lg">
+            <span className="text-gray-300 font-semibold">Email :</span>{" "}
+            <span className="text-orange-300 font-bold">
+              {customer.emailId || "—"}
+            </span>
+          </p>
+          <p className="text-lg">
+            <span className="text-gray-300 font-semibold">No of Orders :</span>{" "}
+            <span className="text-red-400 font-bold">
+              {customer.numberOfOrders || "—"}
+            </span>
+          </p>
+          <p className="text-lg">
+            <span className="text-gray-300 font-semibold">
+              Total Due Amount :
+            </span>{" "}
+            <span className="text-yellow-400 font-bold">
+              {customer.totalDueAmount || "—"}
+            </span>
+          </p>
+        </div>
       </Paper>
 
       {orders.length > 0 && (

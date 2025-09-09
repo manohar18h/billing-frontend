@@ -88,35 +88,56 @@ const BillData: React.FC = () => {
 
   return (
     <div>
-      <div className="mt-10 p-3 flex flex-col items-center justify-center">
-        {/* Customer Details */}
-        <div className="p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]">
-          <div className="flex mb-8">
-            {" "}
-            <IconButton color="primary" onClick={handleBackClick}>
-              <ArrowBackIcon />
+      <div className="mt-10 flex flex-col items-center justify-center">
+        <div
+          className="w-full max-w-4xl rounded-2xl shadow-xl p-6"
+          style={{
+            background: "linear-gradient(135deg, #1e293b, #0f172a)", // dark gradient
+            color: "#fff",
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center mb-6">
+            <IconButton color="inherit" onClick={handleBackClick}>
+              <ArrowBackIcon className="text-white" />
             </IconButton>
-            <Typography variant="h4" fontWeight="bold" color="primary">
+            <h2 className="text-2xl font-bold text-amber-300 ml-2">
               Customer Details
-            </Typography>
+            </h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-8 relative">
-            <div className="pr-4 ">
-              <strong className="text-[rgb(73,73,74)] text-lg font-bold">
-                Name : {customer.name}
-              </strong>
-              <strong className="text-[rgb(73,73,74)] text-lg font-bold">
-                <h1>Village : {customer.village}</h1>
-              </strong>
+          {/* Grid Info */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Left column */}
+            <div className="space-y-4 pr-4 border-r border-white/20">
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Name:</span>
+                <span className="text-emerald-300 font-semibold">
+                  {customer.name}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Village:</span>
+                <span className="text-purple-300 font-semibold">
+                  {customer.village}
+                </span>
+              </p>
             </div>
-            <div className="pl-4">
-              <strong className="text-[rgb(73,73,74)] text-lg font-bold">
-                <h1>Phone : {customer.phoneNumber}</h1>
-              </strong>
-              <strong className="text-[rgb(73,73,74)] text-lg font-bold">
-                Email : {customer.emailId}
-              </strong>
+
+            {/* Right column */}
+            <div className="space-y-4 pl-4">
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Phone:</span>
+                <span className="text-teal-300 font-semibold">
+                  {customer.phoneNumber}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Email:</span>
+                <span className="text-orange-300 font-semibold">
+                  {customer.emailId || "—"}
+                </span>
+              </p>
             </div>
           </div>
         </div>
