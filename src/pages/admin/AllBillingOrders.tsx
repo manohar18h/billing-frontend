@@ -8,8 +8,10 @@ import {
   Button,
   TextField,
   Box,
+  MenuItem,
+  Chip,
 } from "@mui/material";
-import api from "@/services/api"; // ← import your api.ts
+import api from "@/services/api";
 
 type Billing = {
   billId: number;
@@ -32,8 +34,6 @@ type Billing = {
 
 function toDateOnlyYYYYMMDD(s: string | null): string | null {
   if (!s) return null;
-
-  // Try native Date first
   const d1 = new Date(s);
   if (!Number.isNaN(d1.getTime())) {
     const y = d1.getFullYear();
@@ -41,9 +41,6 @@ function toDateOnlyYYYYMMDD(s: string | null): string | null {
     const d = String(d1.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
   }
-
-  // Fallback for strings like "8/7/2025, 5:59:05 AM"
-  // Take the first part before comma, expect M/D/YYYY
   const firstPart = s.split(",")[0]?.trim();
   const parts = firstPart?.split("/") ?? [];
   if (parts.length === 3) {
@@ -60,12 +57,20 @@ function toDateOnlyYYYYMMDD(s: string | null): string | null {
   return null;
 }
 
+function normalizeStatus(s: string | undefined | null): "delivered" | "pending" | "other" {
+  const v = (s ?? "").toLowerCase().trim();
+  if (v.includes("deliver")) return "delivered";
+  if (v.includes("pend")) return "pending";
+  return "other";
+}
+
 const AllBillingOrders: React.FC = () => {
   const [rows, setRows] = useState<Billing[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [fromDate, setFromDate] = useState<string>(""); // yyyy-mm-dd
-  const [toDate, setToDate] = useState<string>(""); // yyyy-mm-dd
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "delivered" | "pending">("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -85,9 +90,7 @@ const AllBillingOrders: React.FC = () => {
         console.error("Failed to fetch all bills:", e);
         setErr("Failed to load billing orders.");
       } finally {
-        if (alive) {
-          setLoading(false);
-        }
+        if (alive) setLoading(false);
       }
     })();
     return () => {
@@ -95,33 +98,37 @@ const AllBillingOrders: React.FC = () => {
     };
   }, []);
 
-  // Apply filter:
   const filteredRows = useMemo(() => {
     const f = fromDate.trim();
     const t = toDate.trim();
-
-    if (!f && !t) return rows;
-
     return rows.filter((bill) => {
+      const norm = normalizeStatus(bill.deliveryStatus);
+      if (statusFilter !== "all" && norm !== statusFilter) return false;
+
+      if (!f && !t) return true;
       const billDay = toDateOnlyYYYYMMDD(bill.billingDate);
       if (!billDay) return false;
 
-      if (f && t) {
-        return billDay >= f && billDay <= t;
-      }
-      if (f && !t) {
-        return billDay === f;
-      }
-      if (!f && t) {
-        return billDay === t;
-      }
+      if (f && t) return billDay >= f && billDay <= t;
+      if (f && !t) return billDay === f;
+      if (!f && t) return billDay === t;
       return true;
     });
-  }, [rows, fromDate, toDate]);
+  }, [rows, fromDate, toDate, statusFilter]);
 
-  const clearDates = () => {
+  const clearFilters = () => {
     setFromDate("");
     setToDate("");
+    setStatusFilter("all"); // 👈 also reset status to ALL
+  };
+
+  const renderStatusChip = (raw: string) => {
+    const n = normalizeStatus(raw);
+    if (n === "delivered")
+      return <Chip label="Delivered" size="small" sx={{ bgcolor: "#d9f7d9", color: "#1b5e20", fontWeight: 600 }} />;
+    if (n === "pending")
+      return <Chip label="Pending" size="small" sx={{ bgcolor: "#fff3e0", color: "#e65100", fontWeight: 600 }} />;
+    return <Chip label={raw || "-"} size="small" sx={{ bgcolor: "#eeeeee", color: "#424242" }} />;
   };
 
   return (
@@ -143,7 +150,7 @@ const AllBillingOrders: React.FC = () => {
           All Billing Orders
         </Typography>
 
-        {/* Date filters */}
+        {/* Filters row */}
         <Box
           sx={{
             display: "flex",
@@ -161,12 +168,7 @@ const AllBillingOrders: React.FC = () => {
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{
-              width: 180, // <= compact width
-              "& .MuiOutlinedInput-input": {
-                py: 0.75, // <= less inner vertical padding
-              },
-            }}
+            sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
           />
 
           <TextField
@@ -176,18 +178,28 @@ const AllBillingOrders: React.FC = () => {
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{
-              width: 180, // <= compact width
-              "& .MuiOutlinedInput-input": {
-                py: 0.75, // <= less inner vertical padding
-              },
-            }}
+            sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
           />
 
+          <TextField
+            select
+            label="Status"
+            size="small"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            sx={{ width: 170, ml: { xs: 0, sm: 1 } }}
+            InputLabelProps={{ shrink: true }}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="delivered">Delivered</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+          </TextField>
+
+          {/* 👇 moved to the end and clears all filters */}
           <Button
             variant="outlined"
             size="small"
-            onClick={clearDates}
+            onClick={clearFilters}
             sx={{ whiteSpace: "nowrap" }}
           >
             Clear
@@ -210,9 +222,7 @@ const AllBillingOrders: React.FC = () => {
                 <tr>
                   <th className="border px-3 py-2 text-left">Billing Date</th>
                   <th className="border px-3 py-2 text-left">Bill Number</th>
-                  <th className="border px-3 py-2 text-left">
-                    Delivery Status
-                  </th>
+                  <th className="border px-3 py-2 text-left">Delivery Status</th>
                   <th className="border px-3 py-2 text-right"># Orders</th>
                   <th className="border px-3 py-2 text-right">Total Amount</th>
                   <th className="border px-3 py-2 text-right">Due Amount</th>
@@ -222,21 +232,15 @@ const AllBillingOrders: React.FC = () => {
               <tbody>
                 {filteredRows.map((bill) => (
                   <tr key={bill.billId} className="bg-white/90">
-                    <td className="border px-3 py-2">
-                      {bill.billingDate ?? "N/A"}
-                    </td>
+                    <td className="border px-3 py-2">{bill.billingDate ?? "N/A"}</td>
                     <td className="border px-3 py-2">{bill.billNumber}</td>
-                    <td className="border px-3 py-2">
-                      {bill.deliveryStatus || "-"}
+                    <td className="border px-3 py-2">{renderStatusChip(bill.deliveryStatus)}</td>
+                    <td className="border px-3 py-2 text-right">{bill.numberOfOrders ?? 0}</td>
+                    <td className="border px-3 py-2 text-right">
+                      {bill.billTotalAmount != null ? bill.billTotalAmount.toFixed(2) : "-"}
                     </td>
                     <td className="border px-3 py-2 text-right">
-                      {bill.numberOfOrders ?? 0}
-                    </td>
-                    <td className="border px-3 py-2 text-right">
-                      {bill.billTotalAmount?.toFixed(2)}
-                    </td>
-                    <td className="border px-3 py-2 text-right">
-                      {bill.billDueAmount?.toFixed(2)}
+                      {bill.billDueAmount != null ? bill.billDueAmount.toFixed(2) : "-"}
                     </td>
                     <td className="border px-3 py-2 text-center">
                       <Button

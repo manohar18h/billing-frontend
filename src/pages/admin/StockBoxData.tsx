@@ -1,7 +1,14 @@
 // src/pages/admin/StockBoxData.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Paper, Typography, CircularProgress, Button } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  CircularProgress,
+  Button,
+  TextField,
+  Box,
+} from "@mui/material";
 import api from "@/services/api";
 
 type StockBoxDataEntry = {
@@ -24,6 +31,7 @@ const StockBoxData: React.FC = () => {
   const [rows, setRows] = useState<StockDataBox[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [search, setSearch] = useState<string>(""); // 👈 search state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,12 +41,9 @@ const StockBoxData: React.FC = () => {
       setErr(null);
       try {
         const token = localStorage.getItem("token") ?? "";
-        const { data } = await api.get<StockDataBox[]>(
-          `/admin/getALlStockBox`,
-          {
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          }
-        );
+        const { data } = await api.get<StockDataBox[]>(`/admin/getALlStockBox`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         if (!alive) return;
         setRows(Array.isArray(data) ? data : []);
       } catch (e) {
@@ -46,15 +51,21 @@ const StockBoxData: React.FC = () => {
         console.error("Failed to fetch all StockBox Data:", e);
         setErr("Failed to load all StockBox Data.");
       } finally {
-        if (alive) {
-          setLoading(false);
-        }
+        if (alive) setLoading(false);
       }
     })();
     return () => {
       alive = false;
     };
   }, []);
+
+  // 👇 Filter rows by stockBoxName
+  const filteredRows = useMemo(() => {
+    if (!search.trim()) return rows;
+    return rows.filter((box) =>
+      box.stockBoxName.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [rows, search]);
 
   return (
     <div className="mt-10 p-3 flex flex-col items-center justify-center">
@@ -75,6 +86,18 @@ const StockBoxData: React.FC = () => {
           All Stock Box Data
         </Typography>
 
+        {/* 🔍 Search Bar */}
+        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+          <TextField
+            label="Search by Stock Box Name"
+            variant="outlined"
+            size="small"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ width: 250 }}
+          />
+        </Box>
+
         {loading ? (
           <div className="flex items-center gap-3 py-6">
             <CircularProgress size={22} />
@@ -82,6 +105,8 @@ const StockBoxData: React.FC = () => {
           </div>
         ) : err ? (
           <p className="text-red-600 py-4">{err}</p>
+        ) : filteredRows.length === 0 ? (
+          <p className="py-4">No stock boxes found.</p>
         ) : (
           <div className="mt-4">
             <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
@@ -98,7 +123,7 @@ const StockBoxData: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((box) => (
+                {filteredRows.map((box) => (
                   <tr key={box.stockBoxId} className="bg-white/90">
                     <td className="border px-3 py-2">{box.stockBoxName}</td>
                     <td className="border px-3 py-2">
