@@ -61,6 +61,8 @@ const CustomerDetails: React.FC = () => {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
   const [workerPayAmount, setWorkerPayAmount] = useState("");
+  const [workerPayWastage, setWorkerPayWastage] = useState("");
+
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
 
   const token = localStorage.getItem("token");
@@ -292,6 +294,7 @@ const CustomerDetails: React.FC = () => {
                           setAssignOrderId(order.orderId);
                           setSelectedWorkerId("");
                           setWorkerPayAmount("");
+                          setWorkerPayWastage("");
                           setAssignDialogOpen(true);
                         }}
                       >
@@ -343,6 +346,14 @@ const CustomerDetails: React.FC = () => {
             fullWidth
             value={workerPayAmount}
             onChange={(e) => setWorkerPayAmount(e.target.value)}
+            sx={{ mb: 2 }} // 👈 margin-bottom = spacing(2)
+          />
+          <TextField
+            label="Worker Pay Wastage"
+            type="number"
+            fullWidth
+            value={workerPayWastage}
+            onChange={(e) => setWorkerPayWastage(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
@@ -350,19 +361,38 @@ const CustomerDetails: React.FC = () => {
           <Button
             variant="contained"
             onClick={async () => {
-              if (!assignOrderId || !selectedWorkerId || !workerPayAmount)
+              if (
+                !assignOrderId ||
+                !selectedWorkerId ||
+                (!workerPayAmount && !workerPayWastage) // both empty
+              ) {
+                alert(
+                  "Please fill all required fields (enter either amount or wastage)"
+                );
                 return;
+              }
+
               try {
+                // ✅ 1. Make API call
+                const requestBody: any = {
+                  workerId: selectedWorkerId,
+                };
+
+                // add only one of them
+                if (workerPayAmount) {
+                  requestBody.workPay = Number(workerPayAmount);
+                } else if (workerPayWastage) {
+                  requestBody.wastage = Number(workerPayWastage);
+                }
+
                 await api.post(
                   `/admin/addWorkerPay/${assignOrderId}`,
-                  {
-                    workPay: Number(workerPayAmount),
-                    workerId: selectedWorkerId,
-                  },
+                  requestBody,
                   {
                     headers: { Authorization: `Bearer ${token}` },
                   }
                 );
+
                 const worker = workerList.find(
                   (w) => w.workerId === selectedWorkerId
                 );

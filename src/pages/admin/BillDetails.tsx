@@ -640,6 +640,21 @@ const BillDetails: React.FC = () => {
                     headers: { Authorization: `Bearer ${token}` },
                   }
                 );
+
+                // add only one of them
+                if (workerPayAmount) {
+                  requestBody.workPay = Number(workerPayAmount);
+                } else if (workerPayWastage) {
+                  requestBody.wastage = Number(workerPayWastage);
+                }
+
+                await api.post(
+                  `/admin/addWorkerPay/${assignOrderId}`,
+                  requestBody,
+                  {
+                    headers: { Authorization: `Bearer ${token}` },
+                  }
+                );
                 const worker = workerList.find(
                   (w) => w.workerId === selectedWorkerId
                 );
