@@ -391,7 +391,7 @@ const Orders: React.FC = () => {
     localStorage.removeItem("from");
 
     if (from === "customerDetails") {
-      navigate("/admin/customer-details", {
+      navigate("/admin/bill-Data", {
         state: { customerId: location.state?.customerId }, // optionally pass back
         replace: true,
       });

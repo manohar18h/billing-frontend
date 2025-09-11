@@ -5,10 +5,17 @@ import {
   Paper,
   Typography,
   TextField,
-  Button,
   Grid,
   Table,
   TableHead,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  Button,
   TableRow,
   TableCell,
   TableBody,
@@ -43,7 +50,7 @@ interface SellingMetal {
 
 interface OldReturnMetals {
   oldMetalReturnId: number;
-  onlyExchange_metal: string;
+  onlyExchangeMetal: string;
   onlyExchange_metal_name: string;
   onlyExchange_metal_weight: number;
   onlyExchange_metal_purity_weight: number;
@@ -333,9 +340,9 @@ const ShowroomMetalStock: React.FC = () => {
 
   const filteredHistoryResults = useMemo(
     () =>
-      (historyResults || []).filter((h) =>
-        inRangeExact(h.date, fromDate, toDate)
-      ),
+      (historyResults || [])
+        .filter((h) => inRangeExact(h.date, fromDate, toDate))
+        .sort((a, b) => b.metalStockHisId - a.metalStockHisId),
     [historyResults, fromDate, toDate]
   );
 
@@ -393,26 +400,25 @@ const ShowroomMetalStock: React.FC = () => {
     ? filteredHistoryResults
     : filteredHistoryResults.slice(0, 4);
 
-  const handleDeleteAll = async () => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete all old return data?"
-    );
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedMetal, setSelectedMetal] = useState("");
+  const [confirmStep, setConfirmStep] = useState(false);
 
+  const handleDelete = async () => {
     const token = localStorage.getItem("token");
-    if (!confirmDelete) return;
     try {
-      await api.delete("/admin/deleteAllOldReturn", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await api.delete(`/admin/deleteOldReturn/${selectedMetal}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      alert("All old return data deleted successfully ✅");
+      alert(`${selectedMetal} old return metals deleted successfully ✅`);
       fetchMetalStock();
       fetchOldReturnData();
-      window.location.reload(); // refresh data OR trigger re-fetch
+      setOpenDeleteDialog(false);
+      setSelectedMetal("");
+      setConfirmStep(false);
     } catch (error) {
       console.error("Delete failed:", error);
-      alert("❌ Failed to delete old return data");
+      alert(`❌ Failed to delete ${selectedMetal} old return metals`);
     }
   };
 
@@ -1126,7 +1132,7 @@ const ShowroomMetalStock: React.FC = () => {
       >
         {/* Delete Icon (top right) */}
         <IconButton
-          onClick={handleDeleteAll}
+          onClick={() => setOpenDeleteDialog(true)}
           sx={{
             position: "absolute",
             top: 16,
@@ -1138,6 +1144,7 @@ const ShowroomMetalStock: React.FC = () => {
         >
           <DeleteIcon />
         </IconButton>
+
         <Typography
           variant="h5"
           fontWeight={700}
@@ -1187,7 +1194,7 @@ const ShowroomMetalStock: React.FC = () => {
             {visibleOldReturnData.map((r) => (
               <TableRow key={r.oldMetalReturnId}>
                 <TableCell sx={{ fontSize: "0.95rem" }}>
-                  {r.onlyExchange_metal}
+                  {r.onlyExchangeMetal}
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.95rem" }}>
                   {r.onlyExchange_metal_name}
@@ -1233,6 +1240,78 @@ const ShowroomMetalStock: React.FC = () => {
           </Typography>
         )}
       </Paper>
+
+      {/* Delete Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => {
+          setOpenDeleteDialog(false);
+          setSelectedMetal("");
+          setConfirmStep(false);
+        }}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle
+          sx={{ fontWeight: 600, textAlign: "center", color: "#8847FF" }}
+        >
+          Delete Old Return Metals
+        </DialogTitle>
+
+        <DialogContent sx={{ textAlign: "center", mt: 1 }}>
+          {!confirmStep ? (
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Select Metal</InputLabel>
+              <Select
+                value={selectedMetal}
+                onChange={(e) => setSelectedMetal(e.target.value)}
+                label="Select Metal"
+              >
+                <MenuItem value="Gold">Gold</MenuItem>
+                <MenuItem value="Silver">Silver</MenuItem>
+              </Select>
+            </FormControl>
+          ) : (
+            <Typography sx={{ mt: 2 }}>
+              Are you sure you want to delete all <b>{selectedMetal}</b> old
+              return metals?
+            </Typography>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ justifyContent: "center", mb: 2 }}>
+          {!confirmStep ? (
+            <>
+              <Button
+                onClick={() => {
+                  setOpenDeleteDialog(false);
+                  setSelectedMetal("");
+                }}
+                variant="outlined"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => setConfirmStep(true)}
+                variant="contained"
+                color="error"
+                disabled={!selectedMetal}
+              >
+                OK
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={() => setConfirmStep(false)} variant="outlined">
+                Back
+              </Button>
+              <Button onClick={handleDelete} variant="contained" color="error">
+                Yes, Delete
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
 
       {/* If filters selected but nothing matched */}
       {(fromDate || toDate) &&

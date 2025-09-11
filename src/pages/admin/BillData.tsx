@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Typography, IconButton } from "@mui/material";
+import { IconButton, Button } from "@mui/material";
+
 import api from "@/services/api"; // ← import your api.ts
 
 interface SelectedOrder {
@@ -23,6 +24,8 @@ interface Billing {
   village: string;
   phoneNumber: string;
   emailId: string;
+  deliveryStatus: string; // ✅ top level
+  numberOfOrders: number;
   billTotalAmount: number;
   billDiscountAmount: number;
   exchangeAmount: number;
@@ -52,7 +55,6 @@ const BillData: React.FC = () => {
         })
         .then((response) => {
           if (response.data.length === 0) {
-            // ❌ No billing data → redirect to customers with error message
             navigate("/admin/customers", {
               replace: true,
               state: {
@@ -84,7 +86,34 @@ const BillData: React.FC = () => {
     return <p className="p-4">No billing data found for this phone number.</p>;
   }
 
-  const customer = billingData[0]; // all bills belong to the same customer
+  const customer = billingData[0]; // all bills belong to same customer
+
+  // ✅ Aggregate values
+  const totalOrders = billingData.reduce(
+    (sum, bill) => sum + bill.numberOfOrders,
+    0
+  );
+  const totalDueAmount = billingData.reduce(
+    (sum, bill) => sum + bill.billDueAmount,
+    0
+  );
+
+  // ✅ Add Order Handler (copied from CustomerDetails)
+  const handleAddOrder = () => {
+    const customer = billingData[0]; // same customer for all bills
+    const orders = billingData.flatMap((bill) => bill.selectedOrders); // collect all existing orders
+
+    localStorage.removeItem("from");
+    localStorage.setItem("CusDetailsCustomerId", String(customer?.customerId));
+    sessionStorage.setItem("customer", JSON.stringify(customer));
+    sessionStorage.setItem("orders", JSON.stringify(orders));
+    localStorage.setItem("from", "customerDetails");
+
+    navigate("/admin/orders", {
+      replace: true,
+      state: { fromCustomerDetails: true, customerId: customer?.customerId },
+    });
+  };
 
   return (
     <div>
@@ -104,6 +133,23 @@ const BillData: React.FC = () => {
             <h2 className="text-2xl font-bold text-amber-300 ml-2">
               Customer Details
             </h2>
+
+            {/* ✅ Add Order Button (top right corner) */}
+            <div className="ml-auto">
+              <Button
+                variant="contained"
+                sx={{
+                  background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                  borderRadius: "12px",
+                  textTransform: "none",
+                  fontWeight: "600",
+                  boxShadow: "0 8px 20px rgba(99,102,241,0.35)",
+                }}
+                onClick={handleAddOrder}
+              >
+                Add Order
+              </Button>
+            </div>
           </div>
 
           {/* Grid Info */}
@@ -122,6 +168,14 @@ const BillData: React.FC = () => {
                   {customer.village}
                 </span>
               </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">
+                  Number of Orders:
+                </span>
+                <span className="text-yellow-300 font-semibold">
+                  {totalOrders}
+                </span>
+              </p>
             </div>
 
             {/* Right column */}
@@ -136,6 +190,12 @@ const BillData: React.FC = () => {
                 <span className="text-gray-300 font-medium">Email:</span>
                 <span className="text-orange-300 font-semibold">
                   {customer.emailId || "—"}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Total Due:</span>
+                <span className="text-red-400 font-semibold">
+                  {totalDueAmount.toFixed(2)}
                 </span>
               </p>
             </div>
@@ -158,6 +218,7 @@ const BillData: React.FC = () => {
                 <th className="border px-3 py-2">Exchange</th>
                 <th className="border px-3 py-2">Paid</th>
                 <th className="border px-3 py-2">Due</th>
+                <th className="border px-3 py-2">Delivery Status</th>
                 <th className="border px-3 py-2">Action</th>
               </tr>
             </thead>
@@ -182,6 +243,7 @@ const BillData: React.FC = () => {
                   <td className="border px-3 py-2">
                     {bill.billDueAmount.toFixed(2)}
                   </td>
+                  <td className="border px-3 py-2">{bill.deliveryStatus}</td>
                   <td className="border px-3 py-2">
                     <button
                       className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"

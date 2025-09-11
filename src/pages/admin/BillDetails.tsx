@@ -169,7 +169,7 @@ const BillDetails: React.FC = () => {
   };
 
   const handleBackClick = () => {
-    navigate("/admin/customers");
+    navigate("/admin/bill-Data");
   };
 
   const formatDate = (isoString: string) => {

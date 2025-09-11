@@ -1,9 +1,9 @@
 // src/pages/admin/WorkerDetails.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useWorkers } from "@/contexts/WorkersContext";
 import { WorkerData } from "@/lib/WorkerData";
-import { TextField, Button, Box } from "@mui/material";
+import { TextField, Button, Box, Typography } from "@mui/material";
 
 /** String-only normalizer: returns YYYY-MM-DD with NO timezone shifts */
 function normalizeYMD(raw: unknown): string | null {
@@ -176,6 +176,38 @@ const WorkerDetails: React.FC = () => {
     setToDate("");
   };
 
+  // State to control expand/collapse
+  const [showWorkerStock, setShowWorkerStock] = useState(false);
+
+  // Only show 4 rows initially
+  const visibleWorkerStockResult = showWorkerStock
+    ? filteredStocks
+    : filteredStocks.slice(0, 4);
+
+  const [showLotWorks, setShowLotWorks] = useState(false);
+
+  // Decide how many lots to show
+  const visibleLotWorks = showLotWorks
+    ? filteredLots
+    : filteredLots.slice(0, 4);
+
+  const [showRepairs, setShowRepairs] = useState(false);
+
+  // Decide how many repairs to show
+  const visibleRepairs = showRepairs
+    ? filteredRepairs
+    : filteredRepairs.slice(0, 4);
+
+  const [showPays, setShowPays] = useState(false);
+
+  // Decide how many payments to show
+  const visiblePays = showPays ? filteredPays : filteredPays.slice(0, 4);
+
+  const [showTxs, setShowTxs] = useState(false);
+
+  // Decide how many transactions to show
+  const visibleTxs = showTxs ? filteredTxs : filteredTxs.slice(0, 4);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
       <div className="w-full max-w-5xl bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-8 relative">
@@ -319,7 +351,8 @@ const WorkerDetails: React.FC = () => {
             <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
               Worker Stocks
             </h2>
-            {filteredStocks.map((s) => (
+
+            {visibleWorkerStockResult.map((s) => (
               <div
                 key={s.wstockId}
                 className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
@@ -334,16 +367,34 @@ const WorkerDetails: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {/* Toggle Button */}
+            {filteredStocks.length > 4 && (
+              <Typography
+                onClick={() => setShowWorkerStock((prev) => !prev)}
+                sx={{
+                  cursor: "pointer",
+                  textAlign: "center",
+                  mt: 2,
+                  color: "#8847FF",
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  "&:hover": { color: "#6b21a8" },
+                }}
+              >
+                {showWorkerStock ? "View Less" : "View More"}
+              </Typography>
+            )}
           </>
         )}
 
-        {/* Lot Works */}
         {filteredLots?.length > 0 && (
           <>
             <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
               Lot Works
             </h2>
-            {filteredLots.map((l) => (
+
+            {visibleLotWorks.map((l) => (
               <div
                 key={l.lotId}
                 className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
@@ -362,6 +413,24 @@ const WorkerDetails: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {/* Toggle Button */}
+            {filteredLots.length > 4 && (
+              <Typography
+                onClick={() => setShowLotWorks((prev) => !prev)}
+                sx={{
+                  cursor: "pointer",
+                  textAlign: "center",
+                  mt: 2,
+                  color: "#8847FF",
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  "&:hover": { color: "#6b21a8" },
+                }}
+              >
+                {showLotWorks ? "View Less" : "View More"}
+              </Typography>
+            )}
           </>
         )}
 
@@ -371,7 +440,8 @@ const WorkerDetails: React.FC = () => {
             <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
               Repair Works
             </h2>
-            {filteredRepairs.map((r, i) => (
+
+            {visibleRepairs.map((r, i) => (
               <div
                 key={i}
                 className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
@@ -388,6 +458,24 @@ const WorkerDetails: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {/* Toggle Button */}
+            {filteredRepairs.length > 4 && (
+              <Typography
+                onClick={() => setShowRepairs((prev) => !prev)}
+                sx={{
+                  cursor: "pointer",
+                  textAlign: "center",
+                  mt: 2,
+                  color: "#8847FF",
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  "&:hover": { color: "#6b21a8" },
+                }}
+              >
+                {showRepairs ? "View Less" : "View More"}
+              </Typography>
+            )}
           </>
         )}
 
@@ -397,7 +485,8 @@ const WorkerDetails: React.FC = () => {
             <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
               Work Payments
             </h2>
-            {filteredPays.map((p) => (
+
+            {visiblePays.map((p) => (
               <div
                 key={p.wpid}
                 className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
@@ -414,6 +503,24 @@ const WorkerDetails: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {/* Toggle Button */}
+            {filteredPays.length > 4 && (
+              <Typography
+                onClick={() => setShowPays((prev) => !prev)}
+                sx={{
+                  cursor: "pointer",
+                  textAlign: "center",
+                  mt: 2,
+                  color: "#8847FF",
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  "&:hover": { color: "#6b21a8" },
+                }}
+              >
+                {showPays ? "View Less" : "View More"}
+              </Typography>
+            )}
           </>
         )}
 
@@ -423,13 +530,32 @@ const WorkerDetails: React.FC = () => {
             <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
               Transactions
             </h2>
+
             <ul className="mb-8 pl-5 list-disc">
-              {filteredTxs.map((t) => (
+              {visibleTxs.map((t) => (
                 <li key={t.wtid}>
                   ₹{t.paidAmount} on {displayFromRaw(t.paymentDate)}
                 </li>
               ))}
             </ul>
+
+            {/* Toggle Button */}
+            {filteredTxs.length > 4 && (
+              <Typography
+                onClick={() => setShowTxs((prev) => !prev)}
+                sx={{
+                  cursor: "pointer",
+                  textAlign: "center",
+                  mt: 2,
+                  color: "#8847FF",
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  "&:hover": { color: "#6b21a8" },
+                }}
+              >
+                {showTxs ? "View Less" : "View More"}
+              </Typography>
+            )}
           </>
         )}
 

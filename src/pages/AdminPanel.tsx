@@ -21,7 +21,6 @@ import Dashboard from "@/pages/admin/Dashboard";
 import Customers from "@/pages/admin/Customers";
 import Orders from "@/pages/admin/Orders";
 import GenerateBill from "./admin/GenerateBill";
-import CustomerDetails from "./admin/CustomerDetails";
 import OrderDetails from "./admin/OrderDetails";
 import BillDetails from "./admin/BillDetails";
 import Workers from "./admin/Workers";
@@ -43,7 +42,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
   { icon: Users, label: "Customers", path: "/admin/Customers" },
   { icon: PersonStanding, label: "Workers", path: "/admin/workers" },
-  { icon: Boxes, label: "Worker Stock", path: "/admin/service" },
+  { icon: Boxes, label: "Services", path: "/admin/service" },
   { icon: PackagePlus, label: "Products", path: "/admin/products" },
   { icon: Gem, label: "Showroom", path: "/admin/showroom-metal-stock" },
   { icon: BoxIcon, label: "Stock Box", path: "/admin/stockBox" },
@@ -244,7 +243,6 @@ function AdminPanelContent() {
             <Route path="customers" element={<Customers />} />
             <Route path="orders" element={<Orders />} />
             <Route path="generate-bill" element={<GenerateBill />} />
-            <Route path="customer-details" element={<CustomerDetails />} />
             <Route path="bill-details" element={<BillDetails />} />
             <Route path="bill-data" element={<BillData />} />
             <Route path="order-details/:orderId" element={<OrderDetails />} />
