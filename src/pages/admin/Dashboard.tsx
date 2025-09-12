@@ -285,31 +285,46 @@
 
 // export default DashboardMain;
 
-
-
-
-
-
-
-
 // src/pages/admin/Dashboard.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
+import api from "@/services/api"; // make sure this import path is correct
 
-/* ---------- helpers for prices (unchanged) ---------- */
-const readNumber = (k: string, fallback = 0) => {
-  const raw = localStorage.getItem(k);
-  const n = raw ? Number(raw) : NaN;
-  return Number.isFinite(n) ? n : fallback;
+type MetalRates = {
+  goldRate: number;
+  silverRate: number;
 };
-const saveNumber = (k: string, v: number) => localStorage.setItem(k, String(v));
 
 /* ---------- Metal Prices (editable) ---------- */
 const MetalPricesCard: React.FC = () => {
-  const [gold, setGold] = React.useState(() => readNumber("goldPrice", 1000));
-  const [silver, setSilver] = React.useState(() => readNumber("silverPrice", 25000));
-  const [open, setOpen] = React.useState(false);
-  const [gDraft, setGDraft] = React.useState(gold);
-  const [sDraft, setSDraft] = React.useState(silver);
+  const token = localStorage.getItem("token");
+
+  const [gold, setGold] = useState(0);
+  const [silver, setSilver] = useState(0);
+
+  const [open, setOpen] = useState(false);
+  const [gDraft, setGDraft] = useState(0);
+  const [sDraft, setSDraft] = useState(0);
+
+  useEffect(() => {
+    if (!token) return;
+
+    api
+      .get<MetalRates>("/admin/getRates", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const { goldRate, silverRate } = res.data;
+        setGold(goldRate);
+        setSilver(silverRate);
+        setGDraft(goldRate);
+        setSDraft(silverRate);
+
+        // keep local copy
+        localStorage.setItem("GoldPrice", goldRate.toString());
+        localStorage.setItem("SilverPrice", silverRate.toString());
+      })
+      .catch((err) => console.error("Error fetching rates:", err));
+  }, [token]);
 
   const openEditor = () => {
     setGDraft(gold);
@@ -317,13 +332,35 @@ const MetalPricesCard: React.FC = () => {
     setOpen(true);
   };
   const save = () => {
-    setGold(gDraft);
-    setSilver(sDraft);
-    saveNumber("goldPrice", gDraft);
-    saveNumber("silverPrice", sDraft);
-    setOpen(false);
-  };
+    if (!token) return;
 
+    api
+      .put<MetalRates>(
+        `/admin/updateRates?goldRate=${gDraft}&silverRate=${sDraft}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      .then((res) => {
+        const { goldRate, silverRate } = res.data;
+        setGold(goldRate);
+        setSilver(silverRate);
+
+        setGDraft(goldRate);
+        setSDraft(silverRate);
+
+        localStorage.setItem("GoldPrice", goldRate.toString());
+        localStorage.setItem("SilverPrice", silverRate.toString());
+
+        setOpen(false);
+
+        // keep local copy
+
+        console.log("Updated Prices =>", goldRate, silverRate);
+      })
+      .catch((err) => console.error("Error updating rates:", err));
+  };
   return (
     <div className="relative rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
       <div className="flex items-center justify-between">
@@ -340,18 +377,24 @@ const MetalPricesCard: React.FC = () => {
       <div className="mt-3 grid grid-cols-2 gap-4">
         <div className="rounded-xl border border-gray-100 p-3">
           <div className="text-xs text-gray-500">Gold</div>
-          <div className="mt-1 text-2xl font-bold tracking-tight text-gray-900">₹{gold.toLocaleString()}</div>
+          <div className="mt-1 text-2xl font-bold tracking-tight text-gray-900">
+            ₹{gold.toLocaleString()}
+          </div>
         </div>
         <div className="rounded-xl border border-gray-100 p-3">
           <div className="text-xs text-gray-500">Silver</div>
-          <div className="mt-1 text-2xl font-bold tracking-tight text-gray-900">₹{silver.toLocaleString()}</div>
+          <div className="mt-1 text-2xl font-bold tracking-tight text-gray-900">
+            ₹{silver.toLocaleString()}
+          </div>
         </div>
       </div>
 
       {open && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 rounded-2xl">
           <div className="w-full max-w-xs rounded-2xl bg-white p-4 shadow-lg ring-1 ring-black/5">
-            <div className="text-sm font-semibold text-gray-800">Update Prices</div>
+            <div className="text-sm font-semibold text-gray-800">
+              Update Prices
+            </div>
             <div className="mt-3 space-y-3">
               <label className="block">
                 <span className="text-xs text-gray-500">Gold (₹)</span>
@@ -373,10 +416,16 @@ const MetalPricesCard: React.FC = () => {
               </label>
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
-              <button onClick={() => setOpen(false)} className="rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50">
+              <button
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+              >
                 Cancel
               </button>
-              <button onClick={save} className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-700">
+              <button
+                onClick={save}
+                className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-700"
+              >
                 Save
               </button>
             </div>
@@ -401,7 +450,9 @@ const MetricCard: React.FC<{
       {delta && (
         <span
           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
-            delta.up ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+            delta.up
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-rose-50 text-rose-700"
           }`}
         >
           {delta.up ? "▲" : "▼"} {delta.label}
@@ -424,7 +475,13 @@ const TargetCard: React.FC = () => {
       <div className="text-sm text-gray-700 font-medium mb-2">Target</div>
       <div className="flex items-center justify-center">
         <svg width="420" height="220" viewBox="0 0 420 220">
-          <path d="M30 190 A160 160 0 0 1 390 190" fill="none" stroke="#eee" strokeWidth="20" strokeLinecap="round" />
+          <path
+            d="M30 190 A160 160 0 0 1 390 190"
+            fill="none"
+            stroke="#eee"
+            strokeWidth="20"
+            strokeLinecap="round"
+          />
           <g transform="translate(210,190) rotate(180) translate(-210,-190)">
             <path
               d="M30 190 A160 160 0 0 1 390 190"
@@ -435,10 +492,22 @@ const TargetCard: React.FC = () => {
               strokeDasharray={`${dash} ${circumference}`}
             />
           </g>
-          <text x="210" y="120" textAnchor="middle" className="fill-gray-900" style={{ fontSize: 28, fontWeight: 800 }}>
+          <text
+            x="210"
+            y="120"
+            textAnchor="middle"
+            className="fill-gray-900"
+            style={{ fontSize: 28, fontWeight: 800 }}
+          >
             {percent.toFixed(2)}%
           </text>
-          <text x="210" y="145" textAnchor="middle" className="fill-rose-600" style={{ fontSize: 12, fontWeight: 700 }}>
+          <text
+            x="210"
+            y="145"
+            textAnchor="middle"
+            className="fill-rose-600"
+            style={{ fontSize: 12, fontWeight: 700 }}
+          >
             −37.72%
           </text>
         </svg>
@@ -497,10 +566,12 @@ const StatisticCard: React.FC = () => {
         <div className="text-sm text-gray-700 font-medium">Statistic</div>
         <div className="flex items-center gap-3 text-xs">
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-sky-500" /> Sales
+            <span className="inline-block w-2 h-2 rounded-full bg-sky-500" />{" "}
+            Sales
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-amber-500" /> Revenue
+            <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />{" "}
+            Revenue
           </span>
         </div>
       </div>
@@ -508,16 +579,58 @@ const StatisticCard: React.FC = () => {
       <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[240px]">
         <rect x="0" y="0" width={w} height={h} fill="white" />
         {[0, 1, 2, 3, 4].map((i) => (
-          <line key={i} x1={left} x2={w - right} y1={top + i * 44} y2={top + i * 44} stroke="#f1f5f9" />
+          <line
+            key={i}
+            x1={left}
+            x2={w - right}
+            y1={top + i * 44}
+            y2={top + i * 44}
+            stroke="#f1f5f9"
+          />
         ))}
         <line x1={left} x2={left} y1={top} y2={h - bottom} stroke="#e2e8f0" />
-        <line x1={left} x2={w - right} y1={h - bottom} y2={h - bottom} stroke="#e2e8f0" />
+        <line
+          x1={left}
+          x2={w - right}
+          y1={h - bottom}
+          y2={h - bottom}
+          stroke="#e2e8f0"
+        />
 
-        <polyline fill="none" stroke="#0ea5e9" strokeWidth="3" points={toPoints(sales)} />
-        <polyline fill="none" stroke="#f59e0b" strokeWidth="3" points={toPoints(revenue)} />
+        <polyline
+          fill="none"
+          stroke="#0ea5e9"
+          strokeWidth="3"
+          points={toPoints(sales)}
+        />
+        <polyline
+          fill="none"
+          stroke="#f59e0b"
+          strokeWidth="3"
+          points={toPoints(revenue)}
+        />
 
-        {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
-          <text key={m} x={left + i * ((w - left - right) / 11)} y={h - 4} className="fill-gray-400" style={{ fontSize: 11 }}>
+        {[
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ].map((m, i) => (
+          <text
+            key={m}
+            x={left + i * ((w - left - right) / 11)}
+            y={h - 4}
+            className="fill-gray-400"
+            style={{ fontSize: 11 }}
+          >
             {m}
           </text>
         ))}
@@ -529,9 +642,30 @@ const StatisticCard: React.FC = () => {
 /* ---------- Latest Orders: static table ---------- */
 const LatestOrders: React.FC = () => {
   const rows = [
-    { src: "🛍️ Shop", name: "Ibnul Shams Al Asad", email: "shams@hotmail.com", total: "AED 8,12,100", status: "Processing", tone: "text-amber-700 bg-amber-50" },
-    { src: "🌐 Website", name: "Zara Hassan", email: "zara.hassan@hotmail.com", total: "AED 12,69,650", status: "Delivered", tone: "text-emerald-700 bg-emerald-50" },
-    { src: "📱 App", name: "Maria R.", email: "maria@example.com", total: "AED 6,15,000", status: "Pending", tone: "text-orange-700 bg-orange-50" },
+    {
+      src: "🛍️ Shop",
+      name: "Ibnul Shams Al Asad",
+      email: "shams@hotmail.com",
+      total: "AED 8,12,100",
+      status: "Processing",
+      tone: "text-amber-700 bg-amber-50",
+    },
+    {
+      src: "🌐 Website",
+      name: "Zara Hassan",
+      email: "zara.hassan@hotmail.com",
+      total: "AED 12,69,650",
+      status: "Delivered",
+      tone: "text-emerald-700 bg-emerald-50",
+    },
+    {
+      src: "📱 App",
+      name: "Maria R.",
+      email: "maria@example.com",
+      total: "AED 6,15,000",
+      status: "Pending",
+      tone: "text-orange-700 bg-orange-50",
+    },
   ];
 
   return (
@@ -558,10 +692,16 @@ const LatestOrders: React.FC = () => {
                 </td>
                 <td className="px-4 py-3">{r.total}</td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${r.tone}`}>{r.status}</span>
+                  <span
+                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${r.tone}`}
+                  >
+                    {r.status}
+                  </span>
                 </td>
                 <td className="px-4 py-3">
-                  <button className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs hover:bg-gray-50">View</button>
+                  <button className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs hover:bg-gray-50">
+                    View
+                  </button>
                 </td>
               </tr>
             ))}
@@ -592,7 +732,10 @@ const BusinessGrowth: React.FC = () => {
               <span className="font-semibold">{c.value}%</span>
             </div>
             <div className="mt-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-              <div className="h-full rounded-full bg-violet-500" style={{ width: `${c.value}%` }} />
+              <div
+                className="h-full rounded-full bg-violet-500"
+                style={{ width: `${c.value}%` }}
+              />
             </div>
           </div>
         ))}
@@ -608,9 +751,24 @@ const Dashboard: React.FC = () => {
       {/* KPI row (first tile = Metal Prices) */}
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <MetalPricesCard />
-        <MetricCard title="Total Orders" value="16,920" delta={{ up: false, label: "3%" }} subtitle="Vs last month · View orders" />
-        <MetricCard title="Order Complete" value="16,581" delta={{ up: true, label: "98%" }} subtitle="Vs last month" />
-        <MetricCard title="Cancel Order" value="338" delta={{ up: false, label: "2%" }} subtitle="227 Decreasing Orders" />
+        <MetricCard
+          title="Total Orders"
+          value="16,920"
+          delta={{ up: false, label: "3%" }}
+          subtitle="Vs last month · View orders"
+        />
+        <MetricCard
+          title="Order Complete"
+          value="16,581"
+          delta={{ up: true, label: "98%" }}
+          subtitle="Vs last month"
+        />
+        <MetricCard
+          title="Cancel Order"
+          value="338"
+          delta={{ up: false, label: "2%" }}
+          subtitle="227 Decreasing Orders"
+        />
       </div>
 
       {/* Charts row */}

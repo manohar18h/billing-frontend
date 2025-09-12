@@ -127,7 +127,7 @@ const SalesPage: React.FC = () => {
   // 🧾 Calculation Logic
   const calculateTotal = (data: BarcodeProduct, price: number) => {
     const wastageWeight = (data.wastage / 100) * data.metal_weight;
-    const metalValue = (data.metal_weight + wastageWeight) * price;
+    const metalValue = (data.metal_weight + wastageWeight) * (price / 10);
 
     const extras =
       data.stone_amount +
@@ -158,9 +158,9 @@ const SalesPage: React.FC = () => {
 
       let price = 0;
       if (rates) {
-        if (data.metal === "Gold") {
+        if (data.metal === "24 Gold" || data.metal === "22 Gold") {
           price = rates.goldRate;
-        } else if (data.metal === "Silver") {
+        } else if (data.metal === "999 Silver" || data.metal === "995 Silver") {
           price = rates.silverRate;
         }
       }
@@ -199,6 +199,11 @@ const SalesPage: React.FC = () => {
   /* Only show estimation */
   #print-section, #print-section * {
     visibility: visible;
+  }
+     .print-container {
+    width: 80mm;
+    font-family: monospace, sans-serif;
+    font-size: 12px;
   }
 
   #print-section {
