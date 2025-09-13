@@ -189,11 +189,10 @@ const SalesPage: React.FC = () => {
     margin: 0;
     padding: 0;
     background: white;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  }
 
-    /* Hide everything by default */
-    visibility: hidden;
+  body * {
+  visibility : hidden;
   }
 
   /* Only show estimation */
@@ -202,19 +201,14 @@ const SalesPage: React.FC = () => {
   }
      .print-container {
     width: 80mm;
-    font-family: monospace, sans-serif;
     font-size: 12px;
   }
 
   #print-section {
-    width: 100%;
-    font-size: 14px;
-    line-height: 1.4;
-    margin: 0;
-    padding: 0;
     position: absolute;
     left: 0;
     top: 0;
+       width: 80mm;
   }
 }
 
