@@ -192,29 +192,26 @@ const SalesPage: React.FC = () => {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
 
-    /* Hide everything by default */
+  }
+
+  body * {
     visibility: hidden;
   }
 
-  /* Only show estimation */
+  
   #print-section, #print-section * {
     visibility: visible;
   }
-     .print-container {
-    width: 80mm;
-    font-family: monospace, sans-serif;
-    font-size: 12px;
-  }
 
   #print-section {
-    width: 100%;
-    font-size: 14px;
-    line-height: 1.4;
-    margin: 0;
+    width: 80mm;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.3;
+    margin: 0 auto;
     padding: 0;
-    position: absolute;
-    left: 0;
-    top: 0;
+    position: static;
+    font-weight: bold;
   }
 }
 
@@ -345,11 +342,11 @@ const SalesPage: React.FC = () => {
               <Typography>RT: {(metalPrice / 10).toFixed(2)}/gm</Typography>
               <Box my={1}>
                 <Typography>
-                  -----------------------------------------------------------
+                  --------------------------------------------
                 </Typography>{" "}
                 <Typography fontWeight="bold">{order.itemName}</Typography>
                 <Typography>
-                  -----------------------------------------------------------
+                  --------------------------------------------
                 </Typography>{" "}
               </Box>
               {/* Weights Section */}
@@ -401,7 +398,7 @@ const SalesPage: React.FC = () => {
                   </Box>
                 )}
                 <Typography>
-                  -----------------------------------------------------------
+                  --------------------------------------------
                 </Typography>{" "}
                 <Box display="flex" justifyContent="space-between">
                   <Typography>Nt Wt</Typography>
@@ -467,7 +464,7 @@ const SalesPage: React.FC = () => {
                 </Box>
               </Box>
               <Typography>
-                -----------------------------------------------------------
+                --------------------------------------------
               </Typography>
               {/* Final Amount */}
               <Box mt={2} display="flex" justifyContent="space-between">
