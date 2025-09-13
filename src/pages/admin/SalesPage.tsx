@@ -205,11 +205,16 @@ const SalesPage: React.FC = () => {
       font-family: Arial, sans-serif;
       font-size: 16px;
       line-height: 1.5;
-      margin: 0 auto;
       padding: 4px 6px;
       font-weight: 600;
       color: #000;
+      margin: 0;
     }
+
+    html, body, #print-section {
+  height: auto !important;
+  min-height: 0 !important;
+}
 
     /* Headings */
     #print-section h1,
@@ -247,10 +252,6 @@ const SalesPage: React.FC = () => {
       text-align: center;
       margin-top: 10px;
     }
-        @page {
-    size: auto;
-    margin: 0;
-  }
   }
 `}
       </style>
