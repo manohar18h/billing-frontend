@@ -176,46 +176,79 @@ const SalesPage: React.FC = () => {
 
   return (
     <div className="p-6 bg-white text-black">
-      {/* PRINT CSS */}
       <style>
         {`
   @media print {
-  @page {
-    size: 80mm auto;   /* Thermal paper width */
-    margin: 0;
+    @page {
+      size: 79mm auto;   /* Exact thermal paper width */
+      margin: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: white;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body * {
+      visibility: hidden;
+    }
+
+    #print-section, #print-section * {
+      visibility: visible;
+    }
+
+    #print-section {
+      width: 79mm;
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 0 auto;
+      padding: 4px 6px;
+      font-weight: 600;
+      color: #000;
+    }
+
+    /* Headings */
+    #print-section h1,
+    #print-section h2,
+    #print-section h3 {
+      text-align: center;
+      font-weight: bold;
+      margin: 6px 0;
+      font-size: 18px;
+    }
+
+    /* Horizontal line */
+    #print-section .line {
+      border-top: 1px dashed #000;
+      margin: 6px 0;
+    }
+
+    /* Key values */
+    #print-section .row {
+      display: flex;
+      justify-content: space-between;
+      margin: 2px 0;
+    }
+
+    /* Final Amount */
+    #print-section .final {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    /* Footer */
+    #print-section .footer {
+      font-size: 12px;
+      text-align: center;
+      margin-top: 10px;
+    }
   }
-
-  body {
-    margin: 0;
-    padding: 0;
-    background: white;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-
-  }
-
-  body * {
-    visibility: hidden;
-  }
-
-  
-  #print-section, #print-section * {
-    visibility: visible;
-  }
-
-  #print-section {
-    width: 80mm;
-    font-family: "Courier New", monospace;
-    font-size: 13px;
-    line-height: 1.3;
-    margin: 0 auto;
-    padding: 0;
-    position: static;
-    font-weight: bold;
-  }
-}
-
-  `}
+`}
       </style>
 
       <Box>
@@ -323,165 +356,149 @@ const SalesPage: React.FC = () => {
         )}
         {showEstimation && order && (
           <div id="print-section">
-            <Paper
-              sx={{
-                mt: 3,
-                p: 2,
-                maxWidth: 380,
-                mx: "auto",
-                fontFamily: "monospace",
-              }}
-            >
-              <Typography align="center" fontWeight="bold">
-                ESTIMATION
-              </Typography>
-              <Typography align="center" fontSize="0.75rem" mb={2}>
-                {new Date().toLocaleString()}
-              </Typography>
-              {/* Item Section */}
-              <Typography>RT: {(metalPrice / 10).toFixed(2)}/gm</Typography>
-              <Box my={1}>
-                <Typography>
-                  --------------------------------------------
-                </Typography>{" "}
-                <Typography fontWeight="bold">{order.itemName}</Typography>
-                <Typography>
-                  --------------------------------------------
-                </Typography>{" "}
-              </Box>
-              {/* Weights Section */}
-              <Box>
-                <Box display="flex" justifyContent="space-between">
-                  <Typography>Gr Wt</Typography>
-                  <Typography>{order.gross_weight.toFixed(3)}</Typography>
-                </Box>
-                {order.stone_weight > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>St Wt</Typography>
-                    <Typography>-{order.stone_weight.toFixed(3)}</Typography>
-                  </Box>
-                )}
-                {order.wax_weight > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Wx Wt</Typography>
-                    <Typography>-{order.wax_weight.toFixed(3)}</Typography>
-                  </Box>
-                )}
-                {order.diamond_weight > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Dmd Wt</Typography>
-                    <Typography>-{order.diamond_weight.toFixed(3)}</Typography>
-                  </Box>
-                )}
-                {order.bits_weight > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Bts Wt</Typography>
-                    <Typography>-{order.bits_weight.toFixed(3)}</Typography>
-                  </Box>
-                )}
-                {order.enamel_weight > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Enml Wt</Typography>
-                    <Typography>-{order.enamel_weight.toFixed(3)}</Typography>
-                  </Box>
-                )}
-                {order.pearls_weight > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Prls Wt</Typography>
-                    <Typography>-{order.pearls_weight.toFixed(3)}</Typography>
-                  </Box>
-                )}
-                {order.other_weight > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Oth Wt</Typography>
-                    <Typography>-{order.other_weight.toFixed(3)}</Typography>
-                  </Box>
-                )}
-                <Typography>
-                  --------------------------------------------
-                </Typography>{" "}
-                <Box display="flex" justifyContent="space-between">
-                  <Typography>Nt Wt</Typography>
-                  <Typography>{order.metal_weight.toFixed(3)}</Typography>
-                </Box>
-                <Box display="flex" justifyContent="space-between">
-                  <Typography>Wst</Typography>
-                  <Typography>{order.wastage}%</Typography>
-                </Box>
-              </Box>
-              {/* Amounts Section */}
-              <Box mt={2}>
-                {order.stone_amount > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>St Rt</Typography>
-                    <Typography>{order.stone_amount}</Typography>
-                  </Box>
-                )}
-                {order.wax_amount > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Wx Rt</Typography>
-                    <Typography>{order.wax_amount}</Typography>
-                  </Box>
-                )}
-                {order.diamond_amount > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Dmd Rt</Typography>
-                    <Typography>{order.diamond_amount}</Typography>
-                  </Box>
-                )}
+            <h2>ESTIMATION</h2>
+            <div className="center">{new Date().toLocaleString()}</div>
+            <div className="line"></div>
 
-                {order.bits_amount > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Bts Rt</Typography>
-                    <Typography>{order.bits_amount}</Typography>
-                  </Box>
-                )}
-                {order.enamel_amount > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Enml Rt</Typography>
-                    <Typography>{order.diamond_amount}</Typography>
-                  </Box>
-                )}
+            {/* Rate */}
+            <div className="row">
+              <span>RT</span>
+              <span>{(metalPrice / 10).toFixed(2)}/gm</span>
+            </div>
 
-                {order.pearls_amount > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Prls Rt</Typography>
-                    <Typography>{order.pearls_amount}</Typography>
-                  </Box>
-                )}
+            <div className="line"></div>
 
-                {order.other_amount > 0 && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Oth Rt</Typography>
-                    <Typography>{order.other_amount}</Typography>
-                  </Box>
-                )}
-                {/* Repeat for Bts Rt, En Rt, Prls Rt, Oth Rt */}
+            {/* Item */}
+            <div className="row">
+              <span>Item</span>
+              <span>{order.itemName}</span>
+            </div>
 
-                <Box display="flex" justifyContent="space-between">
-                  <Typography>MC</Typography>
-                  <Typography>{order.making_charges}</Typography>
-                </Box>
-              </Box>
-              <Typography>
-                --------------------------------------------
-              </Typography>
-              {/* Final Amount */}
-              <Box mt={2} display="flex" justifyContent="space-between">
-                <Typography fontWeight="bold">FINAL AMOUNT</Typography>
-                <Typography fontWeight="bold">{totalAmount}</Typography>
-              </Box>
-              {/* Footer */}
-              <Box mt={2} textAlign="center">
-                <Typography fontSize="0.75rem">
-                  Final will be applied at the time of Billing
-                </Typography>
-                <Typography fontSize="0.75rem">
-                  Certified BIS Hallmark Jewellery
-                </Typography>
-              </Box>
-              =
-            </Paper>
+            <div className="line"></div>
+
+            {/* Weights */}
+            <div className="row">
+              <span>Gr Wt</span>
+              <span>{order.gross_weight.toFixed(3)}</span>
+            </div>
+            {order.stone_weight > 0 && (
+              <div className="row">
+                <span>St Wt</span>
+                <span>-{order.stone_weight.toFixed(3)}</span>
+              </div>
+            )}
+            {order.wax_weight > 0 && (
+              <div className="row">
+                <span>Wx Wt</span>
+                <span>-{order.wax_weight.toFixed(3)}</span>
+              </div>
+            )}
+            {order.diamond_weight > 0 && (
+              <div className="row">
+                <span>Dmd Wt</span>
+                <span>-{order.diamond_weight.toFixed(3)}</span>
+              </div>
+            )}
+            {order.bits_weight > 0 && (
+              <div className="row">
+                <span>Bts Wt</span>
+                <span>-{order.bits_weight.toFixed(3)}</span>
+              </div>
+            )}
+            {order.enamel_weight > 0 && (
+              <div className="row">
+                <span>Enml Wt</span>
+                <span>-{order.enamel_weight.toFixed(3)}</span>
+              </div>
+            )}
+            {order.pearls_weight > 0 && (
+              <div className="row">
+                <span>Prls Wt</span>
+                <span>-{order.pearls_weight.toFixed(3)}</span>
+              </div>
+            )}
+            {order.other_weight > 0 && (
+              <div className="row">
+                <span>Oth Wt</span>
+                <span>-{order.other_weight.toFixed(3)}</span>
+              </div>
+            )}
+
+            <div className="line"></div>
+
+            <div className="row">
+              <span>Nt Wt</span>
+              <span>{order.metal_weight.toFixed(3)}</span>
+            </div>
+            <div className="row">
+              <span>Wst</span>
+              <span>{order.wastage}%</span>
+            </div>
+
+            <div className="line"></div>
+
+            {/* Amounts */}
+            {order.stone_amount > 0 && (
+              <div className="row">
+                <span>St Rt</span>
+                <span>{order.stone_amount}</span>
+              </div>
+            )}
+            {order.wax_amount > 0 && (
+              <div className="row">
+                <span>Wx Rt</span>
+                <span>{order.wax_amount}</span>
+              </div>
+            )}
+            {order.diamond_amount > 0 && (
+              <div className="row">
+                <span>Dmd Rt</span>
+                <span>{order.diamond_amount}</span>
+              </div>
+            )}
+            {order.bits_amount > 0 && (
+              <div className="row">
+                <span>Bts Rt</span>
+                <span>{order.bits_amount}</span>
+              </div>
+            )}
+            {order.enamel_amount > 0 && (
+              <div className="row">
+                <span>Enml Rt</span>
+                <span>{order.enamel_amount}</span>
+              </div>
+            )}
+            {order.pearls_amount > 0 && (
+              <div className="row">
+                <span>Prls Rt</span>
+                <span>{order.pearls_amount}</span>
+              </div>
+            )}
+            {order.other_amount > 0 && (
+              <div className="row">
+                <span>Oth Rt</span>
+                <span>{order.other_amount}</span>
+              </div>
+            )}
+
+            <div className="row">
+              <span>MC</span>
+              <span>{order.making_charges}</span>
+            </div>
+
+            <div className="line"></div>
+
+            {/* Final */}
+            <div className="row final">
+              <span>FINAL AMOUNT</span>
+              <span>{totalAmount}</span>
+            </div>
+
+            {/* Footer */}
+            <div className="footer">
+              <div>Final will be applied at the time of Billing</div>
+              <div>Certified BIS Hallmark Jewellery</div>
+            </div>
           </div>
         )}
       </Box>
