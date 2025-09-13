@@ -247,6 +247,10 @@ const SalesPage: React.FC = () => {
       text-align: center;
       margin-top: 10px;
     }
+        @page {
+    size: auto;
+    margin: 0;
+  }
   }
 `}
       </style>
