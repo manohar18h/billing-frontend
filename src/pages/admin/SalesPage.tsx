@@ -189,10 +189,11 @@ const SalesPage: React.FC = () => {
     margin: 0;
     padding: 0;
     background: white;
-  }
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
 
-  body * {
-  visibility : hidden;
+    /* Hide everything by default */
+    visibility: hidden;
   }
 
   /* Only show estimation */
@@ -201,14 +202,19 @@ const SalesPage: React.FC = () => {
   }
      .print-container {
     width: 80mm;
+    font-family: monospace, sans-serif;
     font-size: 12px;
   }
 
   #print-section {
+    width: 100%;
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
     position: absolute;
     left: 0;
     top: 0;
-       width: 80mm;
   }
 }
 
@@ -471,7 +477,7 @@ const SalesPage: React.FC = () => {
               {/* Footer */}
               <Box mt={2} textAlign="center">
                 <Typography fontSize="0.75rem">
-                  Final Amount will be applied at the time of Billing
+                  Final will be applied at the time of Billing
                 </Typography>
                 <Typography fontSize="0.75rem">
                   Certified BIS Hallmark Jewellery
