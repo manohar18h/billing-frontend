@@ -477,7 +477,7 @@ const SalesPage: React.FC = () => {
               {/* Footer */}
               <Box mt={2} textAlign="center">
                 <Typography fontSize="0.75rem">
-                  Rate will be applied at the time of Billing
+                  Final Amount will be applied at the time of Billing
                 </Typography>
                 <Typography fontSize="0.75rem">
                   Certified BIS Hallmark Jewellery
