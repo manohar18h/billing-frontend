@@ -28,6 +28,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Order } from "@/models/Order";
 import api from "@/services/api";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 
 type BarcodeProduct = {
   metal: string;
@@ -165,7 +169,6 @@ const Orders: React.FC = () => {
   const customerId =
     location.state?.customerId ||
     localStorage.getItem("CusDetailsCustomerId") ||
-    localStorage.getItem("BillCustomerId") ||
     localStorage.getItem("customerId");
 
   const fromBillDetails = location.state?.fromBillDetails || false;
@@ -315,6 +318,10 @@ const Orders: React.FC = () => {
 
       localStorage.setItem("exchangeItemAmount", exchangeItemAmount.toString());
       localStorage.setItem("exchangeOrderId", orderId.toString());
+
+      console.log("requestBody :", exchange);
+      console.log("orderId :", orderId);
+      console.log("token :", token);
 
       const response = await api.post(
         `/admin/addOldExItem/${orderId}`,
@@ -1002,7 +1009,7 @@ const Orders: React.FC = () => {
               }, 100);
             }}
           >
-            Exchange / Return
+            Exchange / Returnn
           </Button>
         </Box>
 
@@ -1274,52 +1281,77 @@ const Orders: React.FC = () => {
           elevation={4}
           className="p-6 mt-6 rounded-3xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
         >
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
+          <h3 className=" text-3xl font-bold mb-10 text-blue-600">
             Order Summary
-          </Typography>
+          </h3>
           <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Order ID</TableCell>
-                <TableCell>Item</TableCell>
-                <TableCell>Metal</TableCell>
-                <TableCell>Weight</TableCell>
-                <TableCell>Total</TableCell>
-                <TableCell>Paid</TableCell>
-                <TableCell>Due</TableCell>
-                <TableCell>Worker</TableCell>
-                <TableCell>Pay</TableCell>
-                <TableCell>Action</TableCell>
-                <TableCell>Edit</TableCell>
-                <TableCell>Delete</TableCell>
-              </TableRow>
-            </TableHead>
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border px-3 py-2">Order ID</th>
+                <th className="border px-3 py-2">Item</th>
+                <th className="border px-3 py-2">Metal</th>
+                <th className="border px-3 py-2">Weight</th>
+                <th className="border px-3 py-2">Total</th>
+                <th className="border px-3 py-2 ">Paid</th>
+                <th className="border px-3 py-2">Due</th>
+                <th className="border px-3 py-2">Worker</th>
+                <th className="border px-3 py-2">Pay</th>
+                <th className="border px-3 py-2">View</th>
+                <th className="border px-3 py-2">Edit</th>
+                <th className="border px-3 py-2">Delete</th>
+              </tr>
+            </thead>
+
             <TableBody>
               {ordersList.map((ord) => (
                 <TableRow key={ord.orderId}>
-                  <TableCell>{ord.orderId}</TableCell>
-                  <TableCell>{ord.itemName}</TableCell>
-                  <TableCell>{ord.metal}</TableCell>
-                  <TableCell>{ord.metal_weight}</TableCell>
-                  <TableCell>{ord.total_item_amount}</TableCell>
-                  <TableCell>{ord.paidAmount}</TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ord.orderId}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ord.itemName}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ord.metal}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ord.metal_weight}
+                  </TableCell>
                   <TableCell
+                    className={`border px-3 py-2 `}
                     sx={{
-                      fontWeight: 400,
-                      color:
-                        asNumber(ord.dueAmount) < 0 ? "error.main" : "inherit",
+                      color: "#ca8a04",
                     }}
+                  >
+                    {ord.total_item_amount}
+                  </TableCell>
+                  <TableCell
+                    className={`border px-3 py-2 `}
+                    sx={{
+                      color: "#15803d",
+                    }}
+                  >
+                    {ord.paidAmount}
+                  </TableCell>
+                  <TableCell
+                    className={`border px-3 py-2 ${
+                      ord.dueAmount !== 0 ? "text-red-600 font-semibold" : ""
+                    }`}
                   >
                     {formatMoney(ord.dueAmount)}
                   </TableCell>
-                  <TableCell>
+
+                  <TableCell className={`border px-3 py-2 `}>
                     {ord.workerPay ? (
                       ord.workerPay.fullName
                     ) : (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        color="primary"
+                      <IconButton
+                        size="medium"
+                        sx={{
+                          color: "#9C27B0",
+                          "&:hover": { backgroundColor: "#E0E0E0" },
+                          borderRadius: "50%", // ✅ ensures round hover effect
+                        }}
                         onClick={() => {
                           setAssignOrderId(ord.orderId);
                           setSelectedWorkerId("");
@@ -1328,96 +1360,123 @@ const Orders: React.FC = () => {
                           setAssignDialogOpen(true);
                         }}
                       >
-                        Assign Worker
-                      </Button>
+                        <PersonAddIcon fontSize="medium" />
+                      </IconButton>
                     )}
                   </TableCell>
-                  <TableCell>
+
+                  <TableCell className={`border px-3 py-2 `}>
                     {asNumber(ord.dueAmount) !== 0 ? (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        color="secondary"
+                      <IconButton
+                        size="medium"
+                        sx={{
+                          color: "#4CAF50", // solid green background
+                          "&:hover": { backgroundColor: "#E0E0E0" },
+                        }}
                         onClick={() => {
                           setSelectedOrderId(ord.orderId);
                           setPayAmount("");
                           setPayDialogOpen(true);
                         }}
                       >
-                        Pay
-                      </Button>
+                        <CurrencyRupeeIcon fontSize="medium" />
+                      </IconButton>
                     ) : (
                       "-"
                     )}
                   </TableCell>
-                  <TableCell>
-                    <Button onClick={() => handleViewMore(ord.orderId)}>
-                      View More
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      color="warning"
-                      onClick={() => {
-                        setOrder({
-                          metal: ord.metal || "",
-                          metalPrice:
-                            ord.metal === "24 Gold" || ord.metal === "22 Gold"
-                              ? parseFloat(
-                                  localStorage.getItem("GoldPrice") || "0"
-                                )
-                              : ord.metal === "999 Silver" ||
-                                ord.metal === "995 Silver"
-                              ? parseFloat(
-                                  localStorage.getItem("SilverPrice") || "0"
-                                )
-                              : 0,
-                          itemName: ord.itemName || "",
-                          catalogue: ord.catalogue || "",
-                          design: ord.design || "",
-                          size: String(ord.size || ""),
-                          metal_weight: ord.metal_weight || 0,
-                          wastage: ord.wastage || 0,
-                          making_charges: ord.making_charges || 0,
-                          stone_weight: ord.stone_weight || 0,
-                          stone_amount: ord.stone_amount || 0,
-                          wax_weight: ord.wax_weight || 0,
-                          wax_amount: ord.wax_amount || 0,
-                          diamond_weight: ord.diamond_weight || 0,
-                          diamond_amount: ord.diamond_amount || 0,
-                          bits_weight: ord.bits_weight || 0,
-                          bits_amount: ord.bits_amount || 0,
-                          enamel_weight: ord.enamel_weight || 0,
-                          enamel_amount: ord.enamel_amount || 0,
-                          pearls_weight: ord.pearls_weight || 0,
-                          pearls_amount: ord.pearls_amount || 0,
-                          other_weight: ord.other_weight || 0,
-                          other_amount: ord.other_amount || 0,
-                          gross_weight: ord.gross_weight || 0,
-                          stockBox: ord.stockBox || 0,
-                          discount: ord.discount || 0,
-                          delivery_status: ord.delivery_status || "",
-                          total_item_amount:
-                            calculateTotals(ord).total_item_amount,
-                        });
 
-                        setIsEditing(true);
-                        setEditingOrderId(ord.orderId); // still keep the orderId in a separate state
-                        setOrderErrors({});
+                  <TableCell className={`border px-3 py-2 `}>
+                    <IconButton
+                      size="medium"
+                      color="primary"
+                      sx={{
+                        "&:hover": { backgroundColor: "#E0E0E0" },
                       }}
+                      onClick={() => handleViewMore(ord.orderId)}
                     >
-                      <EditIcon />
+                      <VisibilityIcon fontSize="medium" />
                     </IconButton>
                   </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      color="warning"
-                      onClick={() => handleClickOrderOpen(ord.orderId)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+
+                  <TableCell className={`border px-3 py-2 `}>
+                    {order.delivery_status === "Canceled" ? (
+                      <>-</>
+                    ) : (
+                      <IconButton
+                        size="small"
+                        color="warning"
+                        sx={{
+                          "&:hover": { backgroundColor: "#E0E0E0" },
+                        }}
+                        onClick={() => {
+                          setOrder({
+                            metal: ord.metal || "",
+                            metalPrice:
+                              ord.metal === "24 Gold" || ord.metal === "22 Gold"
+                                ? parseFloat(
+                                    localStorage.getItem("GoldPrice") || "0"
+                                  )
+                                : ord.metal === "999 Silver" ||
+                                  ord.metal === "995 Silver"
+                                ? parseFloat(
+                                    localStorage.getItem("SilverPrice") || "0"
+                                  )
+                                : 0,
+                            itemName: ord.itemName || "",
+                            catalogue: ord.catalogue || "",
+                            design: ord.design || "",
+                            size: String(ord.size || ""),
+                            metal_weight: ord.metal_weight || 0,
+                            wastage: ord.wastage || 0,
+                            making_charges: ord.making_charges || 0,
+                            stone_weight: ord.stone_weight || 0,
+                            stone_amount: ord.stone_amount || 0,
+                            wax_weight: ord.wax_weight || 0,
+                            wax_amount: ord.wax_amount || 0,
+                            diamond_weight: ord.diamond_weight || 0,
+                            diamond_amount: ord.diamond_amount || 0,
+                            bits_weight: ord.bits_weight || 0,
+                            bits_amount: ord.bits_amount || 0,
+                            enamel_weight: ord.enamel_weight || 0,
+                            enamel_amount: ord.enamel_amount || 0,
+                            pearls_weight: ord.pearls_weight || 0,
+                            pearls_amount: ord.pearls_amount || 0,
+                            other_weight: ord.other_weight || 0,
+                            other_amount: ord.other_amount || 0,
+                            gross_weight: ord.gross_weight || 0,
+                            stockBox: ord.stockBox || 0,
+                            discount: ord.discount || 0,
+                            delivery_status: ord.delivery_status || "",
+                            total_item_amount:
+                              calculateTotals(ord).total_item_amount,
+                          });
+
+                          setIsEditing(true);
+                          setEditingOrderId(ord.orderId); // still keep the orderId in a separate state
+                          setOrderErrors({});
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    )}
+                  </TableCell>
+
+                  <TableCell className={`border px-3 py-2 `}>
+                    {order.delivery_status === "Canceled" ? (
+                      <CheckCircleIcon color="success" />
+                    ) : (
+                      <IconButton
+                        size="small"
+                        sx={{
+                          color: "#A0522D",
+                          "&:hover": { backgroundColor: "#E0E0E0" },
+                        }}
+                        onClick={() => handleClickOrderOpen(ord.orderId)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -1557,41 +1616,63 @@ const Orders: React.FC = () => {
           elevation={4}
           className="p-6 mt-6 rounded-3xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
         >
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
+          <h3 className=" text-3xl font-bold mb-10 text-blue-600">
             Exchange / Return Summary
-          </Typography>
+          </h3>
           <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Order Id</TableCell>
-                <TableCell>Metal</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Gross Weight</TableCell>
-                <TableCell>Weight</TableCell>
-                <TableCell>Purity</TableCell>
-                <TableCell>Metal Price</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Edit</TableCell>
-                <TableCell>Delete</TableCell>
-              </TableRow>
-            </TableHead>
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border px-3 py-2">ID</th>
+                <th className="border px-3 py-2">Order ID</th>
+                <th className="border px-3 py-2">Metal</th>
+                <th className="border px-3 py-2">Name</th>
+                <th className="border px-3 py-2">Gross Weight</th>
+                <th className="border px-3 py-2">Weight</th>
+                <th className="border px-3 py-2">Purity</th>
+                <th className="border px-3 py-2">Metal Price</th>
+                <th className="border px-3 py-2">Amount</th>
+                <th className="border px-3 py-2">Edit</th>
+                <th className="border px-3 py-2">Delete</th>
+              </tr>
+            </thead>
+
             <TableBody>
               {exchangeList.map((ex) => (
                 <TableRow key={ex.oldItemId}>
-                  <TableCell>{ex.oldItemId}</TableCell>
-                  <TableCell>{ex.orderId}</TableCell>
-                  <TableCell>{ex.exchange_metal}</TableCell>
-                  <TableCell>{ex.exchange_metal_name}</TableCell>
-                  <TableCell>{ex.exchange_metal_gross_weight}</TableCell>
-                  <TableCell>{ex.exchange_metal_weight}</TableCell>
-                  <TableCell>{ex.exchange_purity_weight}</TableCell>
-                  <TableCell>{ex.exchange_metal_price}</TableCell>
-                  <TableCell>{ex.exchange_item_amount}</TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ex.oldItemId}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ex.orderId}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ex.exchange_metal}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ex.exchange_metal_name}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ex.exchange_metal_gross_weight}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ex.exchange_metal_weight}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ex.exchange_purity_weight}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ex.exchange_metal_price}
+                  </TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
+                    {ex.exchange_item_amount}
+                  </TableCell>
                   <TableCell>
                     <IconButton
                       size="small"
                       color="warning"
+                      sx={{
+                        "&:hover": { backgroundColor: "#E0E0E0" },
+                      }}
                       onClick={() => {
                         setExchange({
                           ...ex, // ensure dropdown works if needed
@@ -1606,10 +1687,13 @@ const Orders: React.FC = () => {
                       <EditIcon />
                     </IconButton>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className={`border px-3 py-2 `}>
                     <IconButton
                       size="small"
                       color="warning"
+                      sx={{
+                        "&:hover": { backgroundColor: "#E0E0E0" },
+                      }}
                       onClick={() => handleClickOldItemOpen(ex.oldItemId)}
                     >
                       <DeleteIcon />
@@ -1718,6 +1802,11 @@ const Orders: React.FC = () => {
           <Button
             onClick={async () => {
               if (!selectedOrderId || !payAmount) return;
+
+              console.log("pay orderId :", selectedOrderId);
+              console.log("paymethod :", payMethod);
+              console.log("pay amount :", payAmount);
+
               try {
                 await api.post(
                   `/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,

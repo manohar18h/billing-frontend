@@ -24,18 +24,25 @@ type BarcodeProduct = {
   wastage: number;
   making_charges: number;
   stone_weight: number;
+  stone_rate: number;
   stone_amount: number;
   wax_weight: number;
+  wax_rate: number;
   wax_amount: number;
   diamond_weight: number;
+  diamond_rate: number;
   diamond_amount: number;
   bits_weight: number;
+  bits_rate: number;
   bits_amount: number;
   enamel_weight: number;
+  enamel_rate: number;
   enamel_amount: number;
   pearls_weight: number;
+  pearls_rate: number;
   pearls_amount: number;
   other_weight: number;
+  other_rate: number;
   other_amount: number;
   gross_weight: number;
   stockBox: string;
@@ -201,11 +208,14 @@ const SalesPage: React.FC = () => {
     }
 
     #print-section {
+    position: absolute;
+    top: 0;
+    left: 0;
       width: 79mm;
       font-family: Arial, sans-serif;
       font-size: 16px;
       line-height: 1.5;
-      padding: 0;
+      padding: 4px 6px;
       font-weight: 600;
       color: #000;
       margin: 0;
@@ -233,6 +243,19 @@ const SalesPage: React.FC = () => {
       border-top: 1px dashed #000;
       margin: 6px 0;
     }
+
+    #print-section .short-line {
+  border-top: 1px dashed #000;
+  width: 30%;          /* Adjust width (shorter line) */
+  margin-left: auto;   /* Push line to the right */
+  margin-right: 0;
+}
+
+#print-section .solid-line {
+  border-top: 1px solid #000;
+  width: 100%;
+  margin: 6px 0;
+}
 
     /* Key values */
     #print-section .row {
@@ -365,7 +388,6 @@ const SalesPage: React.FC = () => {
           <div id="print-section">
             <h2>ESTIMATION</h2>
             <div className="center">{new Date().toLocaleString()}</div>
-            <div className="line"></div>
 
             {/* Rate */}
             <div className="row">
@@ -373,8 +395,7 @@ const SalesPage: React.FC = () => {
               <span>{(metalPrice / 10).toFixed(2)}/gm</span>
             </div>
 
-            <div className="line"></div>
-
+            <div className="solid-line"></div>
             {/* Item */}
             <div className="row">
               <span>Item</span>
@@ -431,75 +452,172 @@ const SalesPage: React.FC = () => {
               </div>
             )}
 
-            <div className="line"></div>
-
             <div className="row">
               <span>Nt Wt</span>
               <span>{order.metal_weight.toFixed(3)}</span>
             </div>
+
             <div className="row">
               <span>Wst</span>
-              <span>{order.wastage}%</span>
+              <span>
+                {order.wastage}% ({(order.wastage / 100) * order.metal_weight} )
+              </span>
+            </div>
+            <div className="short-line"></div>
+
+            <div className="row">
+              <span>T Wt</span>
+              <span>
+                {order.metal_weight +
+                  (order.wastage / 100) * order.metal_weight}
+              </span>
             </div>
 
-            <div className="line"></div>
+            <div className="short-line"></div>
 
-            {/* Amounts */}
+            <div className="row">
+              <span>
+                Cost of{" "}
+                {order.metal.includes("Gold")
+                  ? "Gold"
+                  : order.metal.includes("Silver")
+                  ? "Silver"
+                  : ""}
+                ({(metalPrice / 10).toFixed(2)}/gm)
+              </span>
+              <span>
+                {(
+                  (order.metal_weight +
+                    (order.wastage / 100) * order.metal_weight) *
+                  (metalPrice / 10)
+                ).toFixed(2)}{" "}
+              </span>
+            </div>
+            {
+              <>
+                <div className="solid-line"></div>
+                <div className="row">
+                  <span>Gems</span>
+                  <span>Wt/pc</span>
+                  <span>Rate</span>
+                  <span>Amount</span>
+                </div>
+              </>
+            }
+
             {order.stone_amount > 0 && (
-              <div className="row">
-                <span>St Rt</span>
-                <span>{order.stone_amount}</span>
-              </div>
+              <>
+                <div className="line"></div>
+
+                <div className="row">
+                  <span>Stone</span>
+                  <span>{(order.stone_weight * 10) / 2} cts</span>
+                  <span>{order.stone_rate}</span>
+                  <span>{order.stone_amount}</span>
+                </div>
+              </>
             )}
+
             {order.wax_amount > 0 && (
-              <div className="row">
-                <span>Wx Rt</span>
-                <span>{order.wax_amount}</span>
-              </div>
+              <>
+                <div className="line"></div>
+                <div className="row">
+                  <span>Wax</span>
+                  <span>{(order.wax_weight * 10) / 2} cts</span>
+                  <span>{order.wax_rate}</span>
+                  <span>{order.wax_amount}</span>
+                </div>
+              </>
             )}
+
             {order.diamond_amount > 0 && (
-              <div className="row">
-                <span>Dmd Rt</span>
-                <span>{order.diamond_amount}</span>
-              </div>
+              <>
+                <div className="line"></div>
+                <div className="row">
+                  <span>Diamond</span>
+                  <span>{(order.diamond_weight * 10) / 2} cts</span>
+                  <span>{order.diamond_rate}</span>
+                  <span>{order.diamond_amount}</span>
+                </div>
+              </>
+            )}
+
+            {order.pearls_amount > 0 && (
+              <>
+                <div className="line"></div>
+                <div className="row">
+                  <span>Stone</span>
+                  <span>{(order.pearls_weight * 10) / 2} cts</span>
+                  <span>{order.pearls_rate}</span>
+                  <span>{order.pearls_amount}</span>
+                </div>
+              </>
             )}
             {order.bits_amount > 0 && (
-              <div className="row">
-                <span>Bts Rt</span>
-                <span>{order.bits_amount}</span>
-              </div>
+              <>
+                <div className="line"></div>
+                <div className="row">
+                  <span>Bits</span>
+                  <span>{(order.bits_weight * 10) / 2} cts</span>
+                  <span>{order.bits_rate}</span>
+                  <span>{order.bits_amount}</span>
+                </div>
+              </>
             )}
+
             {order.enamel_amount > 0 && (
-              <div className="row">
-                <span>Enml Rt</span>
-                <span>{order.enamel_amount}</span>
-              </div>
+              <>
+                <div className="line"></div>
+                <div className="row">
+                  <span>Enamel</span>
+                  <span>{(order.enamel_weight * 10) / 2} cts</span>
+                  <span>{order.enamel_rate}</span>
+                  <span>{order.enamel_amount}</span>
+                </div>
+              </>
             )}
-            {order.pearls_amount > 0 && (
-              <div className="row">
-                <span>Prls Rt</span>
-                <span>{order.pearls_amount}</span>
-              </div>
-            )}
+
             {order.other_amount > 0 && (
-              <div className="row">
-                <span>Oth Rt</span>
-                <span>{order.other_amount}</span>
-              </div>
+              <>
+                <div className="line"></div>
+                <div className="row">
+                  <span>Other</span>
+                  <span>{(order.other_weight * 10) / 2} cts</span>
+                  <span>{order.other_rate}</span>
+                  <span>{order.other_amount}</span>
+                </div>
+              </>
             )}
+
+            <div className="solid-line"></div>
+
+            <div className="row">
+              <span>Gems Amount</span>
+              <span>
+                {order.stone_amount +
+                  order.bits_amount +
+                  order.wax_amount +
+                  order.diamond_amount +
+                  order.enamel_amount +
+                  order.other_amount +
+                  order.pearls_amount}
+              </span>
+            </div>
 
             <div className="row">
               <span>MC</span>
               <span>{order.making_charges}</span>
             </div>
 
-            <div className="line"></div>
+            <div className="short-line"></div>
 
             {/* Final */}
             <div className="row final">
               <span>FINAL AMOUNT</span>
               <span>{totalAmount}</span>
             </div>
+
+            <div className="short-line"></div>
 
             {/* Footer */}
             <div className="footer">

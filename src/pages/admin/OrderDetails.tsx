@@ -28,6 +28,7 @@ const OrderDetails: React.FC = () => {
 
   interface WorkerPay {
     workPay: number;
+    wastage: number;
     date: string; // you can make this `Date` if you parse it
     wpid: number;
     workerId: number;
@@ -325,6 +326,7 @@ const OrderDetails: React.FC = () => {
                     {order.workerPay.workPay}
                   </span>
                 </p>
+
                 <p>
                   <span className="text-purple-200">Metal:</span>{" "}
                   <span className="text-emerald-300">
@@ -333,6 +335,12 @@ const OrderDetails: React.FC = () => {
                 </p>
               </div>
               <div className="pl-6">
+                <p>
+                  <span className="text-pink-200">Wastage:</span>{" "}
+                  <span className="text-yellow-300">
+                    {order.workerPay.wastage}
+                  </span>
+                </p>
                 <p>
                   <span className="text-pink-200">Metal Weight:</span>{" "}
                   <span className="text-yellow-300">
@@ -343,12 +351,6 @@ const OrderDetails: React.FC = () => {
                   <span className="text-pink-200">Worker ID:</span>{" "}
                   <span className="text-yellow-300">
                     {order.workerPay.workerId}
-                  </span>
-                </p>
-                <p>
-                  <span className="text-pink-200">WP ID:</span>{" "}
-                  <span className="text-yellow-300">
-                    {order.workerPay.wpid}
                   </span>
                 </p>
               </div>

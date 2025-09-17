@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, Button } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import api from "@/services/api"; // ← import your api.ts
 
@@ -46,6 +47,10 @@ const BillData: React.FC = () => {
 
   useEffect(() => {
     const phnNumber = localStorage.getItem("bill-phnNumber");
+
+    console.log("phn number :" + phnNumber);
+    console.log("token :" + localStorage.getItem("token"));
+
     if (phnNumber) {
       api
         .get<Billing[]>(`/admin/by-phone/${phnNumber}`, {
@@ -127,8 +132,15 @@ const BillData: React.FC = () => {
         >
           {/* Header */}
           <div className="flex items-center mb-6">
-            <IconButton color="inherit" onClick={handleBackClick}>
-              <ArrowBackIcon className="text-white" />
+            <IconButton
+              onClick={handleBackClick}
+              sx={{
+                backgroundColor: "rgba(255,255,255,0.1)",
+                color: "#fbbf24",
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.25)" },
+              }}
+            >
+              <ArrowBackIcon />
             </IconButton>
             <h2 className="text-2xl font-bold text-amber-300 ml-2">
               Customer Details
@@ -139,11 +151,16 @@ const BillData: React.FC = () => {
               <Button
                 variant="contained"
                 sx={{
-                  background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                  background: "linear-gradient(135deg, #f59e0b, #ef4444)", // orange-red
                   borderRadius: "12px",
                   textTransform: "none",
                   fontWeight: "600",
-                  boxShadow: "0 8px 20px rgba(99,102,241,0.35)",
+                  boxShadow: "0 8px 20px rgba(239,68,68,0.35)",
+                  px: 3,
+                  py: 1,
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #ef4444, #f59e0b)",
+                  },
                 }}
                 onClick={handleAddOrder}
               >
@@ -219,7 +236,7 @@ const BillData: React.FC = () => {
                 <th className="border px-3 py-2">Paid</th>
                 <th className="border px-3 py-2">Due</th>
                 <th className="border px-3 py-2">Delivery Status</th>
-                <th className="border px-3 py-2">Action</th>
+                <th className="border px-3 py-2">View</th>
               </tr>
             </thead>
             <tbody>
@@ -231,29 +248,51 @@ const BillData: React.FC = () => {
                       : "N/A"}
                   </td>
                   <td className="border px-3 py-2">{bill.billNumber}</td>
-                  <td className="border px-3 py-2">
+                  <td className="border px-3 py-2 text-yellow-600 font-semibold">
                     {bill.billTotalAmount.toFixed(2)}
                   </td>
                   <td className="border px-3 py-2">
                     {bill.exchangeAmount.toFixed(2)}
                   </td>
-                  <td className="border px-3 py-2">
+                  <td className="border px-3 py-2 text-green-600 font-semibold">
                     {bill.billPaidAmount.toFixed(2)}
                   </td>
-                  <td className="border px-3 py-2">
+                  <td
+                    className={`border px-3 py-2 ${
+                      bill.billDueAmount !== 0
+                        ? "text-red-600 font-semibold"
+                        : ""
+                    }`}
+                  >
                     {bill.billDueAmount.toFixed(2)}
                   </td>
-                  <td className="border px-3 py-2">{bill.deliveryStatus}</td>
+                  <td
+                    className={`border px-3 py-2 font-semibold ${
+                      bill.deliveryStatus === "Pending"
+                        ? "text-yellow-600"
+                        : bill.deliveryStatus === "Delivered"
+                        ? "text-green-600"
+                        : bill.deliveryStatus === "Canceled"
+                        ? "text-red-600"
+                        : ""
+                    }`}
+                  >
+                    {bill.deliveryStatus}
+                  </td>
                   <td className="border px-3 py-2">
-                    <button
-                      className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+                    <IconButton
+                      size="medium"
+                      color="primary"
+                      sx={{
+                        "&:hover": { backgroundColor: "#E0E0E0" },
+                      }}
                       onClick={() => {
                         localStorage.setItem("billNumber", bill.billNumber);
                         navigate("/admin/bill-details");
                       }}
                     >
-                      View More
-                    </button>
+                      <VisibilityIcon fontSize="medium" />
+                    </IconButton>
                   </td>
                 </tr>
               ))}

@@ -138,18 +138,25 @@ type ProductForm = {
   wastage: string;
   making_charges: string;
   stone_weight: string;
+  stone_rate: string;
   stone_amount: string;
   wax_weight: string;
+  wax_rate: string;
   wax_amount: string;
   diamond_weight: string;
+  diamond_rate: string;
   diamond_amount: string;
   bits_weight: string;
+  bits_rate: string;
   bits_amount: string;
   enamel_weight: string;
+  enamel_rate: string;
   enamel_amount: string;
   pearls_weight: string;
+  pearls_rate: string;
   pearls_amount: string;
   other_weight: string;
+  other_rate: string;
   other_amount: string;
   stock: string;
   stockBox: string;
@@ -181,18 +188,25 @@ const initialProduct: ProductForm = {
   wastage: "",
   making_charges: "",
   stone_weight: "",
+  stone_rate: "",
   stone_amount: "",
   wax_weight: "",
+  wax_rate: "",
   wax_amount: "",
   diamond_weight: "",
+  diamond_rate: "",
   diamond_amount: "",
   bits_weight: "",
+  bits_rate: "",
   bits_amount: "",
   enamel_weight: "",
+  enamel_rate: "",
   enamel_amount: "",
   pearls_weight: "",
+  pearls_rate: "",
   pearls_amount: "",
   other_weight: "",
+  other_rate: "",
   other_amount: "",
   stock: "",
   stockBox: "",
@@ -214,18 +228,25 @@ const numericKeys: (keyof ProductForm)[] = [
   "wastage",
   "making_charges",
   "stone_weight",
+  "stone_rate",
   "stone_amount",
   "wax_weight",
+  "wax_rate",
   "wax_amount",
   "diamond_weight",
+  "diamond_rate",
   "diamond_amount",
   "bits_weight",
+  "bits_rate",
   "bits_amount",
   "enamel_weight",
+  "enamel_rate",
   "enamel_amount",
   "pearls_weight",
+  "pearls_rate",
   "pearls_amount",
   "other_weight",
+  "other_rate",
   "other_amount",
   "stock",
   "gross_weight",
@@ -375,7 +396,6 @@ const Products: React.FC = () => {
     }
   };
   /* --------- PRODUCTS form (bottom) --------- */
-  const [product, setProduct] = useState<ProductForm>(initialProduct);
   const [errors, setErrors] = useState<
     Partial<Record<keyof ProductForm, string>>
   >({});
@@ -385,50 +405,6 @@ const Products: React.FC = () => {
   const [bottomResults, setBottomResults] = useState<StockProduct[] | null>(
     null
   );
-
-  const onProductChange =
-    (k: keyof ProductForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
-      setProduct((prev) => {
-        const next = { ...prev, [k]: val };
-
-        // Auto-calc gross_weight = metal_weight + stone_weight
-        if (
-          k === "metal_weight" ||
-          k === "stone_weight" ||
-          k === "wax_weight" ||
-          k === "bits_weight" ||
-          k === "diamond_weight" ||
-          k === "enamel_weight" ||
-          k === "pearls_weight" ||
-          k === "other_weight"
-        ) {
-          const mw = toNum(k === "metal_weight" ? val : next.metal_weight);
-          const sw = toNum(k === "stone_weight" ? val : next.stone_weight);
-          const ww = toNum(k === "wax_weight" ? val : next.wax_weight);
-          const bw = toNum(k === "bits_weight" ? val : next.bits_weight);
-          const dw = toNum(k === "diamond_weight" ? val : next.diamond_weight);
-          const ew = toNum(k === "enamel_weight" ? val : next.enamel_weight);
-          const pw = toNum(k === "pearls_weight" ? val : next.pearls_weight);
-          const ow = toNum(k === "other_weight" ? val : next.other_weight);
-
-          next.gross_weight =
-            Number.isNaN(mw) ||
-            Number.isNaN(sw) ||
-            Number.isNaN(ww) ||
-            Number.isNaN(bw) ||
-            Number.isNaN(dw) ||
-            Number.isNaN(ew) ||
-            Number.isNaN(pw) ||
-            Number.isNaN(ow)
-              ? ""
-              : String(mw + sw + ww + bw + dw + ew + pw + ow);
-        }
-        return next;
-      });
-
-      if (errors[k]) setErrors((prev) => ({ ...prev, [k]: undefined }));
-    };
 
   const validateProduct = () => {
     const e: Partial<Record<keyof ProductForm, string>> = {};
@@ -460,18 +436,25 @@ const Products: React.FC = () => {
       wastage: toNum(product.wastage),
       making_charges: toNum(product.making_charges),
       stone_weight: toNum(product.stone_weight),
+      stone_rate: toNum(product.stone_rate),
       stone_amount: toNum(product.stone_amount),
       wax_weight: toNum(product.wax_weight),
+      wax_rate: toNum(product.wax_rate),
       wax_amount: toNum(product.wax_amount),
       diamond_weight: toNum(product.diamond_weight),
+      diamond_rate: toNum(product.diamond_rate),
       diamond_amount: toNum(product.diamond_amount),
       bits_weight: toNum(product.bits_weight),
+      bits_rate: toNum(product.bits_rate),
       bits_amount: toNum(product.bits_amount),
       enamel_weight: toNum(product.enamel_weight),
+      enamel_rate: toNum(product.enamel_rate),
       enamel_amount: toNum(product.enamel_amount),
       pearls_weight: toNum(product.pearls_weight),
+      pearls_rate: toNum(product.pearls_rate),
       pearls_amount: toNum(product.pearls_amount),
       other_weight: toNum(product.other_weight),
+      other_rate: toNum(product.other_rate),
       other_amount: toNum(product.other_amount),
       stock: toNum(product.stock),
       stockBox: product.stockBox.trim(),
@@ -506,6 +489,81 @@ const Products: React.FC = () => {
       setSubmitLoading(false);
     }
   };
+
+  // --- Utility functions ---
+  const toNum = (v: string | number | undefined): number => {
+    const n = Number(v);
+    return !isNaN(n) && n > 0 ? n : 0;
+  };
+
+  const calculateAmount = (weight: number, rate: number): number => {
+    if (weight <= 0 || rate <= 0) return 0;
+    return ((weight * 10) / 2) * rate;
+  };
+
+  // --- State ---
+  const [product, setProduct] = useState<ProductForm>(initialProduct);
+
+  // --- Handler for normal product fields ---
+  const onProductChange =
+    (k: keyof ProductForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+
+      setProduct((prev) => {
+        const next = { ...prev, [k]: val };
+
+        // whenever weight fields update, recalc gross weight
+        next.gross_weight = String(calcGrossWeight(next));
+        return next;
+      });
+    };
+
+  // --- Handler for materials with weight & rate ---
+  const handleMaterialChange = (
+    material:
+      | "stone"
+      | "bits"
+      | "diamond"
+      | "enamel"
+      | "pearls"
+      | "wax"
+      | "other",
+    field: "weight" | "rate",
+    value: string
+  ) => {
+    setProduct((prev) => {
+      const next = { ...prev };
+
+      // update weight or rate
+      next[`${material}_${field}` as keyof ProductForm] = value;
+
+      // recalc amount for that material
+      const weight = toNum(next[`${material}_weight` as keyof ProductForm]);
+      const rate = toNum(next[`${material}_rate` as keyof ProductForm]);
+      const amount = calculateAmount(weight, rate);
+
+      next[`${material}_amount` as keyof ProductForm] = String(amount);
+
+      // recalc gross weight
+      next.gross_weight = String(calcGrossWeight(next));
+
+      return next;
+    });
+  };
+
+  // --- Gross weight calculator ---
+  const calcGrossWeight = (p: ProductForm): number => {
+    return (
+      toNum(p.metal_weight) +
+      toNum(p.stone_weight) +
+      toNum(p.bits_weight) +
+      toNum(p.diamond_weight) +
+      toNum(p.enamel_weight) +
+      toNum(p.pearls_weight) +
+      toNum(p.other_weight)
+    );
+  };
+
   /* ------------------------------ UI ----------------------------- */
   return (
     <Box>
@@ -1012,178 +1070,235 @@ const Products: React.FC = () => {
                 />
               </Grid>
 
-              {/* Stone Weight */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   label="Stone Weight"
                   type="number"
-                  inputProps={{ step: "any" }}
                   value={product.stone_weight}
-                  onChange={onProductChange("stone_weight")}
+                  onChange={(e) =>
+                    handleMaterialChange("stone", "weight", e.target.value)
+                  }
                   fullWidth
-                  error={!!errors.stone_weight}
-                  helperText={errors.stone_weight || ""}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Stone Rate"
+                  type="number"
+                  value={product.stone_rate}
+                  onChange={(e) =>
+                    handleMaterialChange("stone", "rate", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   label="Stone Amount"
-                  type="number"
-                  inputProps={{ step: "any" }}
                   value={product.stone_amount}
-                  onChange={onProductChange("stone_amount")}
-                  fullWidth
-                  error={!!errors.stone_amount}
-                  helperText={errors.stone_amount || ""}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Wax Weight"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.wax_weight}
-                  onChange={onProductChange("wax_weight")}
-                  fullWidth
-                  error={!!errors.wax_weight}
-                  helperText={errors.wax_weight || ""}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Wax Amount"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.wax_amount}
-                  onChange={onProductChange("wax_amount")}
-                  fullWidth
-                  error={!!errors.wax_amount}
-                  helperText={errors.wax_amount || ""}
-                />
-              </Grid>
-
-              {/* Diamond Weight */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Diamond Weight"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.diamond_weight}
-                  onChange={onProductChange("diamond_weight")}
+                  InputProps={{ readOnly: true }}
                   fullWidth
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Diamond Amount"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.diamond_amount}
-                  onChange={onProductChange("diamond_amount")}
-                  fullWidth
-                  error={!!errors.diamond_amount}
-                  helperText={errors.diamond_amount || ""}
-                />
-              </Grid>
-
-              {/* Bits Weight */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              {/* ---- Bits ---- */}
+              <Grid item xs={12} sm={4}>
                 <TextField
                   label="Bits Weight"
                   type="number"
-                  inputProps={{ step: "any" }}
                   value={product.bits_weight}
-                  onChange={onProductChange("bits_weight")}
+                  onChange={(e) =>
+                    handleMaterialChange("bits", "weight", e.target.value)
+                  }
                   fullWidth
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Bits Rate"
+                  type="number"
+                  value={product.bits_rate}
+                  onChange={(e) =>
+                    handleMaterialChange("bits", "rate", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   label="Bits Amount"
-                  type="number"
-                  inputProps={{ step: "any" }}
                   value={product.bits_amount}
-                  onChange={onProductChange("bits_amount")}
+                  InputProps={{ readOnly: true }}
                   fullWidth
-                  error={!!errors.bits_amount}
-                  helperText={errors.bits_amount || ""}
                 />
               </Grid>
 
-              {/* Enamel Weight */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              {/* ---- Diamond ---- */}
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Diamond Weight"
+                  type="number"
+                  value={product.diamond_weight}
+                  onChange={(e) =>
+                    handleMaterialChange("diamond", "weight", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Diamond Rate"
+                  type="number"
+                  value={product.diamond_rate}
+                  onChange={(e) =>
+                    handleMaterialChange("diamond", "rate", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Diamond Amount"
+                  value={product.diamond_amount}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                />
+              </Grid>
+
+              {/* ---- Enamel ---- */}
+              <Grid item xs={12} sm={4}>
                 <TextField
                   label="Enamel Weight"
                   type="number"
-                  inputProps={{ step: "any" }}
                   value={product.enamel_weight}
-                  onChange={onProductChange("enamel_weight")}
+                  onChange={(e) =>
+                    handleMaterialChange("enamel", "weight", e.target.value)
+                  }
                   fullWidth
                 />
               </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Enamel Rate"
+                  type="number"
+                  value={product.enamel_rate}
+                  onChange={(e) =>
+                    handleMaterialChange("enamel", "rate", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   label="Enamel Amount"
-                  type="number"
-                  inputProps={{ step: "any" }}
                   value={product.enamel_amount}
-                  onChange={onProductChange("enamel_amount")}
+                  InputProps={{ readOnly: true }}
                   fullWidth
-                  error={!!errors.enamel_amount}
-                  helperText={errors.enamel_amount || ""}
                 />
               </Grid>
 
-              {/* Pearls Weight */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              {/* ---- Pearls ---- */}
+              <Grid item xs={12} sm={4}>
                 <TextField
                   label="Pearls Weight"
                   type="number"
-                  inputProps={{ step: "any" }}
                   value={product.pearls_weight}
-                  onChange={onProductChange("pearls_weight")}
+                  onChange={(e) =>
+                    handleMaterialChange("pearls", "weight", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Pearls Rate"
+                  type="number"
+                  value={product.pearls_rate}
+                  onChange={(e) =>
+                    handleMaterialChange("pearls", "rate", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Pearls Amount"
+                  value={product.pearls_amount}
+                  InputProps={{ readOnly: true }}
                   fullWidth
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              {/* ---- Wax ---- */}
+              <Grid item xs={12} sm={4}>
                 <TextField
-                  label="Pearls Amount"
+                  label="Wax Weight"
                   type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.pearls_amount}
-                  onChange={onProductChange("pearls_amount")}
+                  value={product.wax_weight}
+                  onChange={(e) =>
+                    handleMaterialChange("wax", "weight", e.target.value)
+                  }
                   fullWidth
-                  error={!!errors.pearls_amount}
-                  helperText={errors.pearls_amount || ""}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Wax Rate"
+                  type="number"
+                  value={product.wax_rate}
+                  onChange={(e) =>
+                    handleMaterialChange("wax", "rate", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Wax Amount"
+                  value={product.wax_amount}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
                 />
               </Grid>
 
               {/* Other Weight */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   label="Other Weight"
                   type="number"
-                  inputProps={{ step: "any" }}
                   value={product.other_weight}
-                  onChange={onProductChange("other_weight")}
+                  onChange={(e) =>
+                    handleMaterialChange("other", "weight", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Other Rate"
+                  type="number"
+                  value={product.other_rate}
+                  onChange={(e) =>
+                    handleMaterialChange("other", "rate", e.target.value)
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Other Amount"
+                  value={product.other_amount}
+                  InputProps={{ readOnly: true }}
                   fullWidth
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid item xs={12} sm={4}>
                 <TextField
-                  label="Other Amount"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.other_amount}
-                  onChange={onProductChange("other_amount")}
+                  label="Gross Weight (auto)"
+                  value={product.gross_weight}
+                  InputProps={{ readOnly: true }}
                   fullWidth
-                  error={!!errors.other_amount}
-                  helperText={errors.other_amount || ""}
                 />
               </Grid>
 
@@ -1207,19 +1322,6 @@ const Products: React.FC = () => {
                   value={product.stockBox}
                   onChange={onProductChange("stockBox")}
                   fullWidth
-                />
-              </Grid>
-
-              {/* Gross Weight (auto) */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Gross Weight (auto)"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.gross_weight}
-                  onChange={onProductChange("gross_weight")}
-                  fullWidth
-                  disabled
                 />
               </Grid>
             </Grid>

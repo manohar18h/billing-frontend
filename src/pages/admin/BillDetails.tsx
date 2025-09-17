@@ -2,13 +2,10 @@
 import React, { useEffect, useState } from "react";
 import {
   TextField,
-  Typography,
   Table,
-  TableHead,
   TableRow,
   TableCell,
   TableBody,
-  Paper,
   Button,
   Dialog,
   DialogTitle,
@@ -24,6 +21,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Grid from "@mui/material/Grid";
 import api from "@/services/api"; // ← import your api.ts
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 
 interface selectedOrders {
   orderId: number;
@@ -33,6 +34,7 @@ interface selectedOrders {
   metal_weight: number;
   total_item_amount: number;
   paidAmount: number;
+  delivery_status: string;
   dueAmount: number;
   workerPay?: { fullName: string };
 }
@@ -48,6 +50,7 @@ export interface Customer {
   billDiscountAmount: number;
   exchangeAmount: number;
   billPaidAmount: number;
+  billResAmount: number;
   billDueAmount: number;
   version: number;
   selectedOrders: selectedOrders[]; // <== Ensure this line exists
@@ -84,51 +87,51 @@ const BillDetails: React.FC = () => {
   const billNumber = localStorage.getItem("billNumber");
   console.log("billNumber   ::        " + billNumber);
 
-  useEffect(() => {
-    if (!billNumber || !token) return;
+  const fetchCustomerDetails = async () => {
+    try {
+      const res = await api.get(`/admin/getDataByBillNumber/${billNumber}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    const fetchCustomerDetails = async () => {
-      try {
-        const res = await api.get(`/admin/getDataByBillNumber/${billNumber}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      const customerData = res.data as Customer;
 
-        const customerData = res.data as Customer;
-
-        // ✅ check if no valid data
-        if (!customerData || !customerData.customerId) {
-          navigate("/admin/customers", {
-            replace: true,
-            state: {
-              errorMessage: `No data found for Bill Number: ${billNumber}`,
-            },
-          });
-          return;
-        }
-
-        sessionStorage.removeItem("customer");
-        sessionStorage.removeItem("orders");
-        sessionStorage.removeItem("billingFrom");
-
-        setCustomerId(customerData.customerId);
-        setCustomer(customerData);
-        setOrders(customerData.selectedOrders || []);
-
-        sessionStorage.setItem("customer", JSON.stringify(customerData));
-        sessionStorage.setItem(
-          "orders",
-          JSON.stringify(customerData.selectedOrders || [])
-        );
-      } catch (err) {
-        console.error("Error fetching bill details:", err);
+      // ✅ check if no valid data
+      if (!customerData || !customerData.customerId) {
         navigate("/admin/customers", {
           replace: true,
           state: {
             errorMessage: `No data found for Bill Number: ${billNumber}`,
           },
         });
+        return;
       }
-    };
+
+      sessionStorage.removeItem("customer");
+      sessionStorage.removeItem("orders");
+      sessionStorage.removeItem("billingFrom");
+
+      setCustomerId(customerData.customerId);
+      setCustomer(customerData);
+      setOrders(customerData.selectedOrders || []);
+
+      sessionStorage.setItem("customer", JSON.stringify(customerData));
+      sessionStorage.setItem(
+        "orders",
+        JSON.stringify(customerData.selectedOrders || [])
+      );
+    } catch (err) {
+      console.error("Error fetching bill details:", err);
+      navigate("/admin/customers", {
+        replace: true,
+        state: {
+          errorMessage: `No data found for Bill Number: ${billNumber}`,
+        },
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!billNumber || !token) return;
 
     fetchCustomerDetails();
 
@@ -198,22 +201,18 @@ const BillDetails: React.FC = () => {
     if (slectOrderId === null) return;
 
     try {
-      const response = await api.delete(
-        `/admin/deleteDirectOrder/${slectOrderId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const response = await api.put(
+        `/admin/cancelOrder/${slectOrderId}`,
+        {}, // no body
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.status === 200) {
         const message = response.data; // The backend message
         console.log("Server message:", message);
 
-        if (message === "Yes, It's Deleted") {
-          // Remove deleted item from the state
-          setOrders((prev) =>
-            prev.filter((item) => item.orderId !== slectOrderId)
-          );
+        if (message === "Order canceled successfully and billing updated") {
+          fetchCustomerDetails();
         }
 
         // Show message on the screen
@@ -258,219 +257,354 @@ const BillDetails: React.FC = () => {
   if (!customer) return null;
 
   return (
-    <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6">
-      <Paper className="p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-md">
-        <div className="flex justify-between items-center mb-5">
-          <div className="flex">
-            {" "}
-            <IconButton color="primary" onClick={handleBackClick}>
+    <div>
+      <div className="mt-10 flex flex-col items-center justify-center">
+        <div
+          className="w-full max-w-4xl rounded-2xl shadow-xl p-6"
+          style={{
+            background: "linear-gradient(135deg, #1e293b, #0f172a)", // dark gradient
+            color: "#fff",
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center mb-6">
+            <IconButton
+              onClick={handleBackClick}
+              sx={{
+                backgroundColor: "rgba(255,255,255,0.1)",
+                color: "#fbbf24",
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.25)" },
+              }}
+            >
               <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h4" fontWeight="bold" color="primary">
+
+            <h2 className="text-2xl font-bold text-amber-300 ml-2">
               Bill Details
-            </Typography>
+            </h2>
+
+            {/* ✅ Generate Bill Button (top right) */}
+            <div className="ml-auto">
+              <Button
+                variant="contained"
+                sx={{
+                  background: "linear-gradient(135deg, #f59e0b, #ef4444)", // orange-red
+                  borderRadius: "12px",
+                  textTransform: "none",
+                  fontWeight: "600",
+                  boxShadow: "0 8px 20px rgba(239,68,68,0.35)",
+                  px: 3,
+                  py: 1,
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #ef4444, #f59e0b)",
+                  },
+                }}
+                onClick={() => {
+                  sessionStorage.removeItem("ordersState");
+                  sessionStorage.setItem(
+                    "ordersState",
+                    JSON.stringify({ orders, customerId })
+                  );
+                  sessionStorage.setItem("billingFrom", "BillDetails");
+                  console.log("Ids :" + orders.map((order) => order.orderId));
+                  localStorage.setItem("editBill", "editBill");
+
+                  navigate("/admin/generate-bill", {
+                    replace: true,
+                    state: {
+                      selectedOrders: orders.map((order) => order.orderId),
+                      billingFrom: "BillDetails",
+                    },
+                  });
+                }}
+              >
+                Generate Bill
+              </Button>
+            </div>
           </div>
 
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              sessionStorage.removeItem("ordersState");
-              sessionStorage.setItem(
-                "ordersState",
-                JSON.stringify({ orders, customerId })
-              );
-              sessionStorage.setItem("billingFrom", "BillDetails");
-              console.log("Ids :" + orders.map((order) => order.orderId));
-              localStorage.setItem("editBill", "editBill");
+          {/* Grid Info */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Left column */}
+            <div className="space-y-4 pr-4 border-r border-white/20">
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Bill Number:</span>
+                <span className="text-emerald-300 font-semibold">
+                  {customer.billNumber}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Name:</span>
+                <span className="text-purple-300 font-semibold">
+                  {customer.name}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Village:</span>
+                <span className="text-indigo-300 font-semibold">
+                  {customer.village}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Phone:</span>
+                <span className="text-teal-300 font-semibold">
+                  {customer.phoneNumber}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Email:</span>
+                <span className="text-orange-300 font-semibold">
+                  {customer.emailId || "—"}
+                </span>
+              </p>
+            </div>
 
-              navigate("/admin/generate-bill", {
-                replace: true,
-                state: {
-                  selectedOrders: orders.map((order) => order.orderId),
-                  billingFrom: "BillDetails",
-                },
-              });
-            }}
-          >
-            Bill Generate
-          </Button>
+            {/* Right column */}
+            <div className="space-y-4 pl-4">
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Total Amount:</span>
+                <span className="text-green-400 font-semibold">
+                  {customer.billTotalAmount}
+                </span>
+              </p>
+
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">
+                  Exchange Amount:
+                </span>
+                <span className="text-blue-400 font-semibold">
+                  {customer.exchangeAmount}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Paid Amount:</span>
+                <span className="text-sky-400 font-semibold">
+                  {customer.billPaidAmount}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">
+                  Remaining Amount:
+                </span>
+                <span className="text-purple-400 font-semibold">
+                  {customer.billResAmount}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Due Amount:</span>
+                <span className="text-red-400 font-semibold">
+                  {customer.billDueAmount}
+                </span>
+              </p>
+            </div>
+          </div>
         </div>
+      </div>
+      <div className="mt-10 p-3 flex flex-col items-center justify-center">
+        {orders.length > 0 && (
+          <div className="p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]">
+            <h3 className=" text-3xl font-bold mb-10 text-blue-600">
+              Billing History
+            </h3>
+            <Table>
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="border px-3 py-2">Order ID</th>
+                  <th className="border px-3 py-2">Date</th>
+                  <th className="border px-3 py-2">Item</th>
+                  <th className="border px-3 py-2">Metal</th>
+                  <th className="border px-3 py-2">Weight</th>
+                  <th className="border px-3 py-2">Status</th>
+                  <th className="border px-3 py-2">Total</th>
+                  <th className="border px-3 py-2">Paid</th>
 
-        <Grid container spacing={3}>
-          {["billNumber", "name", "village", "phoneNumber", "emailId"].map(
-            (key) => (
-              <Grid key={key} size={{ xs: 6, sm: 4 }}>
-                <TextField
-                  label={key.charAt(0).toUpperCase() + key.slice(1)}
-                  value={(customer[key as keyof Customer] ?? "-").toString()}
-                  fullWidth
-                  InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
-                />
-              </Grid>
-            )
-          )}
+                  <th className="border px-3 py-2">Due</th>
+                  <th className="border px-3 py-2">Worker</th>
+                  <th className="border px-3 py-2">Pay</th>
+                  <th className="border px-3 py-2">View</th>
+                  <th className="border px-3 py-2">Edit</th>
+                  <th className="border px-3 py-2">Cancel</th>
+                </tr>
+              </thead>
 
-          {[
-            "customerId",
-            "billTotalAmount",
-            "billDiscountAmount",
-            "exchangeAmount",
-            "billPaidAmount",
-            "billDueAmount",
-          ].map((key) => (
-            <Grid key={key} size={{ xs: 6, sm: 4 }}>
-              <TextField
-                label={key.replace(/([A-Z])/g, " $1")}
-                value={(customer[key as keyof Customer] ?? "-").toString()}
-                fullWidth
-                InputProps={{ readOnly: true, style: { fontWeight: 500 } }}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </Paper>
-
-      {orders.length > 0 && (
-        <Paper className="p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-md">
-          <Typography
-            variant="h5"
-            fontWeight="bold"
-            gutterBottom
-            color="primary"
-          >
-            Orders
-          </Typography>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Order ID</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Item</TableCell>
-                <TableCell>Metal</TableCell>
-                <TableCell>Weight</TableCell>
-                <TableCell>Total</TableCell>
-                <TableCell>Paid</TableCell>
-                <TableCell>Due</TableCell>
-                <TableCell>Worker</TableCell>
-                <TableCell>Pay</TableCell>
-                <TableCell>Action</TableCell>
-                <TableCell>Edit</TableCell>
-                <TableCell>Delete</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.orderId}>
-                  <TableCell>{order.orderId}</TableCell>
-                  <TableCell>{formatDate(order.orderDate)}</TableCell>
-                  <TableCell>{order.itemName}</TableCell>
-                  <TableCell>{order.metal}</TableCell>
-                  <TableCell>{order.metal_weight}</TableCell>
-                  <TableCell>{order.total_item_amount}</TableCell>
-                  <TableCell>{order.paidAmount}</TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: 400,
-                      color:
-                        asNumber(order.dueAmount) < 0
-                          ? "error.main"
-                          : "inherit",
-                    }}
-                  >
-                    {formatMoney(order.dueAmount)}
-                  </TableCell>
-                  <TableCell>
-                    {order.workerPay ? (
-                      order.workerPay.fullName
-                    ) : (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => {
-                          setAssignOrderId(order.orderId);
-                          setSelectedWorkerId("");
-                          setWorkerPayAmount("");
-                          setWorkerPayWastage("");
-                          setAssignDialogOpen(true);
-                        }}
-                      >
-                        Assign Worker
-                      </Button>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {asNumber(order.dueAmount) !== 0 ? (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        color="secondary"
-                        onClick={() => {
-                          setSelectedOrderId(order.orderId);
-                          setPayAmount("");
-                          setPayDialogOpen(true);
-                        }}
-                      >
-                        Pay
-                      </Button>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="text"
-                      size="small"
-                      onClick={() => handleViewMore(order.orderId)}
-                    >
-                      View More
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      color="warning"
-                      onClick={() => {
-                        setEditingOrderId(order.orderId);
-                        handleEditOrder(order.orderId);
+              <TableBody>
+                {orders.map((order) => (
+                  <TableRow key={order.orderId}>
+                    <TableCell className={`border px-3 py-2 `}>
+                      {order.orderId}
+                    </TableCell>
+                    <TableCell className={`border px-3 py-2 `}>
+                      {formatDate(order.orderDate)}
+                    </TableCell>
+                    <TableCell className={`border px-3 py-2 `}>
+                      {order.itemName}
+                    </TableCell>
+                    <TableCell className={`border px-3 py-2 `}>
+                      {order.metal}
+                    </TableCell>
+                    <TableCell className={`border px-3 py-2 `}>
+                      {order.metal_weight}
+                    </TableCell>
+                    <TableCell
+                      className={`border px-3 py-2 `}
+                      sx={{
+                        color:
+                          order.delivery_status === "Deliverd"
+                            ? "#2e7d32" // green
+                            : order.delivery_status === "Pending"
+                            ? "#ed6c02" // orange/yellow
+                            : order.delivery_status === "Canceled"
+                            ? "#d32f2f" // red
+                            : "inherit",
+                        fontWeight: "bold",
                       }}
                     >
-                      <EditIcon />
-                    </IconButton>
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      color="warning"
-                      onClick={() => handleClickOrderOpen(order.orderId)}
+                      {order.delivery_status}
+                    </TableCell>
+
+                    <TableCell
+                      className={`border px-3 py-2 `}
+                      sx={{
+                        color: "#ca8a04",
+                      }}
                     >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              <Dialog open={orderOpen} onClose={handleOrderClose}>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogContent>
-                  <DialogContentText>
-                    Are you sure you want to delete this order item with ID:
-                    {slectOrderId}
-                    <strong>{selectedOrderId}</strong>?
-                  </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={handleOrderClose} color="primary">
-                    No
-                  </Button>
-                  <Button onClick={handleOrderDelete} color="error" autoFocus>
-                    Yes, Delete
-                  </Button>
-                </DialogActions>
-              </Dialog>
-            </TableBody>
-          </Table>
-        </Paper>
-      )}
+                      {order.total_item_amount.toFixed(2)}
+                    </TableCell>
+
+                    <TableCell
+                      className={`border px-3 py-2 `}
+                      sx={{
+                        color: "#15803d",
+                      }}
+                    >
+                      {order.paidAmount}
+                    </TableCell>
+                    <TableCell
+                      className={`border px-3 py-2 ${
+                        order.dueAmount !== 0
+                          ? "text-red-600 font-semibold"
+                          : ""
+                      }`}
+                    >
+                      {formatMoney(order.dueAmount)}
+                    </TableCell>
+
+                    <TableCell className={`border px-3 py-2 `}>
+                      {order.workerPay ? (
+                        order.workerPay.fullName
+                      ) : (
+                        <IconButton
+                          size="medium"
+                          sx={{
+                            color: "#9C27B0",
+                            "&:hover": { backgroundColor: "#E0E0E0" },
+                            borderRadius: "50%", // ✅ ensures round hover effect
+                          }}
+                          onClick={() => {
+                            setAssignOrderId(order.orderId);
+                            setSelectedWorkerId("");
+                            setWorkerPayAmount("");
+                            setWorkerPayWastage("");
+                            setAssignDialogOpen(true);
+                          }}
+                        >
+                          <PersonAddIcon fontSize="medium" />
+                        </IconButton>
+                      )}
+                    </TableCell>
+
+                    <TableCell className={`border px-3 py-2 `}>
+                      {asNumber(order.dueAmount) !== 0 ? (
+                        <IconButton
+                          size="medium"
+                          sx={{
+                            color: "#4CAF50", // solid green background
+                            "&:hover": { backgroundColor: "#E0E0E0" },
+                          }}
+                          onClick={() => {
+                            setSelectedOrderId(order.orderId);
+                            setPayAmount("");
+                            setPayDialogOpen(true);
+                          }}
+                        >
+                          <CurrencyRupeeIcon fontSize="medium" />
+                        </IconButton>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell className={`border px-3 py-2 `}>
+                      <IconButton
+                        size="medium"
+                        color="primary"
+                        sx={{
+                          "&:hover": { backgroundColor: "#E0E0E0" },
+                        }}
+                        onClick={() => handleViewMore(order.orderId)}
+                      >
+                        <VisibilityIcon fontSize="medium" />
+                      </IconButton>
+                    </TableCell>
+                    <TableCell className={`border px-3 py-2 `}>
+                      {order.delivery_status === "Canceled" ? (
+                        <>-</>
+                      ) : (
+                        <IconButton
+                          size="small"
+                          color="warning"
+                          sx={{
+                            "&:hover": { backgroundColor: "#E0E0E0" },
+                          }}
+                          onClick={() => {
+                            setEditingOrderId(order.orderId);
+                            handleEditOrder(order.orderId);
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                    <TableCell className={`border px-3 py-2 `}>
+                      {order.delivery_status === "Canceled" ? (
+                        <CheckCircleIcon color="success" />
+                      ) : (
+                        <IconButton
+                          size="small"
+                          sx={{
+                            color: "#A0522D",
+                            "&:hover": { backgroundColor: "#E0E0E0" },
+                          }}
+                          onClick={() => handleClickOrderOpen(order.orderId)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <Dialog open={orderOpen} onClose={handleOrderClose}>
+                  <DialogTitle>Confirm Deletion</DialogTitle>
+                  <DialogContent>
+                    <DialogContentText>
+                      Are you sure you want to delete this order item with ID:
+                      {slectOrderId}
+                      <strong>{selectedOrderId}</strong>?
+                    </DialogContentText>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={handleOrderClose} color="primary">
+                      No
+                    </Button>
+                    <Button onClick={handleOrderDelete} color="error" autoFocus>
+                      Yes, Delete
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
 
       {/* Pay Dialog */}
       <Dialog open={payDialogOpen} onClose={() => setPayDialogOpen(false)}>
@@ -518,6 +652,12 @@ const BillDetails: React.FC = () => {
           <Button
             onClick={async () => {
               if (!selectedOrderId || !payAmount) return;
+
+              console.log("selectedOrderId :", selectedOrderId);
+              console.log("payMethod :", payMethod);
+              console.log("payAmount :", payAmount);
+              console.log("token :", token);
+
               try {
                 await api.post(
                   `/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
@@ -550,6 +690,7 @@ const BillDetails: React.FC = () => {
                   }
                   return o;
                 });
+                fetchCustomerDetails();
 
                 setOrders(updatedOrders);
 
@@ -633,7 +774,7 @@ const BillDetails: React.FC = () => {
                   requestBody.wastage = Number(workerPayWastage);
                 }
 
-                await api.post(
+                const res = await api.post(
                   `/admin/addWorkerPay/${assignOrderId}`,
                   requestBody,
                   {
@@ -641,20 +782,6 @@ const BillDetails: React.FC = () => {
                   }
                 );
 
-                // add only one of them
-                if (workerPayAmount) {
-                  requestBody.workPay = Number(workerPayAmount);
-                } else if (workerPayWastage) {
-                  requestBody.wastage = Number(workerPayWastage);
-                }
-
-                await api.post(
-                  `/admin/addWorkerPay/${assignOrderId}`,
-                  requestBody,
-                  {
-                    headers: { Authorization: `Bearer ${token}` },
-                  }
-                );
                 const worker = workerList.find(
                   (w) => w.workerId === selectedWorkerId
                 );
@@ -662,7 +789,9 @@ const BillDetails: React.FC = () => {
                   o.orderId === assignOrderId
                     ? {
                         ...o,
-                        workerPay: { fullName: worker?.fullName || "Assigned" },
+                        workerPay: {
+                          fullName: worker?.fullName || "Assigned",
+                        },
                       }
                     : o
                 );
