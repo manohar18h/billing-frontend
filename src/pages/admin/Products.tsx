@@ -1070,7 +1070,7 @@ const Products: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Stone Weight"
                   type="number"
@@ -1081,7 +1081,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Stone Rate"
                   type="number"
@@ -1092,7 +1092,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Stone Amount"
                   value={product.stone_amount}
@@ -1102,7 +1102,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* ---- Bits ---- */}
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Bits Weight"
                   type="number"
@@ -1113,7 +1113,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Bits Rate"
                   type="number"
@@ -1124,7 +1124,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Bits Amount"
                   value={product.bits_amount}
@@ -1134,7 +1134,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* ---- Diamond ---- */}
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Diamond Weight"
                   type="number"
@@ -1145,7 +1145,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Diamond Rate"
                   type="number"
@@ -1156,7 +1156,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Diamond Amount"
                   value={product.diamond_amount}
@@ -1166,7 +1166,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* ---- Enamel ---- */}
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Enamel Weight"
                   type="number"
@@ -1177,7 +1177,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Enamel Rate"
                   type="number"
@@ -1188,7 +1188,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Enamel Amount"
                   value={product.enamel_amount}
@@ -1198,7 +1198,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* ---- Pearls ---- */}
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Pearls Weight"
                   type="number"
@@ -1209,7 +1209,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Pearls Rate"
                   type="number"
@@ -1220,7 +1220,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Pearls Amount"
                   value={product.pearls_amount}
@@ -1230,7 +1230,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* ---- Wax ---- */}
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Wax Weight"
                   type="number"
@@ -1241,7 +1241,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Wax Rate"
                   type="number"
@@ -1252,7 +1252,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Wax Amount"
                   value={product.wax_amount}
@@ -1262,7 +1262,7 @@ const Products: React.FC = () => {
               </Grid>
 
               {/* Other Weight */}
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Other Weight"
                   type="number"
@@ -1273,7 +1273,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Other Rate"
                   type="number"
@@ -1284,7 +1284,7 @@ const Products: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Other Amount"
                   value={product.other_amount}
@@ -1293,7 +1293,7 @@ const Products: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   label="Gross Weight (auto)"
                   value={product.gross_weight}
