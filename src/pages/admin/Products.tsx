@@ -166,8 +166,8 @@ type ProductForm = {
 /* ---------- Helpers ---------- */
 const labelize = (k: string) =>
   k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-const toNum = (s: string) => (s.trim() === "" ? 0 : Number(s));
-
+const toNum = (v: string | number | undefined): number =>
+  v === "" || v === null || v === undefined ? 0 : Number(v);
 /* ---------- Initial State ---------- */
 const initialQuery: ProductQuery = {
   metal: "",
@@ -220,7 +220,6 @@ const requiredProductKeys: (keyof ProductForm)[] = [
   "design",
   "size",
   "metal_weight",
-  "stone_weight", // added because gross depends on it
 ];
 
 const numericKeys: (keyof ProductForm)[] = [
@@ -313,7 +312,6 @@ const Products: React.FC = () => {
       if (list.length) {
         setTopResults(list);
         setShowProductForm(false);
-        alert("Found!");
       } else {
         alert("No data found.");
         setTopResults(null);
@@ -406,17 +404,15 @@ const Products: React.FC = () => {
     null
   );
 
-  const validateProduct = () => {
-    const e: Partial<Record<keyof ProductForm, string>> = {};
-    requiredProductKeys.forEach((k) => {
-      if (!product[k].trim()) e[k] = "Required";
-    });
-    numericKeys.forEach((k) => {
-      const v = product[k].trim();
-      if (v !== "" && Number.isNaN(Number(v))) e[k] = "Invalid number";
-    });
-    setErrors(e);
-    return Object.keys(e).length === 0;
+  const validateProduct = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+    for (let key of requiredProductKeys) {
+      if (!product[key].trim()) {
+        newErrors[key] = "Required";
+      }
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const onSubmitProduct = async (e: React.FormEvent) => {
@@ -426,39 +422,51 @@ const Products: React.FC = () => {
       return;
     }
 
+    const safeNum = (val: any) =>
+      val === null || val === undefined || val === "" ? 0 : Number(val);
+
     const payload = {
       metal: product.metal.trim(),
       itemName: product.itemName.trim(),
       catalogue: product.catalogue.trim(),
       design: product.design.trim(),
       size: product.size.trim(),
-      metal_weight: toNum(product.metal_weight),
-      wastage: toNum(product.wastage),
-      making_charges: toNum(product.making_charges),
-      stone_weight: toNum(product.stone_weight),
-      stone_rate: toNum(product.stone_rate),
-      stone_amount: toNum(product.stone_amount),
-      wax_weight: toNum(product.wax_weight),
-      wax_rate: toNum(product.wax_rate),
-      wax_amount: toNum(product.wax_amount),
-      diamond_weight: toNum(product.diamond_weight),
-      diamond_rate: toNum(product.diamond_rate),
-      diamond_amount: toNum(product.diamond_amount),
-      bits_weight: toNum(product.bits_weight),
-      bits_rate: toNum(product.bits_rate),
-      bits_amount: toNum(product.bits_amount),
-      enamel_weight: toNum(product.enamel_weight),
-      enamel_rate: toNum(product.enamel_rate),
-      enamel_amount: toNum(product.enamel_amount),
-      pearls_weight: toNum(product.pearls_weight),
-      pearls_rate: toNum(product.pearls_rate),
-      pearls_amount: toNum(product.pearls_amount),
-      other_weight: toNum(product.other_weight),
-      other_rate: toNum(product.other_rate),
-      other_amount: toNum(product.other_amount),
-      stock: toNum(product.stock),
+      metal_weight: safeNum(product.metal_weight),
+      wastage: safeNum(product.wastage),
+      making_charges: safeNum(product.making_charges),
+
+      // Gems (defaults to 0 if empty)
+      stone_weight: safeNum(product.stone_weight),
+      stone_rate: safeNum(product.stone_rate),
+      stone_amount: safeNum(product.stone_amount),
+
+      wax_weight: safeNum(product.wax_weight),
+      wax_rate: safeNum(product.wax_rate),
+      wax_amount: safeNum(product.wax_amount),
+
+      diamond_weight: safeNum(product.diamond_weight),
+      diamond_rate: safeNum(product.diamond_rate),
+      diamond_amount: safeNum(product.diamond_amount),
+
+      bits_weight: safeNum(product.bits_weight),
+      bits_rate: safeNum(product.bits_rate),
+      bits_amount: safeNum(product.bits_amount),
+
+      enamel_weight: safeNum(product.enamel_weight),
+      enamel_rate: safeNum(product.enamel_rate),
+      enamel_amount: safeNum(product.enamel_amount),
+
+      pearls_weight: safeNum(product.pearls_weight),
+      pearls_rate: safeNum(product.pearls_rate),
+      pearls_amount: safeNum(product.pearls_amount),
+
+      other_weight: safeNum(product.other_weight),
+      other_rate: safeNum(product.other_rate),
+      other_amount: safeNum(product.other_amount),
+
+      stock: safeNum(product.stock),
       stockBox: product.stockBox.trim(),
-      gross_weight: toNum(product.gross_weight),
+      gross_weight: safeNum(product.gross_weight),
     };
 
     try {
@@ -474,10 +482,10 @@ const Products: React.FC = () => {
           },
         }
       );
-
-      alert("Submitted!");
       const data = res.data;
       setBottomResults(Array.isArray(data) ? data : [data]);
+      setProduct(initialProduct);
+      setErrors({});
     } catch (err: unknown) {
       if (err instanceof Error) {
         console.error("Add product failed:", err.message);
@@ -498,7 +506,7 @@ const Products: React.FC = () => {
 
   const calculateAmount = (weight: number, rate: number): number => {
     if (weight <= 0 || rate <= 0) return 0;
-    return ((weight * 10) / 2) * rate;
+    return weight * 5 * rate;
   };
 
   // --- State ---
@@ -560,7 +568,8 @@ const Products: React.FC = () => {
       toNum(p.diamond_weight) +
       toNum(p.enamel_weight) +
       toNum(p.pearls_weight) +
-      toNum(p.other_weight)
+      toNum(p.other_weight) +
+      toNum(p.wax_weight)
     );
   };
 

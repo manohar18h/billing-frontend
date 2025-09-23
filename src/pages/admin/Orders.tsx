@@ -203,6 +203,7 @@ const Orders: React.FC = () => {
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
   const [workerPayAmount, setWorkerPayAmount] = useState("");
   const [workerPayWastage, setWorkerPayWastage] = useState("");
+  const [editBillDetails, setEditBillDetails] = useState<string | null>(null);
 
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
 
@@ -262,6 +263,8 @@ const Orders: React.FC = () => {
       );
 
       const data = response.data;
+
+      setEditBillDetails(localStorage.getItem("editBillFromBillDetails"));
 
       setOrdersList([data]);
       setExchangeList(data.oldItems ?? []);
@@ -1462,9 +1465,11 @@ const Orders: React.FC = () => {
                     )}
                   </TableCell>
 
-                  <TableCell className={`border px-3 py-2 `}>
+                  <TableCell className="border px-3 py-2">
                     {order.delivery_status === "Canceled" ? (
                       <CheckCircleIcon color="success" />
+                    ) : editBillDetails === "editBill" ? (
+                      "-"
                     ) : (
                       <IconButton
                         size="small"

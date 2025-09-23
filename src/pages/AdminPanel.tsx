@@ -183,7 +183,7 @@ function AdminPanelContent() {
     location.pathname === "/admin/customer-details" ||
     location.pathname === "/admin/bill-details" ||
     location.pathname === "/admin/generate-bill" ||
-    location.pathname === "/admin/orders" ||
+    location.pathname.startsWith("/admin/orders") ||
     location.pathname === "/admin/bill-Data" ||
     location.pathname === "/admin/customers" ||
     location.pathname.startsWith("/admin/order-details")

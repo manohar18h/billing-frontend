@@ -1,23 +1,21 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
+    <link id="favicon" rel="icon" type="image/png" href="/vite.svg" />
+    <script type="module">
+      import logoUrl from "/src/assets/logo2.png?url";
+      const link = document.getElementById("favicon");
+      if (link) link.href = logoUrl;
+    </script>
 
-<head>
-  <meta charset="UTF-8" />
-  <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
-  <link id="favicon" rel="icon" type="image/png" href="/vite.svg" />
-  <script type="module">
-    import logoUrl from '/src/assets/logo2.png?url';
-    const link = document.getElementById('favicon');
-    if (link) link.href = logoUrl;
-  </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hambire Jewelery</title>
+  </head>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hambire Jewelery</title>
-</head>
-
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

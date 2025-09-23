@@ -227,6 +227,8 @@ const BillDetails: React.FC = () => {
   };
 
   const handleEditOrder = (orderId: number) => {
+    localStorage.removeItem("editBillFromBillDetails");
+
     if (!orderId) {
       console.error("❌ editingOrderId is missing before navigation");
       return;
@@ -234,7 +236,7 @@ const BillDetails: React.FC = () => {
 
     console.log("✅ Navigating to Orders page with orderId:", orderId);
 
-    localStorage.setItem("editBill", "editBill");
+    localStorage.setItem("editBillFromBillDetails", "editBill");
 
     navigate(`/admin/orders/`, {
       replace: true,

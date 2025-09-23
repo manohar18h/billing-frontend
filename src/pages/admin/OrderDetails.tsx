@@ -367,8 +367,10 @@ const OrderDetails: React.FC = () => {
             <ul className="mb-10 pl-5 list-disc space-y-2">
               {order.transactions.map((tx: Transaction) => (
                 <li key={tx.transactionId} className="text-emerald-300">
-                  ₹{tx.paidAmount} on{" "}
-                  {new Date(tx.paymentDate).toLocaleString()} -{" "}
+                  ₹{tx.paidAmount} -{}
+                  <span className="text-red-300">
+                    {tx.paymentMethod}
+                  </span> on {new Date(tx.paymentDate).toLocaleString()} -{" "}
                   <span className="text-yellow-300">{tx.paymentType}</span>
                 </li>
               ))}

@@ -21,6 +21,8 @@ const SearchAddCustomer: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  localStorage.removeItem("editBillFromBillDetails");
+
   localStorage.removeItem("billNumber");
   localStorage.removeItem("bill-phnNumber");
   localStorage.removeItem("phnNumber");
@@ -137,15 +139,13 @@ const SearchAddCustomer: React.FC = () => {
     }
   };
   useEffect(() => {
+    localStorage.removeItem("editBillFromBillDetails");
     if (location.state?.errorMessage) {
       toast.error(location.state.errorMessage);
 
-      // clear the state so toast doesn’t repeat on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
-
-  localStorage.removeItem("editBill");
 
   return (
     <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6">

@@ -241,22 +241,30 @@ const GenerateBill: React.FC = () => {
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 pb-4 mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-orange-600">
+            <h1 className="text-2xl font-bold text-[#B45309]">
               HAMBIRE JEWELLERY
             </h1>
-            <p>Since 1977</p>
-            <p>Ramayampet, Subhash Road, Medak, Telangana, 502101</p>
-            <p>Phone: 9703738824 | www.hambirejewellery.com</p>
+            <strong className="text-[#374151]">Since 1977</strong>
+            <p className=" text-[#374151]">
+              Ramayampet, Subhash Road, Medak, Telangana, 502101
+            </p>
+            <p className=" text-[#374151]">
+              Phone: 9703738824 | www.hambirejewellery.com
+            </p>
           </div>
-          <div className="text-right">
+          <div className="text-right text-[#111827]">
             <p>
-              <strong>DATE:</strong> {new Date().toLocaleString()}
+              <strong>DATE : </strong> {new Date().toLocaleString()}
             </p>
             <p>
-              <strong>INVOICE:</strong> {bill.billNumber}
+              <strong>INVOICE : </strong>
+              <span className="text-[#10B981] font-bold">
+                {" "}
+                {bill.billNumber}
+              </span>
             </p>
             <p>
-              <strong>Customer ID:</strong> {bill.customerId}
+              <strong>Customer ID : </strong> {bill.customerId}
             </p>
           </div>
         </div>
@@ -264,16 +272,20 @@ const GenerateBill: React.FC = () => {
         {/* Customer Info */}
         <div className="mb-4">
           <p>
-            <strong>Name:</strong> {bill.name}
+            <strong className="text-[#B45309]">Name : </strong>
+            <span className="text-[#111827] ">{bill.name}</span>
           </p>
           <p>
-            <strong>Village:</strong> {bill.village}
+            <strong className="text-[#B45309]">Village : </strong>
+            <span className="text-[#111827] ">{bill.village}</span>
           </p>
           <p>
-            <strong>Phone:</strong> {bill.phoneNumber}
+            <strong className="text-[#B45309]">Phone : </strong>
+            <span className="text-[#111827] ">{bill.phoneNumber}</span>
           </p>
           <p>
-            <strong>Email:</strong> {bill.emailId}
+            <strong className="text-[#B45309]">Email : </strong>
+            <span className="text-[#111827] ">{bill.emailId}</span>
           </p>
         </div>
 
@@ -281,7 +293,7 @@ const GenerateBill: React.FC = () => {
         <div className="overflow-x-auto no-print-scroll">
           <table className="w-full border border-collapse text-sm mb-6 min-w-[1000px] print:min-w-full">
             <thead>
-              <tr className="bg-orange-500 text-white">
+              <tr className="bg-[#B45309] text-[#F9FAFB]">
                 <th className="border px-2 py-1">Item Name</th>
                 <th className="border px-2 py-1">Metal</th>
                 <th className="border px-2 py-1">Rate (G-22k) (S-999)</th>
@@ -305,21 +317,39 @@ const GenerateBill: React.FC = () => {
             </thead>
             <tbody>
               {bill.selectedOrders.map((item: Order, index: number) => (
-                <tr key={index} className="border">
-                  <td className="border px-2 py-1">{item.itemName}</td>
-                  <td className="border px-2 py-1">{item.metal}</td>
-                  <td className="border px-2 py-1">{item.metalPrice}</td>
-                  <td className="border px-2 py-1">{item.gross_weight}</td>
-                  <td className="border px-2 py-1">{item.metal_weight}</td>
+                <tr
+                  key={index}
+                  className="border "
+                  style={{
+                    background: "linear-gradient(135deg, #0f172a, #1e293b)", // dark gradient
+                    color: "#fff",
+                  }}
+                >
+                  {" "}
+                  <td className="border px-2 py-1 text-[#DC2626] font-bold text-center align-middle">
+                    {item.itemName}
+                  </td>
+                  <td className="border px-2 py-1 text-[#9CA3AF] font-bold text-center align-middle">
+                    {item.metal}
+                  </td>
+                  <td className="border px-2 py-1 text-[#008080] font-bold text-center align-middle">
+                    {item.metalPrice}
+                  </td>
+                  <td className="border px-2 py-1 text-[#EC4899] font-bold text-center align-middle">
+                    {item.gross_weight}
+                  </td>
+                  <td className="border px-2 py-1 text-[#7C3AED] font-bold text-center align-middle">
+                    {item.metal_weight}
+                  </td>
                   {activeWeightKeys.map((key) => (
                     <React.Fragment key={key}>
-                      <td className="border px-2 py-1">
+                      <td className="border px-2 py-1 text-[#F9A8D4] font-bold text-center align-middle">
                         {getNumericField(
                           item,
                           `${key}_weight` as keyof Order
                         ) ?? "-"}
                       </td>
-                      <td className="border px-2 py-1">
+                      <td className="border px-2 py-1 text-[#FACC15] font-bold text-center align-middle">
                         {getNumericField(
                           item,
                           `${key}_amount` as keyof Order
@@ -327,19 +357,50 @@ const GenerateBill: React.FC = () => {
                       </td>
                     </React.Fragment>
                   ))}
-                  <td className="border px-2 py-1">{item.wastage}%</td>
-                  <td className="border px-2 py-1">{item.making_charges}</td>
-                  <td className="border px-2 py-1">
+                  <td className="border px-2 py-1 text-[#10B981] font-bold text-center align-middle">
+                    {item.wastage}%
+                  </td>
+                  <td className="border px-2 py-1 text-[#D97706] font-bold text-center align-middle">
+                    {item.making_charges}
+                  </td>
+                  <td className="border px-2 py-1 text-[#22C55E] ">
                     {item.transactions?.length > 0
-                      ? item.transactions.map((tx: Transaction, i: number) => (
-                          <div key={i}>
-                            ₹{tx.paidAmount} on{" "}
-                            {new Date(tx.paymentDate).toLocaleDateString()}
-                          </div>
-                        ))
+                      ? item.transactions.map((tx: Transaction, i: number) => {
+                          const shortMethod =
+                            tx.paymentMethod === "Phone Pay"
+                              ? "(O)"
+                              : tx.paymentMethod === "Cash"
+                              ? "(C)"
+                              : `(${tx.paymentMethod})`; // fallback for other methods
+
+                          return (
+                            <div
+                              key={i}
+                              className={`pb-1 ${
+                                i !== item.transactions.length - 1
+                                  ? "border-b border-dotted border-gray-400"
+                                  : ""
+                              }`}
+                            >
+                              <span className="text-[#22C55E] font-bold text-center align-middle">
+                                {" "}
+                                ₹{tx.paidAmount}{" "}
+                              </span>{" "}
+                              <span className="text-[#E5E7EB] font-bold text-center align-middle">
+                                {" "}
+                                {new Date(
+                                  tx.paymentDate
+                                ).toLocaleDateString()}{" "}
+                              </span>
+                              <span className="text-[#A855F7] font-bold text-center align-middle">
+                                {shortMethod}
+                              </span>
+                            </div>
+                          );
+                        })
                       : "-"}
                   </td>
-                  <td className="border px-2 py-1">
+                  <td className="border px-2 py-1 text-[#60A5FA] font-bold text-center align-middle">
                     ₹{item.total_item_amount}
                   </td>
                 </tr>
@@ -349,18 +410,20 @@ const GenerateBill: React.FC = () => {
                 (item: Order) =>
                   item.oldItems?.map((ex: OldItem, index: number) => (
                     <tr key={`ex-${index}`} className="border bg-gray-100">
-                      <td className="border px-2 py-1">
+                      <td className="border px-2 py-1  text-[#DC2626]">
                         {ex.exchange_metal_name + "  ( Ex )"}
                       </td>
-                      <td className="border px-2 py-1">{ex.exchange_metal}</td>
-                      <td className="border px-2 py-1">
+                      <td className="border px-2 py-1 text-[#9CA3AF] ">
+                        {ex.exchange_metal}
+                      </td>
+                      <td className="border px-2 py-1 text-[#008080]">
                         {ex.exchange_metal_price}
                       </td>
-                      <td className="border px-2 py-1">
+                      <td className="border px-2 py-1 text-[#EC4899]">
                         {ex.exchange_metal_weight}
                       </td>
 
-                      <td className="border px-2 py-1">
+                      <td className="border px-2 py-1 text-[#7C3AED]">
                         {ex.exchange_purity_weight}
                       </td>
                       {Array.from({ length: nonZeroColCount }).map((_, i) => (
@@ -371,7 +434,7 @@ const GenerateBill: React.FC = () => {
                       <td className="border px-2 py-1">-</td>
                       <td className="border px-2 py-1">-</td>
                       <td className="border px-2 py-1">-</td>
-                      <td className="border px-2 py-1">
+                      <td className="border px-2 py-1 text-[#60A5FA] ">
                         ₹{ex.exchange_item_amount}
                       </td>
                     </tr>
@@ -383,45 +446,53 @@ const GenerateBill: React.FC = () => {
 
         {/* Totals */}
         <div className="flex justify-end mt-10">
-          <div className="bg-orange-100 p-4 rounded-md border border-orange-400">
+          <div className=" p-4 rounded-md border border-orange-800">
             <table className="text-sm w-64 table-fixed">
               <tbody>
                 <tr>
-                  <td className="px-3 py-2">Bill Total :</td>
-                  <td className="text-right font-semibold px-3 py-2">
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                    Bill Total :
+                  </td>
+                  <td className="text-right font-extrabold px-3 py-2 text-[#B45309]">
                     ₹{bill.billTotalAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2">Exchange Amount :</td>
-                  <td className="text-right px-3 py-2">
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                    Exchange Amount :
+                  </td>
+                  <td className="text-right px-3 py-2 font-extrabold  text-[#60A5FA]">
                     ₹{bill.exchangeAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2">Discount :</td>
-                  <td className="text-right px-3 py-2">
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                    Discount :
+                  </td>
+                  <td className="text-right px-3 py-2 font-extrabold  text-[#EC4899]">
                     ₹{bill.billDiscountAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2">Paid :</td>
-                  <td className="text-right px-3 py-2">
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">Paid :</td>
+                  <td className="text-right px-3 py-2 font-extrabold  text-[#10B981]">
                     ₹{bill.billPaidAmount}
                   </td>
                 </tr>
                 {/* ✅ Conditionally render Received row */}
                 {bill.billResAmount > 0 && (
                   <tr>
-                    <td className="px-3 py-2">Received :</td>
+                    <td className="px-3 py-2 text-[#1F2937] font-bold">
+                      Received :
+                    </td>
                     <td className="text-right px-3 py-2">
                       ₹{bill.billResAmount}
                     </td>
                   </tr>
                 )}
-                <tr className="border-t border-black">
-                  <td className="px-3 py-2 font-bold text-red-600">Due:</td>
-                  <td className="text-right font-bold text-red-600 px-3 py-2">
+                <tr className="border-t border-[#D97706]">
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">Due:</td>
+                  <td className="text-right font-extrabold text-[#DC2626] px-3 py-2">
                     ₹{bill.billDueAmount}
                   </td>
                 </tr>
@@ -431,7 +502,7 @@ const GenerateBill: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-xs text-gray-600">
+        <div className="mt-6 text-xs text-gray-800">
           <p>Thank you for your Order!</p>
         </div>
       </div>
