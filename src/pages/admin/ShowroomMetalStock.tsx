@@ -43,8 +43,9 @@ interface ShowroomHistory {
 interface SellingMetal {
   metalSellingId: number;
   sellingMetal: string;
-  sellingMetalWeight: number;
-  sellingMetalAmount: number;
+  sellingMetalWeight: string;
+  sellingPaymentMethod: string;
+  sellingMetalAmount: string;
   date: string;
 }
 
@@ -52,9 +53,10 @@ interface OldReturnMetals {
   oldMetalReturnId: number;
   onlyExchangeMetal: string;
   onlyExchange_metal_name: string;
-  onlyExchange_metal_weight: number;
-  onlyExchange_metal_purity_weight: number;
-  onlyExchange_item_amount: number;
+  onlyExchange_metal_weight: string;
+  onlyExchange_metal_purity_weight: string;
+  onlyExchange_paymentMethod: string;
+  onlyExchange_item_amount: string;
   date: string;
 }
 
@@ -109,7 +111,6 @@ function normalizeYMD(raw: unknown): string | null {
     const day = String(d.getDate()).padStart(2, "0");
     return `${y}-${m}-${day}`;
   }
-
   return null;
 }
 
@@ -135,19 +136,22 @@ function inRangeExact(
 const ShowroomMetalStock: React.FC = () => {
   // Add Metal Stock form
   const [addMetal, setAddMetal] = useState<string>("");
-  const [addWeight, setAddWeight] = useState<number | "">("");
+  const [addWeight, setAddWeight] = useState<string>("");
 
   // Selling form
   const [sellMetal, setSellMetal] = useState<string>("");
-  const [sellWeight, setSellWeight] = useState<number | "">("");
-  const [sellAmount, setSellAmount] = useState<number>(0);
+  const [sellWeight, setSellWeight] = useState<string>("");
+  const [sellPayMethod, setSellPayMethod] = useState<string>("");
+  const [sellAmount, setSellAmount] = useState<string>("");
 
   // Old Return form
   const [returnMetal, setReturnMetal] = useState<string>("");
   const [returnMetalName, setReturnMetalName] = useState<string>("");
-  const [returnWeight, setReturnWeight] = useState<number | "">("");
-  const [returnPurityWeight, setreturnPurityWeight] = useState<number>(0);
-  const [returnAmount, setReturnAmount] = useState<number>(0);
+  const [returnWeight, setReturnWeight] = useState<string>("");
+  const [returnPurityWeight, setreturnPurityWeight] = useState<string>("");
+  const [returnPayMethod, setReturnPayMethod] = useState<string>("");
+
+  const [returnAmount, setReturnAmount] = useState<string>("");
 
   // Results
   const [workerResults, setWorkerResults] = useState<WorkerStock[]>([]);
@@ -252,7 +256,7 @@ const ShowroomMetalStock: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       await api.post(
-        `/admin/sellingMetal?sellingMetal=${sellMetal}&sellingMetalWeight=${sellWeight}&sellingMetalAmount=${sellAmount}`,
+        `/admin/sellingMetal?sellingMetal=${sellMetal}&sellingMetalWeight=${sellWeight}&sellingPaymentMethod=${sellPayMethod}&sellingMetalAmount=${sellAmount}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -264,7 +268,8 @@ const ShowroomMetalStock: React.FC = () => {
 
       setSellMetal("");
       setSellWeight("");
-      setSellAmount(0);
+      setSellPayMethod("");
+      setSellAmount("");
     } catch (error) {
       console.error("Error adding stock:", error);
       alert("Failed to add stock");
@@ -281,7 +286,7 @@ const ShowroomMetalStock: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       await api.post(
-        `/admin/oldReturnMetal?onlyExchange_metal=${returnMetal}&onlyExchange_metal_name=${returnMetalName}&onlyExchange_metal_weight=${returnWeight}&onlyExchange_metal_purity_weight=${returnPurityWeight}&onlyExchange_item_amount=${returnAmount}`,
+        `/admin/oldReturnMetal?onlyExchange_metal=${returnMetal}&onlyExchange_metal_name=${returnMetalName}&onlyExchange_metal_weight=${returnWeight}&onlyExchange_metal_purity_weight=${returnPurityWeight}&onlyExchange_paymentMethod=${returnPayMethod}&onlyExchange_item_amount=${returnAmount}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -294,7 +299,8 @@ const ShowroomMetalStock: React.FC = () => {
       setReturnMetal("");
       setReturnWeight("");
       setReturnMetalName("");
-      setReturnAmount(0);
+      setReturnPayMethod("");
+      setReturnAmount("");
     } catch (error) {
       console.error("Error adding stock:", error);
       alert("Failed to add stock");
@@ -561,11 +567,7 @@ const ShowroomMetalStock: React.FC = () => {
               type="number"
               label="Metal Weight (g)"
               value={addWeight}
-              onChange={(e) =>
-                setAddWeight(
-                  e.target.value === "" ? "" : Number(e.target.value)
-                )
-              }
+              onChange={(e) => setAddWeight(e.target.value)}
               required
             />
           </Grid>
@@ -638,14 +640,42 @@ const ShowroomMetalStock: React.FC = () => {
               type="number"
               label="Metal Weight (g)"
               value={sellWeight}
-              onChange={(e) =>
-                setSellWeight(
-                  e.target.value === "" ? "" : Number(e.target.value)
-                )
-              }
+              onChange={(e) => setSellWeight(e.target.value)}
               required
             />
           </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              select
+              label="Payment Method"
+              value={sellPayMethod}
+              onChange={(e) => setSellPayMethod(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (val: unknown): React.ReactNode =>
+                  val ? (
+                    <>{val as string}</>
+                  ) : (
+                    <span style={{ color: "#9aa0a6" }}>
+                      Select Payment Method
+                    </span>
+                  ),
+                MenuProps: {
+                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Method</em>
+              </MenuItem>
+              <MenuItem value="Phone Pay"> Phone Pay </MenuItem>
+              <MenuItem value="Cash">Cash</MenuItem>
+            </TextField>
+          </Grid>
+
           {/* Amount */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
@@ -653,7 +683,7 @@ const ShowroomMetalStock: React.FC = () => {
               type="number"
               label="Amount"
               value={sellAmount}
-              onChange={(e) => setSellAmount(Number(e.target.value))}
+              onChange={(e) => setSellAmount(e.target.value)}
               required
             />
           </Grid>
@@ -728,37 +758,59 @@ const ShowroomMetalStock: React.FC = () => {
             />
           </Grid>
 
-          {/* Weight */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
               label="Metal Weight (g)"
               value={returnWeight}
-              onChange={(e) =>
-                setReturnWeight(
-                  e.target.value === "" ? "" : Number(e.target.value)
-                )
-              }
+              onChange={(e) => setReturnWeight(e.target.value)}
               required
             />
           </Grid>
 
-          {/*Purity Weight */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
               label="Purity Metal Weight (g)"
               value={returnPurityWeight}
-              onChange={(e) =>
-                setreturnPurityWeight(
-                  e.target.value === "" ? NaN : Number(e.target.value)
-                )
-              }
+              onChange={(e) => setreturnPurityWeight(e.target.value)}
               required
             />
           </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              select
+              label="Payment Method"
+              value={returnPayMethod}
+              onChange={(e) => setReturnPayMethod(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (val: unknown): React.ReactNode =>
+                  val ? (
+                    <>{val as string}</>
+                  ) : (
+                    <span style={{ color: "#9aa0a6" }}>
+                      Select Payment Method
+                    </span>
+                  ),
+                MenuProps: {
+                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Method</em>
+              </MenuItem>
+              <MenuItem value="Phone Pay"> Phone Pay </MenuItem>
+              <MenuItem value="Cash">Cash</MenuItem>
+            </TextField>
+          </Grid>
+
           {/* Amount */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
@@ -766,7 +818,7 @@ const ShowroomMetalStock: React.FC = () => {
               type="number"
               label="Amount"
               value={returnAmount}
-              onChange={(e) => setReturnAmount(Number(e.target.value))}
+              onChange={(e) => setReturnAmount(e.target.value)}
               required
             />
           </Grid>
@@ -1076,6 +1128,11 @@ const ShowroomMetalStock: React.FC = () => {
                 <TableCell
                   sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
                 >
+                  Payment Method
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                >
                   Date
                 </TableCell>
               </TableRow>
@@ -1091,6 +1148,9 @@ const ShowroomMetalStock: React.FC = () => {
                   </TableCell>
                   <TableCell sx={{ fontSize: "0.95rem" }}>
                     {r.sellingMetalAmount}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.95rem" }}>
+                    {r.sellingPaymentMethod}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -1186,6 +1246,11 @@ const ShowroomMetalStock: React.FC = () => {
               <TableCell
                 sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
               >
+                Payment Method
+              </TableCell>
+              <TableCell
+                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+              >
                 Date
               </TableCell>
             </TableRow>
@@ -1207,6 +1272,9 @@ const ShowroomMetalStock: React.FC = () => {
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.95rem" }}>
                   {r.onlyExchange_item_amount}
+                </TableCell>
+                <TableCell sx={{ fontSize: "0.95rem" }}>
+                  {r.onlyExchange_paymentMethod}
                 </TableCell>
                 <TableCell
                   sx={{

@@ -16,7 +16,6 @@ const RepairWork: React.FC = () => {
     metal: "",
     itemName: "",
     metalWeight: "",
-    deliveryDate: "",
     customerPay: "",
     workerPay: "",
   });
@@ -24,11 +23,6 @@ const RepairWork: React.FC = () => {
 
   const handleChange = (field: string, val: string) =>
     setRepairData((prev) => ({ ...prev, [field]: val }));
-  const formatDate = (iso: string) => {
-    if (!iso) return "";
-    const [y, m, d] = iso.split("-"); // directly split "2025-08-23"
-    return `${m}-${d}-${y}`; // MM-DD-YYYY
-  };
 
   const handleSubmit = async () => {
     if (!selectedWorkerId) {
@@ -48,7 +42,6 @@ const RepairWork: React.FC = () => {
         metalWeight: parseFloat(repairData.metalWeight) || 0.0,
         customerPay: parseFloat(repairData.customerPay),
         workerPay: parseFloat(repairData.workerPay),
-        deliveryDate: formatDate(repairData.deliveryDate),
       };
 
       console.log("RequestBody Repair", body);
@@ -62,7 +55,6 @@ const RepairWork: React.FC = () => {
         metal: "",
         itemName: "",
         metalWeight: "",
-        deliveryDate: "",
         customerPay: "",
         workerPay: "",
       });
@@ -157,19 +149,6 @@ const RepairWork: React.FC = () => {
               label="Metal Weight (g)"
               value={repairData.metalWeight}
               onChange={(e) => handleChange("metalWeight", e.target.value)}
-              required
-            />
-          </Grid>
-
-          {/* Delivery date */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              fullWidth
-              type="date"
-              label="Delivery Date"
-              value={repairData.deliveryDate}
-              onChange={(e) => handleChange("deliveryDate", e.target.value)}
-              InputLabelProps={{ shrink: true }}
               required
             />
           </Grid>
