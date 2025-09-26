@@ -299,6 +299,7 @@ const ShowroomMetalStock: React.FC = () => {
       setReturnMetal("");
       setReturnWeight("");
       setReturnMetalName("");
+      setreturnPurityWeight("");
       setReturnPayMethod("");
       setReturnAmount("");
     } catch (error) {
