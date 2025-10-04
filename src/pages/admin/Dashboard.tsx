@@ -1,11 +1,44 @@
 // src/pages/admin/Dashboard.tsx
 import React, { useEffect, useState } from "react";
 import api from "@/services/api"; // make sure this import path is correct
+import { MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type MetalRates = {
   goldRate: number;
   silverRate: number;
 };
+
+type OrdersMetric = {
+  currentCount: number;
+  previousCount: number;
+  percentageChange: number;
+};
+
+function useOrdersMetric(
+  endpoint: string,
+  filter: string,
+  token: string | null
+) {
+  const [data, setData] = useState<OrdersMetric | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    api
+      .get<OrdersMetric>(`${endpoint}?filter=${filter}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setData(res.data))
+      .catch((err) => console.error("Error fetching metric:", err));
+  }, [endpoint, filter, token]);
+
+  return data;
+}
 
 /* ---------- Metal Prices (editable) ---------- */
 const MetalPricesCard: React.FC = () => {
@@ -152,29 +185,61 @@ const MetalPricesCard: React.FC = () => {
 /* ---------- KPI card ---------- */
 const MetricCard: React.FC<{
   title: string;
-  value: string;
-  delta?: { up?: boolean; label: string };
-  subtitle?: string;
-}> = ({ title, value, delta, subtitle }) => (
-  <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-    <div className="text-sm text-gray-500">{title}</div>
-    <div className="mt-1 text-3xl font-bold tracking-tight">{value}</div>
-    <div className="mt-1 flex items-center gap-3">
-      {delta && (
-        <span
-          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
-            delta.up
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-rose-50 text-rose-700"
-          }`}
-        >
-          {delta.up ? "▲" : "▼"} {delta.label}
-        </span>
-      )}
-      {subtitle && <span className="text-xs text-gray-500">{subtitle}</span>}
+  endpoint: string;
+  token: string | null;
+}> = ({ title, endpoint, token }) => {
+  const [filter, setFilter] = useState("THIS_MONTH");
+  const data = useOrdersMetric(endpoint, filter, token);
+
+  const FILTER_OPTIONS = [
+    "ALL",
+    "TODAY",
+    "THIS_WEEK",
+    "THIS_MONTH",
+    "THIS_YEAR",
+  ] as const;
+
+  return (
+    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5 relative">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm text-gray-500 font-medium">{title}</div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1 rounded-full hover:bg-gray-100">
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {FILTER_OPTIONS.map((f) => (
+              <DropdownMenuItem
+                key={f}
+                onClick={() => setFilter(f)}
+                className={filter === f ? "font-semibold text-violet-600" : ""}
+              >
+                {f.replace("_", " ")}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="text-2xl font-bold">
+        {data ? data.currentCount.toLocaleString() : "..."}
+      </div>
+      <div
+        className={`text-sm mt-1 ${
+          (data?.percentageChange ?? 0) >= 0 ? "text-green-600" : "text-red-600"
+        }`}
+      >
+        {data ? `${data.percentageChange}%` : ""}
+      </div>
+      <div className="text-xs text-gray-400 mt-1">
+        Vs last {filter.replace("_", " ").toLowerCase()}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ---------- Target: semicircle gauge with static values ---------- */
 const TargetCard: React.FC = () => {
@@ -459,6 +524,8 @@ const BusinessGrowth: React.FC = () => {
 
 /* ---------- Page (no banner; adds spacing under banner) ---------- */
 const Dashboard: React.FC = () => {
+  const token = localStorage.getItem("token") || "";
+
   return (
     <div className="mt-6 space-y-6">
       {/* KPI row (first tile = Metal Prices) */}
@@ -466,21 +533,23 @@ const Dashboard: React.FC = () => {
         <MetalPricesCard />
         <MetricCard
           title="Total Orders"
-          value="16,920"
-          delta={{ up: false, label: "3%" }}
-          subtitle="Vs last month · View orders"
+          endpoint="/admin/ordersCount"
+          token={token}
         />
         <MetricCard
-          title="Order Complete"
-          value="16,581"
-          delta={{ up: true, label: "98%" }}
-          subtitle="Vs last month"
+          title="Delivered Orders"
+          endpoint="/admin/deliveredOrders"
+          token={token}
         />
         <MetricCard
-          title="Cancel Order"
-          value="338"
-          delta={{ up: false, label: "2%" }}
-          subtitle="227 Decreasing Orders"
+          title="Pending Orders"
+          endpoint="/admin/pendingOrders"
+          token={token}
+        />
+        <MetricCard
+          title="Canceled Orders"
+          endpoint="/admin/canceledOrders"
+          token={token}
         />
       </div>
 

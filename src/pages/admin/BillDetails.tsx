@@ -228,7 +228,6 @@ const BillDetails: React.FC = () => {
 
   const handleEditOrder = (orderId: number) => {
     localStorage.removeItem("editBillFromBillDetails");
-
     if (!orderId) {
       console.error("❌ editingOrderId is missing before navigation");
       return;
@@ -451,7 +450,7 @@ const BillDetails: React.FC = () => {
                       className={`border px-3 py-2 `}
                       sx={{
                         color:
-                          order.delivery_status === "Deliverd"
+                          order.delivery_status === "Delivered"
                             ? "#2e7d32" // green
                             : order.delivery_status === "Pending"
                             ? "#ed6c02" // orange/yellow

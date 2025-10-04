@@ -1146,7 +1146,7 @@ const Orders: React.FC = () => {
                   <MenuItem value="">
                     <em>Select Delivery Status</em>
                   </MenuItem>
-                  <MenuItem value="Deliverd">Deliverd</MenuItem>
+                  <MenuItem value="Delivered">Delivered</MenuItem>
                   <MenuItem value="Pending">Pending</MenuItem>
                 </TextField>
               ) : key === "itemName" ? (
@@ -1734,6 +1734,7 @@ const Orders: React.FC = () => {
           onClick={() => {
             sessionStorage.removeItem("billingFrom");
             sessionStorage.removeItem("ordersState");
+
             sessionStorage.setItem(
               "ordersState",
               JSON.stringify({ ordersList, exchangeList, customerId })

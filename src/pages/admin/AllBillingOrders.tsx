@@ -57,7 +57,9 @@ function toDateOnlyYYYYMMDD(s: string | null): string | null {
   return null;
 }
 
-function normalizeStatus(s: string | undefined | null): "delivered" | "pending" | "other" {
+function normalizeStatus(
+  s: string | undefined | null
+): "delivered" | "pending" | "other" {
   const v = (s ?? "").toLowerCase().trim();
   if (v.includes("deliver")) return "delivered";
   if (v.includes("pend")) return "pending";
@@ -70,7 +72,9 @@ const AllBillingOrders: React.FC = () => {
   const [err, setErr] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "delivered" | "pending">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "delivered" | "pending"
+  >("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -125,10 +129,28 @@ const AllBillingOrders: React.FC = () => {
   const renderStatusChip = (raw: string) => {
     const n = normalizeStatus(raw);
     if (n === "delivered")
-      return <Chip label="Delivered" size="small" sx={{ bgcolor: "#d9f7d9", color: "#1b5e20", fontWeight: 600 }} />;
+      return (
+        <Chip
+          label="Delivered"
+          size="small"
+          sx={{ bgcolor: "#d9f7d9", color: "#1b5e20", fontWeight: 600 }}
+        />
+      );
     if (n === "pending")
-      return <Chip label="Pending" size="small" sx={{ bgcolor: "#fff3e0", color: "#e65100", fontWeight: 600 }} />;
-    return <Chip label={raw || "-"} size="small" sx={{ bgcolor: "#eeeeee", color: "#424242" }} />;
+      return (
+        <Chip
+          label="Pending"
+          size="small"
+          sx={{ bgcolor: "#fff3e0", color: "#e65100", fontWeight: 600 }}
+        />
+      );
+    return (
+      <Chip
+        label={raw || "-"}
+        size="small"
+        sx={{ bgcolor: "#eeeeee", color: "#424242" }}
+      />
+    );
   };
 
   return (
@@ -222,7 +244,9 @@ const AllBillingOrders: React.FC = () => {
                 <tr>
                   <th className="border px-3 py-2 text-left">Billing Date</th>
                   <th className="border px-3 py-2 text-left">Bill Number</th>
-                  <th className="border px-3 py-2 text-left">Delivery Status</th>
+                  <th className="border px-3 py-2 text-left">
+                    Delivery Status
+                  </th>
                   <th className="border px-3 py-2 text-right"># Orders</th>
                   <th className="border px-3 py-2 text-right">Total Amount</th>
                   <th className="border px-3 py-2 text-right">Due Amount</th>
@@ -232,15 +256,25 @@ const AllBillingOrders: React.FC = () => {
               <tbody>
                 {filteredRows.map((bill) => (
                   <tr key={bill.billId} className="bg-white/90">
-                    <td className="border px-3 py-2">{bill.billingDate ?? "N/A"}</td>
+                    <td className="border px-3 py-2">
+                      {bill.billingDate ?? "N/A"}
+                    </td>
                     <td className="border px-3 py-2">{bill.billNumber}</td>
-                    <td className="border px-3 py-2">{renderStatusChip(bill.deliveryStatus)}</td>
-                    <td className="border px-3 py-2 text-right">{bill.numberOfOrders ?? 0}</td>
-                    <td className="border px-3 py-2 text-right">
-                      {bill.billTotalAmount != null ? bill.billTotalAmount.toFixed(2) : "-"}
+                    <td className="border px-3 py-2">
+                      {renderStatusChip(bill.deliveryStatus)}
                     </td>
                     <td className="border px-3 py-2 text-right">
-                      {bill.billDueAmount != null ? bill.billDueAmount.toFixed(2) : "-"}
+                      {bill.numberOfOrders ?? 0}
+                    </td>
+                    <td className="border px-3 py-2 text-right">
+                      {bill.billTotalAmount != null
+                        ? bill.billTotalAmount.toFixed(2)
+                        : "-"}
+                    </td>
+                    <td className="border px-3 py-2 text-right">
+                      {bill.billDueAmount != null
+                        ? bill.billDueAmount.toFixed(2)
+                        : "-"}
                     </td>
                     <td className="border px-3 py-2 text-center">
                       <Button
