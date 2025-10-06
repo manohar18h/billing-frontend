@@ -7,6 +7,14 @@ import {
   MenuItem,
   Grid,
 } from "@mui/material";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 import { useWorkers } from "@/contexts/WorkersContext";
 import api from "@/services/api";
@@ -18,6 +26,10 @@ const WorkerStock: React.FC = () => {
     date: "",
   });
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const { invalidate, refresh } = useWorkers();
   const { workers, loading, error } = useWorkers();
@@ -68,9 +80,12 @@ const WorkerStock: React.FC = () => {
 
       // Show the updated stock info from response
       const data = res.data;
-      alert(
-        `Stock assigned successfully!\nMetal: ${data.metal}\nWeight: ${data.metalWeight}\n`
+
+      setDialogMessage(
+        `Stock assigned successfully!\nMetal: ${data.metal}\nWeight: ${data.metalWeight}`
       );
+      setIsSuccess(true);
+      setDialogOpen(true);
 
       // Reset form
       setStockData({ metal: "", weight: "", date: "" });
@@ -80,7 +95,11 @@ const WorkerStock: React.FC = () => {
       await refresh();
     } catch (err: any) {
       if (err.response?.data) {
-        alert("Failed to submit stock: " + JSON.stringify(err.response.data));
+        setDialogMessage(
+          "Failed to submit stock: " + JSON.stringify(err.response.data)
+        );
+        setIsSuccess(false);
+        setDialogOpen(true);
       } else {
         console.error(err);
         alert(
@@ -195,6 +214,32 @@ const WorkerStock: React.FC = () => {
           </Box>
         </Box>
       </div>
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle
+              className={isSuccess ? "text-green-600" : "text-red-600"}
+            >
+              {isSuccess ? "Success" : "Error"}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <p className="text-gray-600 mt-2 whitespace-pre-line">
+            {dialogMessage}
+          </p>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setDialogOpen(false)}
+              className={
+                isSuccess
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

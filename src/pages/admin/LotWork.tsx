@@ -7,6 +7,14 @@ import {
   Typography,
   MenuItem,
 } from "@mui/material";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useWorkers } from "@/contexts/WorkersContext";
 import api from "@/services/api";
 
@@ -21,6 +29,9 @@ const LotWork: React.FC = () => {
     amount: "",
   });
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleChange = (field: string, value: string) =>
     setLotData((prev) => ({ ...prev, [field]: value }));
@@ -57,7 +68,9 @@ const LotWork: React.FC = () => {
       const result = res.data;
       console.log("API result:", result);
 
-      alert("Lot work added successfully.");
+      setDialogMessage("Lot work added successfully.");
+      setIsSuccess(true);
+      setDialogOpen(true);
       await invalidate();
       await refresh();
 
@@ -74,7 +87,9 @@ const LotWork: React.FC = () => {
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Error submitting lot work:", error.message);
-        alert(error.message);
+        setDialogMessage(error.message);
+        setIsSuccess(false);
+        setDialogOpen(true);
       } else {
         console.error("Unexpected error:", error);
         alert("Failed to submit lot work.");
@@ -221,6 +236,30 @@ const LotWork: React.FC = () => {
           </Button>
         </Box>
       </Box>
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle
+              className={isSuccess ? "text-green-600" : "text-red-600"}
+            >
+              {isSuccess ? "Success" : "Error"}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <p className="text-gray-600 mt-2">{dialogMessage}</p>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setDialogOpen(false)}
+              className={
+                isSuccess
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

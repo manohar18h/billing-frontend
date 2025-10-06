@@ -9,6 +9,14 @@ import {
 } from "@mui/material";
 import { useWorkers } from "@/contexts/WorkersContext";
 import api from "@/services/api";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 type FormState = {
   workerId: string;
@@ -28,6 +36,10 @@ const WorkerTransaction: React.FC = () => {
     workerId: "",
     amount: "",
   });
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const selectedWorker = workers.find(
     (w) => w.workerId === Number(form.workerId)
@@ -56,24 +68,26 @@ const WorkerTransaction: React.FC = () => {
 
       const result = res.data;
 
-      alert(
+      setDialogMessage(
         `✅ Transaction successful!\nPaid: ₹${
           result.paidAmount
-        }\nDate: ${new Date(
-          result.paymentDate
-        ).toLocaleString()}\nTransaction ID: ${result.wtid}`
+        }\nDate: ${new Date(result.paymentDate).toLocaleString()}`
       );
+      setIsSuccess(true);
+      setDialogOpen(true);
 
       setForm({ workerId: "", amount: "" });
       await invalidate();
       await refresh();
     } catch (err: any) {
       console.error(err);
-      alert(
+      setDialogMessage(
         `❌ Error submitting transaction: ${
           err.response?.data?.message || err.message
         }`
       );
+      setIsSuccess(false);
+      setDialogOpen(true);
     }
   };
 
@@ -159,6 +173,32 @@ const WorkerTransaction: React.FC = () => {
           </Button>
         </Box>
       </Box>
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle
+              className={isSuccess ? "text-green-600" : "text-red-600"}
+            >
+              {isSuccess ? "Success" : "Error"}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <p className="text-gray-600 mt-2 whitespace-pre-line">
+            {dialogMessage}
+          </p>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setDialogOpen(false)}
+              className={
+                isSuccess
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

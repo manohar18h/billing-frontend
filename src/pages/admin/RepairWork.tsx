@@ -7,6 +7,15 @@ import {
   MenuItem,
   Grid,
 } from "@mui/material";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+
 import { useWorkers } from "@/contexts/WorkersContext";
 import api from "@/services/api";
 
@@ -20,6 +29,10 @@ const RepairWork: React.FC = () => {
     workerPay: "",
   });
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleChange = (field: string, val: string) =>
     setRepairData((prev) => ({ ...prev, [field]: val }));
@@ -50,7 +63,9 @@ const RepairWork: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      alert("Repair work submitted successfully.");
+      setDialogMessage("Repair work submitted successfully.");
+      setIsSuccess(true);
+      setDialogOpen(true);
       setRepairData({
         metal: "",
         itemName: "",
@@ -64,7 +79,10 @@ const RepairWork: React.FC = () => {
     } catch (err: unknown) {
       if (err instanceof Error) {
         console.error("Repair work submit failed:", err.message);
-        alert(err.message);
+
+        setDialogMessage(err.message);
+        setIsSuccess(false);
+        setDialogOpen(true);
       } else {
         console.error("Unexpected error:", err);
         alert("Failed to add repair work.");
@@ -197,6 +215,30 @@ const RepairWork: React.FC = () => {
           </Button>
         </Box>
       </Box>
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle
+              className={isSuccess ? "text-green-600" : "text-red-600"}
+            >
+              {isSuccess ? "Success" : "Error"}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <p className="text-gray-600 mt-2">{dialogMessage}</p>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setDialogOpen(false)}
+              className={
+                isSuccess
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

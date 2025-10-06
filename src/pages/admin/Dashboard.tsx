@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 type MetalRates = {
   goldRate: number;
@@ -188,7 +189,7 @@ const MetricCard: React.FC<{
   endpoint: string;
   token: string | null;
 }> = ({ title, endpoint, token }) => {
-  const [filter, setFilter] = useState("THIS_MONTH");
+  const [filter, setFilter] = useState("ALL");
   const data = useOrdersMetric(endpoint, filter, token);
 
   const FILTER_OPTIONS = [
@@ -198,6 +199,23 @@ const MetricCard: React.FC<{
     "THIS_MONTH",
     "THIS_YEAR",
   ] as const;
+
+  const getVsLabel = (filter: string) => {
+    switch (filter) {
+      case "ALL":
+        return "All";
+      case "TODAY":
+        return "Yesterday";
+      case "THIS_WEEK":
+        return "Last Week";
+      case "THIS_MONTH":
+        return "Last Month";
+      case "THIS_YEAR":
+        return "Last Year";
+      default:
+        return filter.replace("_", " ").toLowerCase();
+    }
+  };
 
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5 relative">
@@ -227,15 +245,28 @@ const MetricCard: React.FC<{
       <div className="text-2xl font-bold">
         {data ? data.currentCount.toLocaleString() : "..."}
       </div>
-      <div
-        className={`text-sm mt-1 ${
-          (data?.percentageChange ?? 0) >= 0 ? "text-green-600" : "text-red-600"
+      <div className="flex items-center gap-2 mt-1 text-sm">
+        {/* Percentage Badge */}
+        {data && (
+          <div
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-medium
+        ${
+          data.percentageChange >= 0
+            ? "text-green-700 bg-green-100"
+            : "text-red-700 bg-red-100"
         }`}
-      >
-        {data ? `${data.percentageChange}%` : ""}
-      </div>
-      <div className="text-xs text-gray-400 mt-1">
-        Vs last {filter.replace("_", " ").toLowerCase()}
+          >
+            {data.percentageChange >= 0 ? (
+              <ArrowUp className="h-4 w-4" />
+            ) : (
+              <ArrowDown className="h-4 w-4" />
+            )}
+            {Math.abs(data.percentageChange)}%
+          </div>
+        )}
+
+        {/* "Vs last ..." text */}
+        <span className="text-gray-500 text-xs">Vs {getVsLabel(filter)}</span>
       </div>
     </div>
   );
