@@ -82,6 +82,7 @@ const BillDetails: React.FC = () => {
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [, setEditingOrderId] = useState<number | null>(null);
   const [payMethod, setPayMethod] = useState("");
+  const [editBill, setEditBill] = useState("");
 
   const token = localStorage.getItem("token");
   const billNumber = localStorage.getItem("billNumber");
@@ -146,6 +147,7 @@ const BillDetails: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    localStorage.removeItem("checkEditBill");
     navigate(location.pathname, { replace: true });
     const shouldPush = !sessionStorage.getItem("preventPushBack");
     if (shouldPush) {
@@ -308,7 +310,8 @@ const BillDetails: React.FC = () => {
                   );
                   sessionStorage.setItem("billingFrom", "BillDetails");
                   console.log("Ids :" + orders.map((order) => order.orderId));
-                  localStorage.setItem("editBill", "editBill");
+                  setEditBill("YesEdit");
+                  localStorage.setItem("checkEditBill", editBill);
 
                   navigate("/admin/generate-bill", {
                     replace: true,

@@ -9,7 +9,6 @@ import {
   Paper,
   Typography,
   Table,
-  TableHead,
   TableRow,
   TableCell,
   TableBody,
@@ -108,7 +107,7 @@ const Orders: React.FC = () => {
       stockBox: "",
       gross_weight: 0.0,
       discount: 0.0,
-      delivery_status: "",
+      deliveryStatus: "",
       total_item_amount: 0,
     });
     setOrderErrors({});
@@ -148,7 +147,7 @@ const Orders: React.FC = () => {
     stockBox: "",
     gross_weight: 0.0,
     discount: 0.0,
-    delivery_status: "",
+    deliveryStatus: "",
     total_item_amount: 0,
   });
 
@@ -1113,19 +1112,19 @@ const Orders: React.FC = () => {
                   <MenuItem value="Star">Star</MenuItem>
                   <MenuItem value="SSP">SSP</MenuItem>
                 </TextField>
-              ) : key === "delivery_status" ? (
+              ) : key === "deliveryStatus" ? (
                 <TextField
                   select
                   label="Delivery Status"
-                  value={order.delivery_status}
+                  value={order.deliveryStatus}
                   onChange={(e) =>
                     setOrder({
                       ...order,
-                      delivery_status: e.target.value,
+                      deliveryStatus: e.target.value,
                     })
                   }
-                  error={!!orderErrors.delivery_status}
-                  helperText={orderErrors.delivery_status || ""}
+                  error={!!orderErrors.deliveryStatus}
+                  helperText={orderErrors.deliveryStatus || ""}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{
@@ -1403,7 +1402,7 @@ const Orders: React.FC = () => {
                   </TableCell>
 
                   <TableCell className={`border px-3 py-2 `}>
-                    {order.delivery_status === "Canceled" ? (
+                    {order.deliveryStatus === "Canceled" ? (
                       <>-</>
                     ) : (
                       <IconButton
@@ -1450,7 +1449,7 @@ const Orders: React.FC = () => {
                             gross_weight: ord.gross_weight || 0,
                             stockBox: ord.stockBox || 0,
                             discount: ord.discount || 0,
-                            delivery_status: ord.delivery_status || "",
+                            deliveryStatus: ord.deliveryStatus || "",
                             total_item_amount:
                               calculateTotals(ord).total_item_amount,
                           });
@@ -1466,7 +1465,7 @@ const Orders: React.FC = () => {
                   </TableCell>
 
                   <TableCell className="border px-3 py-2">
-                    {order.delivery_status === "Canceled" ? (
+                    {order.deliveryStatus === "Canceled" ? (
                       <CheckCircleIcon color="success" />
                     ) : editBillDetails === "editBill" ? (
                       "-"

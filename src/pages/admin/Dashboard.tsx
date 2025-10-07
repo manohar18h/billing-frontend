@@ -19,6 +19,13 @@ type OrdersMetric = {
   currentCount: number;
   previousCount: number;
   percentageChange: number;
+  totalOrders: number;
+};
+type RevenueMetric = {
+  currentRevenue: number;
+  previousRevenue: number;
+  totalRevenue: number;
+  percentageChange: number;
 };
 
 function useOrdersMetric(
@@ -36,6 +43,26 @@ function useOrdersMetric(
       })
       .then((res) => setData(res.data))
       .catch((err) => console.error("Error fetching metric:", err));
+  }, [endpoint, filter, token]);
+
+  return data;
+}
+
+function useRevenueMetric(
+  endpoint: string,
+  filter: string,
+  token: string | null
+) {
+  const [data, setData] = useState<RevenueMetric | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    api
+      .get<RevenueMetric>(`${endpoint}?filter=${filter}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setData(res.data))
+      .catch((err) => console.error("Error fetching revenue metric:", err));
   }, [endpoint, filter, token]);
 
   return data;
@@ -268,6 +295,106 @@ const MetricCard: React.FC<{
         {/* "Vs last ..." text */}
         <span className="text-gray-500 text-xs">Vs {getVsLabel(filter)}</span>
       </div>
+
+      {data && (
+        <div className="mt-2 text-xs text-gray-500">
+          Total Orders: ₹{data.totalOrders.toLocaleString()}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const RevenueCard: React.FC<{
+  title: string;
+  endpoint: string;
+  token: string | null;
+}> = ({ title, endpoint, token }) => {
+  const [filter, setFilter] = useState("ALL");
+  const data = useRevenueMetric(endpoint, filter, token);
+
+  const FILTER_OPTIONS = [
+    "ALL",
+    "TODAY",
+    "THIS_WEEK",
+    "THIS_MONTH",
+    "THIS_YEAR",
+    "CASH",
+    "ONLINE",
+  ] as const;
+
+  const getVsLabel = (filter: string) => {
+    switch (filter) {
+      case "ALL":
+        return "All";
+      case "TODAY":
+        return "Yesterday";
+      case "THIS_WEEK":
+        return "Last Week";
+      case "THIS_MONTH":
+        return "Last Month";
+      case "THIS_YEAR":
+        return "Last Year";
+      default:
+        return filter.replace("_", " ").toLowerCase();
+    }
+  };
+
+  return (
+    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5 relative">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm text-gray-500 font-medium">{title}</div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1 rounded-full hover:bg-gray-100">
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {FILTER_OPTIONS.map((f) => (
+              <DropdownMenuItem
+                key={f}
+                onClick={() => setFilter(f)}
+                className={filter === f ? "font-semibold text-violet-600" : ""}
+              >
+                {f.replace("_", " ")}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="text-2xl font-bold">
+        ₹{data ? data.currentRevenue.toLocaleString() : "..."}
+      </div>
+
+      <div className="flex items-center gap-2 mt-1 text-sm">
+        {data && (
+          <div
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-medium
+          ${
+            data.percentageChange >= 0
+              ? "text-green-700 bg-green-100"
+              : "text-red-700 bg-red-100"
+          }`}
+          >
+            {data.percentageChange >= 0 ? (
+              <ArrowUp className="h-4 w-4" />
+            ) : (
+              <ArrowDown className="h-4 w-4" />
+            )}
+            {Math.abs(data.percentageChange).toFixed(2)}%
+          </div>
+        )}
+        <span className="text-gray-500 text-xs">Vs {getVsLabel(filter)}</span>
+      </div>
+
+      {data && (
+        <div className="mt-2 text-xs text-gray-500">
+          Total Revenue: ₹{data.totalRevenue.toLocaleString()}
+        </div>
+      )}
     </div>
   );
 };
@@ -448,6 +575,43 @@ const StatisticCard: React.FC = () => {
   );
 };
 
+const DueAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
+  const [dueAmount, setDueAmount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchDueAmount = async () => {
+      try {
+        const response = await api.get<number>("/admin/getTotalDueAmount", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setDueAmount(response.data);
+      } catch (error) {
+        console.error("Error fetching due amount:", error);
+      }
+    };
+
+    if (token) fetchDueAmount();
+  }, [token]);
+
+  return (
+    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm text-gray-500 font-medium">Total Due</div>
+      </div>
+
+      <div className="text-2xl font-bold">
+        ₹{dueAmount !== null ? dueAmount.toLocaleString() : "..."}
+      </div>
+
+      <div className="text-xs text-gray-500 mt-2">
+        Total outstanding amount from all customers
+      </div>
+    </div>
+  );
+};
+
 /* ---------- Latest Orders: static table ---------- */
 const LatestOrders: React.FC = () => {
   const rows = [
@@ -582,6 +746,12 @@ const Dashboard: React.FC = () => {
           endpoint="/admin/canceledOrders"
           token={token}
         />
+        <RevenueCard
+          title="Total Revenue"
+          endpoint="/admin/revenueStats"
+          token={token}
+        />
+        <DueAmountCard token={token} /> {/* ✅ Added here */}
       </div>
 
       {/* Charts row */}

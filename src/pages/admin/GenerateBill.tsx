@@ -9,7 +9,7 @@ const GenerateBill: React.FC = () => {
   const token = localStorage.getItem("token");
   const billNumber =
     location.state?.billNumber || localStorage.getItem("billNumber");
-  const editBill = localStorage.getItem("editBill");
+  const checkEditBill = localStorage.getItem("checkEditBill");
 
   // Transaction model
   interface Transaction {
@@ -118,9 +118,9 @@ const GenerateBill: React.FC = () => {
 
     const fetchBillSummary = async () => {
       try {
-        console.log("editBill : ", editBill);
+        console.log("checkEditBill : ", checkEditBill);
 
-        if (editBill === "editBill") {
+        if (checkEditBill === "YesEdit") {
           console.log("Updating existing bill with billNumber:", billNumber);
 
           const res = await api.put<Bill>(
