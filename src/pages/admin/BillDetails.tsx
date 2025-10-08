@@ -34,7 +34,7 @@ interface selectedOrders {
   metal_weight: number;
   total_item_amount: number;
   paidAmount: number;
-  delivery_status: string;
+  deliveryStatus: string;
   dueAmount: number;
   workerPay?: { fullName: string };
 }
@@ -453,17 +453,17 @@ const BillDetails: React.FC = () => {
                       className={`border px-3 py-2 `}
                       sx={{
                         color:
-                          order.delivery_status === "Delivered"
+                          order.deliveryStatus === "Delivered"
                             ? "#2e7d32" // green
-                            : order.delivery_status === "Pending"
+                            : order.deliveryStatus === "Pending"
                             ? "#ed6c02" // orange/yellow
-                            : order.delivery_status === "Canceled"
+                            : order.deliveryStatus === "Canceled"
                             ? "#d32f2f" // red
                             : "inherit",
                         fontWeight: "bold",
                       }}
                     >
-                      {order.delivery_status}
+                      {order.deliveryStatus}
                     </TableCell>
 
                     <TableCell
@@ -550,7 +550,7 @@ const BillDetails: React.FC = () => {
                       </IconButton>
                     </TableCell>
                     <TableCell className={`border px-3 py-2 `}>
-                      {order.delivery_status === "Canceled" ? (
+                      {order.deliveryStatus === "Canceled" ? (
                         <>-</>
                       ) : (
                         <IconButton
@@ -569,7 +569,7 @@ const BillDetails: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell className={`border px-3 py-2 `}>
-                      {order.delivery_status === "Canceled" ? (
+                      {order.deliveryStatus === "Canceled" ? (
                         <CheckCircleIcon color="success" />
                       ) : (
                         <IconButton

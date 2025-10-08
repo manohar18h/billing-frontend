@@ -5,11 +5,12 @@ import {
   Paper,
   Typography,
   CircularProgress,
-  Button,
   TextField,
   Box,
 } from "@mui/material";
 import api from "@/services/api";
+import { IconButton } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 type StockBoxDataEntry = {
   stockBoxDataId: number;
@@ -41,9 +42,12 @@ const StockBoxData: React.FC = () => {
       setErr(null);
       try {
         const token = localStorage.getItem("token") ?? "";
-        const { data } = await api.get<StockDataBox[]>(`/admin/getALlStockBox`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
+        const { data } = await api.get<StockDataBox[]>(
+          `/admin/getALlStockBox`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          }
+        );
         if (!alive) return;
         setRows(Array.isArray(data) ? data : []);
       } catch (e) {
@@ -112,40 +116,72 @@ const StockBoxData: React.FC = () => {
             <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
               <thead className="bg-gray-200">
                 <tr>
-                  <th className="border px-3 py-2 text-left">Stock Box Name</th>
-                  <th className="border px-3 py-2 text-left">
-                    Total Stock Box Count
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Stock Box Name
+                    </div>
                   </th>
-                  <th className="border px-3 py-2 text-left">
-                    Total Stock Box Weight
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Total Stock Box Count
+                    </div>
                   </th>
-                  <th className="border px-3 py-2 text-center">Action</th>
+
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Total Stock Box Weight
+                    </div>
+                  </th>
+
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Action
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRows.map((box) => (
                   <tr key={box.stockBoxId} className="bg-white/90">
-                    <td className="border px-3 py-2">{box.stockBoxName}</td>
-                    <td className="border px-3 py-2">
-                      {box.totalStockBoxCount}
-                    </td>
-                    <td className="border px-3 py-2">
-                      {box.totalStockBoxWeight}
-                    </td>
                     <td className="border px-3 py-2 text-center">
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => {
-                          localStorage.setItem(
-                            "selectedStockBox",
-                            JSON.stringify(box)
-                          );
-                          navigate(`/admin/StockBoxDetails/${box.stockBoxId}`);
-                        }}
-                      >
-                        View More
-                      </Button>
+                      <div className="flex justify-center items-center">
+                        {box.stockBoxName}
+                      </div>
+                    </td>
+
+                    <td className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        {box.totalStockBoxCount}
+                      </div>
+                    </td>
+
+                    <td className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        {box.totalStockBoxWeight}
+                      </div>
+                    </td>
+
+                    <td className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        <IconButton
+                          size="medium"
+                          color="primary"
+                          sx={{
+                            "&:hover": { backgroundColor: "#E0E0E0" },
+                          }}
+                          onClick={() => {
+                            localStorage.setItem(
+                              "selectedStockBox",
+                              JSON.stringify(box)
+                            );
+                            navigate(
+                              `/admin/StockBoxDetails/${box.stockBoxId}`
+                            );
+                          }}
+                        >
+                          <VisibilityIcon fontSize="medium" />
+                        </IconButton>
+                      </div>
                     </td>
                   </tr>
                 ))}

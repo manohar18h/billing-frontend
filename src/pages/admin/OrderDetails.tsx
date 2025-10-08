@@ -83,7 +83,7 @@ const OrderDetails: React.FC = () => {
     paidAmount: number | null;
     dueAmount: number;
     receivedAmount: number;
-    delivery_status: string;
+    deliveryStatus: string;
 
     workerPay: WorkerPay;
 
@@ -241,7 +241,7 @@ const OrderDetails: React.FC = () => {
               ["Paid Amount", order.paidAmount],
               ["Due Amount", order.dueAmount],
               ["Received Amount", order.receivedAmount],
-              ["Delivery Status", order.delivery_status],
+              ["Delivery Status", order.deliveryStatus],
             ].map(([label, value]) => (
               <p key={label} className="mb-2 text-lg">
                 <span className="text-pink-300 font-semibold">{label}:</span>{" "}

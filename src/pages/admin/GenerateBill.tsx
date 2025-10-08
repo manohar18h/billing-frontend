@@ -67,7 +67,7 @@ const GenerateBill: React.FC = () => {
     paidAmount: number;
     dueAmount: number;
     receivedAmount: number | null;
-    delivery_status: string;
+    deliveryStatus: string;
     workerPay: number | null;
     transactions: Transaction[];
     oldItems: OldItem[];

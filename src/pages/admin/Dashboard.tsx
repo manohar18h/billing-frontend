@@ -9,6 +9,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ArrowDown, ArrowUp } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 type MetalRates = {
   goldRate: number;
@@ -27,6 +37,23 @@ type RevenueMetric = {
   totalRevenue: number;
   percentageChange: number;
 };
+
+interface OrderStat {
+  year: number;
+  month: number;
+  billCount: number;
+}
+
+interface CancelStat {
+  year: number;
+  month: number;
+  canceledCount: number;
+}
+
+interface RevenueStat {
+  monthName: string;
+  totalRevenue: number;
+}
 
 function useOrdersMetric(
   endpoint: string,
@@ -399,72 +426,177 @@ const RevenueCard: React.FC<{
   );
 };
 
-/* ---------- Target: semicircle gauge with static values ---------- */
-const TargetCard: React.FC = () => {
-  const percent = 62.28;
+/* ---------- Target: semicircle gauge with dynamic revenue ---------- */
+const TargetCard: React.FC<{ token?: string | null }> = ({ token }) => {
+  const [filter, setFilter] = useState("TODAY");
+  const data = useRevenueMetric("/admin/revenueStats", filter, token ?? null);
+  const BASE_TARGET = 500; // ₹ per day target
+
+  const getDynamicTarget = (filter: string): number => {
+    const today = new Date();
+
+    switch (filter) {
+      case "TODAY":
+        return BASE_TARGET;
+
+      case "THIS_WEEK":
+        return BASE_TARGET * 7;
+
+      case "THIS_MONTH": {
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        return BASE_TARGET * daysInMonth;
+      }
+
+      case "THIS_YEAR":
+        return BASE_TARGET * 365;
+
+      case "ALL": {
+        // calculate total days since a fixed start date (e.g., start of business)
+        const startDate = new Date("2025-05-01"); // change this to your actual business start date
+        const diffTime = today.getTime() - startDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        return BASE_TARGET * diffDays;
+      }
+
+      default:
+        return BASE_TARGET;
+    }
+  };
+
+  const target = getDynamicTarget(filter);
+  const currentRevenue = data?.currentRevenue ?? 0;
+  const percentage = Math.min((currentRevenue / target) * 100, 100);
+  const diffPercent = data?.percentageChange ?? 0;
+
   const radius = 90;
   const circumference = Math.PI * radius;
-  const dash = (percent / 100) * circumference;
+  const dash = (percentage / 100) * circumference;
+
+  const FILTER_OPTIONS = [
+    "TODAY",
+    "THIS_WEEK",
+    "THIS_MONTH",
+    "THIS_YEAR",
+    "ALL",
+  ] as const;
+
+  const getVsLabel = (f: string) => {
+    switch (f) {
+      case "TODAY":
+        return "Yesterday";
+      case "THIS_WEEK":
+        return "Last Week";
+      case "THIS_MONTH":
+        return "Last Month";
+      case "THIS_YEAR":
+        return "Last Year";
+      default:
+        return "All";
+    }
+  };
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-      <div className="text-sm text-gray-700 font-medium mb-2">Target</div>
+    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5 relative">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm text-gray-700 font-medium">
+          Target vs Performance
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1 rounded-full hover:bg-gray-100">
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {FILTER_OPTIONS.map((f) => (
+              <DropdownMenuItem
+                key={f}
+                onClick={() => setFilter(f)}
+                className={filter === f ? "font-semibold text-violet-600" : ""}
+              >
+                {f.replace("_", " ")}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Gauge */}
       <div className="flex items-center justify-center">
         <svg width="420" height="220" viewBox="0 0 420 220">
+          {/* Base arc */}
           <path
-            d="M30 190 A160 160 0 0 1 390 190"
+            d="M50 200 A160 160 0 0 1 370 200"
             fill="none"
             stroke="#eee"
             strokeWidth="20"
             strokeLinecap="round"
           />
-          <g transform="translate(210,190) rotate(180) translate(-210,-190)">
-            <path
-              d="M30 190 A160 160 0 0 1 390 190"
-              fill="none"
-              stroke="#6d28d9"
-              strokeWidth="20"
-              strokeLinecap="round"
-              strokeDasharray={`${dash} ${circumference}`}
-            />
-          </g>
+
+          {/* Progress arc */}
+          <path
+            d="M50 200 A160 160 0 0 1 370 200"
+            fill="none"
+            stroke="#6d28d9"
+            strokeWidth="20"
+            strokeLinecap="round"
+            strokeDasharray={Math.PI * 160}
+            strokeDashoffset={(1 - percentage / 100) * Math.PI * 160}
+            style={{
+              transition: "stroke-dashoffset 0.8s ease-out",
+            }}
+          />
+
+          {/* Main percentage text */}
           <text
             x="210"
             y="120"
             textAnchor="middle"
-            className="fill-gray-900"
+            fill="#111827"
             style={{ fontSize: 28, fontWeight: 800 }}
           >
-            {percent.toFixed(2)}%
+            {percentage.toFixed(2)}%
           </text>
+
+          {/* Comparison text */}
           <text
             x="210"
             y="145"
             textAnchor="middle"
-            className="fill-rose-600"
+            fill={diffPercent >= 0 ? "#059669" : "#dc2626"}
             style={{ fontSize: 12, fontWeight: 700 }}
           >
-            −37.72%
+            {diffPercent >= 0 ? "+" : ""}
+            {diffPercent.toFixed(2)}% vs {getVsLabel(filter)}
           </text>
         </svg>
       </div>
 
+      {/* Footer summary */}
       <div className="text-center text-xs text-gray-500 -mt-3">
-        You succeed earn AED 0.74M · Current Sales Revenue is 40%
+        {`You achieved ₹${currentRevenue.toLocaleString()} / ₹${target.toLocaleString()}`}
       </div>
 
       <div className="grid grid-cols-3 gap-3 mt-4 text-xs">
         <div className="text-center">
           <div className="text-gray-500">Target</div>
-          <div className="font-semibold">AED 1.02M</div>
+          <div className="font-semibold">₹{target.toLocaleString()}</div>
         </div>
         <div className="text-center">
           <div className="text-gray-500">Revenue</div>
-          <div className="font-semibold text-rose-600">AED 0.29M</div>
+          <div className="font-semibold text-rose-600">
+            ₹{currentRevenue.toLocaleString()}
+          </div>
         </div>
         <div className="text-center">
-          <div className="text-gray-500">Sales</div>
-          <div className="font-semibold text-emerald-600">AED 0.27M</div>
+          <div className="text-gray-500">Achieved</div>
+          <div className="font-semibold text-emerald-600">
+            {percentage.toFixed(2)}%
+          </div>
         </div>
       </div>
     </div>
@@ -473,104 +605,207 @@ const TargetCard: React.FC = () => {
 
 /* ---------- Statistic: SVG line chart with static data ---------- */
 const StatisticCard: React.FC = () => {
-  // months 12 points
-  const sales = [12, 18, 25, 24, 33, 30, 40, 28, 48, 38, 44, 47];
-  const revenue = [10, 11, 20, 16, 23, 22, 27, 26, 30, 34, 26, 31];
+  const token = localStorage.getItem("token");
+  const [year, setYear] = useState<number>(2025);
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const w = 680;
-  const h = 240;
-  const left = 40;
-  const right = 10;
-  const top = 20;
-  const bottom = 20;
+  const YEAR_OPTIONS = [2025, 2026, 2027, 2028, 2029, 2030];
 
-  const toPoints = (arr: number[]) => {
-    const maxV = 50;
-    const stepX = (w - left - right) / (arr.length - 1);
-    return arr
-      .map((v, i) => {
-        const x = left + stepX * i;
-        const y = top + (h - top - bottom) * (1 - v / maxV);
-        return `${x},${y}`;
-      })
-      .join(" ");
-  };
+  const months = [
+    "JANUARY",
+    "FEBRUARY",
+    "MARCH",
+    "APRIL",
+    "MAY",
+    "JUNE",
+    "JULY",
+    "AUGUST",
+    "SEPTEMBER",
+    "OCTOBER",
+    "NOVEMBER",
+    "DECEMBER",
+  ];
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+
+    const fetchData = async () => {
+      try {
+        const [ordersRes, canceledRes, revenueRes] = await Promise.all([
+          api.get(`/admin/bill-stats-counts?year=${year}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          api.get(`/admin/canceled-stats-orders?year=${year}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          api.get(`/admin/revenue-monthly/${year}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        const orders: OrderStat[] = Array.isArray(ordersRes.data)
+          ? ordersRes.data
+          : [];
+        const canceled: CancelStat[] = Array.isArray(canceledRes.data)
+          ? canceledRes.data
+          : [];
+        const revenue: RevenueStat[] = Array.isArray(revenueRes.data)
+          ? revenueRes.data
+          : [];
+
+        // Merge all three by month
+        const combined = months.map((m, i) => {
+          const monthIndex = i + 1;
+          const orderObj = orders.find((o: any) => o.month === monthIndex);
+          const cancelObj = canceled.find((c: any) => c.month === monthIndex);
+          const revenueObj = revenue.find(
+            (r: any) => r.monthName?.toUpperCase() === m
+          );
+
+          return {
+            month: m.slice(0, 3), // Short form for chart
+            sales: orderObj ? orderObj.billCount : 0,
+            canceled: cancelObj ? cancelObj.canceledCount : 0,
+            revenue: revenueObj ? revenueObj.totalRevenue : 0,
+          };
+        });
+
+        setData(combined);
+      } catch (error) {
+        console.error("Error fetching statistic data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [year, token]);
 
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
+      {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <div className="text-sm text-gray-700 font-medium">Statistic</div>
-        <div className="flex items-center gap-3 text-xs">
-          <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-sky-500" />{" "}
-            Sales
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />{" "}
-            Revenue
-          </span>
+        <div className="text-sm text-gray-700 font-medium">
+          Monthly Statistics
         </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1 rounded-full hover:bg-gray-100">
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {YEAR_OPTIONS.map((y) => (
+              <DropdownMenuItem
+                key={y}
+                onClick={() => setYear(y)}
+                className={year === y ? "font-semibold text-violet-600" : ""}
+              >
+                {y}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[240px]">
-        <rect x="0" y="0" width={w} height={h} fill="white" />
-        {[0, 1, 2, 3, 4].map((i) => (
-          <line
-            key={i}
-            x1={left}
-            x2={w - right}
-            y1={top + i * 44}
-            y2={top + i * 44}
-            stroke="#f1f5f9"
-          />
-        ))}
-        <line x1={left} x2={left} y1={top} y2={h - bottom} stroke="#e2e8f0" />
-        <line
-          x1={left}
-          x2={w - right}
-          y1={h - bottom}
-          y2={h - bottom}
-          stroke="#e2e8f0"
-        />
-
-        <polyline
-          fill="none"
-          stroke="#0ea5e9"
-          strokeWidth="3"
-          points={toPoints(sales)}
-        />
-        <polyline
-          fill="none"
-          stroke="#f59e0b"
-          strokeWidth="3"
-          points={toPoints(revenue)}
-        />
-
-        {[
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-        ].map((m, i) => (
-          <text
-            key={m}
-            x={left + i * ((w - left - right) / 11)}
-            y={h - 4}
-            className="fill-gray-400"
-            style={{ fontSize: 11 }}
+      {/* Chart */}
+      {loading ? (
+        <div className="flex items-center justify-center h-56 text-gray-400">
+          Loading chart...
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={280}>
+          <LineChart
+            data={data}
+            margin={{ top: 10, right: 40, left: 10, bottom: 10 }}
           >
-            {m}
-          </text>
-        ))}
-      </svg>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+
+            {/* Left axis for Sales and Canceled Orders */}
+            <YAxis
+              yAxisId="left"
+              domain={[
+                (dataMin: number) =>
+                  dataMin > 5 ? Math.floor(dataMin - 5) : 5,
+                (dataMax: number) => {
+                  if (dataMax <= 100) return 100;
+                  if (dataMax <= 250) return 250;
+                  if (dataMax <= 500) return 500;
+                  if (dataMax <= 1000) return 1000;
+                  if (dataMax <= 2500) return 2500;
+                  return dataMax + 500;
+                },
+              ]}
+              tickCount={7}
+              tickFormatter={(value) => value.toLocaleString()}
+              label={{
+                value: "Sales, Canceled Orders",
+                angle: -90,
+                position: "insideLeft",
+                style: { textAnchor: "middle", fontSize: 11 },
+              }}
+            />
+
+            {/* Right axis for Revenue */}
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+              label={{
+                value: "Revenue",
+                angle: 90,
+                position: "insideRight",
+                style: { textAnchor: "middle", fontSize: 11 },
+              }}
+            />
+
+            <Tooltip
+              contentStyle={{
+                fontSize: "12px",
+                borderRadius: "8px",
+              }}
+            />
+            <Legend />
+
+            {/* Sales */}
+            <Line
+              yAxisId="left"
+              type="monotone"
+              dataKey="sales"
+              stroke="#0ea5e9"
+              strokeWidth={2.5}
+              dot={{ r: 3 }}
+              name="Sales"
+            />
+
+            {/* Canceled Orders */}
+            <Line
+              yAxisId="left"
+              type="monotone"
+              dataKey="canceled"
+              stroke="#ef4444"
+              strokeWidth={2.5}
+              dot={{ r: 3 }}
+              name="Canceled Orders"
+            />
+
+            {/* Revenue */}
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="revenue"
+              stroke="#f59e0b"
+              strokeWidth={2.5}
+              dot={{ r: 3 }}
+              name="Revenue"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 };
@@ -606,7 +841,7 @@ const DueAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
       </div>
 
       <div className="text-xs text-gray-500 mt-2">
-        Total outstanding amount from all customers
+        Total outstanding due amount from all customers
       </div>
     </div>
   );
@@ -756,7 +991,8 @@ const Dashboard: React.FC = () => {
 
       {/* Charts row */}
       <div className="grid gap-5 xl:grid-cols-3">
-        <TargetCard />
+        <TargetCard token={token} />
+
         <div className="xl:col-span-2">
           <StatisticCard />
         </div>

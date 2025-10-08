@@ -942,53 +942,78 @@ const ShowroomMetalStock: React.FC = () => {
             Worker Stock
           </Typography>
 
-          <Table size="medium">
-            <TableHead>
+          <Table
+            size="medium"
+            className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden"
+          >
+            <TableHead className="bg-gray-200">
               <TableRow>
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Worker Name
+                  <div className="flex justify-center items-center">
+                    Worker Name
+                  </div>
                 </TableCell>
+
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Metal
+                  <div className="flex justify-center items-center">Metal</div>
                 </TableCell>
+
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Weight Assigned
+                  <div className="flex justify-center items-center">
+                    Weight Assigned
+                  </div>
                 </TableCell>
+
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Date
+                  <div className="flex justify-center items-center">Date</div>
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {visibleWorkerResults.map((p: any, idx: number) => (
                 <TableRow key={idx}>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>
-                    {p.workerName}
-                  </TableCell>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>
-                    {p.metalType}
-                  </TableCell>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>
-                    {p.weightAssigned}
-                  </TableCell>
                   <TableCell
-                    sx={{
-                      fontSize: "0.95rem",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                    }}
-                    title="Click to filter to this day"
-                    onClick={() => drillToExactDate(p.date)}
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
                   >
-                    {p.date}
+                    <div className="flex justify-center items-center">
+                      {p.workerName}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {p.metalType}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {p.weightAssigned}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {p.date}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -1030,43 +1055,59 @@ const ShowroomMetalStock: React.FC = () => {
             Showroom History
           </Typography>
 
-          <Table size="medium">
-            <TableHead>
+          <Table
+            size="medium"
+            className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden"
+          >
+            <TableHead className="bg-gray-200">
               <TableRow>
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Metal
+                  <div className="flex justify-center items-center">Metal</div>
                 </TableCell>
+
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Weight
+                  <div className="flex justify-center items-center">Weight</div>
                 </TableCell>
+
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Date
+                  <div className="flex justify-center items-center">Date</div>
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {visibleHistoryResults.map((r) => (
                 <TableRow key={r.metalStockHisId}>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>{r.metal}</TableCell>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>
-                    {r.metalWeight}
-                  </TableCell>
                   <TableCell
-                    sx={{
-                      fontSize: "0.95rem",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                    }}
-                    title="Click to filter to this day"
-                    onClick={() => drillToExactDate(r.date)}
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
                   >
-                    {r.date}
+                    <div className="flex justify-center items-center">
+                      {r.metal}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.metalWeight}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.date}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -1108,61 +1149,91 @@ const ShowroomMetalStock: React.FC = () => {
             Selling Data
           </Typography>
 
-          <Table size="medium">
-            <TableHead>
+          <Table
+            size="medium"
+            className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden"
+          >
+            <TableHead className="bg-gray-200">
               <TableRow>
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Metal
+                  <div className="flex justify-center items-center">Metal</div>
                 </TableCell>
+
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Weight
+                  <div className="flex justify-center items-center">Weight</div>
                 </TableCell>
+
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Amount
+                  <div className="flex justify-center items-center">Amount</div>
                 </TableCell>
+
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Payment Method
+                  <div className="flex justify-center items-center">
+                    Payment Type
+                  </div>
                 </TableCell>
+
                 <TableCell
-                  sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  Date
+                  <div className="flex justify-center items-center">Date</div>
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {visibleSellingResult.map((r) => (
                 <TableRow key={r.metalSellingId}>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>
-                    {r.sellingMetal}
-                  </TableCell>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>
-                    {r.sellingMetalWeight}
-                  </TableCell>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>
-                    {r.sellingMetalAmount}
-                  </TableCell>
-                  <TableCell sx={{ fontSize: "0.95rem" }}>
-                    {r.sellingPaymentMethod}
-                  </TableCell>
                   <TableCell
-                    sx={{
-                      fontSize: "0.95rem",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                    }}
-                    title="Click to filter to this day"
-                    onClick={() => drillToExactDate(r.date)}
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
                   >
-                    {r.date}
+                    <div className="flex justify-center items-center">
+                      {r.sellingMetal}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.sellingMetalWeight}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.sellingMetalAmount}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.sellingPaymentMethod}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.date}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -1216,77 +1287,130 @@ const ShowroomMetalStock: React.FC = () => {
           Old Return Data
         </Typography>
 
-        <Table size="medium">
-          <TableHead>
+        <Table
+          size="medium"
+          className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden"
+        >
+          <TableHead className="bg-gray-200">
             <TableRow>
               <TableCell
-                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
               >
-                Metal
+                <div className="flex justify-center items-center">Metal</div>
               </TableCell>
+
               <TableCell
-                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
               >
-                Item Name
+                <div className="flex justify-center items-center">
+                  {" "}
+                  Item Name
+                </div>
               </TableCell>
+
               <TableCell
-                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
               >
-                Gross Weight
+                <div className="flex justify-center items-center">
+                  Gross Weight
+                </div>
               </TableCell>
+
               <TableCell
-                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
               >
-                Purity Weight
+                <div className="flex justify-center items-center">
+                  {" "}
+                  Purity Weight
+                </div>
               </TableCell>
+
               <TableCell
-                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
               >
-                Amount
+                <div className="flex justify-center items-center">Amount</div>
               </TableCell>
+
               <TableCell
-                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
               >
-                Payment Method
+                <div className="flex justify-center items-center">
+                  {" "}
+                  Payment Method
+                </div>
               </TableCell>
+
               <TableCell
-                sx={{ color: "#8847FF", fontWeight: 600, fontSize: "1rem" }}
+                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
               >
-                Date
+                <div className="flex justify-center items-center"> Date</div>
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {visibleOldReturnData.map((r) => (
               <TableRow key={r.oldMetalReturnId}>
-                <TableCell sx={{ fontSize: "0.95rem" }}>
-                  {r.onlyExchangeMetal}
-                </TableCell>
-                <TableCell sx={{ fontSize: "0.95rem" }}>
-                  {r.onlyExchange_metal_name}
-                </TableCell>
-                <TableCell sx={{ fontSize: "0.95rem" }}>
-                  {r.onlyExchange_metal_weight}
-                </TableCell>
-                <TableCell sx={{ fontSize: "0.95rem" }}>
-                  {r.onlyExchange_metal_purity_weight}
-                </TableCell>
-                <TableCell sx={{ fontSize: "0.95rem" }}>
-                  {r.onlyExchange_item_amount}
-                </TableCell>
-                <TableCell sx={{ fontSize: "0.95rem" }}>
-                  {r.onlyExchange_paymentMethod}
-                </TableCell>
                 <TableCell
-                  sx={{
-                    fontSize: "0.95rem",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                  }}
-                  title="Click to filter to this day"
-                  onClick={() => drillToExactDate(r.date)}
+                  className="border px-3 py-2 text-center"
+                  sx={{ fontSize: "0.95rem" }}
                 >
-                  {r.date}
+                  <div className="flex justify-center items-center">
+                    {r.onlyExchangeMetal}
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  className="border px-3 py-2 text-center"
+                  sx={{ fontSize: "0.95rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    {r.onlyExchange_metal_name}
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  className="border px-3 py-2 text-center"
+                  sx={{ fontSize: "0.95rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    {r.onlyExchange_metal_weight}
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  className="border px-3 py-2 text-center"
+                  sx={{ fontSize: "0.95rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    {r.onlyExchange_metal_purity_weight}
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  className="border px-3 py-2 text-center"
+                  sx={{ fontSize: "0.95rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    {r.onlyExchange_item_amount}
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  className="border px-3 py-2 text-center"
+                  sx={{ fontSize: "0.95rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    {r.onlyExchange_paymentMethod}
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  className="border px-3 py-2 text-center"
+                  sx={{ fontSize: "0.95rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    {r.date}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

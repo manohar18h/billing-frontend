@@ -33,7 +33,7 @@ export interface Order {
   paidAmount: number;
   dueAmount: number;
   receivedAmount: number | null;
-  delivery_status: string;
+  deliveryStatus: string;
   workerPay?: WorkerPay | null;
   transactions: Transaction[];
   oldItems?: OldItem[];
