@@ -9,7 +9,6 @@ const GenerateBill: React.FC = () => {
   const token = localStorage.getItem("token");
   const billNumber =
     location.state?.billNumber || localStorage.getItem("billNumber");
-  const checkEditBill = localStorage.getItem("checkEditBill");
 
   // Transaction model
   interface Transaction {
@@ -47,8 +46,8 @@ const GenerateBill: React.FC = () => {
     making_charges: number;
     stone_weight: number;
     stone_amount: number;
-    wax_weight: number | null;
-    wax_amount: number | null;
+    wax_weight: number;
+    wax_amount: number;
     diamond_weight: number;
     diamond_amount: number;
     bits_weight: number;
@@ -106,6 +105,7 @@ const GenerateBill: React.FC = () => {
 
   const dynamicWeightKeys = [
     "stone",
+    "wax",
     "diamond",
     "bits",
     "enamel",
@@ -117,10 +117,12 @@ const GenerateBill: React.FC = () => {
     if (selectedOrders.length === 0) return;
 
     const fetchBillSummary = async () => {
-      try {
-        console.log("checkEditBill : ", checkEditBill);
+      const checkEdit = localStorage.getItem("checkEditBill");
 
-        if (checkEditBill === "YesEdit") {
+      try {
+        console.log("checkEditBill : ", checkEdit);
+
+        if (checkEdit === "YesEdit") {
           console.log("Updating existing bill with billNumber:", billNumber);
 
           const res = await api.put<Bill>(
@@ -135,7 +137,7 @@ const GenerateBill: React.FC = () => {
           );
 
           setBill(res.data);
-        } else {
+        } else if (checkEdit === "NoEdit") {
           console.log("Creating new bill...");
 
           const response = await api.post<Bill>(
@@ -165,13 +167,24 @@ const GenerateBill: React.FC = () => {
   const activeWeightKeys = React.useMemo(() => {
     if (!bill || !bill.selectedOrders) return [];
 
-    return dynamicWeightKeys.filter((key) =>
-      bill.selectedOrders.some(
+    // Custom logic for each key
+    return dynamicWeightKeys.filter((key) => {
+      // if this is "other", we handle it specially
+      if (key === "other") {
+        // show column only if either weight > 0 or amount > 0
+        return bill.selectedOrders.some(
+          (item) =>
+            (item[`${key}_weight`] as number) > 0 ||
+            (item[`${key}_amount`] as number) > 0
+        );
+      }
+      // normal logic for others
+      return bill.selectedOrders.some(
         (item) =>
           (item[`${key}_weight`] as number) > 0 ||
           (item[`${key}_amount`] as number) > 0
-      )
-    );
+      );
+    });
   }, [bill]);
 
   const nonZeroColCount = activeWeightKeys.length * 2;
@@ -301,11 +314,22 @@ const GenerateBill: React.FC = () => {
                 <th className="border px-2 py-1">Item Weight</th>
                 {activeWeightKeys.map((key) => (
                   <React.Fragment key={key}>
-                    <th className="border px-2 py-1">
-                      {key.charAt(0).toUpperCase() + key.slice(1)} Weight
-                    </th>
-                    <th className="border px-2 py-1">
-                      {key.charAt(0).toUpperCase() + key.slice(1)} Amount
+                    {!(key === "other") && (
+                      <th className="border px-2 py-1 capitalize">
+                        {key} Weight
+                      </th>
+                    )}
+                    {key === "other" &&
+                      bill.selectedOrders.some(
+                        (item) => item.other_weight && item.other_weight > 0
+                      ) && (
+                        <th className="border px-2 py-1 capitalize">
+                          {key} Weight
+                        </th>
+                      )}
+
+                    <th className="border px-2 py-1 capitalize">
+                      {key} Amount
                     </th>
                   </React.Fragment>
                 ))}
@@ -326,16 +350,16 @@ const GenerateBill: React.FC = () => {
                   }}
                 >
                   {" "}
-                  <td className="border px-2 py-1 text-[#DC2626] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#caaffa] font-bold text-center align-middle">
                     {item.itemName}
                   </td>
-                  <td className="border px-2 py-1 text-[#9CA3AF] font-bold text-center align-middle">
+                  <td className="border px-2 py-1  text-[#EC4899] font-bold text-center align-middle">
                     {item.metal}
                   </td>
                   <td className="border px-2 py-1 text-[#008080] font-bold text-center align-middle">
                     {item.metalPrice}
                   </td>
-                  <td className="border px-2 py-1 text-[#EC4899] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#9CA3AF] font-bold text-center align-middle">
                     {item.gross_weight}
                   </td>
                   <td className="border px-2 py-1 text-[#7C3AED] font-bold text-center align-middle">
@@ -343,18 +367,31 @@ const GenerateBill: React.FC = () => {
                   </td>
                   {activeWeightKeys.map((key) => (
                     <React.Fragment key={key}>
-                      <td className="border px-2 py-1 text-[#F9A8D4] font-bold text-center align-middle">
-                        {getNumericField(
-                          item,
-                          `${key}_weight` as keyof Order
-                        ) ?? "-"}
-                      </td>
-                      <td className="border px-2 py-1 text-[#FACC15] font-bold text-center align-middle">
-                        {getNumericField(
-                          item,
-                          `${key}_amount` as keyof Order
-                        ) ?? "-"}
-                      </td>
+                      {/* ✅ Skip showing weight cell if key === "other" and its value is 0 or null */}
+                      {!(
+                        key === "other" &&
+                        (!item.other_weight || item.other_weight === 0)
+                      ) && (
+                        <td className="border px-2 py-1 text-[#F9A8D4] font-bold text-center align-middle">
+                          {getNumericField(
+                            item,
+                            `${key}_weight` as keyof Order
+                          ) ?? "-"}
+                        </td>
+                      )}
+
+                      {/* ✅ Skip showing amount cell if both weight and amount are 0 or null */}
+                      {!(
+                        key === "other" &&
+                        (!item.other_amount || item.other_amount === 0)
+                      ) && (
+                        <td className="border px-2 py-1 text-[#FACC15] font-bold text-center align-middle">
+                          {getNumericField(
+                            item,
+                            `${key}_amount` as keyof Order
+                          ) ?? "-"}
+                        </td>
+                      )}
                     </React.Fragment>
                   ))}
                   <td className="border px-2 py-1 text-[#10B981] font-bold text-center align-middle">
@@ -382,18 +419,19 @@ const GenerateBill: React.FC = () => {
                                   : ""
                               }`}
                             >
-                              <span className="text-[#22C55E] font-bold text-center align-middle">
-                                {" "}
-                                ₹{tx.paidAmount}{" "}
-                              </span>{" "}
                               <span className="text-[#E5E7EB] font-bold text-center align-middle">
                                 {" "}
                                 {new Date(
                                   tx.paymentDate
                                 ).toLocaleDateString()}{" "}
-                              </span>
-                              <span className="text-[#A855F7] font-bold text-center align-middle">
-                                {shortMethod}
+                              </span>{" "}
+                              <span className="font-bold text-center align-middle">
+                                <span className="text-[#22C55E]">
+                                  ₹{tx.paidAmount}
+                                </span>{" "}
+                                <span className="text-[#A855F7]">
+                                  {shortMethod}
+                                </span>
                               </span>
                             </div>
                           );
@@ -410,16 +448,16 @@ const GenerateBill: React.FC = () => {
                 (item: Order) =>
                   item.oldItems?.map((ex: OldItem, index: number) => (
                     <tr key={`ex-${index}`} className="border bg-gray-100">
-                      <td className="border px-2 py-1  text-[#DC2626]">
+                      <td className="border px-2 py-1  text-[#caaffa] ">
                         {ex.exchange_metal_name + "  ( Ex )"}
                       </td>
-                      <td className="border px-2 py-1 text-[#9CA3AF] ">
+                      <td className="border px-2 py-1  text-[#EC4899] ">
                         {ex.exchange_metal}
                       </td>
                       <td className="border px-2 py-1 text-[#008080]">
                         {ex.exchange_metal_price}
                       </td>
-                      <td className="border px-2 py-1 text-[#EC4899]">
+                      <td className="border px-2 py-1  text-[#9CA3AF]">
                         {ex.exchange_metal_weight}
                       </td>
 

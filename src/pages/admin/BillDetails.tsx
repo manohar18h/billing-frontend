@@ -82,13 +82,14 @@ const BillDetails: React.FC = () => {
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [, setEditingOrderId] = useState<number | null>(null);
   const [payMethod, setPayMethod] = useState("");
-  const [editBill, setEditBill] = useState("");
 
   const token = localStorage.getItem("token");
   const billNumber = localStorage.getItem("billNumber");
   console.log("billNumber   ::        " + billNumber);
 
   const fetchCustomerDetails = async () => {
+    localStorage.removeItem("checkEditBill");
+
     try {
       const res = await api.get(`/admin/getDataByBillNumber/${billNumber}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -147,7 +148,6 @@ const BillDetails: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.removeItem("checkEditBill");
     navigate(location.pathname, { replace: true });
     const shouldPush = !sessionStorage.getItem("preventPushBack");
     if (shouldPush) {
@@ -310,14 +310,15 @@ const BillDetails: React.FC = () => {
                   );
                   sessionStorage.setItem("billingFrom", "BillDetails");
                   console.log("Ids :" + orders.map((order) => order.orderId));
-                  setEditBill("YesEdit");
-                  localStorage.setItem("checkEditBill", editBill);
+
+                  localStorage.setItem("checkEditBill", "YesEdit");
 
                   navigate("/admin/generate-bill", {
                     replace: true,
                     state: {
                       selectedOrders: orders.map((order) => order.orderId),
                       billingFrom: "BillDetails",
+                      billNumber: billNumber,
                     },
                   });
                 }}

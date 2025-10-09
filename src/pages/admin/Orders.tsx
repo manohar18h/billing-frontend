@@ -115,6 +115,8 @@ const Orders: React.FC = () => {
   };
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isBillEditing, setIsBillEditing] = useState(false);
+
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [editingExchangeId, setEditingExchangeId] = useState<number | null>(
     null
@@ -207,6 +209,7 @@ const Orders: React.FC = () => {
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
 
   useEffect(() => {
+    localStorage.removeItem("checkEditBill");
     api
       .get<AppWorker[]>(`/admin/getAllWorkers`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -580,6 +583,58 @@ const Orders: React.FC = () => {
     }
   };
 
+  const handleBillGenerate = () => {
+    // Clear any old data
+    sessionStorage.removeItem("billingFrom");
+    sessionStorage.removeItem("ordersState");
+    localStorage.removeItem("checkEditBill");
+
+    // Save new data
+    sessionStorage.setItem(
+      "ordersState",
+      JSON.stringify({ ordersList, exchangeList, customerId })
+    );
+
+    // Mark this as a NEW bill (not editing)
+    localStorage.setItem("checkEditBill", "NoEdit");
+
+    // Navigate to generate bill
+    navigate("/admin/generate-bill", {
+      state: {
+        fromBillDetails: location.state?.fromBillDetails || false,
+        selectedOrders: ordersList.map((order) => order.orderId),
+        billNumber:
+          location.state?.billNumber || localStorage.getItem("billNumber"),
+      },
+    });
+  };
+
+  const handleUpdateBillGenerate = () => {
+    // Clear any old data
+    sessionStorage.removeItem("billingFrom");
+    sessionStorage.removeItem("ordersState");
+    localStorage.removeItem("checkEditBill");
+    // Save updated order data
+    sessionStorage.setItem(
+      "ordersState",
+      JSON.stringify({ ordersList, exchangeList, customerId })
+    );
+
+    console.log("checkWhere im ", " handleUpdateBillGenerate ");
+    // ✅ Mark as Edit Bill
+    localStorage.setItem("checkEditBill", "YesEdit");
+
+    // Navigate to generate bill (update mode)
+    navigate("/admin/generate-bill", {
+      state: {
+        fromBillDetails: location.state?.fromBillDetails || false,
+        selectedOrders: ordersList.map((order) => order.orderId),
+        billNumber:
+          location.state?.billNumber || localStorage.getItem("billNumber"),
+      },
+    });
+  };
+
   const handleUpdateExchange = async () => {
     if (!editingExchangeId) return;
 
@@ -644,6 +699,7 @@ const Orders: React.FC = () => {
 
       setShowExchangeForm(false);
       setIsEditing(false);
+      setIsBillEditing(true);
       setEditingExchangeId(null);
 
       alert("Exchange Data updated successfully");
@@ -684,8 +740,12 @@ const Orders: React.FC = () => {
 
       handleClearOrder();
       setIsEditing(false);
+      setIsBillEditing(true);
+
       setEditingOrderId(null);
-      alert("Order updated successfully");
+      alert(
+        "Order updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill"
+      );
     } catch (error: any) {
       if (error.response?.data) {
         setOrderErrors(error.response.data);
@@ -1497,7 +1557,8 @@ const Orders: React.FC = () => {
                               gross_weight: ord.gross_weight || 0,
                               stockBox: ord.stockBox || 0,
                               discount: ord.discount || 0,
-                              deliveryStatus: ord.deliveryStatus || "",
+                              deliveryStatus:
+                                ord.deliveryStatus || ord.delivery_status || "",
                               total_item_amount:
                                 calculateTotals(ord).total_item_amount,
                             });
@@ -1849,28 +1910,45 @@ const Orders: React.FC = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => {
-            sessionStorage.removeItem("billingFrom");
-            sessionStorage.removeItem("ordersState");
-
-            sessionStorage.setItem(
-              "ordersState",
-              JSON.stringify({ ordersList, exchangeList, customerId })
-            );
-            navigate("/admin/generate-bill", {
-              state: {
-                fromBillDetails: location.state?.fromBillDetails || false,
-                selectedOrders: ordersList.map((order) => order.orderId),
-                billNumber:
-                  location.state?.billNumber ||
-                  localStorage.getItem("billNumber"),
-              },
-            });
+          onClick={
+            isBillEditing ? handleUpdateBillGenerate : handleBillGenerate
+          }
+          sx={{
+            position: "relative",
+            overflow: "hidden",
+            color: "#fff",
+            background: isBillEditing
+              ? "linear-gradient(90deg, #00e676, #1b5e20, #00e676)"
+              : undefined,
+            backgroundSize: isBillEditing ? "200% 100%" : undefined,
+            animation: isBillEditing
+              ? "waveBright 2.5s linear infinite"
+              : undefined,
+            fontWeight: "bold",
+            textTransform: "none",
+            borderRadius: "8px",
+            boxShadow: isBillEditing
+              ? "0 0 15px rgba(0, 230, 118, 0.8)"
+              : undefined,
           }}
         >
-          Bill Generate
+          {isBillEditing ? "Update Bill Generate" : "Bill Generate"}
         </Button>
+
+        <style>
+          {`
+      @keyframes waveBright {
+        0% {
+          background-position: 0% 50%;
+        }
+        100% {
+          background-position: 200% 50%;
+        }
+      }
+    `}
+        </style>
       </Box>
+
       <Dialog open={payDialogOpen} onClose={() => setPayDialogOpen(false)}>
         <DialogTitle>Enter Payment Amount</DialogTitle>
         <DialogContent>
@@ -1965,6 +2043,13 @@ const Orders: React.FC = () => {
                 });
 
                 setOrdersList(updatedOrders);
+                const checkPayEdit = localStorage.getItem(
+                  "editBillFromBillDetails"
+                );
+
+                if (checkPayEdit === "editBill") {
+                  setIsBillEditing(true);
+                }
                 sessionStorage.setItem(
                   "ordersState",
                   JSON.stringify({
