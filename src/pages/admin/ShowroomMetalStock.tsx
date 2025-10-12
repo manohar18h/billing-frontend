@@ -44,8 +44,9 @@ interface SellingMetal {
   metalSellingId: number;
   sellingMetal: string;
   sellingMetalWeight: string;
-  sellingPaymentMethod: string;
-  sellingMetalAmount: string;
+  sellingMetalTotalAmount: string;
+  sellingMetalPhnPayAmount: string;
+  sellingMetalCashAmount: string;
   date: string;
 }
 
@@ -55,8 +56,9 @@ interface OldReturnMetals {
   onlyExchange_metal_name: string;
   onlyExchange_metal_weight: string;
   onlyExchange_metal_purity_weight: string;
-  onlyExchange_paymentMethod: string;
-  onlyExchange_item_amount: string;
+  onlyExchange_total_amount: string;
+  onlyExchange_item_cash_amount: string;
+  onlyExchange_item_phnpay_amount: string;
   date: string;
 }
 
@@ -141,17 +143,19 @@ const ShowroomMetalStock: React.FC = () => {
   // Selling form
   const [sellMetal, setSellMetal] = useState<string>("");
   const [sellWeight, setSellWeight] = useState<string>("");
-  const [sellPayMethod, setSellPayMethod] = useState<string>("");
-  const [sellAmount, setSellAmount] = useState<string>("");
+  const [sellTotalAmount, setsellTotalAmount] = useState<string>("");
+  const [sellCashAmount, setSellCashAmount] = useState<string>("");
+  const [sellPhnPayAmount, setSellPhnPayAmount] = useState<string>("");
 
   // Old Return form
   const [returnMetal, setReturnMetal] = useState<string>("");
   const [returnMetalName, setReturnMetalName] = useState<string>("");
   const [returnWeight, setReturnWeight] = useState<string>("");
   const [returnPurityWeight, setreturnPurityWeight] = useState<string>("");
-  const [returnPayMethod, setReturnPayMethod] = useState<string>("");
+  const [returnTotalAmount, setReturnTotalAmount] = useState<string>("");
 
-  const [returnAmount, setReturnAmount] = useState<string>("");
+  const [returnCashAmount, setReturnCashAmount] = useState<string>("");
+  const [returnPhnPayAmount, setReturnPhnPayAmount] = useState<string>("");
 
   // Results
   const [workerResults, setWorkerResults] = useState<WorkerStock[]>([]);
@@ -248,15 +252,25 @@ const ShowroomMetalStock: React.FC = () => {
 
   // Add Submit
   const handleSellingSubmit = async () => {
-    if (!sellMetal || !sellWeight || !sellAmount) {
+    if (!sellMetal || !sellWeight || !sellTotalAmount) {
       alert("Please select metal and enter weight and amount");
       return;
     }
 
     try {
       const token = localStorage.getItem("token");
+
+      // Convert empty or null to 0.0 before sending
+      const phnPay = sellPhnPayAmount ? parseFloat(sellPhnPayAmount) : 0.0;
+      const cashPay = sellCashAmount ? parseFloat(sellCashAmount) : 0.0;
+      const totalAmount = sellTotalAmount ? parseFloat(sellTotalAmount) : 0.0;
+
+      console.log("Phn Pay amount:", phnPay);
+      console.log("Cash amount:", cashPay);
+      console.log("Total amount:", totalAmount);
+
       await api.post(
-        `/admin/sellingMetal?sellingMetal=${sellMetal}&sellingMetalWeight=${sellWeight}&sellingPaymentMethod=${sellPayMethod}&sellingMetalAmount=${sellAmount}`,
+        `/admin/sellingMetal?sellingMetal=${sellMetal}&sellingMetalWeight=${sellWeight}&sellingMetalTotalAmount=${totalAmount}&sellingMetalPhnPayAmount=${cashPay}&sellingMetalCashAmount=${phnPay}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -268,8 +282,9 @@ const ShowroomMetalStock: React.FC = () => {
 
       setSellMetal("");
       setSellWeight("");
-      setSellPayMethod("");
-      setSellAmount("");
+      setsellTotalAmount("");
+      setSellCashAmount("");
+      setSellPhnPayAmount("");
     } catch (error) {
       console.error("Error adding stock:", error);
       alert("Failed to add stock");
@@ -278,15 +293,50 @@ const ShowroomMetalStock: React.FC = () => {
 
   // Add Submit
   const handleOldReturnSubmit = async () => {
-    if (!returnMetal || !returnWeight || !returnAmount || !returnMetalName) {
+    if (
+      !returnMetal ||
+      !returnWeight ||
+      !returnTotalAmount ||
+      !returnMetalName
+    ) {
       alert("Please select metal and enter weight");
       return;
     }
 
     try {
       const token = localStorage.getItem("token");
+
+      // Convert empty or null to 0.0 before sending
+      const returnPhnPay = returnPhnPayAmount
+        ? parseFloat(returnPhnPayAmount)
+        : 0.0;
+      const returnCashPay = returnCashAmount
+        ? parseFloat(returnCashAmount)
+        : 0.0;
+      const returnTotalAmt = returnTotalAmount
+        ? parseFloat(returnTotalAmount)
+        : 0.0;
+
+      console.log("Phn Pay amount:", returnPhnPay);
+      console.log("Cash amount:", returnCashPay);
+      console.log("Total amount:", returnTotalAmt);
+
+      const fullUrl =
+        `/admin/oldReturnMetal?` +
+        `onlyExchange_metal=${encodeURIComponent(returnMetal)}&` +
+        `onlyExchange_metal_name=${encodeURIComponent(returnMetalName)}&` +
+        `onlyExchange_metal_weight=${encodeURIComponent(returnWeight)}&` +
+        `onlyExchange_metal_purity_weight=${encodeURIComponent(
+          returnPurityWeight
+        )}&` +
+        `onlyExchange_total_amount=${encodeURIComponent(returnTotalAmt)}&` +
+        `onlyExchange_item_cash_amount=${encodeURIComponent(returnCashPay)}&` +
+        `onlyExchange_item_phnpay_amount=${encodeURIComponent(returnPhnPay)}`;
+
+      // ✅ Print full URL to console
+      console.log("📡 Full request URL:", fullUrl);
       await api.post(
-        `/admin/oldReturnMetal?onlyExchange_metal=${returnMetal}&onlyExchange_metal_name=${returnMetalName}&onlyExchange_metal_weight=${returnWeight}&onlyExchange_metal_purity_weight=${returnPurityWeight}&onlyExchange_paymentMethod=${returnPayMethod}&onlyExchange_item_amount=${returnAmount}`,
+        fullUrl,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -300,8 +350,9 @@ const ShowroomMetalStock: React.FC = () => {
       setReturnWeight("");
       setReturnMetalName("");
       setreturnPurityWeight("");
-      setReturnPayMethod("");
-      setReturnAmount("");
+      setReturnTotalAmount("");
+      setReturnCashAmount("");
+      setReturnPhnPayAmount("");
     } catch (error) {
       console.error("Error adding stock:", error);
       alert("Failed to add stock");
@@ -648,44 +699,33 @@ const ShowroomMetalStock: React.FC = () => {
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
-              select
-              label="Payment Method"
-              value={sellPayMethod}
-              onChange={(e) => setSellPayMethod(e.target.value)}
               fullWidth
-              InputLabelProps={{ shrink: true }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (val: unknown): React.ReactNode =>
-                  val ? (
-                    <>{val as string}</>
-                  ) : (
-                    <span style={{ color: "#9aa0a6" }}>
-                      Select Payment Method
-                    </span>
-                  ),
-                MenuProps: {
-                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>Select Method</em>
-              </MenuItem>
-              <MenuItem value="Phone Pay"> Phone Pay </MenuItem>
-              <MenuItem value="Cash">Cash</MenuItem>
-            </TextField>
+              type="number"
+              label="Total Amount"
+              value={sellTotalAmount}
+              onChange={(e) => setsellTotalAmount(e.target.value)}
+              required
+            />
           </Grid>
 
+          {/*Cash Amount */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Cash Amount"
+              value={sellCashAmount}
+              onChange={(e) => setSellCashAmount(e.target.value)}
+            />
+          </Grid>
           {/* Amount */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
-              label="Amount"
-              value={sellAmount}
-              onChange={(e) => setSellAmount(e.target.value)}
-              required
+              label="Phn Pay Amount"
+              value={sellPhnPayAmount}
+              onChange={(e) => setSellPhnPayAmount(e.target.value)}
             />
           </Grid>
         </Grid>
@@ -745,6 +785,10 @@ const ShowroomMetalStock: React.FC = () => {
               </MenuItem>
               <MenuItem value="Gold">Gold</MenuItem>
               <MenuItem value="Silver">Silver</MenuItem>
+              <MenuItem value="24 gold">24 gold</MenuItem>
+              <MenuItem value="22 gold">22 gold</MenuItem>
+              <MenuItem value="999 silver">999 silver</MenuItem>
+              <MenuItem value="995 silver">995 silver</MenuItem>
             </TextField>
           </Grid>
 
@@ -783,43 +827,33 @@ const ShowroomMetalStock: React.FC = () => {
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
-              select
-              label="Payment Method"
-              value={returnPayMethod}
-              onChange={(e) => setReturnPayMethod(e.target.value)}
               fullWidth
-              InputLabelProps={{ shrink: true }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (val: unknown): React.ReactNode =>
-                  val ? (
-                    <>{val as string}</>
-                  ) : (
-                    <span style={{ color: "#9aa0a6" }}>
-                      Select Payment Method
-                    </span>
-                  ),
-                MenuProps: {
-                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>Select Method</em>
-              </MenuItem>
-              <MenuItem value="Phone Pay"> Phone Pay </MenuItem>
-              <MenuItem value="Cash">Cash</MenuItem>
-            </TextField>
+              type="number"
+              label="Total Amount"
+              value={returnTotalAmount}
+              onChange={(e) => setReturnTotalAmount(e.target.value)}
+            />
           </Grid>
 
-          {/* Amount */}
+          {/*Cash Amount */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               type="number"
-              label="Amount"
-              value={returnAmount}
-              onChange={(e) => setReturnAmount(e.target.value)}
+              label="Cash Amount"
+              value={returnCashAmount}
+              onChange={(e) => setReturnCashAmount(e.target.value)}
+              required
+            />
+          </Grid>
+          {/* Online Amount */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Phn Pay Amount"
+              value={returnPhnPayAmount}
+              onChange={(e) => setReturnPhnPayAmount(e.target.value)}
               required
             />
           </Grid>
@@ -1170,17 +1204,26 @@ const ShowroomMetalStock: React.FC = () => {
                 <TableCell
                   sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  <div className="flex justify-center items-center">Amount</div>
+                  <div className="flex justify-center items-center">
+                    Total Amount
+                  </div>
                 </TableCell>
 
                 <TableCell
                   sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
                   <div className="flex justify-center items-center">
-                    Payment Type
+                    Cash Amount
                   </div>
                 </TableCell>
 
+                <TableCell
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    Online Amount
+                  </div>
+                </TableCell>
                 <TableCell
                   sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
@@ -1214,7 +1257,7 @@ const ShowroomMetalStock: React.FC = () => {
                     sx={{ fontSize: "0.95rem" }}
                   >
                     <div className="flex justify-center items-center">
-                      {r.sellingMetalAmount}
+                      {r.sellingMetalTotalAmount}
                     </div>
                   </TableCell>
 
@@ -1223,7 +1266,16 @@ const ShowroomMetalStock: React.FC = () => {
                     sx={{ fontSize: "0.95rem" }}
                   >
                     <div className="flex justify-center items-center">
-                      {r.sellingPaymentMethod}
+                      {r.sellingMetalCashAmount}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.sellingMetalPhnPayAmount}
                     </div>
                   </TableCell>
 
@@ -1328,7 +1380,9 @@ const ShowroomMetalStock: React.FC = () => {
               <TableCell
                 sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
               >
-                <div className="flex justify-center items-center">Amount</div>
+                <div className="flex justify-center items-center">
+                  Total Amount
+                </div>
               </TableCell>
 
               <TableCell
@@ -1336,7 +1390,16 @@ const ShowroomMetalStock: React.FC = () => {
               >
                 <div className="flex justify-center items-center">
                   {" "}
-                  Payment Method
+                  Cash Amount
+                </div>
+              </TableCell>
+
+              <TableCell
+                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+              >
+                <div className="flex justify-center items-center">
+                  {" "}
+                  Phn Pay Amount
                 </div>
               </TableCell>
 
@@ -1391,7 +1454,7 @@ const ShowroomMetalStock: React.FC = () => {
                   sx={{ fontSize: "0.95rem" }}
                 >
                   <div className="flex justify-center items-center">
-                    {r.onlyExchange_item_amount}
+                    {r.onlyExchange_total_amount}
                   </div>
                 </TableCell>
 
@@ -1400,7 +1463,16 @@ const ShowroomMetalStock: React.FC = () => {
                   sx={{ fontSize: "0.95rem" }}
                 >
                   <div className="flex justify-center items-center">
-                    {r.onlyExchange_paymentMethod}
+                    {r.onlyExchange_item_cash_amount}
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  className="border px-3 py-2 text-center"
+                  sx={{ fontSize: "0.95rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    {r.onlyExchange_item_phnpay_amount}
                   </div>
                 </TableCell>
 
