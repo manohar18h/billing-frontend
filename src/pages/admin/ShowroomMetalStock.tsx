@@ -50,6 +50,16 @@ interface SellingMetal {
   date: string;
 }
 
+interface Wallet {
+  walletId: number;
+  walletType: string;
+  personName: string;
+  description: string;
+  paymentType: string;
+  amount: string;
+  date: string;
+}
+
 interface OldReturnMetals {
   oldMetalReturnId: number;
   onlyExchangeMetal: string;
@@ -157,11 +167,19 @@ const ShowroomMetalStock: React.FC = () => {
   const [returnCashAmount, setReturnCashAmount] = useState<string>("");
   const [returnPhnPayAmount, setReturnPhnPayAmount] = useState<string>("");
 
+  // Wallet form
+  const [walletType, setWalletType] = useState<string>("");
+  const [personName, setPersonName] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [paymentType, setPaymentType] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
+
   // Results
   const [workerResults, setWorkerResults] = useState<WorkerStock[]>([]);
   const [historyResults, setHistoryResults] = useState<ShowroomHistory[]>([]);
   const [sellingData, setSellingData] = useState<SellingMetal[]>([]);
   const [oldReturnData, setOldReturnData] = useState<OldReturnMetals[]>([]);
+  const [walletData, setWalletData] = useState<Wallet[]>([]);
 
   const [metalStock, setMetalStock] = useState<MetalStock | null>(null);
 
@@ -176,6 +194,7 @@ const ShowroomMetalStock: React.FC = () => {
     fetchMetalStock();
     fetchOldReturnData();
     fetchSellingData();
+    fetchWalletData();
   }, []);
 
   const fetchWorkerStock = async () => {
@@ -196,6 +215,17 @@ const ShowroomMetalStock: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSellingData(res.data || []);
+    } catch (error) {
+      console.error("Error fetching worker stock:", error);
+    }
+  };
+  const fetchWalletData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.get<Wallet[]>("/admin/getAllWallets", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setWalletData(res.data || []);
     } catch (error) {
       console.error("Error fetching worker stock:", error);
     }
@@ -247,6 +277,39 @@ const ShowroomMetalStock: React.FC = () => {
       setHistoryResults(res.data || []);
     } catch (error) {
       console.error("Error fetching showroom history:", error);
+    }
+  };
+
+  // Add Submit
+  const handleWalletSubmit = async () => {
+    if (!walletType || !amount || !personName || !paymentType) {
+      alert(
+        "Please select Wallet Type and enter Amount and Person and Payment Type"
+      );
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await api.post(
+        `/admin/addWallet?walletType=${walletType}&personName=${personName}&desc=${description}&paymentType=${paymentType}&amount=${amount}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Submitted successfully!");
+
+      // refresh
+      fetchWalletData();
+
+      setWalletType("");
+      setPersonName("");
+      setDescription("");
+      setPaymentType("");
+      setAmount("");
+    } catch (error) {
+      console.error("Error adding stock:", error);
+      alert("Failed to add stock");
     }
   };
 
@@ -410,6 +473,12 @@ const ShowroomMetalStock: React.FC = () => {
     [sellingData, fromDate, toDate]
   );
 
+  const filteredWalletResult = useMemo(
+    () =>
+      (walletData || []).filter((h) => inRangeExact(h.date, fromDate, toDate)),
+    [walletData, fromDate, toDate]
+  );
+
   const filteredOldReturnData = useMemo(
     () =>
       (oldReturnData || []).filter((h) =>
@@ -423,25 +492,23 @@ const ShowroomMetalStock: React.FC = () => {
     setToDate("");
   };
 
-  // When clicking a date cell in table → set single-day exact filter
-  const drillToExactDate = (rawDate: string) => {
-    const ymd = normalizeYMD(rawDate);
-    if (!ymd) return;
-    setFromDate(ymd);
-    setToDate("");
-  };
-
   const [showAllOldReturn, setShowAllOldReturn] = useState(false);
 
   const visibleOldReturnData = showAllOldReturn
     ? filteredOldReturnData
-    : filteredOldReturnData.slice(0, 5); // show only 5 rows initially
+    : filteredOldReturnData.slice(0, 4); // show only 5 rows initially
 
   const [showAllSelling, setShowAllSelling] = useState(false);
 
   const visibleSellingResult = showAllSelling
     ? filteredSellingResult
     : filteredSellingResult.slice(0, 4); // 👈 show only 4 initially
+
+  const [showAllWallet, setShowAllWallet] = useState(false);
+
+  const visibleWalletResult = showAllSelling
+    ? filteredWalletResult
+    : filteredWalletResult.slice(0, 4); // 👈 show only 4 initially
 
   const [showAllWorker, setShowAllWorker] = useState(false);
 
@@ -877,6 +944,125 @@ const ShowroomMetalStock: React.FC = () => {
             }}
           >
             Submit Old Return
+          </Button>
+        </Box>
+
+        <Box display="flex" mt={4}>
+          <Typography variant="h6" fontWeight={200} color="primary" mb={3}>
+            Showroom Wallet
+          </Typography>
+        </Box>
+
+        <Grid container spacing={2}>
+          {/* Wallet Type Select */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              select
+              label="Wallet Type"
+              value={walletType}
+              onChange={(e) => setWalletType(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (val: unknown): React.ReactNode =>
+                  val ? (
+                    <>{val as string}</>
+                  ) : (
+                    <span style={{ color: "#9aa0a6" }}>Select Type</span>
+                  ),
+                MenuProps: {
+                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Type</em>
+              </MenuItem>
+              <MenuItem value="With Draw">With Draw </MenuItem>
+              <MenuItem value="Deposit">Deposit</MenuItem>
+            </TextField>
+          </Grid>
+
+          {/* Person Name */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              label="Name"
+              value={personName}
+              onChange={(e) => setPersonName(e.target.value)}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              select
+              label="Payment Type"
+              value={paymentType}
+              onChange={(e) => setPaymentType(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (val: unknown): React.ReactNode =>
+                  val ? (
+                    <>{val as string}</>
+                  ) : (
+                    <span style={{ color: "#9aa0a6" }}>
+                      Select Payment Type
+                    </span>
+                  ),
+                MenuProps: {
+                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Payment Type</em>
+              </MenuItem>
+              <MenuItem value="Phone Pay">Phone Pay</MenuItem>
+              <MenuItem value="Cash">Cash</MenuItem>
+            </TextField>
+          </Grid>
+          {/* Amount */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </Grid>
+        </Grid>
+
+        {/* Submit Button */}
+        <Box display="flex" justifyContent="center" mt={4}>
+          <Button
+            onClick={handleWalletSubmit}
+            variant="outlined"
+            sx={{
+              px: 4,
+              py: 1.5,
+              borderRadius: "12px",
+              fontWeight: "bold",
+              boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+              borderColor: "#8847FF",
+              color: "#8847FF",
+              transition: "all 0.3s",
+              "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+            }}
+          >
+            Submit
           </Button>
         </Box>
       </Paper>
@@ -1505,6 +1691,149 @@ const ShowroomMetalStock: React.FC = () => {
           </Typography>
         )}
       </Paper>
+
+      {/* ---------- Wallet Table ---------- */}
+      {filteredWalletResult.length > 0 && (
+        <Paper
+          elevation={4}
+          className="relative p-8 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
+        >
+          <Typography
+            variant="h5"
+            fontWeight={700}
+            color="primary"
+            mb={3}
+            align="center"
+          >
+            Wallet Data
+          </Typography>
+
+          <Table
+            size="medium"
+            className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden"
+          >
+            <TableHead className="bg-gray-200">
+              <TableRow>
+                <TableCell
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    Wallet Type
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  <div className="flex justify-center items-center">Person</div>
+                </TableCell>
+
+                <TableCell
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    Description
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  <div className="flex justify-center items-center">
+                    Payment Type
+                  </div>
+                </TableCell>
+
+                <TableCell
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  <div className="flex justify-center items-center">Amount</div>
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  <div className="flex justify-center items-center">Date</div>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {visibleWalletResult.map((r) => (
+                <TableRow key={r.walletId}>
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.walletType}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.personName}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.description}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.paymentType}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.amount}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.date}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {filteredWalletResult.length > 4 && (
+            <Typography
+              onClick={() => setShowAllWallet(!showAllWallet)}
+              sx={{
+                cursor: "pointer",
+                textAlign: "center",
+                marginTop: 2,
+                color: "#8847FF",
+                fontWeight: 600,
+                textDecoration: "underline",
+              }}
+            >
+              {showAllWallet ? "View Less" : "View More"}
+            </Typography>
+          )}
+        </Paper>
+      )}
 
       {/* Delete Dialog */}
       <Dialog

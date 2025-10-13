@@ -255,6 +255,9 @@ const AllBillingOrders: React.FC = () => {
                     </div>
                   </th>
                   <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">Name</div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
                     <div className="flex justify-center items-center">
                       Delivery Status
                     </div>
@@ -293,6 +296,11 @@ const AllBillingOrders: React.FC = () => {
                     <td className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
                         {bill.billNumber}{" "}
+                      </div>
+                    </td>
+                    <td className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        {bill.name}{" "}
                       </div>
                     </td>
                     <td className="border px-3 py-2 text-center">

@@ -50,9 +50,10 @@ type BarcodeProduct = {
 };
 
 type MetalRates = {
-  metalPriceId: number;
-  goldRate: number;
-  silverRate: number;
+  gold24Rate: number;
+  gold22Rate: number;
+  silver999Rate: number;
+  silver995Rate: number;
 };
 
 type StockBoxDataEntry = {
@@ -165,10 +166,14 @@ const SalesPage: React.FC = () => {
 
       let price = 0;
       if (rates) {
-        if (data.metal === "24 Gold" || data.metal === "22 Gold") {
-          price = rates.goldRate;
-        } else if (data.metal === "999 Silver" || data.metal === "995 Silver") {
-          price = rates.silverRate;
+        if (data.metal === "24 Gold") {
+          price = rates.gold24Rate;
+        } else if (data.metal === "22 Gold") {
+          price = rates.gold22Rate;
+        } else if (data.metal === "999 Silver") {
+          price = rates.silver999Rate;
+        } else if (data.metal === "995 Silver") {
+          price = rates.silver995Rate;
         }
       }
 

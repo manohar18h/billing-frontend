@@ -482,11 +482,14 @@ const Orders: React.FC = () => {
   const calculateTotals = (data: typeof order) => {
     let metalPrice = 0;
 
-    // Pick price based on selected metal
-    if (data.metal === "24 Gold" || data.metal === "22 Gold") {
-      metalPrice = Number(localStorage.getItem("GoldPrice")) || 0;
-    } else if (data.metal === "999 Silver" || data.metal === "995 Silver") {
-      metalPrice = Number(localStorage.getItem("SilverPrice")) || 0;
+    if (data.metal === "24 Gold") {
+      metalPrice = Number(localStorage.getItem("Gold24Price")) || 0;
+    } else if (data.metal === "22 Gold") {
+      metalPrice = Number(localStorage.getItem("Gold22Price")) || 0;
+    } else if (data.metal === "999 Silver") {
+      metalPrice = Number(localStorage.getItem("Silver999Price")) || 0;
+    } else if (data.metal === "995 Silver") {
+      metalPrice = Number(localStorage.getItem("Silver995Price")) || 0;
     }
 
     // Calculate wastage weight
@@ -771,12 +774,16 @@ const Orders: React.FC = () => {
 
       const data = response.data;
 
-      // ✅ figure out metal price from localStorage
       let getMetalPrice = 0;
-      if (data.metal === "24 Gold" || data.metal === "22 Gold") {
-        getMetalPrice = Number(localStorage.getItem("GoldPrice")) || 0;
-      } else if (data.metal === "999 Silver" || data.metal === "995 Silver") {
-        getMetalPrice = Number(localStorage.getItem("SilverPrice")) || 0;
+
+      if (data.metal === "24 Gold") {
+        getMetalPrice = Number(localStorage.getItem("Gold24Price")) || 0;
+      } else if (data.metal === "22 Gold") {
+        getMetalPrice = Number(localStorage.getItem("Gold22Price")) || 0;
+      } else if (data.metal === "999 Silver") {
+        getMetalPrice = Number(localStorage.getItem("Silver999Price")) || 0;
+      } else if (data.metal === "995 Silver") {
+        getMetalPrice = Number(localStorage.getItem("Silver995Price")) || 0;
       }
 
       // ✅ calculate total item amount
@@ -974,9 +981,17 @@ const Orders: React.FC = () => {
   useEffect(() => {
     let price = 0;
     if (exchange.exchange_metal === "Gold") {
-      price = Number(localStorage.getItem("GoldPrice") || 0) - 500;
+      price = Number(localStorage.getItem("Gold22Price") || 0) - 500;
     } else if (exchange.exchange_metal === "Silver") {
-      price = Number(localStorage.getItem("SilverPrice") || 0) - 15;
+      price = Number(localStorage.getItem("Silver995Price") || 0) - 15;
+    } else if (exchange.exchange_metal === "24 Gold") {
+      price = Number(localStorage.getItem("Gold24Price") || 0);
+    } else if (exchange.exchange_metal === "22 Gold") {
+      price = Number(localStorage.getItem("Gold22Price") || 0);
+    } else if (exchange.exchange_metal === "999 Silver") {
+      price = Number(localStorage.getItem("Silver999Price") || 0);
+    } else if (exchange.exchange_metal === "995 Silver") {
+      price = Number(localStorage.getItem("Silver995Price") || 0);
     }
 
     setExchange((prev) => ({
@@ -1087,18 +1102,18 @@ const Orders: React.FC = () => {
                     const selectedMetal = e.target.value;
 
                     let metalPrice = 0;
-                    if (
-                      selectedMetal === "22 Gold" ||
-                      selectedMetal === "24 Gold"
-                    ) {
+                    if (selectedMetal === "24 Gold") {
                       metalPrice =
-                        Number(localStorage.getItem("GoldPrice")) || 0;
-                    } else if (
-                      selectedMetal === "995 Silver" ||
-                      selectedMetal === "999 Silver"
-                    ) {
+                        Number(localStorage.getItem("Gold24Price")) || 0;
+                    } else if (selectedMetal === "22 Gold") {
                       metalPrice =
-                        Number(localStorage.getItem("SilverPrice")) || 0;
+                        Number(localStorage.getItem("Gold22Price")) || 0;
+                    } else if (selectedMetal === "999 Silver") {
+                      metalPrice =
+                        Number(localStorage.getItem("Silver999Price")) || 0;
+                    } else if (selectedMetal === "995 Silver") {
+                      metalPrice =
+                        Number(localStorage.getItem("Silver995Price")) || 0;
                     }
 
                     setOrder({
@@ -1522,15 +1537,23 @@ const Orders: React.FC = () => {
                             setOrder({
                               metal: ord.metal || "",
                               metalPrice:
-                                ord.metal === "24 Gold" ||
-                                ord.metal === "22 Gold"
+                                ord.metal === "24 Gold"
                                   ? parseFloat(
-                                      localStorage.getItem("GoldPrice") || "0"
+                                      localStorage.getItem("Gold24Price") || "0"
                                     )
-                                  : ord.metal === "999 Silver" ||
-                                    ord.metal === "995 Silver"
+                                  : ord.metal === "22 Gold"
                                   ? parseFloat(
-                                      localStorage.getItem("SilverPrice") || "0"
+                                      localStorage.getItem("Gold22Price") || "0"
+                                    )
+                                  : ord.metal === "999 Silver"
+                                  ? parseFloat(
+                                      localStorage.getItem("Silver999Price") ||
+                                        "0"
+                                    )
+                                  : ord.metal === "995 Silver"
+                                  ? parseFloat(
+                                      localStorage.getItem("Silver995Price") ||
+                                        "0"
                                     )
                                   : 0,
                               itemName: ord.itemName || "",
@@ -1681,6 +1704,10 @@ const Orders: React.FC = () => {
                       <MenuItem value="">
                         <em>Select Metal</em>
                       </MenuItem>
+                      <MenuItem value="24 Gold">24 Gold</MenuItem>
+                      <MenuItem value="22 Gold">22 Gold</MenuItem>
+                      <MenuItem value="999 Silver">999 Silver</MenuItem>
+                      <MenuItem value="995 Silver">995 Silver</MenuItem>
                       <MenuItem value="Gold">Gold</MenuItem>
                       <MenuItem value="Silver">Silver</MenuItem>
                     </TextField>

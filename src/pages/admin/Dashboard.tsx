@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import api from "@/services/api"; // make sure this import path is correct
 import { MoreVertical } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,11 +21,43 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { IconButton, Chip } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 type MetalRates = {
-  goldRate: number;
-  silverRate: number;
+  gold24Rate: number;
+  gold22Rate: number;
+  silver999Rate: number;
+  silver995Rate: number;
 };
+
+type Billing = {
+  billId: number;
+  billNumber: string;
+  customerId: number;
+  name: string;
+  village: string;
+  phoneNumber: string;
+  emailId: string;
+  deliveryStatus: string;
+  numberOfOrders: number;
+  billTotalAmount: number;
+  billDiscountAmount: number;
+  exchangeAmount: number;
+  billPaidAmount: number;
+  billDueAmount: number;
+  selectedOrderIds: string;
+  billingDate: string | null;
+};
+
+function normalizeStatus(
+  s: string | undefined | null
+): "delivered" | "pending" | "other" {
+  const v = (s ?? "").toLowerCase().trim();
+  if (v.includes("deliver")) return "delivered";
+  if (v.includes("pend")) return "pending";
+  return "other";
+}
 
 type OrdersMetric = {
   currentCount: number;
@@ -99,12 +133,16 @@ function useRevenueMetric(
 const MetalPricesCard: React.FC = () => {
   const token = localStorage.getItem("token");
 
-  const [gold, setGold] = useState(0);
-  const [silver, setSilver] = useState(0);
+  const [gold24, setGold24] = useState("");
+  const [gold22, setGold22] = useState("");
+  const [silver999, setSilver999] = useState("");
+  const [silver995, setSilver995] = useState("");
 
   const [open, setOpen] = useState(false);
-  const [gDraft, setGDraft] = useState(0);
-  const [sDraft, setSDraft] = useState(0);
+  const [g24Draft, setG24Draft] = useState("");
+  const [g22Draft, setG22Draft] = useState("");
+  const [s999Draft, setS999Draft] = useState("");
+  const [s995Draft, setS995Draft] = useState("");
 
   useEffect(() => {
     if (!token) return;
@@ -114,22 +152,31 @@ const MetalPricesCard: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
-        const { goldRate, silverRate } = res.data;
-        setGold(goldRate);
-        setSilver(silverRate);
-        setGDraft(goldRate);
-        setSDraft(silverRate);
+        const { gold24Rate, gold22Rate, silver999Rate, silver995Rate } =
+          res.data;
+        setGold24(gold24Rate.toString());
+        setGold22(gold22Rate.toString());
+        setSilver999(silver999Rate.toString());
+        setSilver995(silver995Rate.toString());
+        setG24Draft(gold24Rate.toString());
+        setG22Draft(gold22Rate.toString());
+        setS999Draft(silver999Rate.toString());
+        setS995Draft(silver995Rate.toString());
 
         // keep local copy
-        localStorage.setItem("GoldPrice", goldRate.toString());
-        localStorage.setItem("SilverPrice", silverRate.toString());
+        localStorage.setItem("Gold24Price", (gold24Rate ?? 0).toString());
+        localStorage.setItem("Gold22Price", (gold22Rate ?? 0).toString());
+        localStorage.setItem("Silver999Price", (silver999Rate ?? 0).toString());
+        localStorage.setItem("Silver995Price", (silver995Rate ?? 0).toString());
       })
       .catch((err) => console.error("Error fetching rates:", err));
   }, [token]);
 
   const openEditor = () => {
-    setGDraft(gold);
-    setSDraft(silver);
+    setG24Draft(gold24);
+    setG22Draft(gold22);
+    setS999Draft(silver999);
+    setS995Draft(silver995);
     setOpen(true);
   };
   const save = () => {
@@ -137,28 +184,40 @@ const MetalPricesCard: React.FC = () => {
 
     api
       .put<MetalRates>(
-        `/admin/updateRates?goldRate=${gDraft}&silverRate=${sDraft}`,
+        `/admin/updateRates?gold24Rate=${g24Draft}&gold22Rate=${g22Draft}&silver999Rate=${s999Draft}&silver995Rate=${s995Draft}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       )
       .then((res) => {
-        const { goldRate, silverRate } = res.data;
-        setGold(goldRate);
-        setSilver(silverRate);
+        const { gold24Rate, gold22Rate, silver999Rate, silver995Rate } =
+          res.data;
+        setGold24(gold24Rate.toString());
+        setGold22(gold22Rate.toString());
+        setSilver999(silver999Rate.toString());
+        setSilver995(silver995Rate.toString());
+        setG24Draft(gold24Rate.toString());
+        setG22Draft(gold22Rate.toString());
+        setS999Draft(silver999Rate.toString());
+        setS995Draft(silver995Rate.toString());
 
-        setGDraft(goldRate);
-        setSDraft(silverRate);
-
-        localStorage.setItem("GoldPrice", goldRate.toString());
-        localStorage.setItem("SilverPrice", silverRate.toString());
+        localStorage.setItem("Gold24Price", (gold24Rate ?? 0).toString());
+        localStorage.setItem("Gold22Price", (gold22Rate ?? 0).toString());
+        localStorage.setItem("Silver999Price", (silver999Rate ?? 0).toString());
+        localStorage.setItem("Silver995Price", (silver995Rate ?? 0).toString());
 
         setOpen(false);
 
         // keep local copy
 
-        console.log("Updated Prices =>", goldRate, silverRate);
+        console.log(
+          "Updated Prices =>",
+          gold24Rate,
+          gold22Rate,
+          silver999Rate,
+          silver995Rate
+        );
       })
       .catch((err) => console.error("Error updating rates:", err));
   };
@@ -177,15 +236,30 @@ const MetalPricesCard: React.FC = () => {
 
       <div className="mt-3 grid grid-cols-2 gap-4">
         <div className="rounded-xl border border-gray-100 p-3">
-          <div className="text-xs text-gray-500">Gold</div>
+          <div className="text-xs text-gray-500">24 Gold</div>
           <div className="mt-1 text-2xl font-bold tracking-tight text-gray-900">
-            ₹{gold.toLocaleString()}
+            ₹{(gold24 ?? 0).toLocaleString()}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-100 p-3">
+          <div className="text-xs text-gray-500">22 Gold</div>
+          <div className="mt-1 text-2xl font-bold tracking-tight text-gray-900">
+            ₹{(gold22 ?? 0).toLocaleString()}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-4">
+        <div className="rounded-xl border border-gray-100 p-3">
+          <div className="text-xs text-gray-500">999 Silver</div>
+          <div className="mt-1 text-2xl font-bold tracking-tight text-gray-900">
+            ₹{(silver999 ?? 0).toLocaleString()}
           </div>
         </div>
         <div className="rounded-xl border border-gray-100 p-3">
-          <div className="text-xs text-gray-500">Silver</div>
+          <div className="text-xs text-gray-500">995 Silver</div>
           <div className="mt-1 text-2xl font-bold tracking-tight text-gray-900">
-            ₹{silver.toLocaleString()}
+            ₹{(silver995 ?? 0).toLocaleString()}
           </div>
         </div>
       </div>
@@ -198,20 +272,38 @@ const MetalPricesCard: React.FC = () => {
             </div>
             <div className="mt-3 space-y-3">
               <label className="block">
-                <span className="text-xs text-gray-500">Gold (₹)</span>
+                <span className="text-xs text-gray-500">24 Gold (₹)</span>
                 <input
                   type="number"
-                  value={gDraft}
-                  onChange={(e) => setGDraft(Number(e.target.value))}
+                  value={g24Draft}
+                  onChange={(e) => setG24Draft(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
                 />
               </label>
               <label className="block">
-                <span className="text-xs text-gray-500">Silver (₹)</span>
+                <span className="text-xs text-gray-500">22 Gold (₹)</span>
                 <input
                   type="number"
-                  value={sDraft}
-                  onChange={(e) => setSDraft(Number(e.target.value))}
+                  value={g22Draft}
+                  onChange={(e) => setG22Draft(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-gray-500">999 Silver (₹)</span>
+                <input
+                  type="number"
+                  value={s999Draft}
+                  onChange={(e) => setS999Draft(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-gray-500">995 Silver (₹)</span>
+                <input
+                  type="number"
+                  value={s995Draft}
+                  onChange={(e) => setS995Draft(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
                 />
               </label>
@@ -849,67 +941,133 @@ const DueAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
 
 /* ---------- Latest Orders: static table ---------- */
 const LatestOrders: React.FC = () => {
-  const rows = [
-    {
-      src: "🛍️ Shop",
-      name: "Ibnul Shams Al Asad",
-      email: "shams@hotmail.com",
-      total: "AED 8,12,100",
-      status: "Processing",
-      tone: "text-amber-700 bg-amber-50",
-    },
-    {
-      src: "🌐 Website",
-      name: "Zara Hassan",
-      email: "zara.hassan@hotmail.com",
-      total: "AED 12,69,650",
-      status: "Delivered",
-      tone: "text-emerald-700 bg-emerald-50",
-    },
-    {
-      src: "📱 App",
-      name: "Maria R.",
-      email: "maria@example.com",
-      total: "AED 6,15,000",
-      status: "Pending",
-      tone: "text-orange-700 bg-orange-50",
-    },
-  ];
+  const [rows, setRows] = useState<Billing[]>([]);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const token = localStorage.getItem("token") ?? "";
+        const { data } = await api.get<Billing[]>(`/admin/today-bills`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!alive) return;
+        setRows(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!alive) return;
+        console.error("Failed to fetch Todays bills:", e);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const renderStatusChip = (raw: string) => {
+    const n = normalizeStatus(raw);
+    if (n === "delivered")
+      return (
+        <Chip
+          label="Delivered"
+          size="small"
+          sx={{ bgcolor: "#d9f7d9", color: "#1b5e20", fontWeight: 600 }}
+        />
+      );
+    if (n === "pending")
+      return (
+        <Chip
+          label="Pending"
+          size="small"
+          sx={{ bgcolor: "#fff3e0", color: "#e65100", fontWeight: 600 }}
+        />
+      );
+    return (
+      <Chip
+        label={raw || "-"}
+        size="small"
+        sx={{ bgcolor: "#eeeeee", color: "#424242" }}
+      />
+    );
+  };
 
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-      <div className="font-semibold text-gray-800 mb-3">Latest Order</div>
-      <div className="overflow-hidden rounded-xl border border-gray-100">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500">
+      <div className=" text-[#85400b] mb-3 font-bold text-lg">
+        Today's Order
+      </div>
+      <div className="mt-4">
+        <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
+          <thead className="bg-gray-200">
             <tr>
-              <th className="px-4 py-2 text-left">Source</th>
-              <th className="px-4 py-2 text-left">Customer</th>
-              <th className="px-4 py-2 text-left">Total</th>
-              <th className="px-4 py-2 text-left">Status</th>
-              <th className="px-4 py-2 text-left">Action</th>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center ">
+                  Bill Number
+                </div>
+              </th>
+              <th className="border px-3 py-2 text-center ">
+                <div className="flex justify-center items-center">Name</div>
+              </th>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">Total</div>
+              </th>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">Due</div>
+              </th>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">Status</div>
+              </th>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">View</div>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {rows.map((r, i) => (
               <tr key={i} className="bg-white">
-                <td className="px-4 py-3">{r.src}</td>
-                <td className="px-4 py-3">
-                  <div className="font-medium text-gray-800">{r.name}</div>
-                  <div className="text-xs text-gray-400">{r.email}</div>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center text-[#4911a9] font-semibold">
+                    {r.billNumber}
+                  </div>
                 </td>
-                <td className="px-4 py-3">{r.total}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${r.tone}`}
-                  >
-                    {r.status}
-                  </span>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center text-[#b6276f] font-semibold">
+                    {r.name}
+                  </div>
                 </td>
-                <td className="px-4 py-3">
-                  <button className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs hover:bg-gray-50">
-                    View
-                  </button>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center  text-[#e38111]  font-semibold">
+                    {r.billTotalAmount}
+                  </div>
+                </td>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center text-[#e60b0b] font-semibold">
+                    {r.billDueAmount}
+                  </div>
+                </td>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center font-semibold">
+                    {renderStatusChip(r.deliveryStatus)}
+                  </div>
+                </td>
+
+                <td>
+                  <div className="flex justify-center items-center">
+                    <IconButton
+                      size="medium"
+                      color="primary"
+                      sx={{
+                        "&:hover": { backgroundColor: "#E0E0E0" },
+                      }}
+                      onClick={() => {
+                        localStorage.setItem("billNumber", r.billNumber);
+                        navigate("/admin/bill-details");
+                      }}
+                    >
+                      <VisibilityIcon fontSize="medium" />
+                    </IconButton>
+                  </div>
                 </td>
               </tr>
             ))}
