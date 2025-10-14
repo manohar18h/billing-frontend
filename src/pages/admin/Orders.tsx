@@ -482,6 +482,9 @@ const Orders: React.FC = () => {
   const calculateTotals = (data: typeof order) => {
     let metalPrice = 0;
 
+    console.log("GoldPrice :", localStorage.getItem("Gold24Price"));
+    console.log("SilverPrice :", localStorage.getItem("Silver999Price"));
+
     if (data.metal === "24 Gold") {
       metalPrice = Number(localStorage.getItem("Gold24Price")) || 0;
     } else if (data.metal === "22 Gold") {

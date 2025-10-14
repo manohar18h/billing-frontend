@@ -499,7 +499,7 @@ const WorkerDetails: React.FC = () => {
                 <div className="pl-4">
                   {line("Date", displayFromRaw(p.date))}
                   {line("Pay", `₹${p.workPay}`)}
-                  {line("WP ID", p.wpid)}
+                  {line("Wastage", p.wastage)}
                 </div>
               </div>
             ))}

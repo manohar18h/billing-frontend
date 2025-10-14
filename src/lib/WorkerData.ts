@@ -51,6 +51,7 @@ export interface WorkerData {
     orderId: number;
     metal: string;
     metal_weight: number;
+    wastage: number;
   }[];
 
   workerTransactionHistories: {
