@@ -43,7 +43,7 @@ export interface WorkerData {
   }[];
 
   workerPays: {
-    workPay: number;
+    workPay?: number;
     wpid: number;
     date?: string | null; // ← optional now
     workerId: number;
@@ -51,7 +51,7 @@ export interface WorkerData {
     orderId: number;
     metal: string;
     metal_weight: number;
-    wastage: number;
+    wastage?: number;
   }[];
 
   workerTransactionHistories: {
