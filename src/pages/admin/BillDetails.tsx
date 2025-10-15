@@ -389,7 +389,7 @@ const BillDetails: React.FC = () => {
               </p>
               <p className="flex justify-between">
                 <span className="text-gray-300 font-medium">
-                  Remaining Amount:
+                  Received Amount:
                 </span>
                 <span className="text-purple-400 font-semibold">
                   {customer.billResAmount}

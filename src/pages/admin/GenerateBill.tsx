@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import api from "@/services/api";
+import logo2 from "../../assets/logo2.png";
 
 const GenerateBill: React.FC = () => {
   const printRef = useRef<HTMLDivElement>(null);
@@ -164,6 +165,16 @@ const GenerateBill: React.FC = () => {
     return (item[field] as number | null) ?? null;
   }
 
+  const shortLabels: Record<string, { weight: string; amount: string }> = {
+    stone: { weight: "S.Wt", amount: "S.Amt" },
+    wax: { weight: "W.Wt", amount: "W.Amt" },
+    diamond: { weight: "D.Wt", amount: "D.Amt" },
+    bits: { weight: "B.Wt", amount: "B.Amt" },
+    enamel: { weight: "E.Wt", amount: "E.Amt" },
+    pearls: { weight: "P.Wt", amount: "P.Amt" },
+    other: { weight: "O.Wt", amount: "O.Amt" },
+  };
+
   const activeWeightKeys = React.useMemo(() => {
     if (!bill || !bill.selectedOrders) return [];
 
@@ -205,9 +216,48 @@ const GenerateBill: React.FC = () => {
             visibility: hidden;
 
   }
+
+
+  .invoice-table {
+    width: 100% !important;
+    transform: scale(1) !important;
+    table-layout: fixed;
+    font-size: 10px; /* Slightly smaller text for fitting */
+  }
+
+  .invoice-header {
+    margin: 0 !important;
+  }
+
+  .invoice-container {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    flex-direction: row !important;
+    width: 100% !important;
+  }
+      .invoice-container > div {
+    width: 48% !important;
+  }
+
+
+  /* Avoid clipping large tables */
+  .invoice-table-wrapper {
+    width: 100%;
+    overflow: visible !important;
+  }
+
+  /* Make print layout use full page height */
+  body, html {
+    width: 100%;
+    height: 100%;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+
              @page {
     size: A4 portrait;   /* Or A5 portrait */
-    margin: 5mm;        /* Adjust as needed */
+    margin: 10mm;        /* Adjust as needed */
   }
 
   .no-print-scroll {
@@ -217,6 +267,10 @@ const GenerateBill: React.FC = () => {
   #print-section, #print-section * {
         visibility: visible;
       }
+          #print-section {
+    zoom: 1 !important;
+    transform: none !important;
+  }
       #print-section {
         position: absolute;
         left: 0;
@@ -242,7 +296,66 @@ const GenerateBill: React.FC = () => {
   padding: 6px 4px !important; /* more breathing space */
 }
 }
+
+
+
   `}
+      </style>
+
+      <style>
+        {`
+     .invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  table-layout: fixed;
+}
+
+.invoice-table th,
+.invoice-table td {
+  padding: 4px 6px;
+  word-wrap: break-word;
+  white-space: normal;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Adjust specific columns (optional fine-tuning) */
+.invoice-table th:nth-child(1),
+.invoice-table td:nth-child(1) {
+  width: 7%; /* Item Name */
+}
+.invoice-table th:nth-child(2),
+.invoice-table td:nth-child(2) {
+  width: 8%; /* Metal */
+}
+.invoice-table th:last-child,
+.invoice-table td:last-child {
+  width: 8%; /* Amount */
+}
+
+      /* Auto-shrink on smaller screens */
+      @media (max-width: 1400px) {
+        .invoice-table {
+          transform: scale(0.9);
+        }
+      }
+      @media (max-width: 1200px) {
+        .invoice-table {
+          transform: scale(0.8);
+        }
+      }
+      @media (max-width: 1000px) {
+        .invoice-table {
+          transform: scale(0.7);
+        }
+      }
+      @media (max-width: 800px) {
+        .invoice-table {
+          transform: scale(0.6);
+        }
+      }
+    `}
       </style>
 
       {/* Printable Content */}
@@ -265,6 +378,35 @@ const GenerateBill: React.FC = () => {
               Phone: 9703738824 | www.hambirejewellery.com
             </p>
           </div>
+          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200">
+            <img
+              src={logo2}
+              alt="HJ Logo"
+              className="w-12 h-12 object-contain"
+            />
+          </div>
+        </div>
+
+        {/* Customer Info */}
+        <div className="invoice-container flex justify-between items-start border-b-2 pb-4 mb-4">
+          <div className="mb-4 invoice-header">
+            <p>
+              <strong className="text-[#B45309]">Name : </strong>
+              <span className="text-[#111827] ">{bill.name}</span>
+            </p>
+            <p>
+              <strong className="text-[#B45309]">Village : </strong>
+              <span className="text-[#111827] ">{bill.village}</span>
+            </p>
+            <p>
+              <strong className="text-[#B45309]">Phone : </strong>
+              <span className="text-[#111827] ">{bill.phoneNumber}</span>
+            </p>
+            <p>
+              <strong className="text-[#B45309]">Email : </strong>
+              <span className="text-[#111827] ">{bill.emailId}</span>
+            </p>
+          </div>
           <div className="text-right text-[#111827]">
             <p>
               <strong>DATE : </strong> {new Date().toLocaleString()}
@@ -282,61 +424,47 @@ const GenerateBill: React.FC = () => {
           </div>
         </div>
 
-        {/* Customer Info */}
-        <div className="mb-4">
-          <p>
-            <strong className="text-[#B45309]">Name : </strong>
-            <span className="text-[#111827] ">{bill.name}</span>
-          </p>
-          <p>
-            <strong className="text-[#B45309]">Village : </strong>
-            <span className="text-[#111827] ">{bill.village}</span>
-          </p>
-          <p>
-            <strong className="text-[#B45309]">Phone : </strong>
-            <span className="text-[#111827] ">{bill.phoneNumber}</span>
-          </p>
-          <p>
-            <strong className="text-[#B45309]">Email : </strong>
-            <span className="text-[#111827] ">{bill.emailId}</span>
-          </p>
-        </div>
-
         {/* Table */}
-        <div className="overflow-x-auto no-print-scroll">
-          <table className="w-full border border-collapse text-sm mb-6 min-w-[1000px] print:min-w-full">
+        <div className="w-full flex justify-center invoice-table-wrapper">
+          <table className="invoice-table border border-collapse text-sm mb-6 invoice-table">
             <thead>
               <tr className="bg-[#B45309] text-[#F9FAFB]">
-                <th className="border px-2 py-1">Item Name</th>
+                <th className="border px-2 py-1">Name</th>
                 <th className="border px-2 py-1">Metal</th>
-                <th className="border px-2 py-1">Rate (G-22k) (S-999)</th>
-                <th className="border px-2 py-1">Gross Weight</th>
-                <th className="border px-2 py-1">Item Weight</th>
+                <th className="border px-2 py-1">RT</th>
+                <th className="border px-2 py-1">G.Wt</th>
+                <th className="border px-2 py-1">N.Wt</th>
                 {activeWeightKeys.map((key) => (
                   <React.Fragment key={key}>
+                    {/* Weight Header */}
                     {!(key === "other") && (
                       <th className="border px-2 py-1 capitalize">
-                        {key} Weight
+                        {shortLabels[key]?.weight ||
+                          `${key[0].toUpperCase()}.Wt`}
                       </th>
                     )}
+
                     {key === "other" &&
                       bill.selectedOrders.some(
                         (item) => item.other_weight && item.other_weight > 0
                       ) && (
                         <th className="border px-2 py-1 capitalize">
-                          {key} Weight
+                          {shortLabels[key]?.weight || "O.Wt"}
                         </th>
                       )}
 
+                    {/* Amount Header */}
                     <th className="border px-2 py-1 capitalize">
-                      {key} Amount
+                      {shortLabels[key]?.amount ||
+                        `${key[0].toUpperCase()}.Amt`}
                     </th>
                   </React.Fragment>
                 ))}
-                <th className="border px-2 py-1">Wastage</th>
-                <th className="border px-2 py-1">Making Charges</th>
+
+                <th className="border px-2 py-1">WST</th>
+                <th className="border px-2 py-1">MC</th>
                 <th className="border px-2 py-1">Paid</th>
-                <th className="border px-2 py-1">Amount</th>
+                <th className="border px-2 py-1">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -345,24 +473,25 @@ const GenerateBill: React.FC = () => {
                   key={index}
                   className="border "
                   style={{
-                    background: "linear-gradient(135deg, #0f172a, #1e293b)", // dark gradient
+                    backgroundColor: "#e7d8e2",
+
                     color: "#fff",
                   }}
                 >
                   {" "}
-                  <td className="border px-2 py-1 text-[#caaffa] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle">
                     {item.itemName}
                   </td>
-                  <td className="border px-2 py-1  text-[#EC4899] font-bold text-center align-middle">
+                  <td className="border px-2 py-1  text-[#d81275] font-bold text-center align-middle">
                     {item.metal}
                   </td>
-                  <td className="border px-2 py-1 text-[#008080] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#146363] font-bold text-center align-middle">
                     {item.metalPrice}
                   </td>
-                  <td className="border px-2 py-1 text-[#9CA3AF] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#81745c] font-bold text-center align-middle">
                     {item.gross_weight}
                   </td>
-                  <td className="border px-2 py-1 text-[#7C3AED] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#4682b4] font-bold text-center align-middle">
                     {item.metal_weight}
                   </td>
                   {activeWeightKeys.map((key) => (
@@ -372,7 +501,7 @@ const GenerateBill: React.FC = () => {
                         key === "other" &&
                         (!item.other_weight || item.other_weight === 0)
                       ) && (
-                        <td className="border px-2 py-1 text-[#F9A8D4] font-bold text-center align-middle">
+                        <td className="border px-2 py-1 text-[#333333] font-bold text-center align-middle">
                           {getNumericField(
                             item,
                             `${key}_weight` as keyof Order
@@ -385,7 +514,7 @@ const GenerateBill: React.FC = () => {
                         key === "other" &&
                         (!item.other_amount || item.other_amount === 0)
                       ) && (
-                        <td className="border px-2 py-1 text-[#FACC15] font-bold text-center align-middle">
+                        <td className="border px-2 py-1 text-[#333333] font-bold text-center align-middle">
                           {getNumericField(
                             item,
                             `${key}_amount` as keyof Order
@@ -394,13 +523,13 @@ const GenerateBill: React.FC = () => {
                       )}
                     </React.Fragment>
                   ))}
-                  <td className="border px-2 py-1 text-[#10B981] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#c000fe] font-bold text-center align-middle">
                     {item.wastage}%
                   </td>
                   <td className="border px-2 py-1 text-[#D97706] font-bold text-center align-middle">
                     {item.making_charges}
                   </td>
-                  <td className="border px-2 py-1 text-[#22C55E] ">
+                  <td className="border px-2 py-1 text-[#22C55E] font-bold text-center align-middle ">
                     {item.transactions?.length > 0
                       ? item.transactions.map((tx: Transaction, i: number) => {
                           const shortMethod =
@@ -419,17 +548,27 @@ const GenerateBill: React.FC = () => {
                                   : ""
                               }`}
                             >
-                              <span className="text-[#E5E7EB] font-bold text-center align-middle">
-                                {" "}
-                                {new Date(
-                                  tx.paymentDate
-                                ).toLocaleDateString()}{" "}
-                              </span>{" "}
+                              <span className="text-[#333333] font-bold text-center align-middle">
+                                {(() => {
+                                  const d = new Date(tx.paymentDate);
+                                  const day = String(d.getDate()).padStart(
+                                    2,
+                                    "0"
+                                  );
+                                  const month = String(
+                                    d.getMonth() + 1
+                                  ).padStart(2, "0");
+                                  const year = String(d.getFullYear()).slice(
+                                    -2
+                                  ); // ✅ last 2 digits
+                                  return `${day}/${month}/${year}`;
+                                })()}
+                              </span>
                               <span className="font-bold text-center align-middle">
                                 <span className="text-[#22C55E]">
                                   ₹{tx.paidAmount}
                                 </span>{" "}
-                                <span className="text-[#A855F7]">
+                                <span className="text-[#f1699f]">
                                   {shortMethod}
                                 </span>
                               </span>
@@ -438,7 +577,7 @@ const GenerateBill: React.FC = () => {
                         })
                       : "-"}
                   </td>
-                  <td className="border px-2 py-1 text-[#60A5FA] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#2c83ed] font-bold text-center align-middle">
                     ₹{item.total_item_amount}
                   </td>
                 </tr>
@@ -447,32 +586,68 @@ const GenerateBill: React.FC = () => {
               {bill.selectedOrders.flatMap(
                 (item: Order) =>
                   item.oldItems?.map((ex: OldItem, index: number) => (
-                    <tr key={`ex-${index}`} className="border bg-gray-100">
-                      <td className="border px-2 py-1  text-[#caaffa] ">
+                    <tr
+                      key={`ex-${index}`}
+                      className="border"
+                      style={{
+                        backgroundColor: "#f1e8ed",
+                      }}
+                    >
+                      <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle">
                         {ex.exchange_metal_name + "  ( Ex )"}
                       </td>
-                      <td className="border px-2 py-1  text-[#EC4899] ">
+
+                      <td className="border px-2 py-1 text-[#d81275]  font-bold text-center align-middle">
                         {ex.exchange_metal}
                       </td>
-                      <td className="border px-2 py-1 text-[#008080]">
+
+                      <td className="border px-2 py-1 text-[#146363] font-bold text-center align-middle">
                         {ex.exchange_metal_price}
                       </td>
-                      <td className="border px-2 py-1  text-[#9CA3AF]">
+
+                      <td className="border px-2 py-1 text-[#81745c] font-bold text-center align-middle">
                         {ex.exchange_metal_weight}
                       </td>
 
-                      <td className="border px-2 py-1 text-[#7C3AED]">
+                      <td className="border px-2 py-1  text-[#4682b4] font-bold text-center align-middle">
                         {ex.exchange_purity_weight}
                       </td>
-                      {Array.from({ length: nonZeroColCount }).map((_, i) => (
-                        <td key={`empty-${i}`} className="border px-2 py-1">
-                          -
-                        </td>
-                      ))}
-                      <td className="border px-2 py-1">-</td>
-                      <td className="border px-2 py-1">-</td>
-                      <td className="border px-2 py-1">-</td>
-                      <td className="border px-2 py-1 text-[#60A5FA] ">
+
+                      {/* ✅ Dynamic dash cells based on parent order */}
+                      {(() => {
+                        const showOtherWeight =
+                          item.other_weight && item.other_weight > 0;
+                        const showOtherAmount =
+                          item.other_amount && item.other_amount > 0;
+
+                        let dashCount = 0;
+
+                        if (showOtherWeight && showOtherAmount) dashCount = 2;
+                        else if (!showOtherWeight && showOtherAmount)
+                          dashCount = 1;
+                        else dashCount = 0;
+
+                        return Array.from({
+                          length: nonZeroColCount - dashCount,
+                        }).map((_, i) => (
+                          <td
+                            key={`dash-${index}-${i}`}
+                            className="border px-2 py-1 text-center align-middle"
+                          >
+                            -
+                          </td>
+                        ));
+                      })()}
+                      <td className="border px-2 py-1 text-center align-middle">
+                        -
+                      </td>
+                      <td className="border px-2 py-1 text-center align-middle">
+                        -
+                      </td>
+                      <td className="border px-2 py-1 text-center align-middle">
+                        -
+                      </td>
+                      <td className="border px-2 py-1  text-[#2c83ed] font-bold text-center align-middle">
                         ₹{ex.exchange_item_amount}
                       </td>
                     </tr>
@@ -523,7 +698,7 @@ const GenerateBill: React.FC = () => {
                     <td className="px-3 py-2 text-[#1F2937] font-bold">
                       Received :
                     </td>
-                    <td className="text-right px-3 py-2">
+                    <td className="text-right px-3 py-2 font-bold text-[#49505b]">
                       ₹{bill.billResAmount}
                     </td>
                   </tr>
