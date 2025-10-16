@@ -49,11 +49,13 @@ const LotWork: React.FC = () => {
         itemName: lotData.itemName,
         itemWeight: parseFloat(lotData.weight),
         pieces: parseInt(lotData.pieces),
-        wastage: parseInt(lotData.wastage),
+        wastage: parseFloat(lotData.wastage),
         amount: parseFloat(lotData.amount),
       };
 
       console.log("requestBody", JSON.stringify(requestBody));
+
+      console.log("wastage: ", lotData.wastage);
 
       const res = await api.post(
         `/admin/addLotWork/${selectedWorkerId}`,

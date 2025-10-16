@@ -165,9 +165,15 @@ const RepairWork: React.FC = () => {
               fullWidth
               type="number"
               label="Metal Weight (g)"
-              value={repairData.metalWeight}
+              value={
+                repairData.metal === "Non Metal" ? "" : repairData.metalWeight
+              }
               onChange={(e) => handleChange("metalWeight", e.target.value)}
-              required
+              required={repairData.metal !== "Non Metal"} // not required when Non Metal
+              disabled={repairData.metal === "Non Metal"} // disable input
+              InputProps={{
+                readOnly: repairData.metal === "Non Metal",
+              }}
             />
           </Grid>
 
