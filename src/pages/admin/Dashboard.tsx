@@ -89,6 +89,10 @@ interface RevenueStat {
   totalRevenue: number;
 }
 
+interface BusinessGrowthResponse {
+  [key: string]: number;
+}
+
 function useOrdersMetric(
   endpoint: string,
   filter: string,
@@ -522,7 +526,7 @@ const RevenueCard: React.FC<{
 const TargetCard: React.FC<{ token?: string | null }> = ({ token }) => {
   const [filter, setFilter] = useState("TODAY");
   const data = useRevenueMetric("/admin/revenueStats", filter, token ?? null);
-  const BASE_TARGET = 500; // ₹ per day target
+  const BASE_TARGET = 1000000; // ₹ per day target
 
   const getDynamicTarget = (filter: string): number => {
     const today = new Date();
@@ -1080,32 +1084,73 @@ const LatestOrders: React.FC = () => {
 
 /* ---------- Business Growth: static country list + bars ---------- */
 const BusinessGrowth: React.FC = () => {
-  const countries = [
-    { name: "Hyderabad", value: 72 },
-    { name: "Medak", value: 58 },
-    { name: "Karimnagar", value: 43 },
-    { name: "Khamam", value: 31 },
-  ];
+  const [villages, setVillages] = useState<{ name: string; value: number }[]>(
+    []
+  );
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBusinessGrowth = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        // ✅ 2️⃣ Use generic typing for the Axios GET call
+        const response = await api.get<BusinessGrowthResponse>(
+          "/admin/village-percentage",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // ✅ 3️⃣ Convert object into array
+        const transformedData = Object.entries(response.data).map(
+          ([name, value]) => ({
+            name,
+            value,
+          })
+        );
+
+        setVillages(transformedData);
+      } catch (error) {
+        console.error("Error fetching business growth data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBusinessGrowth();
+  }, []);
 
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
       <div className="font-semibold text-gray-800 mb-3">Business Growth</div>
-      <div className="space-y-3">
-        {countries.map((c) => (
-          <div key={c.name}>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-700">{c.name}</span>
-              <span className="font-semibold">{c.value}%</span>
-            </div>
-            <div className="mt-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-violet-500"
-                style={{ width: `${c.value}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+
+      {loading ? (
+        <div className="text-sm text-gray-500">Loading...</div>
+      ) : (
+        <div className="space-y-3">
+          {villages.length > 0 ? (
+            villages.map((c) => (
+              <div key={c.name}>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700">{c.name}</span>
+                  <span className="font-semibold">{c.value.toFixed(2)}%</span>
+                </div>
+                <div className="mt-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-violet-500 transition-all duration-500"
+                    style={{ width: `${c.value}%` }}
+                  />
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-sm text-gray-500">No data available</div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

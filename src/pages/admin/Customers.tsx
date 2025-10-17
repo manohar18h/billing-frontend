@@ -5,6 +5,7 @@ import {
   Grid,
   Button,
   InputAdornment,
+  Autocomplete,
   Typography,
   MenuItem,
   Paper,
@@ -14,12 +15,16 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
 import api from "@/services/api"; // ← import your api.ts
+import debounce from "lodash/debounce";
 
 const SearchAddCustomer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<any[]>([]); // your fetched data
+  const [loading, setLoading] = useState(false);
 
   localStorage.removeItem("editBillFromBillDetails");
 
@@ -50,6 +55,47 @@ const SearchAddCustomer: React.FC = () => {
     totalDueAmount: 0.0,
     password: "",
   };
+
+  // Debounced API call
+  const fetchData = debounce(async (query: string) => {
+    if (query.trim().length < 3) {
+      setResults([]);
+      return;
+    }
+
+    console.log("🔍 Calling API for:", query);
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.get<string[]>(
+        `/admin/searchVillage?query=${query}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("✅ API Response:", res.data);
+      setResults(res.data || []);
+    } catch (err) {
+      console.error("❌ Error fetching villages:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, 500);
+
+  // Trigger when user types 3+ chars
+  useEffect(() => {
+    if (search.trim().length >= 3) {
+      fetchData(search);
+    } else {
+      setResults([]);
+    }
+
+    // cancel debounce on unmount
+    return () => fetchData.cancel();
+  }, [search]);
 
   const [customer, setCustomer] = useState<Customer>({ ...emptyCustomer });
   const [fieldErrors, setFieldErrors] = useState<
@@ -99,6 +145,19 @@ const SearchAddCustomer: React.FC = () => {
       localStorage.removeItem("from");
 
       setFieldErrors({});
+
+      // --- Add village if not empty ---
+      if (customer.village?.trim()) {
+        await api.post(
+          "/admin/addVillage",
+          { name: customer.village.trim() },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
 
       console.log("requestbody : ", JSON.stringify(customer));
 
@@ -248,21 +307,71 @@ const SearchAddCustomer: React.FC = () => {
             ] as (keyof Customer)[]
           ).map((key) => (
             <Grid key={key} size={{ xs: 6, sm: 4 }}>
-              <TextField
-                {...thickTextFieldProps}
-                label={
-                  key === "phoneNumber"
-                    ? "Phone Number"
-                    : key === "emailId"
-                    ? "Email ID"
-                    : key.charAt(0).toUpperCase() + key.slice(1)
-                }
-                type={key === "password" ? "password" : "text"}
-                value={customer[key]}
-                onChange={(e) => handleChange(key, e.target.value)}
-                error={!!fieldErrors[key]}
-                helperText={fieldErrors[key]}
-              />
+              {key === "village" ? (
+                <Autocomplete
+                  freeSolo
+                  disableClearable
+                  options={results || []}
+                  loading={loading}
+                  value={customer.village || ""}
+                  onInputChange={(event, newInputValue) => {
+                    setSearch(newInputValue); // triggers API
+                    handleChange("village", newInputValue); // updates customer state
+                  }}
+                  onChange={(event, newValue) => {
+                    handleChange("village", newValue || "");
+                  }}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option}>
+                      {option}
+                    </li>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      {...thickTextFieldProps}
+                      label="Village"
+                      placeholder="Type 3 letters to search..."
+                      helperText={
+                        search.length >= 3
+                          ? results.length > 0
+                            ? "Select from list or type new"
+                            : "No villages found, you can add new"
+                          : "Type 3 letters to search"
+                      }
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loading ? (
+                              <span className="text-gray-400 text-sm pr-2">
+                                Loading...
+                              </span>
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+              ) : (
+                <TextField
+                  {...thickTextFieldProps}
+                  label={
+                    key === "phoneNumber"
+                      ? "Phone Number"
+                      : key === "emailId"
+                      ? "Email ID"
+                      : key.charAt(0).toUpperCase() + key.slice(1)
+                  }
+                  type={key === "password" ? "password" : "text"}
+                  value={customer[key]}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  error={!!fieldErrors[key]}
+                  helperText={fieldErrors[key]}
+                />
+              )}
             </Grid>
           ))}
         </Grid>

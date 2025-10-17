@@ -708,7 +708,7 @@ const SalesPage: React.FC = () => {
                               JSON.stringify(box)
                             );
                             navigate(
-                              `/admin/StockBoxDetails/${box.stockBoxId}`
+                              `/admin/salesStockBoxDetails/${box.stockBoxId}`
                             );
                           }}
                         >

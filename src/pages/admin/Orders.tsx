@@ -981,8 +981,10 @@ const Orders: React.FC = () => {
     order.other_amount,
   ]);
 
+  // 1️⃣ Set default price only when metal changes
   useEffect(() => {
     let price = 0;
+
     if (exchange.exchange_metal === "Gold") {
       price = Number(localStorage.getItem("Gold22Price") || 0) - 500;
     } else if (exchange.exchange_metal === "Silver") {
@@ -997,14 +999,22 @@ const Orders: React.FC = () => {
       price = Number(localStorage.getItem("Silver995Price") || 0);
     }
 
+    // ✅ only set auto-price when metal is changed by user
     setExchange((prev) => ({
       ...prev,
       exchange_metal_price: price,
+    }));
+  }, [exchange.exchange_metal]);
+
+  // 2️⃣ Recalculate amount whenever purity weight or metal price changes
+  useEffect(() => {
+    setExchange((prev) => ({
+      ...prev,
       exchange_item_amount: Math.round(
-        (price * prev.exchange_purity_weight) / 10
+        (prev.exchange_metal_price * prev.exchange_purity_weight) / 10
       ),
     }));
-  }, [exchange.exchange_metal, exchange.exchange_purity_weight]);
+  }, [exchange.exchange_metal_price, exchange.exchange_purity_weight]);
 
   return (
     <Box>
@@ -1675,6 +1685,7 @@ const Orders: React.FC = () => {
               {Object.entries(exchange).map(([key, value]) => (
                 <Grid size={{ xs: 4, sm: 2 }} key={key}>
                   {key === "exchange_metal" ? (
+                    // 🔸 Dropdown for metal type
                     <TextField
                       select
                       label="Exchange Metal"
@@ -1691,7 +1702,7 @@ const Orders: React.FC = () => {
                       variant="outlined"
                       InputLabelProps={{
                         style: { color: "#333" },
-                        shrink: true, // ✅ ensures label is always visible
+                        shrink: true,
                       }}
                       InputProps={{
                         style: { fontWeight: 500 },
@@ -1714,7 +1725,34 @@ const Orders: React.FC = () => {
                       <MenuItem value="Gold">Gold</MenuItem>
                       <MenuItem value="Silver">Silver</MenuItem>
                     </TextField>
+                  ) : key === "exchange_metal_price" ? (
+                    // 🔸 Editable Exchange Metal Price field
+                    <TextField
+                      {...thickTextFieldProps}
+                      label="Exchange Metal Price"
+                      type="number"
+                      value={
+                        exchange.exchange_metal_price === 0
+                          ? ""
+                          : exchange.exchange_metal_price
+                      }
+                      onChange={(e) => {
+                        const newPrice = Number(e.target.value) || 0;
+                        setExchange((prev) => ({
+                          ...prev,
+                          exchange_metal_price: newPrice,
+                          exchange_item_amount: Math.round(
+                            (newPrice * prev.exchange_purity_weight) / 10
+                          ),
+                        }));
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      error={!!exchangeErrors.exchange_metal_price}
+                      helperText={exchangeErrors.exchange_metal_price || ""}
+                    />
                   ) : (
+                    // 🔸 Default for other fields
                     <TextField
                       {...thickTextFieldProps}
                       label={key
@@ -1725,27 +1763,38 @@ const Orders: React.FC = () => {
                         key.includes("date") ? { shrink: true } : undefined
                       }
                       value={
-                        typeof value === "number" && value === 0
-                          ? "" // show empty instead of 0
-                          : value
+                        typeof value === "number" && value === 0 ? "" : value
                       }
                       error={!!exchangeErrors[key]}
                       helperText={exchangeErrors[key] || ""}
                       onChange={(e) => {
                         const newValue =
                           typeof value === "number"
-                            ? e.target.value === "" // allow clearing
+                            ? e.target.value === ""
                               ? 0
                               : Number(e.target.value)
                             : e.target.value;
 
-                        setExchange({ ...exchange, [key]: newValue });
+                        setExchange((prev) => ({
+                          ...prev,
+                          [key]: newValue,
+                          // ✅ recalc item amount if purity weight changes
+                          exchange_item_amount:
+                            key === "exchange_purity_weight"
+                              ? Math.round(
+                                  (prev.exchange_metal_price *
+                                    Number(e.target.value || 0)) /
+                                    10
+                                )
+                              : prev.exchange_item_amount,
+                        }));
                       }}
                     />
                   )}
                 </Grid>
               ))}
             </Grid>
+
             <Box display="flex" justifyContent="flex-end" mt={4}>
               <Button
                 variant="contained"

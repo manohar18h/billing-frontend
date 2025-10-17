@@ -32,6 +32,8 @@ const LoginScreen: React.FC = () => {
       // Redirect based on role returned by backend
       if (data.role === "SALES") {
         setTimeout(() => navigate("/sales"), 1000);
+      } else if (data.role === "WORKER") {
+        setTimeout(() => navigate("/worker"), 1000);
       } else if (data.role === "ADMIN") {
         setTimeout(() => navigate("/admin"), 1000);
       } else {

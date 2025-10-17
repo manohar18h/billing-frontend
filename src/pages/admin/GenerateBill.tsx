@@ -321,12 +321,27 @@ const GenerateBill: React.FC = () => {
 }
 
 /* Adjust specific columns (optional fine-tuning) */
-.invoice-table th:nth-child(1),
-.invoice-table td:nth-child(1) {
+.invoice-table th:nth-child(3),
+.invoice-table td:nth-child(3) {
   width: 7%; /* Item Name */
 }
-.invoice-table th:nth-child(2),
+.invoice-table th:nth-child(4),
+.invoice-table td:nth-child(4) {
+  width: 8%; /* Metal */
+}
+  .invoice-table th:nth-child(5),
+.invoice-table td:nth-child(5) {
+  width: 8%; /* Metal */
+}
+    .invoice-table th:nth-child(2),
 .invoice-table td:nth-child(2) {
+  width: 8%; /* Metal */
+}
+     .invoice-table th:nth-child(6),
+.invoice-table td:nth-child(6) {
+  width: 8%; /* Metal */
+}   .invoice-table th:nth-child(7),
+.invoice-table td:nth-child(7) {
   width: 8%; /* Metal */
 }
 .invoice-table th:last-child,

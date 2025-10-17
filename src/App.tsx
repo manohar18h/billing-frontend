@@ -11,6 +11,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SalesPage from "./pages/admin/SalesPage";
 import SalesStockBoxDetails from "./pages/admin/SalesStockBoxDetails";
+import WorkerProfile from "./pages/admin/WorkerProfile";
 
 const App = () => {
   return (
@@ -20,13 +21,12 @@ const App = () => {
         <Route path="/login" element={<LoginScreen />} />
         {/* All admin-related routes go through AdminPanel */}
         <Route path="/admin/*" element={<WrappedAdminPanel />} />
-        <Route path="/sales" element={<SalesPage />} /> {/* ← fixed */}
+        <Route path="/sales" element={<SalesPage />} />
+        <Route path="/worker" element={<WorkerProfile />} />
         <Route
-          path="/salesStockBoxDetails"
+          path="/admin/salesStockBoxDetails/:stockBoxId"
           element={<SalesStockBoxDetails />}
-        />{" "}
-        {/* ← fixed */}
-        {/* Default redirect */}
+        />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
 
