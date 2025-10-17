@@ -5,8 +5,6 @@ import { useWorkers } from "@/contexts/WorkersContext";
 import { WorkerData } from "@/lib/WorkerData";
 import { TextField, Button, Box, Typography } from "@mui/material";
 
-const API_URL = "https://api.hambirejewellery.com/worker/profile";
-
 /** String-only normalizer: returns YYYY-MM-DD with NO timezone shifts */
 function normalizeYMD(raw: unknown): string | null {
   if (raw == null) return null;
@@ -73,43 +71,40 @@ function inRangeExact(
   return true;
 }
 
+/** For Worker Stocks only: single “From” means ≥ From; single “To” means ≤ To */
+function inRangeOpenStart(
+  rawDate: unknown,
+  fromDate: string,
+  toDate: string
+): boolean {
+  const day = normalizeYMD(rawDate);
+  if (!day) return false;
+  const f = fromDate.trim();
+  const t = toDate.trim();
+
+  if (!f && !t) return true;
+  if (f && t) return day >= f && day <= t;
+  if (f && !t) return day >= f; // OPEN-ENDED START
+  if (!f && t) return day <= t; // OPEN-ENDED END
+  return true;
+}
+
 const WorkerDetails: React.FC = () => {
   const { workerId } = useParams<{ workerId: string }>();
   const navigate = useNavigate();
+  const { workers, refresh } = useWorkers();
 
-  const [worker, setWorker] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    refresh(); // pulls newest list on mount
+  }, [refresh]);
+
+  const worker: WorkerData | undefined = workers.find(
+    (w) => w.workerId === Number(workerId)
+  );
 
   // Date filter state (YYYY-MM-DD)
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Unauthorized: token missing");
-      setLoading(false);
-      return;
-    }
-
-    const fetchWorker = async () => {
-      try {
-        const res = await fetch(`${API_URL}?workerId=${workerId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setWorker(data);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch worker profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWorker();
-  }, [workerId]);
 
   if (!worker)
     return (
