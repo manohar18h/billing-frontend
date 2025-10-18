@@ -365,7 +365,21 @@ const WorkerProfile: React.FC = () => {
                   {line("Weight", `${s.metalWeight} g`)}
                 </div>
                 <div className="pl-4">
-                  {line("Date", displayFromRaw(s.todaysDate))}
+                  {line(
+                    "Date",
+                    s.todaysDate
+                      ? (() => {
+                          const d = new Date(s.todaysDate);
+                          const mm = String(d.getMonth() + 1).padStart(2, "0");
+                          const dd = String(d.getDate()).padStart(2, "0");
+                          const yy = String(d.getFullYear() % 100).padStart(
+                            2,
+                            "0"
+                          );
+                          return `${mm}/${dd}/${yy}`;
+                        })()
+                      : "-"
+                  )}
                 </div>
               </div>
             ))}
@@ -408,7 +422,21 @@ const WorkerProfile: React.FC = () => {
                   {line("Pieces", l.pieces)}
                 </div>
                 <div className="pl-4">
-                  {line("Date", displayFromRaw(l.deliveryDate))}
+                  {line(
+                    "Date",
+                    l.deliveryDate
+                      ? (() => {
+                          const d = new Date(l.deliveryDate);
+                          const mm = String(d.getMonth() + 1).padStart(2, "0");
+                          const dd = String(d.getDate()).padStart(2, "0");
+                          const yy = String(d.getFullYear() % 100).padStart(
+                            2,
+                            "0"
+                          );
+                          return `${mm}/${dd}/${yy}`;
+                        })()
+                      : "-"
+                  )}
                   {line("Wastage", `${l.wastage} %`)}
                   {line("Amount", `₹${l.amount}`)}
                 </div>
@@ -453,9 +481,22 @@ const WorkerProfile: React.FC = () => {
                   {line("Weight", `${r.metalWeight} g`)}
                 </div>
                 <div className="pl-4">
-                  {line("Customer Pay", `₹${r.customerPay}`)}
-                  {line("Worker Pay", `₹${r.workerPay}`)}
-                  {line("Date", displayFromRaw(r.deliveryDate))}
+                  {line("Work Pay", `₹${r.workerPay}`)}
+                  {line(
+                    "Date",
+                    r.deliveryDate
+                      ? (() => {
+                          const d = new Date(r.deliveryDate);
+                          const mm = String(d.getMonth() + 1).padStart(2, "0");
+                          const dd = String(d.getDate()).padStart(2, "0");
+                          const yy = String(d.getFullYear() % 100).padStart(
+                            2,
+                            "0"
+                          );
+                          return `${mm}/${dd}/${yy}`;
+                        })()
+                      : "-"
+                  )}
                 </div>
               </div>
             ))}
@@ -498,7 +539,21 @@ const WorkerProfile: React.FC = () => {
                   {line("Weight", `${p.metal_weight} g`)}
                 </div>
                 <div className="pl-4">
-                  {line("Date", displayFromRaw(p.date))}
+                  {line(
+                    "Date",
+                    p.date
+                      ? (() => {
+                          const d = new Date(p.date);
+                          const mm = String(d.getMonth() + 1).padStart(2, "0");
+                          const dd = String(d.getDate()).padStart(2, "0");
+                          const yy = String(d.getFullYear() % 100).padStart(
+                            2,
+                            "0"
+                          );
+                          return `${mm}/${dd}/${yy}`;
+                        })()
+                      : "-"
+                  )}
                   {line("Pay", `₹${p.workPay}`)}
                   {line("Wastage", p.wastage)}
                 </div>
