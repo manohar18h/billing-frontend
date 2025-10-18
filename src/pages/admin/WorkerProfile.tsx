@@ -1,9 +1,9 @@
-// src/pages/admin/WorkerDetails.tsx
+// src/pages/admin/WorkerProfile.tsx
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useWorkers } from "@/contexts/WorkersContext";
 import { WorkerData } from "@/lib/WorkerData";
 import { TextField, Button, Box, Typography } from "@mui/material";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 /** String-only normalizer: returns YYYY-MM-DD with NO timezone shifts */
 function normalizeYMD(raw: unknown): string | null {
@@ -71,40 +71,114 @@ function inRangeExact(
   return true;
 }
 
-/** For Worker Stocks only: single “From” means ≥ From; single “To” means ≤ To */
-function inRangeOpenStart(
-  rawDate: unknown,
-  fromDate: string,
-  toDate: string
-): boolean {
-  const day = normalizeYMD(rawDate);
-  if (!day) return false;
-  const f = fromDate.trim();
-  const t = toDate.trim();
-
-  if (!f && !t) return true;
-  if (f && t) return day >= f && day <= t;
-  if (f && !t) return day >= f; // OPEN-ENDED START
-  if (!f && t) return day <= t; // OPEN-ENDED END
-  return true;
-}
-
-const WorkerDetails: React.FC = () => {
-  const { workerId } = useParams<{ workerId: string }>();
+const WorkerProfile: React.FC = () => {
   const navigate = useNavigate();
-  const { workers, refresh } = useWorkers();
-
-  useEffect(() => {
-    refresh(); // pulls newest list on mount
-  }, [refresh]);
-
-  const worker: WorkerData | undefined = workers.find(
-    (w) => w.workerId === Number(workerId)
-  );
+  const [worker, setWorker] = useState<WorkerData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Date filter state (YYYY-MM-DD)
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
+
+  const [showWorkerStock, setShowWorkerStock] = useState(false);
+  const [showLotWorks, setShowLotWorks] = useState(false);
+  const [showRepairs, setShowRepairs] = useState(false);
+  const [showPays, setShowPays] = useState(false);
+  const [showTxs, setShowTxs] = useState(false);
+
+  // Filtered views
+  const filteredStocks = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.workerStocks ?? []).filter((s) =>
+            inRangeExact(s.todaysDate as any, fromDate, toDate)
+          )
+        : worker?.workerStocks ?? [],
+    [worker?.workerStocks, fromDate, toDate]
+  );
+
+  const filteredLots = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.lotWorks ?? []).filter((l) =>
+            inRangeExact(l.deliveryDate as any, fromDate, toDate)
+          )
+        : worker?.lotWorks ?? [],
+    [worker?.lotWorks, fromDate, toDate]
+  );
+
+  const filteredRepairs = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.repairWorks ?? []).filter((r) =>
+            inRangeExact(r.deliveryDate as any, fromDate, toDate)
+          )
+        : worker?.repairWorks ?? [],
+    [worker?.repairWorks, fromDate, toDate]
+  );
+
+  const filteredPays = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.workerPays ?? []).filter((p) =>
+            inRangeExact(p.date as any, fromDate, toDate)
+          )
+        : worker?.workerPays ?? [],
+    [worker?.workerPays, fromDate, toDate]
+  );
+
+  const filteredTxs = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.workerTransactionHistories ?? []).filter((t) =>
+            inRangeExact(t.paymentDate as any, fromDate, toDate)
+          )
+        : worker?.workerTransactionHistories ?? [],
+    [worker?.workerTransactionHistories, fromDate, toDate]
+  );
+
+  useEffect(() => {
+    const fetchWorkerProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("No token found. Please log in again.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get<WorkerData>(
+          "https://api.hambirejewellery.com/worker/profile",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        setWorker(response.data);
+      } catch (err: any) {
+        console.error("Error fetching worker profile:", err);
+        setError("Failed to load worker profile.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWorkerProfile();
+  }, []);
+
+  if (loading)
+    return (
+      <div className="flex justify-center items-center min-h-screen text-lg">
+        Loading worker profile...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex justify-center items-center min-h-screen text-red-500">
+        {error}
+      </div>
+    );
 
   if (!worker)
     return (
@@ -120,92 +194,25 @@ const WorkerDetails: React.FC = () => {
     </div>
   );
 
-  // Filtered views
-  const filteredStocks = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.workerStocks ?? []).filter((s) =>
-            inRangeExact(s.todaysDate as any, fromDate, toDate)
-          )
-        : worker.workerStocks ?? [],
-    [worker.workerStocks, fromDate, toDate]
-  );
-
-  const filteredLots = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.lotWorks ?? []).filter((l) =>
-            inRangeExact(l.deliveryDate as any, fromDate, toDate)
-          )
-        : worker.lotWorks ?? [],
-    [worker.lotWorks, fromDate, toDate]
-  );
-
-  const filteredRepairs = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.repairWorks ?? []).filter((r) =>
-            inRangeExact(r.deliveryDate as any, fromDate, toDate)
-          )
-        : worker.repairWorks ?? [],
-    [worker.repairWorks, fromDate, toDate]
-  );
-
-  const filteredPays = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.workerPays ?? []).filter((p) =>
-            inRangeExact(p.date as any, fromDate, toDate)
-          )
-        : worker.workerPays ?? [],
-    [worker.workerPays, fromDate, toDate]
-  );
-
-  const filteredTxs = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.workerTransactionHistories ?? []).filter((t) =>
-            inRangeExact(t.paymentDate as any, fromDate, toDate)
-          )
-        : worker.workerTransactionHistories ?? [],
-    [worker.workerTransactionHistories, fromDate, toDate]
-  );
-
   const clearDates = () => {
     setFromDate("");
     setToDate("");
   };
 
-  // State to control expand/collapse
-  const [showWorkerStock, setShowWorkerStock] = useState(false);
-
-  // Only show 4 rows initially
   const visibleWorkerStockResult = showWorkerStock
     ? filteredStocks
     : filteredStocks.slice(0, 4);
 
-  const [showLotWorks, setShowLotWorks] = useState(false);
-
-  // Decide how many lots to show
   const visibleLotWorks = showLotWorks
     ? filteredLots
     : filteredLots.slice(0, 4);
 
-  const [showRepairs, setShowRepairs] = useState(false);
-
-  // Decide how many repairs to show
   const visibleRepairs = showRepairs
     ? filteredRepairs
     : filteredRepairs.slice(0, 4);
 
-  const [showPays, setShowPays] = useState(false);
-
-  // Decide how many payments to show
   const visiblePays = showPays ? filteredPays : filteredPays.slice(0, 4);
 
-  const [showTxs, setShowTxs] = useState(false);
-
-  // Decide how many transactions to show
   const visibleTxs = showTxs ? filteredTxs : filteredTxs.slice(0, 4);
 
   return (
@@ -219,26 +226,19 @@ const WorkerDetails: React.FC = () => {
         </button>
 
         <h1 className="text-2xl font-bold text-purple-700 dark:text-purple-300 mb-6">
-          Worker Details #{worker.workerId}
+          #{worker.fullName} Details
         </h1>
 
         <div className="mb-20 flex justify-center">
-          <div
-            className="w-full max-w-3xl rounded-2xl shadow-xl p-6"
-            style={{
-              background: "linear-gradient(135deg, #0f172a, #334155)", // dark gradient
-              color: "#fff",
-            }}
-          >
-            {/* Title */}
-            <h2 className="text-2xl font-bold text-center mb-6 text-amber-300">
-              Worker Basic Information
+          <div className="w-full max-w-3xl rounded-2xl shadow-xl p-4 sm:p-6 bg-gradient-to-br from-gray-900 to-gray-700 text-white">
+            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 text-amber-300">
+              Employee Information
             </h2>
 
             {/* Grid */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {/* Left Column */}
-              <div className="space-y-3 pr-4 border-r border-white/20">
+              <div className="space-y-2 sm:pr-4 border-b sm:border-b-0 sm:border-r border-white/20">
                 {[
                   ["Full Name", worker.fullName, "text-amber-200"],
                   ["Phone", worker.phnNumber, "text-teal-300"],
@@ -263,7 +263,7 @@ const WorkerDetails: React.FC = () => {
               </div>
 
               {/* Right Column */}
-              <div className="space-y-3 pl-4">
+              <div className="space-y-2 sm:pl-4">
                 {[
                   [
                     "Received Amount",
@@ -296,7 +296,10 @@ const WorkerDetails: React.FC = () => {
                     "text-slate-200 font-bold",
                   ],
                 ].map(([label, value, color], i) => (
-                  <p key={i} className="flex justify-between">
+                  <p
+                    key={i}
+                    className="flex justify-between text-sm sm:text-base"
+                  >
                     <span className="text-gray-300 font-medium">{label}:</span>
                     <span className={`${color}`}>{value}</span>
                   </p>
@@ -349,7 +352,7 @@ const WorkerDetails: React.FC = () => {
         {filteredStocks?.length > 0 && (
           <>
             <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
-              Worker Stocks
+              Metal Stocks
             </h2>
 
             {visibleWorkerStockResult.map((s) => (
@@ -363,7 +366,6 @@ const WorkerDetails: React.FC = () => {
                 </div>
                 <div className="pl-4">
                   {line("Date", displayFromRaw(s.todaysDate))}
-                  {line("Stock ID", s.wstockId)}
                 </div>
               </div>
             ))}
@@ -409,7 +411,6 @@ const WorkerDetails: React.FC = () => {
                   {line("Date", displayFromRaw(l.deliveryDate))}
                   {line("Wastage", `${l.wastage} %`)}
                   {line("Amount", `₹${l.amount}`)}
-                  {line("Lot ID", l.lotId)}
                 </div>
               </div>
             ))}
@@ -483,7 +484,7 @@ const WorkerDetails: React.FC = () => {
         {filteredPays?.length > 0 && (
           <>
             <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
-              Work Payments
+              Order Work Payments
             </h2>
 
             {visiblePays.map((p) => (
@@ -576,4 +577,4 @@ const WorkerDetails: React.FC = () => {
   );
 };
 
-export default WorkerDetails;
+export default WorkerProfile;

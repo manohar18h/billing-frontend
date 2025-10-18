@@ -88,6 +88,63 @@ const WorkerDetails: React.FC = () => {
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
 
+  const [showWorkerStock, setShowWorkerStock] = useState(false);
+  const [showLotWorks, setShowLotWorks] = useState(false);
+  const [showRepairs, setShowRepairs] = useState(false);
+  const [showPays, setShowPays] = useState(false);
+  const [showTxs, setShowTxs] = useState(false);
+
+  // Filtered views
+  const filteredStocks = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.workerStocks ?? []).filter((s) =>
+            inRangeExact(s.todaysDate as any, fromDate, toDate)
+          )
+        : worker?.workerStocks ?? [],
+    [worker?.workerStocks, fromDate, toDate]
+  );
+
+  const filteredLots = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.lotWorks ?? []).filter((l) =>
+            inRangeExact(l.deliveryDate as any, fromDate, toDate)
+          )
+        : worker?.lotWorks ?? [],
+    [worker?.lotWorks, fromDate, toDate]
+  );
+
+  const filteredRepairs = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.repairWorks ?? []).filter((r) =>
+            inRangeExact(r.deliveryDate as any, fromDate, toDate)
+          )
+        : worker?.repairWorks ?? [],
+    [worker?.repairWorks, fromDate, toDate]
+  );
+
+  const filteredPays = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.workerPays ?? []).filter((p) =>
+            inRangeExact(p.date as any, fromDate, toDate)
+          )
+        : worker?.workerPays ?? [],
+    [worker?.workerPays, fromDate, toDate]
+  );
+
+  const filteredTxs = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.workerTransactionHistories ?? []).filter((t) =>
+            inRangeExact(t.paymentDate as any, fromDate, toDate)
+          )
+        : worker?.workerTransactionHistories ?? [],
+    [worker?.workerTransactionHistories, fromDate, toDate]
+  );
+
   if (!worker)
     return (
       <div className="p-10 text-center text-xl">
@@ -102,90 +159,30 @@ const WorkerDetails: React.FC = () => {
     </div>
   );
 
-  // Filtered views
-  const filteredStocks = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.workerStocks ?? []).filter((s) =>
-            inRangeExact(s.todaysDate as any, fromDate, toDate)
-          )
-        : worker.workerStocks ?? [],
-    [worker.workerStocks, fromDate, toDate]
-  );
-
-  const filteredLots = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.lotWorks ?? []).filter((l) =>
-            inRangeExact(l.deliveryDate as any, fromDate, toDate)
-          )
-        : worker.lotWorks ?? [],
-    [worker.lotWorks, fromDate, toDate]
-  );
-
-  const filteredRepairs = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.repairWorks ?? []).filter((r) =>
-            inRangeExact(r.deliveryDate as any, fromDate, toDate)
-          )
-        : worker.repairWorks ?? [],
-    [worker.repairWorks, fromDate, toDate]
-  );
-
-  const filteredPays = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.workerPays ?? []).filter((p) =>
-            inRangeExact(p.date as any, fromDate, toDate)
-          )
-        : worker.workerPays ?? [],
-    [worker.workerPays, fromDate, toDate]
-  );
-
-  const filteredTxs = useMemo(
-    () =>
-      fromDate || toDate
-        ? (worker.workerTransactionHistories ?? []).filter((t) =>
-            inRangeExact(t.paymentDate as any, fromDate, toDate)
-          )
-        : worker.workerTransactionHistories ?? [],
-    [worker.workerTransactionHistories, fromDate, toDate]
-  );
-
   const clearDates = () => {
     setFromDate("");
     setToDate("");
   };
 
   // State to control expand/collapse
-  const [showWorkerStock, setShowWorkerStock] = useState(false);
 
   // Only show 4 rows initially
   const visibleWorkerStockResult = showWorkerStock
     ? filteredStocks
     : filteredStocks.slice(0, 4);
 
-  const [showLotWorks, setShowLotWorks] = useState(false);
-
   // Decide how many lots to show
   const visibleLotWorks = showLotWorks
     ? filteredLots
     : filteredLots.slice(0, 4);
-
-  const [showRepairs, setShowRepairs] = useState(false);
 
   // Decide how many repairs to show
   const visibleRepairs = showRepairs
     ? filteredRepairs
     : filteredRepairs.slice(0, 4);
 
-  const [showPays, setShowPays] = useState(false);
-
   // Decide how many payments to show
   const visiblePays = showPays ? filteredPays : filteredPays.slice(0, 4);
-
-  const [showTxs, setShowTxs] = useState(false);
 
   // Decide how many transactions to show
   const visibleTxs = showTxs ? filteredTxs : filteredTxs.slice(0, 4);

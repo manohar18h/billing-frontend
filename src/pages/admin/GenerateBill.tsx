@@ -497,8 +497,16 @@ const GenerateBill: React.FC = () => {
                   <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle">
                     {item.itemName}
                   </td>
-                  <td className="border px-2 py-1  text-[#d81275] font-bold text-center align-middle">
-                    {item.metal}
+                  <td className="border px-2 py-1 text-[#d81275] font-bold text-center align-middle">
+                    {item.metal === "22 Gold"
+                      ? "22k G"
+                      : item.metal === "24 Gold"
+                      ? "24k G"
+                      : item.metal === "995 Silver"
+                      ? "995 S"
+                      : item.metal === "999 Silver"
+                      ? "Kamal S"
+                      : item.metal}
                   </td>
                   <td className="border px-2 py-1 text-[#146363] font-bold text-center align-middle">
                     {item.metalPrice}

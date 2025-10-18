@@ -1524,156 +1524,163 @@ const ShowroomMetalStock: React.FC = () => {
         >
           Old Return Data
         </Typography>
-
-        <Table
-          size="medium"
-          className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden"
+        <Box
+          sx={{
+            width: "100%",
+            overflowX: "auto", // allows horizontal scrolling on small screens
+          }}
         >
-          <TableHead className="bg-gray-200">
-            <TableRow>
-              <TableCell
-                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
-              >
-                <div className="flex justify-center items-center">Metal</div>
-              </TableCell>
-
-              <TableCell
-                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
-              >
-                <div className="flex justify-center items-center">
-                  {" "}
-                  Item Name
-                </div>
-              </TableCell>
-
-              <TableCell
-                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
-              >
-                <div className="flex justify-center items-center">
-                  Gross Weight
-                </div>
-              </TableCell>
-
-              <TableCell
-                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
-              >
-                <div className="flex justify-center items-center">
-                  {" "}
-                  Purity Weight
-                </div>
-              </TableCell>
-
-              <TableCell
-                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
-              >
-                <div className="flex justify-center items-center">
-                  Total Amount
-                </div>
-              </TableCell>
-
-              <TableCell
-                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
-              >
-                <div className="flex justify-center items-center">
-                  {" "}
-                  Cash Amount
-                </div>
-              </TableCell>
-
-              <TableCell
-                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
-              >
-                <div className="flex justify-center items-center">
-                  {" "}
-                  Phn Pay Amount
-                </div>
-              </TableCell>
-
-              <TableCell
-                sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
-              >
-                <div className="flex justify-center items-center"> Date</div>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {visibleOldReturnData.map((r) => (
-              <TableRow key={r.oldMetalReturnId}>
+          <Table
+            sx={{ minWidth: 800 /* ensure table doesn’t collapse */ }}
+            size="medium"
+            className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden"
+          >
+            <TableHead className="bg-gray-200">
+              <TableRow>
                 <TableCell
-                  className="border px-3 py-2 text-center"
-                  sx={{ fontSize: "0.95rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+                >
+                  <div className="flex justify-center items-center">Metal</div>
+                </TableCell>
+
+                <TableCell
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
                   <div className="flex justify-center items-center">
-                    {r.onlyExchangeMetal}
+                    {" "}
+                    Item Name
                   </div>
                 </TableCell>
 
                 <TableCell
-                  className="border px-3 py-2 text-center"
-                  sx={{ fontSize: "0.95rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
                   <div className="flex justify-center items-center">
-                    {r.onlyExchange_metal_name}
+                    Gross Weight
                   </div>
                 </TableCell>
 
                 <TableCell
-                  className="border px-3 py-2 text-center"
-                  sx={{ fontSize: "0.95rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
                   <div className="flex justify-center items-center">
-                    {r.onlyExchange_metal_weight}
+                    {" "}
+                    Purity Weight
                   </div>
                 </TableCell>
 
                 <TableCell
-                  className="border px-3 py-2 text-center"
-                  sx={{ fontSize: "0.95rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
                   <div className="flex justify-center items-center">
-                    {r.onlyExchange_metal_purity_weight}
+                    Total Amount
                   </div>
                 </TableCell>
 
                 <TableCell
-                  className="border px-3 py-2 text-center"
-                  sx={{ fontSize: "0.95rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
                   <div className="flex justify-center items-center">
-                    {r.onlyExchange_total_amount}
+                    {" "}
+                    Cash Amount
                   </div>
                 </TableCell>
 
                 <TableCell
-                  className="border px-3 py-2 text-center"
-                  sx={{ fontSize: "0.95rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
                   <div className="flex justify-center items-center">
-                    {r.onlyExchange_item_cash_amount}
+                    {" "}
+                    Phn Pay Amount
                   </div>
                 </TableCell>
 
                 <TableCell
-                  className="border px-3 py-2 text-center"
-                  sx={{ fontSize: "0.95rem" }}
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
-                  <div className="flex justify-center items-center">
-                    {r.onlyExchange_item_phnpay_amount}
-                  </div>
-                </TableCell>
-
-                <TableCell
-                  className="border px-3 py-2 text-center"
-                  sx={{ fontSize: "0.95rem" }}
-                >
-                  <div className="flex justify-center items-center">
-                    {r.date}
-                  </div>
+                  <div className="flex justify-center items-center"> Date</div>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {visibleOldReturnData.map((r) => (
+                <TableRow key={r.oldMetalReturnId}>
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.onlyExchangeMetal}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.onlyExchange_metal_name}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.onlyExchange_metal_weight}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.onlyExchange_metal_purity_weight}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.onlyExchange_total_amount}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.onlyExchange_item_cash_amount}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.onlyExchange_item_phnpay_amount}
+                    </div>
+                  </TableCell>
+
+                  <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.date}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Box>
 
         {filteredOldReturnData.length > 5 && (
           <Typography

@@ -241,117 +241,129 @@ const AllBillingOrders: React.FC = () => {
           <p className="py-4">No billing orders found.</p>
         ) : (
           <div className="mt-4">
-            <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      Billing Date
-                    </div>
-                  </th>
-                  <th className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      Bill Number
-                    </div>
-                  </th>
-                  <th className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">Name</div>
-                  </th>
-                  <th className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      Delivery Status
-                    </div>
-                  </th>
-                  <th className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      Orders
-                    </div>
-                  </th>
-                  <th className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      Total Amount
-                    </div>
-                  </th>
-                  <th className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      Due Amount
-                    </div>
-                  </th>
-                  <th className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      Action
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRows.map((bill) => (
-                  <tr key={bill.billId} className="bg-white/90">
-                    <td className="border px-3 py-2 text-center">
+            <Box
+              sx={{
+                width: "100%",
+                overflowX: "auto", // allows horizontal scrolling on small screens
+              }}
+            >
+              <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden sx={{ minWidth: 800">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        {bill.billingDate ?? "N/A"}
+                        Billing Date
                       </div>
-                    </td>
-
-                    <td className="border px-3 py-2 text-center">
+                    </th>
+                    <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        {bill.billNumber}{" "}
+                        Bill Number
                       </div>
-                    </td>
-                    <td className="border px-3 py-2 text-center">
+                    </th>
+                    <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        {bill.name}{" "}
+                        Name
                       </div>
-                    </td>
-                    <td className="border px-3 py-2 text-center">
+                    </th>
+                    <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        {renderStatusChip(bill.deliveryStatus)}
+                        Delivery Status
                       </div>
-                    </td>
-
-                    <td className="border px-3 py-2 text-center">
+                    </th>
+                    <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        {bill.numberOfOrders ?? 0}
+                        Orders
                       </div>
-                    </td>
-
-                    <td className="border px-3 py-2 text-center">
+                    </th>
+                    <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        {bill.billTotalAmount != null
-                          ? bill.billTotalAmount.toFixed(2)
-                          : "-"}
+                        Total Amount
                       </div>
-                    </td>
-
-                    <td className="border px-3 py-2 text-center">
+                    </th>
+                    <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        {bill.billDueAmount != null
-                          ? bill.billDueAmount.toFixed(2)
-                          : "-"}
+                        Due Amount
                       </div>
-                    </td>
-
-                    <td className="border px-3 py-2 text-center">
+                    </th>
+                    <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        <IconButton
-                          size="medium"
-                          color="primary"
-                          sx={{
-                            "&:hover": { backgroundColor: "#E0E0E0" },
-                          }}
-                          onClick={() => {
-                            localStorage.setItem("billNumber", bill.billNumber);
-                            navigate("/admin/bill-details");
-                          }}
-                        >
-                          <VisibilityIcon fontSize="medium" />
-                        </IconButton>
+                        Action
                       </div>
-                    </td>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredRows.map((bill) => (
+                    <tr key={bill.billId} className="bg-white/90">
+                      <td className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          {bill.billingDate ?? "N/A"}
+                        </div>
+                      </td>
+
+                      <td className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          {bill.billNumber}{" "}
+                        </div>
+                      </td>
+                      <td className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          {bill.name}{" "}
+                        </div>
+                      </td>
+                      <td className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          {renderStatusChip(bill.deliveryStatus)}
+                        </div>
+                      </td>
+
+                      <td className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          {bill.numberOfOrders ?? 0}
+                        </div>
+                      </td>
+
+                      <td className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          {bill.billTotalAmount != null
+                            ? bill.billTotalAmount.toFixed(2)
+                            : "-"}
+                        </div>
+                      </td>
+
+                      <td className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          {bill.billDueAmount != null
+                            ? bill.billDueAmount.toFixed(2)
+                            : "-"}
+                        </div>
+                      </td>
+
+                      <td className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          <IconButton
+                            size="medium"
+                            color="primary"
+                            sx={{
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                            }}
+                            onClick={() => {
+                              localStorage.setItem(
+                                "billNumber",
+                                bill.billNumber
+                              );
+                              navigate("/admin/bill-details");
+                            }}
+                          >
+                            <VisibilityIcon fontSize="medium" />
+                          </IconButton>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Box>
           </div>
         )}
       </Paper>

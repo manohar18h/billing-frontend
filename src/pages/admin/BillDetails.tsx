@@ -25,6 +25,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
+import { Box } from "@mui/system";
 
 interface selectedOrders {
   orderId: number;
@@ -411,202 +412,213 @@ const BillDetails: React.FC = () => {
             <h3 className=" text-3xl font-bold mb-10 text-blue-600">
               Billing History
             </h3>
-            <Table>
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="border px-3 py-2">Order ID</th>
-                  <th className="border px-3 py-2">Date</th>
-                  <th className="border px-3 py-2">Item</th>
-                  <th className="border px-3 py-2">Metal</th>
-                  <th className="border px-3 py-2">Weight</th>
-                  <th className="border px-3 py-2">Status</th>
-                  <th className="border px-3 py-2">Total</th>
-                  <th className="border px-3 py-2">Paid</th>
+            <Box
+              sx={{
+                width: "100%",
+                overflowX: "auto", // allows horizontal scrolling on small screens
+              }}
+            >
+              <Table sx={{ minWidth: 800 /* ensure table doesn’t collapse */ }}>
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="border px-3 py-2">Order ID</th>
+                    <th className="border px-3 py-2">Date</th>
+                    <th className="border px-3 py-2">Item</th>
+                    <th className="border px-3 py-2">Metal</th>
+                    <th className="border px-3 py-2">Weight</th>
+                    <th className="border px-3 py-2">Status</th>
+                    <th className="border px-3 py-2">Total</th>
+                    <th className="border px-3 py-2">Paid</th>
 
-                  <th className="border px-3 py-2">Due</th>
-                  <th className="border px-3 py-2">Worker</th>
-                  <th className="border px-3 py-2">Pay</th>
-                  <th className="border px-3 py-2">View</th>
-                  <th className="border px-3 py-2">Edit</th>
-                  <th className="border px-3 py-2">Cancel</th>
-                </tr>
-              </thead>
+                    <th className="border px-3 py-2">Due</th>
+                    <th className="border px-3 py-2">Worker</th>
+                    <th className="border px-3 py-2">Pay</th>
+                    <th className="border px-3 py-2">View</th>
+                    <th className="border px-3 py-2">Edit</th>
+                    <th className="border px-3 py-2">Cancel</th>
+                  </tr>
+                </thead>
 
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.orderId}>
-                    <TableCell className={`border px-3 py-2 `}>
-                      {order.orderId}
-                    </TableCell>
-                    <TableCell className={`border px-3 py-2 `}>
-                      {formatDate(order.orderDate)}
-                    </TableCell>
-                    <TableCell className={`border px-3 py-2 `}>
-                      {order.itemName}
-                    </TableCell>
-                    <TableCell className={`border px-3 py-2 `}>
-                      {order.metal}
-                    </TableCell>
-                    <TableCell className={`border px-3 py-2 `}>
-                      {order.metal_weight}
-                    </TableCell>
-                    <TableCell
-                      className={`border px-3 py-2 `}
-                      sx={{
-                        color:
-                          order.deliveryStatus === "Delivered"
-                            ? "#2e7d32" // green
-                            : order.deliveryStatus === "Pending"
-                            ? "#ed6c02" // orange/yellow
-                            : order.deliveryStatus === "Canceled"
-                            ? "#d32f2f" // red
-                            : "inherit",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {order.deliveryStatus}
-                    </TableCell>
-
-                    <TableCell
-                      className={`border px-3 py-2 `}
-                      sx={{
-                        color: "#ca8a04",
-                      }}
-                    >
-                      {order.total_item_amount.toFixed(2)}
-                    </TableCell>
-
-                    <TableCell
-                      className={`border px-3 py-2 `}
-                      sx={{
-                        color: "#15803d",
-                      }}
-                    >
-                      {order.paidAmount}
-                    </TableCell>
-                    <TableCell
-                      className={`border px-3 py-2 ${
-                        order.dueAmount !== 0
-                          ? "text-red-600 font-semibold"
-                          : ""
-                      }`}
-                    >
-                      {formatMoney(order.dueAmount)}
-                    </TableCell>
-
-                    <TableCell className={`border px-3 py-2 `}>
-                      {order.workerPay ? (
-                        order.workerPay.fullName
-                      ) : (
-                        <IconButton
-                          size="medium"
-                          sx={{
-                            color: "#9C27B0",
-                            "&:hover": { backgroundColor: "#E0E0E0" },
-                            borderRadius: "50%", // ✅ ensures round hover effect
-                          }}
-                          onClick={() => {
-                            setAssignOrderId(order.orderId);
-                            setSelectedWorkerId("");
-                            setWorkerPayAmount("");
-                            setWorkerPayWastage("");
-                            setAssignDialogOpen(true);
-                          }}
-                        >
-                          <PersonAddIcon fontSize="medium" />
-                        </IconButton>
-                      )}
-                    </TableCell>
-
-                    <TableCell className={`border px-3 py-2 `}>
-                      {asNumber(order.dueAmount) !== 0 ? (
-                        <IconButton
-                          size="medium"
-                          sx={{
-                            color: "#4CAF50", // solid green background
-                            "&:hover": { backgroundColor: "#E0E0E0" },
-                          }}
-                          onClick={() => {
-                            setSelectedOrderId(order.orderId);
-                            setPayAmount("");
-                            setPayDialogOpen(true);
-                          }}
-                        >
-                          <CurrencyRupeeIcon fontSize="medium" />
-                        </IconButton>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell className={`border px-3 py-2 `}>
-                      <IconButton
-                        size="medium"
-                        color="primary"
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.orderId}>
+                      <TableCell className={`border px-3 py-2 `}>
+                        {order.orderId}
+                      </TableCell>
+                      <TableCell className={`border px-3 py-2 `}>
+                        {formatDate(order.orderDate)}
+                      </TableCell>
+                      <TableCell className={`border px-3 py-2 `}>
+                        {order.itemName}
+                      </TableCell>
+                      <TableCell className={`border px-3 py-2 `}>
+                        {order.metal}
+                      </TableCell>
+                      <TableCell className={`border px-3 py-2 `}>
+                        {order.metal_weight}
+                      </TableCell>
+                      <TableCell
+                        className={`border px-3 py-2 `}
                         sx={{
-                          "&:hover": { backgroundColor: "#E0E0E0" },
+                          color:
+                            order.deliveryStatus === "Delivered"
+                              ? "#2e7d32" // green
+                              : order.deliveryStatus === "Pending"
+                              ? "#ed6c02" // orange/yellow
+                              : order.deliveryStatus === "Canceled"
+                              ? "#d32f2f" // red
+                              : "inherit",
+                          fontWeight: "bold",
                         }}
-                        onClick={() => handleViewMore(order.orderId)}
                       >
-                        <VisibilityIcon fontSize="medium" />
-                      </IconButton>
-                    </TableCell>
-                    <TableCell className={`border px-3 py-2 `}>
-                      {order.deliveryStatus === "Canceled" ? (
-                        <>-</>
-                      ) : (
+                        {order.deliveryStatus}
+                      </TableCell>
+
+                      <TableCell
+                        className={`border px-3 py-2 `}
+                        sx={{
+                          color: "#ca8a04",
+                        }}
+                      >
+                        {order.total_item_amount.toFixed(2)}
+                      </TableCell>
+
+                      <TableCell
+                        className={`border px-3 py-2 `}
+                        sx={{
+                          color: "#15803d",
+                        }}
+                      >
+                        {order.paidAmount}
+                      </TableCell>
+                      <TableCell
+                        className={`border px-3 py-2 ${
+                          order.dueAmount !== 0
+                            ? "text-red-600 font-semibold"
+                            : ""
+                        }`}
+                      >
+                        {formatMoney(order.dueAmount)}
+                      </TableCell>
+
+                      <TableCell className={`border px-3 py-2 `}>
+                        {order.workerPay ? (
+                          order.workerPay.fullName
+                        ) : (
+                          <IconButton
+                            size="medium"
+                            sx={{
+                              color: "#9C27B0",
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                              borderRadius: "50%", // ✅ ensures round hover effect
+                            }}
+                            onClick={() => {
+                              setAssignOrderId(order.orderId);
+                              setSelectedWorkerId("");
+                              setWorkerPayAmount("");
+                              setWorkerPayWastage("");
+                              setAssignDialogOpen(true);
+                            }}
+                          >
+                            <PersonAddIcon fontSize="medium" />
+                          </IconButton>
+                        )}
+                      </TableCell>
+
+                      <TableCell className={`border px-3 py-2 `}>
+                        {asNumber(order.dueAmount) !== 0 ? (
+                          <IconButton
+                            size="medium"
+                            sx={{
+                              color: "#4CAF50", // solid green background
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                            }}
+                            onClick={() => {
+                              setSelectedOrderId(order.orderId);
+                              setPayAmount("");
+                              setPayDialogOpen(true);
+                            }}
+                          >
+                            <CurrencyRupeeIcon fontSize="medium" />
+                          </IconButton>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+                      <TableCell className={`border px-3 py-2 `}>
                         <IconButton
-                          size="small"
-                          color="warning"
+                          size="medium"
+                          color="primary"
                           sx={{
                             "&:hover": { backgroundColor: "#E0E0E0" },
                           }}
-                          onClick={() => {
-                            setEditingOrderId(order.orderId);
-                            handleEditOrder(order.orderId);
-                          }}
+                          onClick={() => handleViewMore(order.orderId)}
                         >
-                          <EditIcon />
+                          <VisibilityIcon fontSize="medium" />
                         </IconButton>
-                      )}
-                    </TableCell>
-                    <TableCell className={`border px-3 py-2 `}>
-                      {order.deliveryStatus === "Canceled" ? (
-                        <CheckCircleIcon color="success" />
-                      ) : (
-                        <IconButton
-                          size="small"
-                          sx={{
-                            color: "#A0522D",
-                            "&:hover": { backgroundColor: "#E0E0E0" },
-                          }}
-                          onClick={() => handleClickOrderOpen(order.orderId)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <Dialog open={orderOpen} onClose={handleOrderClose}>
-                  <DialogTitle>Confirm Cancelation</DialogTitle>
-                  <DialogContent>
-                    <DialogContentText>
-                      Are you sure you want to Cancel this order item with ID:
-                      {slectOrderId}
-                      <strong>{selectedOrderId}</strong>?
-                    </DialogContentText>
-                  </DialogContent>
-                  <DialogActions>
-                    <Button onClick={handleOrderClose} color="primary">
-                      No
-                    </Button>
-                    <Button onClick={handleOrderDelete} color="error" autoFocus>
-                      Yes, Cancel
-                    </Button>
-                  </DialogActions>
-                </Dialog>
-              </TableBody>
-            </Table>
+                      </TableCell>
+                      <TableCell className={`border px-3 py-2 `}>
+                        {order.deliveryStatus === "Canceled" ? (
+                          <>-</>
+                        ) : (
+                          <IconButton
+                            size="small"
+                            color="warning"
+                            sx={{
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                            }}
+                            onClick={() => {
+                              setEditingOrderId(order.orderId);
+                              handleEditOrder(order.orderId);
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        )}
+                      </TableCell>
+                      <TableCell className={`border px-3 py-2 `}>
+                        {order.deliveryStatus === "Canceled" ? (
+                          <CheckCircleIcon color="success" />
+                        ) : (
+                          <IconButton
+                            size="small"
+                            sx={{
+                              color: "#A0522D",
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                            }}
+                            onClick={() => handleClickOrderOpen(order.orderId)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <Dialog open={orderOpen} onClose={handleOrderClose}>
+                    <DialogTitle>Confirm Cancelation</DialogTitle>
+                    <DialogContent>
+                      <DialogContentText>
+                        Are you sure you want to Cancel this order item with ID:
+                        {slectOrderId}
+                        <strong>{selectedOrderId}</strong>?
+                      </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={handleOrderClose} color="primary">
+                        No
+                      </Button>
+                      <Button
+                        onClick={handleOrderDelete}
+                        color="error"
+                        autoFocus
+                      >
+                        Yes, Cancel
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
+                </TableBody>
+              </Table>
+            </Box>
           </div>
         )}
       </div>

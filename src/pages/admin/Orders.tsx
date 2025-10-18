@@ -2,8 +2,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   TextField,
-  Box,
-  Grid,
   Button,
   InputAdornment,
   Paper,
@@ -31,6 +29,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
+import { Box } from "@mui/system";
 
 type BarcodeProduct = {
   metal: string;
@@ -1032,11 +1031,14 @@ const Orders: React.FC = () => {
       >
         <Box
           display="flex"
+          flexDirection={{ xs: "column", sm: "row" }}
+          flexWrap="wrap"
           justifyContent="space-between"
-          alignItems="center"
+          alignItems={{ xs: "flex-start", sm: "center" }}
           mb={6}
+          gap={2}
         >
-          <Box display="flex">
+          <Box display="flex" alignItems="center" gap={1}>
             <IconButton color="primary" onClick={handleBackClick}>
               <ArrowBackIcon />
             </IconButton>
@@ -1045,12 +1047,11 @@ const Orders: React.FC = () => {
             </Typography>
           </Box>
           <Box
-            mt={6}
             display="flex"
+            flexDirection={{ xs: "column", sm: "row" }}
             gap={2}
             maxWidth={600}
-            alignSelf="center"
-            mb={4}
+            width="100%"
           >
             <TextField
               fullWidth
@@ -1098,14 +1099,26 @@ const Orders: React.FC = () => {
                 exchangeFormRef.current?.scrollIntoView({ behavior: "smooth" });
               }, 100);
             }}
+            sx={{ mt: { xs: 2, sm: 0 } }}
           >
             Exchange / Returnn
           </Button>
         </Box>
 
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr", // 12 columns → 1 column on xs
+              sm: "repeat(2, 1fr)", // 6 columns → 2 columns on sm
+              md: "repeat(3, 1fr)", // 4 columns → 3 columns on md
+              lg: "repeat(4, 1fr)", // 3 columns → 4 columns on lg
+            },
+            gap: 3, // spacing between items (like Grid spacing={3})
+          }}
+        >
           {Object.entries(order).map(([key, value]) => (
-            <Grid size={{ xs: 4, sm: 2 }} key={key}>
+            <Box key={key}>
               {key === "metal" ? (
                 <TextField
                   select
@@ -1336,9 +1349,9 @@ const Orders: React.FC = () => {
                   }}
                 />
               )}
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
         <Box display="flex" justifyContent="flex-end" mt={4} gap={2}>
           <Button
@@ -1374,287 +1387,300 @@ const Orders: React.FC = () => {
           <h3 className=" text-3xl font-bold mb-10 text-blue-600">
             Order Summary
           </h3>
-          <Table>
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="border px-3 py-2">Order ID</th>
-                <th className="border px-3 py-2">Item</th>
-                <th className="border px-3 py-2">Metal</th>
-                <th className="border px-3 py-2">Weight</th>
-                <th className="border px-3 py-2">Total</th>
-                <th className="border px-3 py-2 ">Paid</th>
-                <th className="border px-3 py-2">Due</th>
-                <th className="border px-3 py-2">Worker</th>
-                <th className="border px-3 py-2">Pay</th>
-                <th className="border px-3 py-2">View</th>
-                <th className="border px-3 py-2">Edit</th>
-                <th className="border px-3 py-2">Delete</th>
-              </tr>
-            </thead>
+          <Box
+            sx={{
+              width: "100%",
+              overflowX: "auto", // allows horizontal scrolling on small screens
+            }}
+          >
+            <Table sx={{ minWidth: 800 /* ensure table doesn’t collapse */ }}>
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="border px-3 py-2">Order ID</th>
+                  <th className="border px-3 py-2">Item</th>
+                  <th className="border px-3 py-2">Metal</th>
+                  <th className="border px-3 py-2">Weight</th>
+                  <th className="border px-3 py-2">Total</th>
+                  <th className="border px-3 py-2 ">Paid</th>
+                  <th className="border px-3 py-2">Due</th>
+                  <th className="border px-3 py-2">Worker</th>
+                  <th className="border px-3 py-2">Pay</th>
+                  <th className="border px-3 py-2">View</th>
+                  <th className="border px-3 py-2">Edit</th>
+                  <th className="border px-3 py-2">Delete</th>
+                </tr>
+              </thead>
 
-            <TableBody>
-              {ordersList.map((ord) => (
-                <TableRow key={ord.orderId}>
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ord.orderId}
-                    </div>
-                  </TableCell>
+              <TableBody>
+                {ordersList.map((ord) => (
+                  <TableRow key={ord.orderId}>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ord.orderId}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ord.itemName}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ord.itemName}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ord.metal}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ord.metal}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ord.metal_weight}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ord.metal_weight}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ord.total_item_amount}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ord.total_item_amount}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ord.paidAmount}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ord.paidAmount}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className={`border px-3 py-2  text-center ${
-                      ord.dueAmount !== 0 ? "text-red-600 font-semibold" : ""
-                    }`}
-                  >
-                    <div className="flex justify-center items-center">
-                      {formatMoney(ord.dueAmount)}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className={`border px-3 py-2  text-center ${
+                        ord.dueAmount !== 0 ? "text-red-600 font-semibold" : ""
+                      }`}
+                    >
+                      <div className="flex justify-center items-center">
+                        {formatMoney(ord.dueAmount)}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ord.workerPay ? (
-                        ord.workerPay.fullName
-                      ) : (
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ord.workerPay ? (
+                          ord.workerPay.fullName
+                        ) : (
+                          <IconButton
+                            size="medium"
+                            sx={{
+                              color: "#9C27B0",
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                              borderRadius: "50%", // ✅ ensures round hover effect
+                            }}
+                            onClick={() => {
+                              setAssignOrderId(ord.orderId);
+                              setSelectedWorkerId("");
+                              setWorkerPayAmount("");
+                              setWorkerPayWastage("");
+                              setAssignDialogOpen(true);
+                            }}
+                          >
+                            <PersonAddIcon fontSize="medium" />
+                          </IconButton>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {asNumber(ord.dueAmount) !== 0 ? (
+                          <IconButton
+                            size="medium"
+                            sx={{
+                              color: "#4CAF50", // solid green background
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                            }}
+                            onClick={() => {
+                              setSelectedOrderId(ord.orderId);
+                              setPayAmount("");
+                              setPayDialogOpen(true);
+                            }}
+                          >
+                            <CurrencyRupeeIcon fontSize="medium" />
+                          </IconButton>
+                        ) : (
+                          "-"
+                        )}
+                      </div>
+                    </TableCell>
+
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
                         <IconButton
                           size="medium"
-                          sx={{
-                            color: "#9C27B0",
-                            "&:hover": { backgroundColor: "#E0E0E0" },
-                            borderRadius: "50%", // ✅ ensures round hover effect
-                          }}
-                          onClick={() => {
-                            setAssignOrderId(ord.orderId);
-                            setSelectedWorkerId("");
-                            setWorkerPayAmount("");
-                            setWorkerPayWastage("");
-                            setAssignDialogOpen(true);
-                          }}
-                        >
-                          <PersonAddIcon fontSize="medium" />
-                        </IconButton>
-                      )}
-                    </div>
-                  </TableCell>
-
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {asNumber(ord.dueAmount) !== 0 ? (
-                        <IconButton
-                          size="medium"
-                          sx={{
-                            color: "#4CAF50", // solid green background
-                            "&:hover": { backgroundColor: "#E0E0E0" },
-                          }}
-                          onClick={() => {
-                            setSelectedOrderId(ord.orderId);
-                            setPayAmount("");
-                            setPayDialogOpen(true);
-                          }}
-                        >
-                          <CurrencyRupeeIcon fontSize="medium" />
-                        </IconButton>
-                      ) : (
-                        "-"
-                      )}
-                    </div>
-                  </TableCell>
-
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      <IconButton
-                        size="medium"
-                        color="primary"
-                        sx={{
-                          "&:hover": { backgroundColor: "#E0E0E0" },
-                        }}
-                        onClick={() => handleViewMore(ord.orderId)}
-                      >
-                        <VisibilityIcon fontSize="medium" />
-                      </IconButton>
-                    </div>
-                  </TableCell>
-
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {order.deliveryStatus === "Canceled" ? (
-                        <>-</>
-                      ) : (
-                        <IconButton
-                          size="small"
-                          color="warning"
+                          color="primary"
                           sx={{
                             "&:hover": { backgroundColor: "#E0E0E0" },
                           }}
-                          onClick={() => {
-                            setOrder({
-                              metal: ord.metal || "",
-                              metalPrice:
-                                ord.metal === "24 Gold"
-                                  ? parseFloat(
-                                      localStorage.getItem("Gold24Price") || "0"
-                                    )
-                                  : ord.metal === "22 Gold"
-                                  ? parseFloat(
-                                      localStorage.getItem("Gold22Price") || "0"
-                                    )
-                                  : ord.metal === "999 Silver"
-                                  ? parseFloat(
-                                      localStorage.getItem("Silver999Price") ||
-                                        "0"
-                                    )
-                                  : ord.metal === "995 Silver"
-                                  ? parseFloat(
-                                      localStorage.getItem("Silver995Price") ||
-                                        "0"
-                                    )
-                                  : 0,
-                              itemName: ord.itemName || "",
-                              catalogue: ord.catalogue || "",
-                              design: ord.design || "",
-                              size: String(ord.size || ""),
-                              metal_weight: ord.metal_weight || 0,
-                              wastage: ord.wastage || 0,
-                              making_charges: ord.making_charges || 0,
-                              stone_weight: ord.stone_weight || 0,
-                              stone_amount: ord.stone_amount || 0,
-                              wax_weight: ord.wax_weight || 0,
-                              wax_amount: ord.wax_amount || 0,
-                              diamond_weight: ord.diamond_weight || 0,
-                              diamond_amount: ord.diamond_amount || 0,
-                              bits_weight: ord.bits_weight || 0,
-                              bits_amount: ord.bits_amount || 0,
-                              enamel_weight: ord.enamel_weight || 0,
-                              enamel_amount: ord.enamel_amount || 0,
-                              pearls_weight: ord.pearls_weight || 0,
-                              pearls_amount: ord.pearls_amount || 0,
-                              other_weight: ord.other_weight || 0,
-                              other_amount: ord.other_amount || 0,
-                              gross_weight: ord.gross_weight || 0,
-                              stockBox: ord.stockBox || 0,
-                              discount: ord.discount || 0,
-                              deliveryStatus:
-                                ord.deliveryStatus || ord.delivery_status || "",
-                              total_item_amount:
-                                calculateTotals(ord).total_item_amount,
-                            });
-
-                            setIsEditing(true);
-                            setEditingOrderId(ord.orderId); // still keep the orderId in a separate state
-                            setOrderErrors({});
-                          }}
+                          onClick={() => handleViewMore(ord.orderId)}
                         >
-                          <EditIcon />
+                          <VisibilityIcon fontSize="medium" />
                         </IconButton>
-                      )}
-                    </div>
-                  </TableCell>
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {order.deliveryStatus === "Canceled" ? (
-                        <CheckCircleIcon color="success" />
-                      ) : editBillDetails === "editBill" ? (
-                        "-"
-                      ) : (
-                        <IconButton
-                          size="small"
-                          sx={{
-                            color: "#A0522D",
-                            "&:hover": { backgroundColor: "#E0E0E0" },
-                          }}
-                          onClick={() => handleClickOrderOpen(ord.orderId)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              <Dialog open={orderOpen} onClose={handleOrderClose}>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogContent>
-                  <DialogContentText>
-                    Are you sure you want to delete this order item with ID:
-                    {slectOrderId}
-                    <strong>{selectedOrderId}</strong>?
-                  </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={handleOrderClose} color="primary">
-                    No
-                  </Button>
-                  <Button onClick={handleOrderDelete} color="error" autoFocus>
-                    Yes, Delete
-                  </Button>
-                </DialogActions>
-              </Dialog>
-            </TableBody>
-          </Table>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {order.deliveryStatus === "Canceled" ? (
+                          <>-</>
+                        ) : (
+                          <IconButton
+                            size="small"
+                            color="warning"
+                            sx={{
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                            }}
+                            onClick={() => {
+                              setOrder({
+                                metal: ord.metal || "",
+                                metalPrice:
+                                  ord.metal === "24 Gold"
+                                    ? parseFloat(
+                                        localStorage.getItem("Gold24Price") ||
+                                          "0"
+                                      )
+                                    : ord.metal === "22 Gold"
+                                    ? parseFloat(
+                                        localStorage.getItem("Gold22Price") ||
+                                          "0"
+                                      )
+                                    : ord.metal === "999 Silver"
+                                    ? parseFloat(
+                                        localStorage.getItem(
+                                          "Silver999Price"
+                                        ) || "0"
+                                      )
+                                    : ord.metal === "995 Silver"
+                                    ? parseFloat(
+                                        localStorage.getItem(
+                                          "Silver995Price"
+                                        ) || "0"
+                                      )
+                                    : 0,
+                                itemName: ord.itemName || "",
+                                catalogue: ord.catalogue || "",
+                                design: ord.design || "",
+                                size: String(ord.size || ""),
+                                metal_weight: ord.metal_weight || 0,
+                                wastage: ord.wastage || 0,
+                                making_charges: ord.making_charges || 0,
+                                stone_weight: ord.stone_weight || 0,
+                                stone_amount: ord.stone_amount || 0,
+                                wax_weight: ord.wax_weight || 0,
+                                wax_amount: ord.wax_amount || 0,
+                                diamond_weight: ord.diamond_weight || 0,
+                                diamond_amount: ord.diamond_amount || 0,
+                                bits_weight: ord.bits_weight || 0,
+                                bits_amount: ord.bits_amount || 0,
+                                enamel_weight: ord.enamel_weight || 0,
+                                enamel_amount: ord.enamel_amount || 0,
+                                pearls_weight: ord.pearls_weight || 0,
+                                pearls_amount: ord.pearls_amount || 0,
+                                other_weight: ord.other_weight || 0,
+                                other_amount: ord.other_amount || 0,
+                                gross_weight: ord.gross_weight || 0,
+                                stockBox: ord.stockBox || 0,
+                                discount: ord.discount || 0,
+                                deliveryStatus:
+                                  ord.deliveryStatus ||
+                                  ord.delivery_status ||
+                                  "",
+                                total_item_amount:
+                                  calculateTotals(ord).total_item_amount,
+                              });
+
+                              setIsEditing(true);
+                              setEditingOrderId(ord.orderId); // still keep the orderId in a separate state
+                              setOrderErrors({});
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {order.deliveryStatus === "Canceled" ? (
+                          <CheckCircleIcon color="success" />
+                        ) : editBillDetails === "editBill" ? (
+                          "-"
+                        ) : (
+                          <IconButton
+                            size="small"
+                            sx={{
+                              color: "#A0522D",
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                            }}
+                            onClick={() => handleClickOrderOpen(ord.orderId)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <Dialog open={orderOpen} onClose={handleOrderClose}>
+                  <DialogTitle>Confirm Deletion</DialogTitle>
+                  <DialogContent>
+                    <DialogContentText>
+                      Are you sure you want to delete this order item with ID:
+                      {slectOrderId}
+                      <strong>{selectedOrderId}</strong>?
+                    </DialogContentText>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={handleOrderClose} color="primary">
+                      No
+                    </Button>
+                    <Button onClick={handleOrderDelete} color="error" autoFocus>
+                      Yes, Delete
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </TableBody>
+            </Table>
+          </Box>
         </Paper>
       )}
 
@@ -1681,9 +1707,20 @@ const Orders: React.FC = () => {
             >
               Exchange / Return
             </Typography>
-            <Grid container spacing={3}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr", // 12 columns → 1 column on xs
+                  sm: "repeat(2, 1fr)", // 6 columns → 2 columns on sm
+                  md: "repeat(3, 1fr)", // 4 columns → 3 columns on md
+                  lg: "repeat(4, 1fr)", // 3 columns → 4 columns on lg
+                },
+                gap: 3, // spacing between items (like Grid spacing={3})
+              }}
+            >
               {Object.entries(exchange).map(([key, value]) => (
-                <Grid size={{ xs: 4, sm: 2 }} key={key}>
+                <Box key={key}>
                   {key === "exchange_metal" ? (
                     // 🔸 Dropdown for metal type
                     <TextField
@@ -1791,9 +1828,9 @@ const Orders: React.FC = () => {
                       }}
                     />
                   )}
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
 
             <Box display="flex" justifyContent="flex-end" mt={4}>
               <Button
@@ -1817,172 +1854,179 @@ const Orders: React.FC = () => {
           <h3 className=" text-3xl font-bold mb-10 text-blue-600">
             Exchange / Return Summary
           </h3>
-          <Table>
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="border px-3 py-2">ID</th>
-                <th className="border px-3 py-2">Order ID</th>
-                <th className="border px-3 py-2">Metal</th>
-                <th className="border px-3 py-2">Name</th>
-                <th className="border px-3 py-2">Gross Weight</th>
-                <th className="border px-3 py-2">Weight</th>
-                <th className="border px-3 py-2">Purity</th>
-                <th className="border px-3 py-2">Metal Price</th>
-                <th className="border px-3 py-2">Amount</th>
-                <th className="border px-3 py-2">Edit</th>
-                <th className="border px-3 py-2">Delete</th>
-              </tr>
-            </thead>
+          <Box
+            sx={{
+              width: "100%",
+              overflowX: "auto", // allows horizontal scrolling on small screens
+            }}
+          >
+            <Table sx={{ minWidth: 800 /* ensure table doesn’t collapse */ }}>
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="border px-3 py-2">ID</th>
+                  <th className="border px-3 py-2">Order ID</th>
+                  <th className="border px-3 py-2">Metal</th>
+                  <th className="border px-3 py-2">Name</th>
+                  <th className="border px-3 py-2">Gross Weight</th>
+                  <th className="border px-3 py-2">Weight</th>
+                  <th className="border px-3 py-2">Purity</th>
+                  <th className="border px-3 py-2">Metal Price</th>
+                  <th className="border px-3 py-2">Amount</th>
+                  <th className="border px-3 py-2">Edit</th>
+                  <th className="border px-3 py-2">Delete</th>
+                </tr>
+              </thead>
 
-            <TableBody>
-              {exchangeList.map((ex) => (
-                <TableRow key={ex.oldItemId}>
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ex.oldItemId}
-                    </div>
-                  </TableCell>
+              <TableBody>
+                {exchangeList.map((ex) => (
+                  <TableRow key={ex.oldItemId}>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ex.oldItemId}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ex.orderId}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ex.orderId}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ex.exchange_metal}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ex.exchange_metal}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ex.exchange_metal_name}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ex.exchange_metal_name}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ex.exchange_metal_gross_weight}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ex.exchange_metal_gross_weight}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ex.exchange_metal_weight}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ex.exchange_metal_weight}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ex.exchange_purity_weight}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ex.exchange_purity_weight}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ex.exchange_metal_price}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ex.exchange_metal_price}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      {ex.exchange_item_amount}
-                    </div>
-                  </TableCell>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        {ex.exchange_item_amount}
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      <IconButton
-                        size="small"
-                        color="warning"
-                        sx={{
-                          "&:hover": { backgroundColor: "#E0E0E0" },
-                        }}
-                        onClick={() => {
-                          setExchange({
-                            ...ex, // ensure dropdown works if needed
-                          });
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        <IconButton
+                          size="small"
+                          color="warning"
+                          sx={{
+                            "&:hover": { backgroundColor: "#E0E0E0" },
+                          }}
+                          onClick={() => {
+                            setExchange({
+                              ...ex, // ensure dropdown works if needed
+                            });
 
-                          setShowExchangeForm((prev) => !prev);
-                          setIsEditing(true);
-                          setEditingExchangeId(ex.oldItemId);
-                          setExchangeErrors({});
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </div>
-                  </TableCell>
+                            setShowExchangeForm((prev) => !prev);
+                            setIsEditing(true);
+                            setEditingExchangeId(ex.oldItemId);
+                            setExchangeErrors({});
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </div>
+                    </TableCell>
 
-                  <TableCell
-                    className="border px-3 py-2 text-center"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      <IconButton
-                        size="small"
-                        color="warning"
-                        sx={{
-                          "&:hover": { backgroundColor: "#E0E0E0" },
-                        }}
-                        onClick={() => handleClickOldItemOpen(ex.oldItemId)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              <Dialog open={oldItemOpen} onClose={handleOldItemClose}>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogContent>
-                  <DialogContentText>
-                    Are you sure you want to delete this exchange / old item
-                    with ID: <strong>{slectOldItemId}</strong>?
-                  </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={handleOldItemClose} color="primary">
-                    No
-                  </Button>
-                  <Button onClick={handleOldDelete} color="error" autoFocus>
-                    Yes, Delete
-                  </Button>
-                </DialogActions>
-              </Dialog>
-            </TableBody>
-          </Table>
+                    <TableCell
+                      className="border px-3 py-2 text-center"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      <div className="flex justify-center items-center">
+                        <IconButton
+                          size="small"
+                          color="warning"
+                          sx={{
+                            "&:hover": { backgroundColor: "#E0E0E0" },
+                          }}
+                          onClick={() => handleClickOldItemOpen(ex.oldItemId)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <Dialog open={oldItemOpen} onClose={handleOldItemClose}>
+                  <DialogTitle>Confirm Deletion</DialogTitle>
+                  <DialogContent>
+                    <DialogContentText>
+                      Are you sure you want to delete this exchange / old item
+                      with ID: <strong>{slectOldItemId}</strong>?
+                    </DialogContentText>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={handleOldItemClose} color="primary">
+                      No
+                    </Button>
+                    <Button onClick={handleOldDelete} color="error" autoFocus>
+                      Yes, Delete
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </TableBody>
+            </Table>
+          </Box>
         </Paper>
       )}
       <Box display="flex" justifyContent="flex-end" mt={3}>

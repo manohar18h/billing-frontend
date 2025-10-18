@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, Button } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-
+import { Box } from "@mui/system";
 import api from "@/services/api"; // ← import your api.ts
 
 interface SelectedOrder {
@@ -226,78 +226,85 @@ const BillData: React.FC = () => {
           <h3 className=" text-3xl font-bold mb-10 text-blue-600">
             Billing History
           </h3>
-          <table className="w-full border-collapse border border-gray-300">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="border px-3 py-2">Billing Date</th>
-                <th className="border px-3 py-2">Bill Number</th>
-                <th className="border px-3 py-2">Total Amount</th>
-                <th className="border px-3 py-2">Exchange</th>
-                <th className="border px-3 py-2">Paid</th>
-                <th className="border px-3 py-2">Due</th>
-                <th className="border px-3 py-2">Delivery Status</th>
-                <th className="border px-3 py-2">View</th>
-              </tr>
-            </thead>
-            <tbody>
-              {billingData.map((bill) => (
-                <tr key={bill.billId} className="text-center">
-                  <td className="border px-3 py-2">
-                    {bill.billingDate
-                      ? new Date(bill.billingDate).toLocaleString()
-                      : "N/A"}
-                  </td>
-                  <td className="border px-3 py-2">{bill.billNumber}</td>
-                  <td className="border px-3 py-2 text-yellow-600 font-semibold">
-                    {bill.billTotalAmount.toFixed(2)}
-                  </td>
-                  <td className="border px-3 py-2">
-                    {bill.exchangeAmount.toFixed(2)}
-                  </td>
-                  <td className="border px-3 py-2 text-green-600 font-semibold">
-                    {bill.billPaidAmount.toFixed(2)}
-                  </td>
-                  <td
-                    className={`border px-3 py-2 ${
-                      bill.billDueAmount !== 0
-                        ? "text-red-600 font-semibold"
-                        : ""
-                    }`}
-                  >
-                    {bill.billDueAmount.toFixed(2)}
-                  </td>
-                  <td
-                    className={`border px-3 py-2 font-semibold ${
-                      bill.deliveryStatus === "Pending"
-                        ? "text-yellow-600"
-                        : bill.deliveryStatus === "Delivered"
-                        ? "text-green-600"
-                        : bill.deliveryStatus === "Canceled"
-                        ? "text-red-600"
-                        : ""
-                    }`}
-                  >
-                    {bill.deliveryStatus}
-                  </td>
-                  <td className="border px-3 py-2">
-                    <IconButton
-                      size="medium"
-                      color="primary"
-                      sx={{
-                        "&:hover": { backgroundColor: "#E0E0E0" },
-                      }}
-                      onClick={() => {
-                        localStorage.setItem("billNumber", bill.billNumber);
-                        navigate("/admin/bill-details");
-                      }}
-                    >
-                      <VisibilityIcon fontSize="medium" />
-                    </IconButton>
-                  </td>
+          <Box
+            sx={{
+              width: "100%",
+              overflowX: "auto", // allows horizontal scrolling on small screens
+            }}
+          >
+            <table className="w-full border-collapse border border-gray-300 minWidth: 800 ">
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="border px-3 py-2">Billing Date</th>
+                  <th className="border px-3 py-2">Bill Number</th>
+                  <th className="border px-3 py-2">Total Amount</th>
+                  <th className="border px-3 py-2">Exchange</th>
+                  <th className="border px-3 py-2">Paid</th>
+                  <th className="border px-3 py-2">Due</th>
+                  <th className="border px-3 py-2">Delivery Status</th>
+                  <th className="border px-3 py-2">View</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {billingData.map((bill) => (
+                  <tr key={bill.billId} className="text-center">
+                    <td className="border px-3 py-2">
+                      {bill.billingDate
+                        ? new Date(bill.billingDate).toLocaleString()
+                        : "N/A"}
+                    </td>
+                    <td className="border px-3 py-2">{bill.billNumber}</td>
+                    <td className="border px-3 py-2 text-yellow-600 font-semibold">
+                      {bill.billTotalAmount.toFixed(2)}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {bill.exchangeAmount.toFixed(2)}
+                    </td>
+                    <td className="border px-3 py-2 text-green-600 font-semibold">
+                      {bill.billPaidAmount.toFixed(2)}
+                    </td>
+                    <td
+                      className={`border px-3 py-2 ${
+                        bill.billDueAmount !== 0
+                          ? "text-red-600 font-semibold"
+                          : ""
+                      }`}
+                    >
+                      {bill.billDueAmount.toFixed(2)}
+                    </td>
+                    <td
+                      className={`border px-3 py-2 font-semibold ${
+                        bill.deliveryStatus === "Pending"
+                          ? "text-yellow-600"
+                          : bill.deliveryStatus === "Delivered"
+                          ? "text-green-600"
+                          : bill.deliveryStatus === "Canceled"
+                          ? "text-red-600"
+                          : ""
+                      }`}
+                    >
+                      {bill.deliveryStatus}
+                    </td>
+                    <td className="border px-3 py-2">
+                      <IconButton
+                        size="medium"
+                        color="primary"
+                        sx={{
+                          "&:hover": { backgroundColor: "#E0E0E0" },
+                        }}
+                        onClick={() => {
+                          localStorage.setItem("billNumber", bill.billNumber);
+                          navigate("/admin/bill-details");
+                        }}
+                      >
+                        <VisibilityIcon fontSize="medium" />
+                      </IconButton>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Box>
         </div>
       </div>
     </div>
