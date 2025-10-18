@@ -71,24 +71,6 @@ function inRangeExact(
   return true;
 }
 
-/** For Worker Stocks only: single “From” means ≥ From; single “To” means ≤ To */
-function inRangeOpenStart(
-  rawDate: unknown,
-  fromDate: string,
-  toDate: string
-): boolean {
-  const day = normalizeYMD(rawDate);
-  if (!day) return false;
-  const f = fromDate.trim();
-  const t = toDate.trim();
-
-  if (!f && !t) return true;
-  if (f && t) return day >= f && day <= t;
-  if (f && !t) return day >= f; // OPEN-ENDED START
-  if (!f && t) return day <= t; // OPEN-ENDED END
-  return true;
-}
-
 const WorkerDetails: React.FC = () => {
   const { workerId } = useParams<{ workerId: string }>();
   const navigate = useNavigate();

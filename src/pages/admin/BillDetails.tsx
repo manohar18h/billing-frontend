@@ -588,10 +588,10 @@ const BillDetails: React.FC = () => {
                   </TableRow>
                 ))}
                 <Dialog open={orderOpen} onClose={handleOrderClose}>
-                  <DialogTitle>Confirm Deletion</DialogTitle>
+                  <DialogTitle>Confirm Cancelation</DialogTitle>
                   <DialogContent>
                     <DialogContentText>
-                      Are you sure you want to delete this order item with ID:
+                      Are you sure you want to Cancel this order item with ID:
                       {slectOrderId}
                       <strong>{selectedOrderId}</strong>?
                     </DialogContentText>
@@ -601,7 +601,7 @@ const BillDetails: React.FC = () => {
                       No
                     </Button>
                     <Button onClick={handleOrderDelete} color="error" autoFocus>
-                      Yes, Delete
+                      Yes, Cancel
                     </Button>
                   </DialogActions>
                 </Dialog>
