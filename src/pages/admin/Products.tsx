@@ -1359,7 +1359,6 @@ const Products: React.FC = () => {
         </Box>
       )}
 
-      {/* ---------- TABLE B (only after successful submit) ---------- */}
       {bottomResults && (
         <Paper
           elevation={0}
@@ -1373,54 +1372,154 @@ const Products: React.FC = () => {
           }}
         >
           <Typography variant="h6" fontWeight={600} mb={2}>
-            Result (Products Submit)
+            Product Labels (Ready to Print)
           </Typography>
-          =
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Gross Weight</TableCell>
-                <TableCell>Metal Weight</TableCell>
-                {bottomResults?.[0] &&
-                  possibleWeightKeys.map((key) => {
-                    const val = bottomResults[0][key as keyof StockProduct];
-                    return typeof val === "number" && val > 0 ? (
-                      <TableCell key={key}>{labelize(key)}</TableCell>
-                    ) : null;
-                  })}
-                <TableCell>Barcode Value</TableCell>
-                <TableCell>Barcode Image</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {bottomResults.map((r) => (
-                <TableRow key={r.stockProductId}>
-                  <TableCell>{r.stockProductId}</TableCell>
-                  <TableCell>{r.gross_weight}</TableCell>
-                  <TableCell>{r.metal_weight}</TableCell>
-                  {possibleWeightKeys.map((key) => {
-                    const val = r[key as keyof StockProduct];
-                    return typeof val === "number" && val > 0 ? (
-                      <TableCell key={key}>{val}</TableCell>
-                    ) : null;
-                  })}
-                  <TableCell>{r.barcodeValue ?? "-"}</TableCell>
-                  <TableCell>
-                    {r.barcodeImageBase64 ? (
-                      <img
-                        alt="barcode"
-                        src={`data:image/png;base64,${r.barcodeImageBase64}`}
-                        style={{ height: 60 }}
-                      />
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+
+          <Box
+            display="flex"
+            flexWrap="wrap"
+            gap={4}
+            justifyContent="flex-start"
+            alignItems="center"
+          >
+            {bottomResults.map((r) => {
+              const handlePrint = () => {
+                const printContents = `
+<div style="
+  width: 101.6mm;
+  height: 11.9mm;
+  display: flex;
+  margin-left: 15mm;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: #fff;
+  padding: 1mm 2mm;
+  box-sizing: border-box;
+">
+  <!-- Barcode Section -->
+  <div style="display:flex;align-items:center;justify-content:center;margin: 0;
+    ">
+    ${
+      r.barcodeImageBase64
+        ? `<img src="data:image/png;base64,${r.barcodeImageBase64}" 
+                 style="height:11.9mm;width:20mm;object-fit:contain;margin:0;padding:0;display:block;" 
+                 alt="barcode" />`
+        : `<div style="font-size:2mm;">No Barcode</div>`
+    }
+  </div>
+
+  <!-- Text Section -->
+  <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;font-size:2mm;line-height:1.3;margin-left: 0mm;         /* ensure NO extra gap */
+    padding-left: 0mm;">
+    <div style="font-weight:bold;">${r.barcodeValue ?? "-"}</div>
+    <div>G.W: ${r.gross_weight ?? "-"}g</div>
+    <div>N.W: ${r.metal_weight ?? "-"}g</div>
+  </div>
+</div>`;
+
+                const printWindow = window.open("", "", "width=400,height=300");
+                if (printWindow) {
+                  printWindow.document.write(`
+  <html>
+    <head>
+      <title>Print Label</title>
+      <style>
+        @page { size: 101.6mm 11.9mm; margin: 0; }
+        body { margin: 0; padding: 0; display:flex;justify-content:center;align-items:center;background:#fff; }
+      </style>
+    </head>
+    <body onload="window.print();window.close();">
+      ${printContents}
+    </body>
+  </html>
+`);
+                  printWindow.document.close();
+                }
+              };
+
+              return (
+                <Box
+                  key={r.stockProductId}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                >
+                  {/* Small Label Preview */}
+                  <Box
+                    sx={{
+                      width: 300,
+                      height: 120,
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      backgroundColor: "#fff",
+                      gap: 0,
+                      position: "relative",
+                    }}
+                  >
+                    {/* Left: Barcode Image + Value */}
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="center"
+                      justifyContent="center"
+                      sx={{ mr: 0 }}
+                    >
+                      {r.barcodeImageBase64 ? (
+                        <img
+                          alt="barcode"
+                          src={`data:image/png;base64,${r.barcodeImageBase64}`}
+                          style={{ height: 50 }}
+                        />
+                      ) : (
+                        <Typography fontSize={12}>No Barcode</Typography>
+                      )}
+                      <Typography fontSize={12} mt={0.5}>
+                        {r.barcodeValue ?? "-"}
+                      </Typography>
+                    </Box>
+
+                    {/* Right: Rotated G.W / N.W */}
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      justifyContent="center"
+                      alignItems="center"
+                      fontSize={12}
+                      lineHeight={1.4}
+                      sx={{
+                        transform: "rotate(270deg)",
+                        transformOrigin: "center center",
+                        position: "absolute",
+                        right: 10,
+                      }}
+                    >
+                      <Typography fontSize={12}>
+                        G.W: {r.gross_weight ?? "-"}g
+                      </Typography>
+                      <Typography fontSize={12}>
+                        N.W: {r.metal_weight ?? "-"}g
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Print Button */}
+                  <Button
+                    variant="contained"
+                    onClick={handlePrint}
+                    sx={{
+                      mt: 1,
+                      backgroundColor: "#6c63ff",
+                      "&:hover": { backgroundColor: "#594ef9" },
+                      textTransform: "none",
+                    }}
+                  >
+                    Print Label
+                  </Button>
+                </Box>
+              );
+            })}
+          </Box>
         </Paper>
       )}
     </Box>
