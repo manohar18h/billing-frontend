@@ -421,7 +421,7 @@ const MetricCard: React.FC<{
 
       {data && (
         <div className="mt-2 text-xs text-gray-500">
-          Total Orders: ₹{data.totalOrders.toLocaleString()}
+          Total Orders: {data.totalOrders.toLocaleString()}
         </div>
       )}
     </div>

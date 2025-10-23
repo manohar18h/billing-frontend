@@ -1389,28 +1389,38 @@ const Products: React.FC = () => {
   width: 101.6mm;
   height: 11.9mm;
   display: flex;
-  margin-left: 15mm;
+  margin-left: 12mm;
   justify-content: flex-start;
-  align-items: center;
+  align-items: stretch;
   background-color: #fff;
-  padding: 1mm 2mm;
+  padding: 0mm, 2mm;
   box-sizing: border-box;
+  overflow: hidden;
+  transform: translateY(-1mm); /* Push up slightly */
 ">
-  <!-- Barcode Section -->
-  <div style="display:flex;align-items:center;justify-content:center;margin: 0;
-    ">
+  <!-- QR Section -->
+  <div style="display:flex;align-items:stretch;justify-content:center;margin:0;padding:0;height:100%;">
     ${
       r.barcodeImageBase64
         ? `<img src="data:image/png;base64,${r.barcodeImageBase64}" 
-                 style="height:11.9mm;width:20mm;object-fit:contain;margin:0;padding:0;display:block;" 
-                 alt="barcode" />`
-        : `<div style="font-size:2mm;">No Barcode</div>`
+                 style="height:100%;width:20mm;object-fit:contain;margin:0;padding:0;display:block;" 
+                 alt="QR" />`
+        : `<div style="font-size:2mm;">No QR</div>`
     }
   </div>
 
   <!-- Text Section -->
-  <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;font-size:2mm;line-height:1.3;margin-left: 0mm;         /* ensure NO extra gap */
-    padding-left: 0mm;">
+  <div style="
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+    font-size:2mm;
+    line-height:1.3;
+    margin:0;
+    padding-left:1mm;
+    height:100%;
+  ">
     <div style="font-weight:bold;">${r.barcodeValue ?? "-"}</div>
     <div>G.W: ${r.gross_weight ?? "-"}g</div>
     <div>N.W: ${r.metal_weight ?? "-"}g</div>
@@ -1420,18 +1430,36 @@ const Products: React.FC = () => {
                 const printWindow = window.open("", "", "width=400,height=300");
                 if (printWindow) {
                   printWindow.document.write(`
-  <html>
-    <head>
-      <title>Print Label</title>
-      <style>
-        @page { size: 101.6mm 11.9mm; margin: 0; }
-        body { margin: 0; padding: 0; display:flex;justify-content:center;align-items:center;background:#fff; }
-      </style>
-    </head>
-    <body onload="window.print();window.close();">
-      ${printContents}
-    </body>
-  </html>
+<html>
+  <head>
+    <title>Print Label</title>
+    <style>
+      @page {
+        size: 101.6mm 11.9mm;
+        margin: 0;
+      }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+      body {
+        display: block; /* not flex — avoids phantom top gap */
+      }
+      img {
+        display: block;
+        border: none;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body onload="window.print();window.close();">
+    ${printContents}
+  </body>
+</html>
 `);
                   printWindow.document.close();
                 }
