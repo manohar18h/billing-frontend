@@ -1,3 +1,4 @@
+// @charset "UTF-8";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import api from "@/services/api";
@@ -10,6 +11,9 @@ const GenerateBill: React.FC = () => {
   const token = localStorage.getItem("token");
   const billNumber =
     location.state?.billNumber || localStorage.getItem("billNumber");
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [msgTitle, SetMsgTitle] = useState("");
+  const openWhatsAppModal = () => setShowWhatsAppModal(true);
 
   // Transaction model
   interface Transaction {
@@ -102,6 +106,16 @@ const GenerateBill: React.FC = () => {
     selectedOrders: Order[]; // keep string since it’s coming in this format
   }
 
+  interface Bill {
+    name: string;
+    phoneNumber: string;
+    billNumber: string;
+    billingDate: string;
+    billTotalAmount: number;
+    billPaidAmount: number;
+    billDueAmount: number;
+  }
+
   const [bill, setBill] = useState<Bill | null>(null);
 
   const dynamicWeightKeys = [
@@ -113,6 +127,55 @@ const GenerateBill: React.FC = () => {
     "pearls",
     "other",
   ];
+
+  // Updated getWhatsAppMessage to include all orders
+  const getWhatsAppMessage = (bill: Bill, msgTitle: string) => {
+    if (!bill.selectedOrders || bill.selectedOrders.length === 0) return "";
+
+    const orderLines = bill.selectedOrders.map((order, idx) => {
+      return `🛍️ Product Name ${idx + 1}: ${order.itemName}`;
+    });
+
+    return `
+👋 Hello ${bill.name},
+
+✨ Thank you, ${msgTitle} 🎁🥳
+We appreciate your trust in Hambire Jewellery 💎
+
+🧾 Invoice Bill No: ${bill.billNumber}
+📅 Date: ${bill.billingDate}
+
+${orderLines.join("\n\n")}
+
+💰 Total Bill Amount: ₹${bill.billTotalAmount.toFixed(2)}
+✅ Paid: ₹${bill.billPaidAmount.toFixed(2)}
+⚠️ Due: ₹${bill.billDueAmount.toFixed(2)}
+🎯 Delivery Status: ${bill.deliveryStatus}
+
+Thank you for your purchase! 💎
+We hope to serve you again soon!
+-- Hambire Jewellery 💍
+  `;
+  };
+
+  // Updated copyWhatsAppMessage function
+  const copyWhatsAppMessage = () => {
+    if (!bill) return;
+
+    const phone = bill.phoneNumber?.replace(/\D/g, "");
+    if (!phone) return alert("Customer phone number missing!");
+
+    const msg = getWhatsAppMessage(bill, msgTitle);
+
+    navigator.clipboard.writeText(msg).then(() => {
+      const url = `https://web.whatsapp.com/send?phone=91${phone}`;
+      window.open(url, "_blank");
+
+      alert(
+        "Message copied to clipboard ✅ \nWhatsApp Web opened. You can paste and send manually."
+      );
+    });
+  };
 
   useEffect(() => {
     if (selectedOrders.length === 0) return;
@@ -138,6 +201,7 @@ const GenerateBill: React.FC = () => {
           );
 
           setBill(res.data);
+          SetMsgTitle(`Your order updated Successfully`);
         } else if (checkEdit === "NoEdit") {
           console.log("Creating new bill...");
 
@@ -152,6 +216,7 @@ const GenerateBill: React.FC = () => {
             }
           );
           setBill(response.data);
+          SetMsgTitle(`Your order placed Successfully`);
         }
       } catch (error) {
         console.error("Error fetching bill summary/update:", error);
@@ -197,6 +262,8 @@ const GenerateBill: React.FC = () => {
       );
     });
   }, [bill]);
+
+  // 🔹 Open WhatsApp with message
 
   const nonZeroColCount = activeWeightKeys.length * 2;
 
@@ -752,6 +819,40 @@ const GenerateBill: React.FC = () => {
           🖨️ Print Invoice
         </button>
       </div>
+      <div className="text-center mt-4 print:hidden">
+        <button
+          onClick={openWhatsAppModal} // Now defined
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+        >
+          📲 Send WhatsApp Message
+        </button>
+      </div>
+
+      {/* WhatsApp Modal */}
+      {showWhatsAppModal && bill && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h2 className="text-lg font-bold mb-4">WhatsApp Message Preview</h2>
+            <pre className="whitespace-pre-wrap mb-4">
+              {getWhatsAppMessage(bill, msgTitle)}
+            </pre>
+            <div className="flex justify-end gap-2">
+              <button
+                className="bg-blue-500 text-white px-3 py-1 rounded"
+                onClick={copyWhatsAppMessage}
+              >
+                Copy to Clipboard
+              </button>
+              <button
+                className="bg-gray-300 px-3 py-1 rounded"
+                onClick={() => setShowWhatsAppModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
