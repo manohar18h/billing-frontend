@@ -16,8 +16,7 @@ import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
 import api from "@/services/api";
 import debounce from "lodash/debounce";
-
-const SearchAddCustomer: React.FC = () => {
+const Loan: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("");
   const navigate = useNavigate();
@@ -33,27 +32,31 @@ const SearchAddCustomer: React.FC = () => {
   localStorage.removeItem("phnNumber");
 
   interface Customer {
-    customerId: string;
+    loanCusId: string;
     name: string;
     village: string;
     phoneNumber: string;
     emailId: string;
-    numberOfOrders: number;
+    gender: string;
+    numberOfActiveItems: number;
     finalAmount: number;
     totalDueAmount: number;
-    password: string;
+    paidInterestAmount: number;
+    dueInterestAmount: number;
   }
 
   const emptyCustomer: Customer = {
-    customerId: "",
+    loanCusId: "",
     name: "",
     village: "",
     phoneNumber: "",
     emailId: "",
-    numberOfOrders: 0,
+    gender: "",
+    numberOfActiveItems: 0,
     finalAmount: 0.0,
     totalDueAmount: 0.0,
-    password: "",
+    paidInterestAmount: 0.0,
+    dueInterestAmount: 0.0,
   };
 
   // Debounced API call
@@ -143,6 +146,8 @@ const SearchAddCustomer: React.FC = () => {
       localStorage.removeItem("CusDetailsCustomerId");
       localStorage.removeItem("customerId");
       localStorage.removeItem("from");
+      localStorage.removeItem("loanCusId");
+      localStorage.removeItem("fromLoan");
 
       setFieldErrors({});
 
@@ -162,7 +167,7 @@ const SearchAddCustomer: React.FC = () => {
       console.log("requestbody : ", JSON.stringify(customer));
 
       const response = await api.post<Customer>(
-        "/admin/addCustomer",
+        "/admin/addLoanCustomer",
         customer,
         {
           headers: {
@@ -173,14 +178,14 @@ const SearchAddCustomer: React.FC = () => {
 
       const result = response.data;
 
-      if (result?.customerId) {
-        localStorage.setItem("customerId", result.customerId);
-        localStorage.setItem("from", "customer");
-        console.log("customerId in customer:", result.customerId);
+      if (result?.loanCusId) {
+        localStorage.setItem("loanCusId", result.loanCusId);
+        localStorage.setItem("fromLoan", "LoanCustomer");
+        console.log(" Loan customerId in customer:", result.loanCusId);
 
-        navigate("/admin/orders", {
+        navigate("/admin/loanItems", {
           replace: true,
-          state: { fromCustomer: true },
+          state: { fromLoanCustomer: true },
         });
       } else {
         toast.error("Failed to add customer");
@@ -220,7 +225,7 @@ const SearchAddCustomer: React.FC = () => {
             color="primary"
             gutterBottom
           >
-            Search Customer
+            Search Loan Customer
           </Typography>
 
           <Box
@@ -311,7 +316,7 @@ const SearchAddCustomer: React.FC = () => {
             color="primary"
             gutterBottom
           >
-            Add Customer
+            Add Loan Customer
           </Typography>
           <Grid container spacing={3} mt={6}>
             {(
@@ -320,7 +325,7 @@ const SearchAddCustomer: React.FC = () => {
                 "village",
                 "phoneNumber",
                 "emailId",
-                "password",
+                "gender",
               ] as (keyof Customer)[]
             ).map((key) => (
               <Grid key={key} size={{ xs: 6, sm: 4 }}>
@@ -372,6 +377,20 @@ const SearchAddCustomer: React.FC = () => {
                       />
                     )}
                   />
+                ) : key === "gender" ? (
+                  <TextField
+                    {...thickTextFieldProps}
+                    select
+                    label="Gender"
+                    value={customer.gender}
+                    onChange={(e) => handleChange("gender", e.target.value)}
+                  >
+                    <MenuItem value="">
+                      <em>Select Gender</em>
+                    </MenuItem>
+                    <MenuItem value="Male">Male</MenuItem>
+                    <MenuItem value="Female">Female</MenuItem>
+                  </TextField>
                 ) : (
                   <TextField
                     {...thickTextFieldProps}
@@ -382,7 +401,6 @@ const SearchAddCustomer: React.FC = () => {
                         ? "Email ID"
                         : key.charAt(0).toUpperCase() + key.slice(1)
                     }
-                    type={key === "password" ? "password" : "text"}
                     value={customer[key]}
                     onChange={(e) => handleChange(key, e.target.value)}
                     error={!!fieldErrors[key]}
@@ -418,4 +436,4 @@ const SearchAddCustomer: React.FC = () => {
   );
 };
 
-export default SearchAddCustomer;
+export default Loan;

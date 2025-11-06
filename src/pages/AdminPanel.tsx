@@ -11,6 +11,7 @@ import {
   Moon,
   Gem,
   ReceiptText,
+  BadgeIndianRupee,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo2 from "../assets/logo2.png";
@@ -37,6 +38,8 @@ import BillData from "./admin/BillData";
 import ShowroomMetalStock from "./admin/ShowroomMetalStock";
 import StockBoxData from "./admin/StockBoxData";
 import StockBoxDetails from "./admin/StockBoxDetails";
+import Loan from "./admin/Loan";
+import LoanItems from "./admin/LoanItems";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
@@ -47,6 +50,7 @@ const menuItems = [
   { icon: Gem, label: "Showroom", path: "/admin/showroom-metal-stock" },
   { icon: BoxIcon, label: "Stock Box", path: "/admin/stockBox" },
   { icon: ReceiptText, label: "Billing", path: "/admin/billing-orders" },
+  { icon: BadgeIndianRupee, label: "Loan", path: "/admin/Loan" },
 ];
 
 type SidebarProps = {
@@ -194,6 +198,8 @@ function AdminPanelContent() {
     location.pathname.startsWith("/admin/worker-details")
   ) {
     activeIndex = 2;
+  } else if (location.pathname.startsWith("/admin/loanItems")) {
+    activeIndex = 8;
   }
 
   if (activeIndex === -1) activeIndex = 0;
@@ -254,6 +260,8 @@ function AdminPanelContent() {
             <Route path="service" element={<AdminService />} />
             <Route path="products" element={<Products />} />
             <Route path="billing-orders" element={<AllBillingOrders />} />
+            <Route path="Loan" element={<Loan />} />
+            <Route path="loanItems" element={<LoanItems />} />
             <Route path="stockBox" element={<StockBoxData />} />
             <Route path="worker-stock" element={<WorkerStock />} />
             <Route path="repair-work" element={<RepairWork />} />
