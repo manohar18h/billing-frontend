@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   TextField,
   Button,
-  InputAdornment,
   Paper,
   Typography,
   Table,
@@ -36,6 +35,7 @@ const LoanItems: React.FC = () => {
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState("");
   const [payType, setPayType] = useState("");
+  const navigate = useNavigate();
 
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const token = localStorage.getItem("token");
@@ -61,8 +61,9 @@ const LoanItems: React.FC = () => {
       itemName: "",
       gross_weight: 0.0,
       net_weight: 0.0,
-      rateOfInterest: 0.0,
+      rate_of_interest: 0.0,
       total_amount: 0.0,
+      due_interest_amount: 0.0,
       deliveryStatus: "",
     });
     setItemErrors({});
@@ -73,8 +74,9 @@ const LoanItems: React.FC = () => {
     itemName: "",
     gross_weight: 0.0,
     net_weight: 0.0,
-    rateOfInterest: 0.0,
+    rate_of_interest: 0.0,
     total_amount: 0.0,
+    due_interest_amount: 0.0,
     deliveryStatus: "",
   });
   const goldItems = [
@@ -175,8 +177,63 @@ const LoanItems: React.FC = () => {
       }
     }
   };
-  const handleUpdateItem = async () => {};
-  const handleViewMore = (loanId: number) => {};
+  const handleUpdateItem = async () => {
+    if (!editingItemId) return;
+
+    try {
+      const { data: updatedItemFromBackend } = await api.put(
+        `/admin/updateItem/${editingItemId}`,
+        item,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const updatedItem: any = updatedItemFromBackend; // 👈 cast
+
+      const updatedItems = itemsList.map((o) =>
+        o.loanId === editingItemId
+          ? {
+              ...updatedItem,
+              due_interest_amount: updatedItem.due_interest_amount,
+            }
+          : o
+      );
+
+      setItemsList(updatedItems);
+      sessionStorage.setItem(
+        "itemsState",
+        JSON.stringify({ itemsList: updatedItems })
+      );
+
+      handleClearitem();
+      setIsEditing(false);
+
+      setEditingItemId(null);
+      alert(
+        "Loan Item updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill"
+      );
+    } catch (error: any) {
+      if (error.response?.data) {
+        setItemErrors(error.response.data);
+      } else {
+        alert("Failed to update order");
+      }
+    }
+  };
+  const handleViewMore = (loanId: number) => {
+    sessionStorage.removeItem("itemsState");
+    // Save current state
+    sessionStorage.setItem("itemsState", JSON.stringify({ itemsList }));
+
+    navigate(`/admin/loanItem-details/${loanId}`, {
+      replace: true,
+      state: {
+        loanCustomerId,
+        from: "loanItems",
+      },
+    });
+  };
 
   const handleBackClick = () => {};
 
@@ -227,159 +284,167 @@ const LoanItems: React.FC = () => {
             gap: 3, // spacing between items (like Grid spacing={3})
           }}
         >
-          {Object.entries(item).map(([key, value]) => (
-            <Box key={key}>
-              {key === "metal" ? (
-                <TextField
-                  select
-                  label="Metal"
-                  value={item.metal}
-                  onChange={(e) => {
-                    const selectedMetal = e.target.value;
-                    setItem({
-                      ...item,
-                      metal: selectedMetal,
-                    });
-                  }}
-                  error={!!itemErrors.metal}
-                  helperText={itemErrors.metal || ""}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    style: { color: "#333" },
-                    shrink: true, // ✅ ensures label is always visible
-                  }}
-                  InputProps={{
-                    style: { fontWeight: 500 },
-                  }}
-                  sx={{
-                    minWidth: "200px",
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderWidth: "2px",
-                      borderColor: "gray",
-                    },
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>Select Metal</em>
-                  </MenuItem>
-                  <MenuItem value="22 Gold">22 Gold</MenuItem>
-                  <MenuItem value="995 Silver">995 Silver</MenuItem>
-                  <MenuItem value="24 Gold">24 Gold</MenuItem>
-                  <MenuItem value="999 Silver">999 Silver</MenuItem>
-                </TextField>
-              ) : key === "deliveryStatus" ? (
-                <TextField
-                  select
-                  label="Delivery Status"
-                  value={item.deliveryStatus}
-                  onChange={(e) =>
-                    setItem({
-                      ...item,
-                      deliveryStatus: e.target.value,
-                    })
-                  }
-                  error={!!itemErrors.deliveryStatus}
-                  helperText={itemErrors.deliveryStatus || ""}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    style: { color: "#333" },
-                    shrink: true, // ✅ ensures label is always visible
-                  }}
-                  InputProps={{
-                    style: { fontWeight: 500 },
-                  }}
-                  sx={{
-                    minWidth: "200px",
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderWidth: "2px",
-                      borderColor: "gray",
-                    },
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>Select Delivery Status</em>
-                  </MenuItem>
-                  <MenuItem value="Delivered">Delivered</MenuItem>
-                  <MenuItem value="Pending">Pending</MenuItem>
-                </TextField>
-              ) : key === "itemName" ? (
-                <TextField
-                  select
-                  label="Item Name"
-                  value={item.itemName}
-                  onChange={(e) =>
-                    setItem({
-                      ...item,
-                      itemName: e.target.value,
-                    })
-                  }
-                  error={!!itemErrors.itemName}
-                  helperText={itemErrors.itemName || ""}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    style: { color: "#333" },
-                    shrink: true, // ✅ ensures label is always visible
-                  }}
-                  InputProps={{
-                    style: { fontWeight: 500 },
-                  }}
-                  sx={{
-                    minWidth: "200px",
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderWidth: "2px",
-                      borderColor: "gray",
-                    },
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>Select Item</em>
-                  </MenuItem>
-                  {getItemOptions().map((item) => (
-                    <MenuItem key={item} value={item}>
-                      {item}
+          {Object.entries(item).map(([key, value]) => {
+            // ✅ Hide due_interest_amount when adding new item
+            if (key === "due_interest_amount" && !isEditing) {
+              return null;
+            }
+
+            return (
+              <Box key={key}>
+                {key === "metal" ? (
+                  <TextField
+                    select
+                    label="Metal"
+                    value={item.metal}
+                    onChange={(e) => {
+                      const selectedMetal = e.target.value;
+                      setItem({
+                        ...item,
+                        metal: selectedMetal,
+                      });
+                    }}
+                    error={!!itemErrors.metal}
+                    helperText={itemErrors.metal || ""}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      style: { color: "#333" },
+                      shrink: true, // ✅ ensures label is always visible
+                    }}
+                    InputProps={{
+                      style: { fontWeight: 500 },
+                    }}
+                    sx={{
+                      minWidth: "200px",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderWidth: "2px",
+                        borderColor: "gray",
+                      },
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Metal</em>
                     </MenuItem>
-                  ))}
-                </TextField>
-              ) : (
-                <TextField
-                  {...thickTextFieldProps}
-                  label={key
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase())}
-                  type={typeof value === "number" ? "number" : "text"}
-                  InputLabelProps={
-                    key.includes("date") ? { shrink: true } : undefined
-                  }
-                  value={
-                    typeof value === "number" && value === 0
-                      ? "" // show empty instead of 0
-                      : value
-                  }
-                  error={!!itemErrors[key]}
-                  helperText={itemErrors[key] || ""}
-                  onChange={(e) => {
-                    const newValue =
-                      typeof value === "number"
-                        ? e.target.value === "" // allow clearing
-                          ? 0
-                          : Number(e.target.value)
-                        : e.target.value;
-
-                    const updatedOrder = { ...item, [key]: newValue };
-
-                    setItem(updatedOrder);
-
-                    if (itemErrors[key]) {
-                      setItemErrors((prev) => ({ ...prev, [key]: "" }));
+                    <MenuItem value="22 Gold">22 Gold</MenuItem>
+                    <MenuItem value="995 Silver">995 Silver</MenuItem>
+                    <MenuItem value="24 Gold">24 Gold</MenuItem>
+                    <MenuItem value="999 Silver">999 Silver</MenuItem>
+                  </TextField>
+                ) : key === "deliveryStatus" ? (
+                  <TextField
+                    select
+                    label="Delivery Status"
+                    value={item.deliveryStatus}
+                    onChange={(e) =>
+                      setItem({
+                        ...item,
+                        deliveryStatus: e.target.value,
+                      })
                     }
-                  }}
-                />
-              )}
-            </Box>
-          ))}
+                    error={!!itemErrors.deliveryStatus}
+                    helperText={itemErrors.deliveryStatus || ""}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      style: { color: "#333" },
+                      shrink: true, // ✅ ensures label is always visible
+                    }}
+                    InputProps={{
+                      style: { fontWeight: 500 },
+                    }}
+                    sx={{
+                      minWidth: "200px",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderWidth: "2px",
+                        borderColor: "gray",
+                      },
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Delivery Status</em>
+                    </MenuItem>
+                    <MenuItem value="Delivered">Delivered</MenuItem>
+                    <MenuItem value="Pending">Pending</MenuItem>
+                  </TextField>
+                ) : key === "itemName" ? (
+                  <TextField
+                    select
+                    label="Item Name"
+                    value={item.itemName}
+                    onChange={(e) =>
+                      setItem({
+                        ...item,
+                        itemName: e.target.value,
+                      })
+                    }
+                    error={!!itemErrors.itemName}
+                    helperText={itemErrors.itemName || ""}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      style: { color: "#333" },
+                      shrink: true, // ✅ ensures label is always visible
+                    }}
+                    InputProps={{
+                      style: { fontWeight: 500 },
+                    }}
+                    sx={{
+                      minWidth: "200px",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderWidth: "2px",
+                        borderColor: "gray",
+                      },
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Item</em>
+                    </MenuItem>
+                    {getItemOptions().map((item) => (
+                      <MenuItem key={item} value={item}>
+                        {item}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                ) : (
+                  <TextField
+                    {...thickTextFieldProps}
+                    label={key
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
+                    type={typeof value === "number" ? "number" : "text"}
+                    InputLabelProps={
+                      key.includes("date") ? { shrink: true } : undefined
+                    }
+                    value={
+                      typeof value === "number" && value === 0
+                        ? "" // show empty instead of 0
+                        : value
+                    }
+                    error={!!itemErrors[key]}
+                    helperText={itemErrors[key] || ""}
+                    onChange={(e) => {
+                      const newValue =
+                        typeof value === "number"
+                          ? e.target.value === "" // allow clearing
+                            ? 0
+                            : Number(e.target.value)
+                          : e.target.value;
+
+                      const updatedOrder = { ...item, [key]: newValue };
+
+                      setItem(updatedOrder);
+
+                      if (itemErrors[key]) {
+                        setItemErrors((prev) => ({ ...prev, [key]: "" }));
+                      }
+                    }}
+                    disabled={isEditing && key === "total_amount"} // ✅ Disable only on edit
+                  />
+                )}
+              </Box>
+            );
+          })}
         </Box>
 
         <Box display="flex" justifyContent="flex-end" mt={4} gap={2}>
@@ -494,7 +559,7 @@ const LoanItems: React.FC = () => {
                       }`}
                     >
                       <div className="flex justify-center items-center">
-                        {formatMoney(itm.dueAmount)}
+                        {formatMoney(itm.due_amount)}
                       </div>
                     </TableCell>
 
@@ -503,7 +568,7 @@ const LoanItems: React.FC = () => {
                       sx={{ fontSize: "0.95rem" }}
                     >
                       <div className="flex justify-center items-center">
-                        {itm.rateOfInterest}
+                        {itm.rate_of_interest}
                       </div>
                     </TableCell>
 
@@ -512,7 +577,7 @@ const LoanItems: React.FC = () => {
                       sx={{ fontSize: "0.95rem" }}
                     >
                       <div className="flex justify-center items-center">
-                        {itm.dueInterestAmount}
+                        {itm.due_interest_amount}
                       </div>
                     </TableCell>
 
@@ -521,8 +586,8 @@ const LoanItems: React.FC = () => {
                       sx={{ fontSize: "0.95rem" }}
                     >
                       <div className="flex justify-center items-center">
-                        {asNumber(itm.dueAmount) !== 0 ||
-                        asNumber(itm.dueInterestAmount) !== 0 ? (
+                        {asNumber(itm.due_amount) !== 0 ||
+                        asNumber(itm.due_interest_amount) !== 0 ? (
                           <IconButton
                             size="medium"
                             sx={{
@@ -581,8 +646,10 @@ const LoanItems: React.FC = () => {
                                 itemName: itm.itemName || "",
                                 gross_weight: itm.gross_weight || 0,
                                 net_weight: itm.net_weight || 0,
-                                rateOfInterest: itm.rateOfInterest || 0,
+                                rate_of_interest: itm.rate_of_interest || 0,
                                 total_amount: itm.total_amount || 0,
+                                due_interest_amount:
+                                  itm.due_interest_amount || 0,
 
                                 deliveryStatus:
                                   itm.deliveryStatus ||
@@ -733,10 +800,10 @@ const LoanItems: React.FC = () => {
             onClick={async () => {
               if (!selectedItemId || !payAmount) return;
 
-              console.log("pay orderId :", selectedItemId);
-              console.log("paymethod :", payMethod);
-              console.log("payType :", payType);
-              console.log("pay amount :", payAmount);
+              console.log("pay orderId:", selectedItemId);
+              console.log("payMethod:", payMethod);
+              console.log("payType:", payType);
+              console.log("payAmount:", payAmount);
 
               try {
                 await api.post(
@@ -746,56 +813,47 @@ const LoanItems: React.FC = () => {
                 );
 
                 const updatedItems = itemsList.map((o) => {
-                  if (o.loanId === selectedItemId) {
-                    const paid = Number(payAmount);
-                    let newExistDue;
-                    let newTotal;
-                    let newexistInterestDue;
-                    let newPaid;
-                    let newpaidInterestAmount;
-                    if (payType === "Paying Interest") {
-                      const existInterestDue = Number(o.dueInterestAmount);
-                      const existInterestPaid = Number(o.paidInterestAmount);
-                      newpaidInterestAmount = existInterestPaid + paid;
-                      if (existInterestDue < 0) {
-                        newexistInterestDue = existInterestDue + paid;
-                      } else {
-                        newexistInterestDue = existInterestDue - paid;
-                      }
-                    } else if (payType === "Paying Principle") {
-                      const existingDue = Number(o.dueAmount);
-                      const existingTotalAmount = Number(o.total_amount);
-                      if (existingDue < 0) {
-                        newExistDue = existingDue + paid;
-                        newPaid = existingTotalAmount - newExistDue;
-                      } else {
-                        newExistDue = existingDue - paid;
-                      }
-                    } else if (payType === "Giving Money") {
-                      const existingTotalAmount = Number(o.total_amount);
-                      const existingDue = Number(o.dueAmount);
-                      newTotal = existingTotalAmount + paid;
-                      newExistDue = existingDue + paid;
-                    }
-                    if (Math.abs(newTotal ?? 0) < 0.01) newTotal = 0;
-                    if (Math.abs(newExistDue ?? 0) < 0.01) newExistDue = 0;
-                    if (Math.abs(newexistInterestDue ?? 0) < 0.01)
-                      newexistInterestDue = 0;
+                  if (o.loanId !== selectedItemId) return o;
 
-                    return {
-                      ...o,
-                      total_amount: newTotal,
-                      paidAmount: newPaid,
-                      dueAmount: newExistDue,
-                      paidInterestAmount: newpaidInterestAmount,
-                      dueInterestAmount: newexistInterestDue,
-                    };
+                  const paid = Number(payAmount);
+
+                  let newTotal = o.total_amount ?? 0;
+                  let newExistDue = o.due_amount ?? 0;
+                  let newPaid = o.paid_amount ?? 0;
+                  let newExistInterestDue = o.due_interest_amount ?? 0;
+                  let newPaidInterestAmount = o.paid_interest_amount ?? 0;
+
+                  if (payType === "Paying Interest") {
+                    newPaidInterestAmount += paid;
+                    newExistInterestDue = Math.max(
+                      newExistInterestDue - paid,
+                      0
+                    );
+                  } else if (payType === "Paying Principle") {
+                    newExistDue = Math.max(newExistDue - paid, 0);
+                    newPaid += paid;
+                  } else if (payType === "Giving Money") {
+                    newTotal += paid;
+                    newExistDue += paid;
                   }
-                  return o;
+
+                  // rounding safety
+                  if (Math.abs(newTotal) < 0.01) newTotal = 0;
+                  if (Math.abs(newExistDue) < 0.01) newExistDue = 0;
+                  if (Math.abs(newExistInterestDue) < 0.01)
+                    newExistInterestDue = 0;
+
+                  return {
+                    ...o,
+                    total_amount: newTotal,
+                    paid_amount: newPaid,
+                    due_amount: newExistDue,
+                    paid_interest_amount: newPaidInterestAmount,
+                    due_interest_amount: newExistInterestDue,
+                  };
                 });
 
                 setItemsList(updatedItems);
-
                 setPayDialogOpen(false);
               } catch (err) {
                 console.error("Payment failed:", err);

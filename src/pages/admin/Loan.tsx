@@ -144,8 +144,6 @@ const Loan: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       localStorage.removeItem("CusDetailsCustomerId");
-      localStorage.removeItem("customerId");
-      localStorage.removeItem("from");
       localStorage.removeItem("loanCusId");
       localStorage.removeItem("fromLoan");
 

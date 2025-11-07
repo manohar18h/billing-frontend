@@ -40,6 +40,7 @@ import StockBoxData from "./admin/StockBoxData";
 import StockBoxDetails from "./admin/StockBoxDetails";
 import Loan from "./admin/Loan";
 import LoanItems from "./admin/LoanItems";
+import LoanItemDetails from "./admin/LoanItemDetails";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
@@ -198,7 +199,10 @@ function AdminPanelContent() {
     location.pathname.startsWith("/admin/worker-details")
   ) {
     activeIndex = 2;
-  } else if (location.pathname.startsWith("/admin/loanItems")) {
+  } else if (
+    location.pathname.startsWith("/admin/loanItems") ||
+    location.pathname.startsWith("/admin/loanItem-details")
+  ) {
     activeIndex = 8;
   }
 
@@ -252,6 +256,11 @@ function AdminPanelContent() {
             <Route path="bill-details" element={<BillDetails />} />
             <Route path="bill-data" element={<BillData />} />
             <Route path="order-details/:orderId" element={<OrderDetails />} />
+            <Route
+              path="loanItem-details/:loanId"
+              element={<LoanItemDetails />}
+            />
+
             <Route
               path="StockBoxDetails/:stockBoxId"
               element={<StockBoxDetails />}
