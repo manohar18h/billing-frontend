@@ -36,10 +36,11 @@ const LoanItems: React.FC = () => {
   const [payMethod, setPayMethod] = useState("");
   const [payType, setPayType] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const showItemsList = location.state?.showItemsList || false;
 
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const token = localStorage.getItem("token");
-  const location = useLocation();
 
   const loanCustomerId =
     location.state?.loanCusId || localStorage.getItem("loanCusId");
@@ -234,6 +235,18 @@ const LoanItems: React.FC = () => {
       },
     });
   };
+
+  useEffect(() => {
+    const savedState = sessionStorage.getItem("itemsState");
+
+    if (showItemsList && savedState) {
+      const { itemsList } = JSON.parse(savedState);
+      setItemsList(itemsList || []);
+    } else if (!showItemsList && savedState) {
+      const { itemsList } = JSON.parse(savedState);
+      setItemsList(itemsList || []);
+    }
+  }, [location.key]);
 
   const handleBackClick = () => {};
 
