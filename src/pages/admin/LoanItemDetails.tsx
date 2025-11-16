@@ -106,31 +106,9 @@ const LoanItemDetails: React.FC = () => {
         {/* Close button */}
         <button
           onClick={() => {
-            const from = sessionStorage.getItem("from");
-
-            if (loanCustomer && items && from === "LoanCustomerDetails") {
-              navigate("/admin/loan-customer-details", {
-                state: { loanCustomer, items },
-              });
-            } else if (loanCustomerId) {
-              navigate("/admin/loanItems", {
-                state: { showItemsList: true, loanCustomerId },
-              });
-            } else if (from === "BillDetails") {
-              const stored = sessionStorage.getItem("itemsState");
-              const parsed = stored ? JSON.parse(stored) : null;
-              const restoredOrders = parsed?.orders || [];
-
-              navigate("/admin/bill-details", {
-                state: {
-                  showOrdersList: true,
-                  loanCustomerId,
-                  orders: restoredOrders,
-                },
-              });
-            } else {
-              navigate("/admin");
-            }
+            navigate("/admin/loanItems", {
+              state: { showItemsList: true, loanCustomerId },
+            });
           }}
           className="absolute top-5 right-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-lg text-sm hover:opacity-90"
         >

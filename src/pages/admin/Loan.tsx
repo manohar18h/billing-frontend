@@ -259,7 +259,7 @@ const Loan: React.FC = () => {
               <MenuItem value="">
                 <em>Select Search Type</em>
               </MenuItem>
-              <MenuItem value="Bill Number">Bill Number</MenuItem>
+              <MenuItem value="Bill Number">Loan Id</MenuItem>
               <MenuItem value="Phone Number">Phone Number</MenuItem>
             </TextField>
             <TextField
@@ -335,11 +335,10 @@ const Loan: React.FC = () => {
                     loading={loading}
                     value={customer.village || ""}
                     onInputChange={(event, newInputValue) => {
-                      setSearch(newInputValue); // triggers API
-                      handleChange("village", newInputValue); // updates customer state
+                      setSearch(newInputValue); // only update search
                     }}
                     onChange={(event, newValue) => {
-                      handleChange("village", newValue || "");
+                      handleChange("village", newValue || ""); // update customer only after selection
                     }}
                     renderOption={(props, option) => (
                       <li {...props} key={option}>

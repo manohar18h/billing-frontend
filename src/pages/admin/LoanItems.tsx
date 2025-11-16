@@ -38,6 +38,8 @@ const LoanItems: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const showItemsList = location.state?.showItemsList || false;
+  const [isBillLoanEditing, setIsBillLoanEditing] = useState(false);
+  const fromLoanCustomer = location.state?.fromLoanCustomer || false;
 
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const token = localStorage.getItem("token");
@@ -209,7 +211,7 @@ const LoanItems: React.FC = () => {
 
       handleClearitem();
       setIsEditing(false);
-
+      setIsBillLoanEditing(true);
       setEditingItemId(null);
       alert(
         "Loan Item updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill"
@@ -236,10 +238,43 @@ const LoanItems: React.FC = () => {
     });
   };
 
+  const handleBillLoanGenerate = () => {
+    // Clear any old data
+    sessionStorage.removeItem("billingFrom");
+    sessionStorage.removeItem("ordersState");
+    localStorage.removeItem("checkEditBillLoan");
+
+    // Save new data
+    sessionStorage.setItem(
+      "itemsState",
+      JSON.stringify({ itemsList, loanCustomerId })
+    );
+
+    // Mark this as a NEW bill (not editing)
+    localStorage.setItem("checkEditBillLoan", "NoEdit");
+
+    // Navigate to generate bill
+    navigate("/admin/generate-loan-bill", {
+      state: {
+        fromBillDetails: location.state?.fromBillDetails || false,
+        selectedOrders: itemsList.map((item) => item.loanId),
+        billLoanNumber:
+          location.state?.billLoanNumber ||
+          localStorage.getItem("billLoanNumber"),
+      },
+    });
+  };
+
+  const handleUpdateBillLoanGenerate = () => {};
+
   useEffect(() => {
     const savedState = sessionStorage.getItem("itemsState");
 
-    if (showItemsList && savedState) {
+    if (fromLoanCustomer) {
+      // Clear state when coming from CustomerDetails or Customers
+      setItemsList([]);
+      sessionStorage.removeItem("itemsState");
+    } else if (showItemsList && savedState) {
       const { itemsList } = JSON.parse(savedState);
       setItemsList(itemsList || []);
     } else if (!showItemsList && savedState) {
@@ -728,6 +763,51 @@ const LoanItems: React.FC = () => {
         </Paper>
       )}
 
+      <Box display="flex" justifyContent="flex-end" mt={3}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={
+            isBillLoanEditing
+              ? handleUpdateBillLoanGenerate
+              : handleBillLoanGenerate
+          }
+          sx={{
+            position: "relative",
+            overflow: "hidden",
+            color: "#fff",
+            background: isBillLoanEditing
+              ? "linear-gradient(90deg, #00e676, #1b5e20, #00e676)"
+              : undefined,
+            backgroundSize: isBillLoanEditing ? "200% 100%" : undefined,
+            animation: isBillLoanEditing
+              ? "waveBright 2.5s linear infinite"
+              : undefined,
+            fontWeight: "bold",
+            textTransform: "none",
+            borderRadius: "8px",
+            boxShadow: isBillLoanEditing
+              ? "0 0 15px rgba(0, 230, 118, 0.8)"
+              : undefined,
+          }}
+        >
+          {isBillLoanEditing ? "Update Bill Generate" : "Bill Generate"}
+        </Button>
+
+        <style>
+          {`
+                    @keyframes waveBright {
+                      0% {
+                        background-position: 0% 50%;
+                      }
+                      100% {
+                        background-position: 200% 50%;
+                      }
+                    }
+                  `}
+        </style>
+      </Box>
+
       <Dialog open={payDialogOpen} onClose={() => setPayDialogOpen(false)}>
         <DialogTitle>Enter Payment Amount</DialogTitle>
         <DialogContent>
@@ -867,6 +947,19 @@ const LoanItems: React.FC = () => {
                 });
 
                 setItemsList(updatedItems);
+                const checkPayEdit = localStorage.getItem(
+                  "editBillFromBillDetails"
+                );
+
+                if (checkPayEdit === "editBill") {
+                  setIsBillLoanEditing(true);
+                }
+                sessionStorage.setItem(
+                  "intemsState",
+                  JSON.stringify({
+                    itemsList: updatedItems,
+                  })
+                );
                 setPayDialogOpen(false);
               } catch (err) {
                 console.error("Payment failed:", err);
