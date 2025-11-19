@@ -256,7 +256,6 @@ function AdminPanelContent() {
             <Route path="orders" element={<Orders />} />
             <Route path="generate-bill" element={<GenerateBill />} />
             <Route path="generate-loan-bill" element={<GenerateLoanBill />} />
-
             <Route path="bill-details" element={<BillDetails />} />
             <Route path="bill-data" element={<BillData />} />
             <Route path="order-details/:orderId" element={<OrderDetails />} />

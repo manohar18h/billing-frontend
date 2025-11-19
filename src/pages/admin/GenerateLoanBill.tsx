@@ -1,13 +1,123 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
+import api from "@/services/api";
 
 const GenerateLoanBill: React.FC = () => {
-  const [loanData, setLoanData] = useState<any>(null);
+  interface LoanTotalAmtHistory {
+    amountHistoryId: number;
+    paymentMethod: string;
+    paymentType: string;
+    amount: number;
+    paymentDate: string;
+    loanId: number;
+  }
 
+  interface LoanItem {
+    loanId: number;
+    loanDate: string;
+    metal: string;
+    itemName: string;
+    gross_weight: number;
+    net_weight: number;
+    rate_of_interest: number;
+    total_amount: number;
+    paid_amount: number;
+    due_amount: number;
+    paid_interest_amount: number;
+    due_interest_amount: number;
+    active_month_count: number;
+
+    deliveryStatus: string;
+    loanTotalAmtHistories: LoanTotalAmtHistory[];
+    version: number;
+    [key: string]: string | number | number[] | null | LoanTotalAmtHistory[];
+  }
+
+  interface LoanBill {
+    loanBillId: number;
+    loanBillNumber: string;
+    customerLoanId: number;
+    name: string;
+    village: string;
+    phoneNumber: string;
+    emailId: string;
+    deliveryStatus: string;
+    numberOfItems: number;
+    totalAmount: number;
+    paidAmount: number;
+    dueAmount: number;
+    paidInterestAmount: number;
+    dueInterestAmount: number;
+    selectedItemsIds: string;
+    loanBillingDate: string;
+    selectedItems: LoanItem[]; // keep string since it’s coming in this format
+  }
+
+  const [loanData, setLoanData] = useState<any>(null);
+  const location = useLocation();
+  const selectedItems = location.state?.selectedItems || [];
+  const billLoanNumber =
+    location.state?.billLoanNumber || localStorage.getItem("billLoanNumber");
   const token = localStorage.getItem("token");
+  const [msgTitle, SetMsgTitle] = useState("");
 
   const loanIdList = history.state?.usr?.selectedOrders || []; // loanId array
   const loanId = loanIdList[0]; // always single loan item
+
+  const [loanBill, setLoanBill] = useState<LoanBill | null>(null);
+
+  useEffect(() => {
+    if (selectedItems.length === 0) return;
+
+    const fetchLoanBillSummary = async () => {
+      const checkEdit = localStorage.getItem("checkEditLoanBill");
+
+      try {
+        console.log("checkEditLoanBill : ", checkEdit);
+
+        if (checkEdit === "YesEdit") {
+          console.log(
+            "Updating existing Loan bill with billNumber:",
+            billLoanNumber
+          );
+
+          const res = await api.put<LoanBill>(
+            `/admin/bill-updateData/${loanBillNumber}`,
+            { loanId: selectedItems }, // send array of orderIds
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          setLoanBill(res.data);
+          SetMsgTitle(`Your order updated Successfully`);
+        } else if (checkEdit === "NoEdit") {
+          console.log("Creating new bill...");
+
+          const response = await api.post<Bill>(
+            "/admin/bill-summary",
+            { orderId: selectedOrders },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          setBill(response.data);
+          SetMsgTitle(`Your order placed Successfully`);
+        }
+      } catch (error) {
+        console.error("Error fetching bill summary/update:", error);
+      }
+    };
+
+    fetchLoanBillSummary();
+  }, [selectedOrders, token]);
 
   useEffect(() => {
     if (!loanId) return;
