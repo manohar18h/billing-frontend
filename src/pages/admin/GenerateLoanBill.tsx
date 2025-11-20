@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import axios from "axios";
 import api from "@/services/api";
 
 const GenerateLoanBill: React.FC = () => {
@@ -54,20 +53,16 @@ const GenerateLoanBill: React.FC = () => {
     selectedItems: LoanItem[]; // keep string since it’s coming in this format
   }
 
-  const [loanData, setLoanData] = useState<any>(null);
+  const [loanData, setLoanData] = useState<LoanBill | null>(null);
   const location = useLocation();
   const selectedItems = location.state?.selectedItems || [];
   const billLoanNumber =
     location.state?.billLoanNumber || localStorage.getItem("billLoanNumber");
   const token = localStorage.getItem("token");
-  const [msgTitle, SetMsgTitle] = useState("");
-
-  const loanIdList = history.state?.usr?.selectedOrders || []; // loanId array
-  const loanId = loanIdList[0]; // always single loan item
-
-  const [loanBill, setLoanBill] = useState<LoanBill | null>(null);
+  // const [msgTitle, SetMsgTitle] = useState("");
 
   useEffect(() => {
+    console.log("check ids selected ids :", selectedItems);
     if (selectedItems.length === 0) return;
 
     const fetchLoanBillSummary = async () => {
@@ -83,7 +78,7 @@ const GenerateLoanBill: React.FC = () => {
           );
 
           const res = await api.put<LoanBill>(
-            `/admin/bill-updateData/${loanBillNumber}`,
+            `/admin/loan-bill-update/${billLoanNumber}`,
             { loanId: selectedItems }, // send array of orderIds
             {
               headers: {
@@ -93,14 +88,14 @@ const GenerateLoanBill: React.FC = () => {
             }
           );
 
-          setLoanBill(res.data);
-          SetMsgTitle(`Your order updated Successfully`);
+          setLoanData(res.data);
+          // SetMsgTitle(`Your order updated Successfully`);
         } else if (checkEdit === "NoEdit") {
           console.log("Creating new bill...");
 
-          const response = await api.post<Bill>(
-            "/admin/bill-summary",
-            { orderId: selectedOrders },
+          const response = await api.post<LoanBill>(
+            "/admin/loan-bill-summary",
+            { loanId: selectedItems },
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -108,8 +103,8 @@ const GenerateLoanBill: React.FC = () => {
               },
             }
           );
-          setBill(response.data);
-          SetMsgTitle(`Your order placed Successfully`);
+          setLoanData(response.data);
+          // SetMsgTitle(`Your order placed Successfully`);
         }
       } catch (error) {
         console.error("Error fetching bill summary/update:", error);
@@ -117,21 +112,7 @@ const GenerateLoanBill: React.FC = () => {
     };
 
     fetchLoanBillSummary();
-  }, [selectedOrders, token]);
-
-  useEffect(() => {
-    if (!loanId) return;
-
-    axios
-      .get(
-        `https://api.hambirejewellery.com/admin/getLoanItemByLoanId/${loanId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      .then((res) => {
-        setLoanData(res.data);
-      })
-      .catch((err) => console.error(err));
-  }, []);
+  }, [selectedItems, token]);
 
   const handlePrint = () => {
     window.print();
@@ -178,130 +159,137 @@ const GenerateLoanBill: React.FC = () => {
       {/* PRINT SECTION */}
       <div id="print-section">
         <h2 style={{ textAlign: "center" }}>LOAN BILL</h2>
+        <span>{loanData.loanBillNumber}</span>
         <div style={{ textAlign: "center", marginBottom: "4px" }}>
           {new Date().toLocaleString()}
         </div>
 
         <div className="solid-line"></div>
+        <h3 style={{ textAlign: "center" }}>ITEMS</h3>
 
-        {/* Basic Details */}
-        <div className="row">
-          <span>Loan ID</span>
-          <span>{loanData.loanId}</span>
-        </div>
+        {loanData.selectedItems.map((item: LoanItem, index: number) => (
+          <div key={index}>
+            <div className="line"></div>
 
-        <div className="row">
-          <span>Date</span>
-          <span>{new Date(loanData.loanDate).toLocaleDateString()}</span>
-        </div>
-
-        <div className="row">
-          <span>Metal</span>
-          <span>{loanData.metal}</span>
-        </div>
-
-        <div className="row">
-          <span>Item</span>
-          <span>{loanData.itemName}</span>
-        </div>
-
-        <div className="line"></div>
-
-        {/* Weights */}
-        <div className="row">
-          <span>Gross Wt</span>
-          <span>{loanData.gross_weight} gm</span>
-        </div>
-
-        <div className="row">
-          <span>Net Wt</span>
-          <span>{loanData.net_weight} gm</span>
-        </div>
-
-        <div className="line"></div>
-
-        {/* Amounts */}
-        <div className="row">
-          <span>Total Loan Amt</span>
-          <span>₹ {loanData.total_amount}</span>
-        </div>
-
-        <div className="row">
-          <span>Paid</span>
-          <span>₹ {loanData.paid_amount}</span>
-        </div>
-
-        <div className="row">
-          <span>Due</span>
-          <span>₹ {loanData.due_amount}</span>
-        </div>
-
-        <div className="line"></div>
-
-        {/* Interest */}
-        <div className="row">
-          <span>Interest Rate</span>
-          <span>{loanData.rate_of_interest}%</span>
-        </div>
-
-        <div className="row">
-          <span>Paid Interest</span>
-          <span>₹ {loanData.paid_interest_amount}</span>
-        </div>
-
-        <div className="row">
-          <span>Due Interest</span>
-          <span>₹ {loanData.due_interest_amount}</span>
-        </div>
-
-        {/* PAYMENT HISTORY SECTION */}
-        <div className="solid-line"></div>
-
-        <h3 style={{ textAlign: "center", fontSize: "16px" }}>
-          PAYMENT HISTORY
-        </h3>
-
-        {/* If no history */}
-        {(!loanData.loanTotalAmtHistories ||
-          loanData.loanTotalAmtHistories.length === 0) && (
-          <div
-            style={{ textAlign: "center", margin: "6px 0", fontSize: "14px" }}
-          >
-            No payment history
-          </div>
-        )}
-
-        {/* Only ONE loop */}
-        {loanData.loanTotalAmtHistories &&
-          loanData.loanTotalAmtHistories.map((item: any, index: number) => (
-            <div key={index}>
-              <div className="line"></div>
-
-              <div className="row">
-                <span>Amount</span>
-                <span>₹ {item.amount ?? "0"}</span>
-              </div>
-
-              <div className="row">
-                <span>Payment Type</span>
-                <span>{item.paymentType ?? "N/A"}</span>
-              </div>
-
-              <div className="row">
-                <span>Payment Method</span>
-                <span>{item.paymentMethod ?? "N/A"}</span>
-              </div>
-
-              <div className="row">
-                <span>Payment Date</span>
-                <span>
-                  {item.paymentDate
-                    ? new Date(item.paymentDate).toLocaleDateString()
-                    : "N/A"}
-                </span>
-              </div>
+            {/* Item Header */}
+            <div className="row">
+              <span>Item #{index + 1}</span>
+              <span>ID: {item.loanId}</span>
             </div>
-          ))}
+
+            <div className="row">
+              <span>Metal</span>
+              <span>{item.metal}</span>
+            </div>
+
+            <div className="row">
+              <span>Item</span>
+              <span>{item.itemName}</span>
+            </div>
+
+            <div className="row">
+              <span>Gross Wt</span>
+              <span>{item.gross_weight} gm</span>
+            </div>
+
+            <div className="row">
+              <span>Net Wt</span>
+              <span>{item.net_weight} gm</span>
+            </div>
+
+            <div className="row">
+              <span>Total Amount</span>
+              <span>₹ {item.total_amount}</span>
+            </div>
+
+            <div className="row">
+              <span>Paid</span>
+              <span>₹ {item.paid_amount ?? 0}</span>
+            </div>
+
+            <div className="row">
+              <span>Due</span>
+              <span>₹ {item.due_amount}</span>
+            </div>
+
+            <div className="row">
+              <span>Interest Paid</span>
+              <span>₹ {item.paid_interest_amount ?? 0}</span>
+            </div>
+
+            <div className="row">
+              <span>Interest Due</span>
+              <span>₹ {item.due_interest_amount}</span>
+            </div>
+
+            {/* Item Payment History */}
+            {item.loanTotalAmtHistories.length > 0 && (
+              <>
+                <div className="line"></div>
+                <h4 style={{ textAlign: "center", fontSize: "15px" }}>
+                  Payment History
+                </h4>
+
+                {item.loanTotalAmtHistories.map((pay, i) => (
+                  <div key={i}>
+                    <div className="row">
+                      <span>Amount</span>
+                      <span>₹ {pay.amount}</span>
+                    </div>
+
+                    <div className="row">
+                      <span>Type</span>
+                      <span>{pay.paymentType}</span>
+                    </div>
+
+                    <div className="row">
+                      <span>Method</span>
+                      <span>{pay.paymentMethod}</span>
+                    </div>
+
+                    <div className="row">
+                      <span>Date</span>
+                      <span>{pay.paymentDate}</span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        ))}
+        <div className="solid-line"></div>
+        <h3 style={{ textAlign: "center" }}>TOTAL SUMMARY</h3>
+
+        <div className="row">
+          <span>Total Items</span>
+          <span>{loanData.numberOfItems}</span>
+        </div>
+
+        <div className="row">
+          <span>Total Amount</span>
+          <span>₹ {loanData.totalAmount}</span>
+        </div>
+
+        <div className="row">
+          <span>Total Paid</span>
+          <span>₹ {loanData.paidAmount}</span>
+        </div>
+
+        <div className="row">
+          <span>Total Due</span>
+          <span>₹ {loanData.dueAmount}</span>
+        </div>
+
+        <div className="row">
+          <span>Total Interest Paid</span>
+          <span>₹ {loanData.paidInterestAmount}</span>
+        </div>
+
+        <div className="row">
+          <span>Total Interest Due</span>
+          <span>₹ {loanData.dueInterestAmount}</span>
+        </div>
+
         <div className="solid-line"></div>
 
         <div className="footer">

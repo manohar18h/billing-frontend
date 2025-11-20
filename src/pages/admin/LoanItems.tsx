@@ -251,13 +251,13 @@ const LoanItems: React.FC = () => {
     );
 
     // Mark this as a NEW bill (not editing)
-    localStorage.setItem("checkEditBillLoan", "NoEdit");
+    localStorage.setItem("checkEditLoanBill", "NoEdit");
 
     // Navigate to generate bill
     navigate("/admin/generate-loan-bill", {
       state: {
         fromBillDetails: location.state?.fromBillDetails || false,
-        selectedOrders: itemsList.map((item) => item.loanId),
+        selectedItems: itemsList.map((item) => item.loanId),
         billLoanNumber:
           location.state?.billLoanNumber ||
           localStorage.getItem("billLoanNumber"),
@@ -265,13 +265,32 @@ const LoanItems: React.FC = () => {
     });
   };
 
-  const handleUpdateBillLoanGenerate = () => {};
+  const handleUpdateBillLoanGenerate = () => {
+    sessionStorage.removeItem("billingFrom");
+    sessionStorage.removeItem("ordersState");
+    localStorage.removeItem("checkEditBill");
+    sessionStorage.setItem(
+      "itemsState",
+      JSON.stringify({ itemsList, loanCustomerId })
+    );
+
+    console.log("checkWhere im ", " handleUpdateBillGenerate ");
+    localStorage.setItem("checkEditLoanBill", "YesEdit");
+    navigate("/admin/generate-loan-bill", {
+      state: {
+        fromBillDetails: location.state?.fromBillDetails || false,
+        selectedItems: itemsList.map((item) => item.loanId),
+        billLoanNumber:
+          location.state?.billLoanNumber ||
+          localStorage.getItem("billLoanNumber"),
+      },
+    });
+  };
 
   useEffect(() => {
     const savedState = sessionStorage.getItem("itemsState");
 
     if (fromLoanCustomer) {
-      // Clear state when coming from CustomerDetails or Customers
       setItemsList([]);
       sessionStorage.removeItem("itemsState");
     } else if (showItemsList && savedState) {
@@ -730,7 +749,7 @@ const LoanItems: React.FC = () => {
                               color: "#A0522D",
                               "&:hover": { backgroundColor: "#E0E0E0" },
                             }}
-                            onClick={() => handleClickItemOpen(itm.orderId)}
+                            onClick={() => handleClickItemOpen(itm.loanId)}
                           >
                             <DeleteIcon />
                           </IconButton>
@@ -791,7 +810,9 @@ const LoanItems: React.FC = () => {
               : undefined,
           }}
         >
-          {isBillLoanEditing ? "Update Bill Generate" : "Bill Generate"}
+          {isBillLoanEditing
+            ? "Update Loan Bill Generate"
+            : "Loan Bill Generate"}
         </Button>
 
         <style>
