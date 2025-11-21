@@ -42,6 +42,8 @@ import Loan from "./admin/Loan";
 import LoanItems from "./admin/LoanItems";
 import LoanItemDetails from "./admin/LoanItemDetails";
 import GenerateLoanBill from "./admin/GenerateLoanBill";
+import BillLoanDetails from "./admin/BillLoanDetails";
+import BillLoanData from "./admin/BillLoanData";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
@@ -203,7 +205,9 @@ function AdminPanelContent() {
   } else if (
     location.pathname.startsWith("/admin/loanItems") ||
     location.pathname.startsWith("/admin/loanItem-details") ||
-    location.pathname === "/admin/generate-loan-bill"
+    location.pathname === "/admin/generate-loan-bill" ||
+    location.pathname === "/admin/bill-loan-details" ||
+    location.pathname === "/admin/bill-loan-data"
   ) {
     activeIndex = 8;
   }
@@ -257,7 +261,9 @@ function AdminPanelContent() {
             <Route path="generate-bill" element={<GenerateBill />} />
             <Route path="generate-loan-bill" element={<GenerateLoanBill />} />
             <Route path="bill-details" element={<BillDetails />} />
+            <Route path="bill-loan-details" element={<BillLoanDetails />} />
             <Route path="bill-data" element={<BillData />} />
+            <Route path="bill-loan-data" element={<BillLoanData />} />
             <Route path="order-details/:orderId" element={<OrderDetails />} />
             <Route
               path="loanItem-details/:loanId"

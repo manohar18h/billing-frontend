@@ -130,22 +130,28 @@ const Loan: React.FC = () => {
     }
 
     if (searchType === "Bill Number") {
-      localStorage.removeItem("billNumber");
-      localStorage.setItem("billNumber", "HJ-" + trimmedQuery);
-      navigate("/admin/bill-details");
+      localStorage.removeItem("billLoanNumber");
+      localStorage.removeItem("bill-loan-phnNumber");
+      localStorage.removeItem("checkBackFrom");
+      localStorage.setItem("billLoanNumber", "L-" + trimmedQuery);
+      localStorage.setItem("checkBackFrom", "Bill-Number");
+      navigate("/admin/bill-loan-details");
     } else if (searchType === "Phone Number") {
-      localStorage.removeItem("bill-phnNumber");
-      localStorage.setItem("bill-phnNumber", trimmedQuery);
-      navigate("/admin/bill-Data");
+      localStorage.removeItem("checkBackFrom");
+      localStorage.removeItem("billLoanNumber");
+      localStorage.removeItem("bill-loan-phnNumber");
+      localStorage.setItem("bill-loan-phnNumber", trimmedQuery);
+      localStorage.setItem("checkBackFrom", "Phn-Number");
+      navigate("/admin/bill-loan-data");
     }
   };
 
   const handleAddCustomer = async () => {
     try {
       const token = localStorage.getItem("token");
-      localStorage.removeItem("CusDetailsCustomerId");
-      localStorage.removeItem("loanCusId");
-      localStorage.removeItem("fromLoan");
+      localStorage.removeItem("loanCusDetailsCustomerId");
+      localStorage.removeItem("loanCustomerId");
+      localStorage.removeItem("from");
 
       setFieldErrors({});
 
@@ -177,8 +183,8 @@ const Loan: React.FC = () => {
       const result = response.data;
 
       if (result?.loanCusId) {
-        localStorage.setItem("loanCusId", result.loanCusId);
-        localStorage.setItem("fromLoan", "LoanCustomer");
+        localStorage.setItem("loanCustomerId", result.loanCusId);
+        localStorage.setItem("from", "LoanCustomer");
         console.log(" Loan customerId in customer:", result.loanCusId);
 
         navigate("/admin/loanItems", {
@@ -259,7 +265,7 @@ const Loan: React.FC = () => {
               <MenuItem value="">
                 <em>Select Search Type</em>
               </MenuItem>
-              <MenuItem value="Bill Number">Loan Id</MenuItem>
+              <MenuItem value="Bill Number">Bill Number</MenuItem>
               <MenuItem value="Phone Number">Phone Number</MenuItem>
             </TextField>
             <TextField

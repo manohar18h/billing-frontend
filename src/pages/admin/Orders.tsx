@@ -399,8 +399,6 @@ const Orders: React.FC = () => {
   };
 
   const handleBackClick = () => {
-    localStorage.removeItem("from");
-
     if (from === "customerDetails") {
       navigate("/admin/bill-Data", {
         state: { customerId: location.state?.customerId }, // optionally pass back
@@ -589,8 +587,6 @@ const Orders: React.FC = () => {
   };
 
   const handleBillGenerate = () => {
-    // Clear any old data
-    sessionStorage.removeItem("billingFrom");
     sessionStorage.removeItem("ordersState");
     localStorage.removeItem("checkEditBill");
 
@@ -615,8 +611,6 @@ const Orders: React.FC = () => {
   };
 
   const handleUpdateBillGenerate = () => {
-    // Clear any old data
-    sessionStorage.removeItem("billingFrom");
     sessionStorage.removeItem("ordersState");
     localStorage.removeItem("checkEditBill");
     // Save updated order data

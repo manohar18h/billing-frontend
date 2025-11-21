@@ -26,7 +26,6 @@ const GenerateLoanBill: React.FC = () => {
     paid_interest_amount: number;
     due_interest_amount: number;
     active_month_count: number;
-
     deliveryStatus: string;
     loanTotalAmtHistories: LoanTotalAmtHistory[];
     version: number;
@@ -310,5 +309,4 @@ const GenerateLoanBill: React.FC = () => {
     </div>
   );
 };
-
 export default GenerateLoanBill;

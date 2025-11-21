@@ -63,7 +63,7 @@ const LoanItemDetails: React.FC = () => {
 
         const token = localStorage.getItem("token");
 
-        const response = await api.get<LoanItem>( // 👈 tell Axios the response type
+        const response = await api.get<LoanItem>(
           `/admin/getLoanItemByLoanId/${numericItemId}`,
           {
             headers: {
@@ -106,9 +106,27 @@ const LoanItemDetails: React.FC = () => {
         {/* Close button */}
         <button
           onClick={() => {
-            navigate("/admin/loanItems", {
-              state: { showItemsList: true, loanCustomerId },
-            });
+            const from = sessionStorage.getItem("from");
+
+            if (loanCustomerId) {
+              navigate("/admin/loanItems", {
+                state: { showItemsList: true, loanCustomerId },
+              });
+            } else if (from === "BillLoanDetails") {
+              const stored = sessionStorage.getItem("itemsState");
+              const parsed = stored ? JSON.parse(stored) : null;
+              const restoredItems = parsed?.items || [];
+
+              navigate("/admin/bill-loan-details", {
+                state: {
+                  showItemsList: true,
+                  loanCustomerId,
+                  items: restoredItems,
+                },
+              });
+            } else {
+              navigate("/admin");
+            }
           }}
           className="absolute top-5 right-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-lg text-sm hover:opacity-90"
         >
@@ -144,7 +162,7 @@ const LoanItemDetails: React.FC = () => {
           <div className="pl-6">
             {[
               ["Paid Amount", item.paid_amount],
-              ["Due Weight", item.due_amount],
+              ["Due Amount", item.due_amount],
               ["Paid Interest Amount", item.paid_interest_amount],
               ["Due Interest Amount", item.due_interest_amount],
               ["Active Month Count", item.active_month_count],

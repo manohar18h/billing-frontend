@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TextField,
   Button,
@@ -40,12 +40,20 @@ const LoanItems: React.FC = () => {
   const showItemsList = location.state?.showItemsList || false;
   const [isBillLoanEditing, setIsBillLoanEditing] = useState(false);
   const fromLoanCustomer = location.state?.fromLoanCustomer || false;
+  const fromBillLoanDetails = location.state?.fromBillLoanDetails || false;
+  const numericLoanId = location.state?.loanId || null; // read from state
+  const fromLoanCustomerDetails =
+    location.state?.fromLoanCustomerDetails || false;
+  const from = location.state?.from || localStorage.getItem("from");
 
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const token = localStorage.getItem("token");
+  const [editBillLoanDetails, setEditBillLoanDetails] = useState<string | null>(
+    null
+  );
 
   const loanCustomerId =
-    location.state?.loanCusId || localStorage.getItem("loanCusId");
+    location.state?.loanCustomerId || localStorage.getItem("loanCustomerId");
 
   const asNumber = (v: number | string | null | undefined): number =>
     v == null || v === "" ? 0 : Number(v);
@@ -239,24 +247,19 @@ const LoanItems: React.FC = () => {
   };
 
   const handleBillLoanGenerate = () => {
-    // Clear any old data
-    sessionStorage.removeItem("billingFrom");
-    sessionStorage.removeItem("ordersState");
-    localStorage.removeItem("checkEditBillLoan");
+    sessionStorage.removeItem("itemsState");
+    localStorage.removeItem("checkEditLoanBill");
 
-    // Save new data
     sessionStorage.setItem(
       "itemsState",
       JSON.stringify({ itemsList, loanCustomerId })
     );
 
-    // Mark this as a NEW bill (not editing)
     localStorage.setItem("checkEditLoanBill", "NoEdit");
 
-    // Navigate to generate bill
     navigate("/admin/generate-loan-bill", {
       state: {
-        fromBillDetails: location.state?.fromBillDetails || false,
+        fromBillLoanDetails: location.state?.fromBillLoanDetails || false,
         selectedItems: itemsList.map((item) => item.loanId),
         billLoanNumber:
           location.state?.billLoanNumber ||
@@ -266,9 +269,8 @@ const LoanItems: React.FC = () => {
   };
 
   const handleUpdateBillLoanGenerate = () => {
-    sessionStorage.removeItem("billingFrom");
-    sessionStorage.removeItem("ordersState");
-    localStorage.removeItem("checkEditBill");
+    sessionStorage.removeItem("itemsState");
+    localStorage.removeItem("checkEditLoanBill");
     sessionStorage.setItem(
       "itemsState",
       JSON.stringify({ itemsList, loanCustomerId })
@@ -278,7 +280,7 @@ const LoanItems: React.FC = () => {
     localStorage.setItem("checkEditLoanBill", "YesEdit");
     navigate("/admin/generate-loan-bill", {
       state: {
-        fromBillDetails: location.state?.fromBillDetails || false,
+        fromBillLoanDetails: location.state?.fromBillLoanDetails || false,
         selectedItems: itemsList.map((item) => item.loanId),
         billLoanNumber:
           location.state?.billLoanNumber ||
@@ -288,9 +290,48 @@ const LoanItems: React.FC = () => {
   };
 
   useEffect(() => {
+    if (fromBillLoanDetails && numericLoanId) {
+      fetchItemDetails();
+    }
+  }, [location.key]);
+
+  const fetchItemDetails = async (): Promise<void> => {
+    try {
+      if (!numericLoanId) return;
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found");
+        return;
+      }
+
+      const response = await api.get<any>(
+        `/admin/getLoanItemByLoanId/${numericLoanId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = response.data;
+
+      setEditBillLoanDetails(
+        localStorage.getItem("editBillFromBillLoanDetails")
+      );
+
+      setItemsList([data]);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Error fetching order:", err.message);
+      } else {
+        console.error("Unexpected error:", err);
+      }
+    }
+  };
+
+  useEffect(() => {
     const savedState = sessionStorage.getItem("itemsState");
 
-    if (fromLoanCustomer) {
+    if (fromLoanCustomer || fromLoanCustomerDetails) {
       setItemsList([]);
       sessionStorage.removeItem("itemsState");
     } else if (showItemsList && savedState) {
@@ -302,7 +343,18 @@ const LoanItems: React.FC = () => {
     }
   }, [location.key]);
 
-  const handleBackClick = () => {};
+  const handleBackClick = () => {
+    if (from === "loanCustomerDetails") {
+      navigate("/admin/bill-loan-data", {
+        state: { loanCustomerId: location.state?.loanCustomerId }, // optionally pass back
+        replace: true,
+      });
+    } else if (from === "LoanCustomer") {
+      navigate("/admin/Loan", { replace: true });
+    } else {
+      navigate("/admin"); // fallback
+    }
+  };
 
   const handleItemDelete = async () => {};
 
@@ -742,6 +794,8 @@ const LoanItems: React.FC = () => {
                       <div className="flex justify-center items-center">
                         {itm.deliveryStatus === "Canceled" ? (
                           <CheckCircleIcon color="success" />
+                        ) : editBillLoanDetails === "editBill" ? (
+                          "-"
                         ) : (
                           <IconButton
                             size="small"
@@ -969,7 +1023,7 @@ const LoanItems: React.FC = () => {
 
                 setItemsList(updatedItems);
                 const checkPayEdit = localStorage.getItem(
-                  "editBillFromBillDetails"
+                  "editBillFromBillLoanDetails"
                 );
 
                 if (checkPayEdit === "editBill") {
