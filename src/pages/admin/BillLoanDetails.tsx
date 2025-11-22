@@ -21,7 +21,7 @@ import api from "@/services/api"; // ← import your api.ts
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import { Box } from "@mui/system";
-import SignaturePad from "react-signature-pad-wrapper";
+import SignatureCanvas from "./SignatureCanvas";
 
 interface selectedItems {
   loanId: number;
@@ -81,11 +81,11 @@ const BillLoanDetails: React.FC = () => {
   const [payMethod, setPayMethod] = useState("");
   const [payType, setPayType] = useState("");
   const [signDialogOpen, setSignDialogOpen] = useState(false);
-  const signPad = useRef<any>(null);
   const [signType, setSignType] = useState(""); // start or end
   const [selectedBillNo, setSelectedBillNo] = useState("");
-  const [startSignature, setStartSignature] = useState<string | null>(null);
 
+  const signPad = useRef<any>(null);
+  const [startSignature, setStartSignature] = useState<string | null>(null);
   const [endSignature, setEndSignature] = useState<string | null>(null);
 
   const checkBackFrom = localStorage.getItem("checkBackFrom");
@@ -745,12 +745,7 @@ const BillLoanDetails: React.FC = () => {
               border: "2px solid black",
             }}
           >
-            <SignaturePad
-              ref={signPad}
-              options={{ penColor: "black" }}
-              width={400}
-              height={200}
-            />
+            <SignatureCanvas ref={signPad} />
           </div>
 
           <Button
