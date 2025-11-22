@@ -106,6 +106,11 @@ const BillLoanData: React.FC = () => {
     0
   );
 
+  const totalInterestDueAmount = loanBillingData.reduce(
+    (sum, bill) => sum + bill.dueInterestAmount,
+    0
+  );
+
   const handleAddOrder = () => {
     const loanCustomer = loanBillingData[0]; // same customer for all bills
     const items = loanBillingData.flatMap((bill) => bill.selectedItems); // collect all existing orders
@@ -193,18 +198,7 @@ const BillLoanData: React.FC = () => {
                   {loanCustomer.village}
                 </span>
               </p>
-              <p className="flex justify-between">
-                <span className="text-gray-300 font-medium">
-                  Number of Items:
-                </span>
-                <span className="text-yellow-300 font-semibold">
-                  {totalItems}
-                </span>
-              </p>
-            </div>
 
-            {/* Right column */}
-            <div className="space-y-4 pl-4">
               <p className="flex justify-between">
                 <span className="text-gray-300 font-medium">Phone:</span>
                 <span className="text-teal-300 font-semibold">
@@ -217,10 +211,30 @@ const BillLoanData: React.FC = () => {
                   {loanCustomer.emailId || "—"}
                 </span>
               </p>
+            </div>
+
+            {/* Right column */}
+            <div className="space-y-4 pl-4">
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">
+                  Number of Items:
+                </span>
+                <span className="text-yellow-300 font-semibold">
+                  {totalItems}
+                </span>
+              </p>
               <p className="flex justify-between">
                 <span className="text-gray-300 font-medium">Total Due:</span>
                 <span className="text-red-400 font-semibold">
                   {totalDueAmount.toFixed(2)}
+                </span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">
+                  Total Interest Due:
+                </span>
+                <span className="text-red-400 font-semibold">
+                  {totalInterestDueAmount.toFixed(2)}
                 </span>
               </p>
             </div>
@@ -235,12 +249,13 @@ const BillLoanData: React.FC = () => {
             Billing History
           </h3>
           <Box
+            className="w-full"
             sx={{
               width: "100%",
               overflowX: "auto", // allows horizontal scrolling on small screens
             }}
           >
-            <table className="w-full border-collapse border border-gray-300 minWidth: 800 ">
+            <table className="w-full min-w-[900px] border-collapse border border-gray-300">
               <thead className="bg-gray-200">
                 <tr>
                   <th className="border px-3 py-2">Billing Date</th>

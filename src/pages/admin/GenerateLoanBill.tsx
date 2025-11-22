@@ -1,6 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import api from "@/services/api";
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import SignatureCanvas from "./SignatureCanvas";
 
 const GenerateLoanBill: React.FC = () => {
   interface LoanTotalAmtHistory {
@@ -10,6 +18,15 @@ const GenerateLoanBill: React.FC = () => {
     amount: number;
     paymentDate: string;
     loanId: number;
+  }
+
+  interface LoanBillingSignature {
+    id: number;
+    loanBillId: number;
+    loanBillNumber: string;
+    signatureType: string;
+    signatureData: string;
+    signedAt: string;
   }
 
   interface LoanItem {
@@ -58,7 +75,93 @@ const GenerateLoanBill: React.FC = () => {
   const billLoanNumber =
     location.state?.billLoanNumber || localStorage.getItem("billLoanNumber");
   const token = localStorage.getItem("token");
-  // const [msgTitle, SetMsgTitle] = useState("");
+  const printRef = useRef<HTMLDivElement>(null);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [msgTitle, SetMsgTitle] = useState("");
+  const openWhatsAppModal = () => setShowWhatsAppModal(true);
+  const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [signType, setSignType] = useState(""); // start or end
+  const [selectedBillNo, setSelectedBillNo] = useState("");
+  const [showStartSign, setShowStartSign] = useState(true);
+
+  const signPad = useRef<any>(null);
+  // Updated getWhatsAppMessage to include all orders
+  const getWhatsAppMessage = (bill: LoanBill, msgTitle: string) => {
+    if (!bill.selectedItems || bill.selectedItems.length === 0) return "";
+
+    const itemsLines = bill.selectedItems.map((item, idx) => {
+      return `🛍️ Product Name ${idx + 1}: ${item.itemName}`;
+    });
+
+    return `
+👋 Hello ${bill.name},
+
+✨ Thank you, ${msgTitle} 🎁🥳
+We appreciate your trust in Hambire Jewellery 💎
+
+🧾 Invoice Bill No: ${bill.loanBillNumber}
+📅 Date: ${bill.loanBillingDate}
+
+${itemsLines.join("\n\n")}
+
+💰 Total Bill Amount: ₹${bill.totalAmount.toFixed(2)}
+✅ Paid: ₹${bill.paidAmount.toFixed(2)}
+⚠️ Due: ₹${bill.dueAmount.toFixed(2)}
+⚠️ I Due: ₹${bill.dueInterestAmount.toFixed(2)}
+✅ I Paid: ₹${bill.paidInterestAmount.toFixed(2)}
+🎯 Delivery Status: ${bill.deliveryStatus}
+
+🎉Thank you for your purchase! 💎
+We hope to serve you again soon!
+-- Hambire Jewellery 💍
+  `;
+  };
+
+  // Updated copyWhatsAppMessage function
+  const copyWhatsAppMessage = () => {
+    if (!loanData) return;
+
+    const phone = loanData.phoneNumber?.replace(/\D/g, "");
+    if (!phone) return alert("Customer phone number missing!");
+
+    const msg = getWhatsAppMessage(loanData, msgTitle);
+
+    navigator.clipboard.writeText(msg).then(() => {
+      const url = `https://web.whatsapp.com/send?phone=91${phone}`;
+      window.open(url, "_blank");
+
+      alert(
+        "Message copied to clipboard ✅ \nWhatsApp Web opened. You can paste and send manually."
+      );
+    });
+  };
+
+  useEffect(() => {
+    checkSignatureExists();
+  }, [loanData]);
+
+  const checkSignatureExists = async () => {
+    if (!loanData?.loanBillNumber) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await api.get<LoanBillingSignature[]>(
+        `/admin/signatures/${loanData.loanBillNumber}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.status === 200 && res.data.length > 0) {
+        setShowStartSign(false);
+      }
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        setShowStartSign(true);
+      }
+    }
+  };
 
   useEffect(() => {
     console.log("check ids selected ids :", selectedItems);
@@ -103,7 +206,7 @@ const GenerateLoanBill: React.FC = () => {
             }
           );
           setLoanData(response.data);
-          // SetMsgTitle(`Your order placed Successfully`);
+          SetMsgTitle(`Your Item Updated Successfully`);
         }
       } catch (error) {
         console.error("Error fetching bill summary/update:", error);
@@ -113,10 +216,6 @@ const GenerateLoanBill: React.FC = () => {
     fetchLoanBillSummary();
   }, [selectedItems, token]);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   if (!loanData) return <div>Loading...</div>;
 
   return (
@@ -124,188 +223,454 @@ const GenerateLoanBill: React.FC = () => {
       {/* PRINT CSS */}
       <style>
         {`
-        @media print {
-          @page { size: 79mm auto; margin: 0; }
+  @media print {
+  body {
+   -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0;
+    zoom: 0.75; /* Shrink content to fit horizontally */
+            visibility: hidden;
 
-          body {
-            margin: 0; padding: 0;
-            background: white;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
+  }
 
-          body * { visibility: hidden; }
-          #print-section, #print-section * { visibility: visible; }
 
+  .invoice-table {
+    width: 100% !important;
+    transform: scale(1) !important;
+    table-layout: fixed;
+    font-size: 10px; /* Slightly smaller text for fitting */
+  }
+
+  .invoice-header {
+    margin: 0 !important;
+  }
+
+  .invoice-container {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    flex-direction: row !important;
+    width: 100% !important;
+  }
+      .invoice-container > div {
+    width: 48% !important;
+  }
+
+
+  /* Avoid clipping large tables */
+  .invoice-table-wrapper {
+    width: 100%;
+    overflow: visible !important;
+  }
+
+  /* Make print layout use full page height */
+  body, html {
+    width: 100%;
+    height: 100%;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+
+             @page {
+    size: A4 portrait;   /* Or A5 portrait */
+    margin: 10mm;        /* Adjust as needed */
+  }
+
+  .no-print-scroll {
+    overflow: visible !important;
+  }
+
+  #print-section, #print-section * {
+        visibility: visible;
+      }
           #print-section {
-            position: absolute; top: 0; left: 0;
-            width: 79mm;
-            font-family: Arial, sans-serif;
-            padding: 4px 6px;
-            font-size: 16px;
-            font-weight: 600;
-            line-height: 1.45;
-          }
+    zoom: 1 !important;
+    transform: none !important;
+  }
+      #print-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 10;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
 
-          .line      { border-top: 1px dashed #000; margin: 6px 0; }
-          .solid-line{ border-top: 1px solid #000; margin: 6px 0; }
-          .row       { display: flex; justify-content: space-between; margin: 4px 0; }
-          .footer    { text-align: center; font-size: 12px; margin-top: 10px; }
+ 
+
+  table {
+  min-width: 100% !important;
+  font-size: 13px !important; /* Bigger and clearer */
+}
+
+
+
+  th, td {
+  padding: 6px 4px !important; /* more breathing space */
+}
+}
+
+
+
+  `}
+      </style>
+
+      <style>
+        {`
+     .invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  table-layout: fixed;
+}
+
+.invoice-table th,
+.invoice-table td {
+  padding: 4px 6px;
+  word-wrap: break-word;
+  white-space: normal;
+  text-align: center;
+  vertical-align: middle;
+}
+
+
+
+      /* Auto-shrink on smaller screens */
+      @media (max-width: 1400px) {
+        .invoice-table {
+          transform: scale(0.9);
         }
-        `}
+      }
+      @media (max-width: 1200px) {
+        .invoice-table {
+          transform: scale(0.8);
+        }
+      }
+      @media (max-width: 1000px) {
+        .invoice-table {
+          transform: scale(0.7);
+        }
+      }
+      @media (max-width: 800px) {
+        .invoice-table {
+          transform: scale(0.6);
+        }
+      }
+    `}
       </style>
 
       {/* PRINT SECTION */}
-      <div id="print-section">
-        <h2 style={{ textAlign: "center" }}>LOAN BILL</h2>
-        <span>{loanData.loanBillNumber}</span>
-        <div style={{ textAlign: "center", marginBottom: "4px" }}>
-          {new Date().toLocaleString()}
-        </div>
-
-        <div className="solid-line"></div>
-        <h3 style={{ textAlign: "center" }}>ITEMS</h3>
-
-        {loanData.selectedItems.map((item: LoanItem, index: number) => (
-          <div key={index}>
-            <div className="line"></div>
-
-            {/* Item Header */}
-            <div className="row">
-              <span>Item #{index + 1}</span>
-              <span>ID: {item.loanId}</span>
-            </div>
-
-            <div className="row">
-              <span>Metal</span>
-              <span>{item.metal}</span>
-            </div>
-
-            <div className="row">
-              <span>Item</span>
-              <span>{item.itemName}</span>
-            </div>
-
-            <div className="row">
-              <span>Gross Wt</span>
-              <span>{item.gross_weight} gm</span>
-            </div>
-
-            <div className="row">
-              <span>Net Wt</span>
-              <span>{item.net_weight} gm</span>
-            </div>
-
-            <div className="row">
-              <span>Total Amount</span>
-              <span>₹ {item.total_amount}</span>
-            </div>
-
-            <div className="row">
-              <span>Paid</span>
-              <span>₹ {item.paid_amount ?? 0}</span>
-            </div>
-
-            <div className="row">
-              <span>Due</span>
-              <span>₹ {item.due_amount}</span>
-            </div>
-
-            <div className="row">
-              <span>Interest Paid</span>
-              <span>₹ {item.paid_interest_amount ?? 0}</span>
-            </div>
-
-            <div className="row">
-              <span>Interest Due</span>
-              <span>₹ {item.due_interest_amount}</span>
-            </div>
-
-            {/* Item Payment History */}
-            {item.loanTotalAmtHistories.length > 0 && (
-              <>
-                <div className="line"></div>
-                <h4 style={{ textAlign: "center", fontSize: "15px" }}>
-                  Payment History
-                </h4>
-
-                {item.loanTotalAmtHistories.map((pay, i) => (
-                  <div key={i}>
-                    <div className="row">
-                      <span>Amount</span>
-                      <span>₹ {pay.amount}</span>
-                    </div>
-
-                    <div className="row">
-                      <span>Type</span>
-                      <span>{pay.paymentType}</span>
-                    </div>
-
-                    <div className="row">
-                      <span>Method</span>
-                      <span>{pay.paymentMethod}</span>
-                    </div>
-
-                    <div className="row">
-                      <span>Date</span>
-                      <span>{pay.paymentDate}</span>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
+      <div
+        id="print-section"
+        ref={printRef}
+        className="p-6 bg-gray-100 shadow-2xl rounded-md max-w-[800px] mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
+      >
+        {/* Header */}
+        <div className="flex justify-between items-start border-b-2 pb-4 mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-[#B45309]">
+              HAMBIRE JEWELLERY
+            </h1>
+            <strong className="text-[#374151]">Since 1977</strong>
+            <p className=" text-[#374151]">
+              Ramayampet, Subhash Road, Medak, Telangana, 502101
+            </p>
+            <p className=" text-[#374151]">
+              Phone: 9703738824 | www.hambirejewellery.com
+            </p>
           </div>
-        ))}
-        <div className="solid-line"></div>
-        <h3 style={{ textAlign: "center" }}>TOTAL SUMMARY</h3>
-
-        <div className="row">
-          <span>Total Items</span>
-          <span>{loanData.numberOfItems}</span>
         </div>
-
-        <div className="row">
-          <span>Total Amount</span>
-          <span>₹ {loanData.totalAmount}</span>
+        {/* Customer Info */}
+        <div className="invoice-container flex justify-between items-start border-b-2 pb-4 mb-4">
+          <div className="mb-4 invoice-header">
+            <p>
+              <strong className="text-[#B45309]">Name : </strong>
+              <span className="text-[#111827] ">{loanData.name}</span>
+            </p>
+            <p>
+              <strong className="text-[#B45309]">Village : </strong>
+              <span className="text-[#111827] ">{loanData.village}</span>
+            </p>
+            <p>
+              <strong className="text-[#B45309]">Phone : </strong>
+              <span className="text-[#111827] ">{loanData.phoneNumber}</span>
+            </p>
+            <p>
+              <strong className="text-[#B45309]">Email : </strong>
+              <span className="text-[#111827] ">{loanData.emailId}</span>
+            </p>
+          </div>
+          <div className="text-right text-[#111827]">
+            <p>
+              <strong>DATE : </strong> {new Date().toLocaleString()}
+            </p>
+            <p>
+              <strong>INVOICE : </strong>
+              <span className="text-[#10B981] font-bold">
+                {" "}
+                {loanData.loanBillNumber}
+              </span>
+            </p>
+            <p>
+              <strong>Loan Customer ID : </strong> {loanData.customerLoanId}
+            </p>
+          </div>
         </div>
+        {/* Table */}
+        <div className="w-full flex justify-center invoice-table-wrapper">
+          <table className="invoice-table border border-collapse text-sm mb-6 invoice-table">
+            <thead>
+              <tr className="bg-[#B45309] text-[#F9FAFB]">
+                <th className="border px-2 py-1">Name</th>
+                <th className="border px-2 py-1">Metal</th>
+                <th className="border px-2 py-1">G.Wt</th>
+                <th className="border px-2 py-1">RI</th>
+                <th className="border px-2 py-1">Total</th>
+                <th className="border px-2 py-1">Paid</th>
+                <th className="border px-2 py-1">Due</th>
+                <th className="border px-2 py-1">I.P</th>
+                <th className="border px-2 py-1">I.D</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loanData.selectedItems.map((item: LoanItem, index: number) => (
+                <tr
+                  key={index}
+                  className="border "
+                  style={{
+                    backgroundColor: "#e7d8e2",
 
-        <div className="row">
-          <span>Total Paid</span>
-          <span>₹ {loanData.paidAmount}</span>
+                    color: "#fff",
+                  }}
+                >
+                  {" "}
+                  <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle">
+                    {item.itemName}
+                  </td>
+                  <td className="border px-2 py-1 text-[#d81275] font-bold text-center align-middle">
+                    {item.metal === "22 Gold"
+                      ? "22k G"
+                      : item.metal === "24 Gold"
+                      ? "24k G"
+                      : item.metal === "995 Silver"
+                      ? "995 S"
+                      : item.metal === "999 Silver"
+                      ? "Kamal S"
+                      : item.metal}
+                  </td>
+                  <td className="border px-2 py-1 text-[#81745c] font-bold text-center align-middle">
+                    {item.gross_weight}
+                  </td>
+                  <td className="border px-2 py-1 text-[#146363] font-bold text-center align-middle">
+                    {item.rate_of_interest}
+                  </td>
+                  <td className="border px-2 py-1 text-[#4682b4] font-bold text-center align-middle">
+                    {item.total_amount}
+                  </td>
+                  <td className="border px-2 py-1 text-[#c000fe] font-bold text-center align-middle">
+                    {item.paid_amount}
+                  </td>
+                  <td className="border px-2 py-1 text-[#D97706] font-bold text-center align-middle">
+                    {item.due_amount}
+                  </td>
+                  <td className="border px-2 py-1 text-[#2c83ed] font-bold text-center align-middle">
+                    {item.paid_interest_amount}
+                  </td>
+                  <td className="border px-2 py-1 text-[#2c83ed] font-bold text-center align-middle">
+                    {item.due_interest_amount}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+        <div className="flex justify-end mt-10">
+          <div className=" p-4 rounded-md border border-orange-800">
+            <table className="text-sm w-64 table-fixed">
+              <tbody>
+                <tr>
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                    Total Items:
+                  </td>
+                  <td className="text-right font-extrabold px-3 py-2 text-[#B45309]">
+                    ₹{loanData.numberOfItems}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                    Total Amount :
+                  </td>
+                  <td className="text-right px-3 py-2 font-extrabold  text-[#60A5FA]">
+                    ₹{loanData.totalAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">Paid :</td>
+                  <td className="text-right px-3 py-2 font-extrabold  text-[#EC4899]">
+                    ₹{loanData.paidAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">Due :</td>
+                  <td className="text-right px-3 py-2 font-extrabold  text-[#10B981]">
+                    ₹{loanData.dueAmount}
+                  </td>
+                </tr>
 
-        <div className="row">
-          <span>Total Due</span>
-          <span>₹ {loanData.dueAmount}</span>
+                <tr>
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                    Interest Paid:
+                  </td>
+                  <td className="text-right font-extrabold text-[#DC2626] px-3 py-2">
+                    ₹{loanData.paidInterestAmount}
+                  </td>
+                </tr>
+
+                <tr>
+                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                    Interest Due:
+                  </td>
+                  <td className="text-right font-extrabold text-[#DC2626] px-3 py-2">
+                    ₹{loanData.dueInterestAmount}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-
-        <div className="row">
-          <span>Total Interest Paid</span>
-          <span>₹ {loanData.paidInterestAmount}</span>
+        <div className="mt-6 text-xs text-gray-800">
+          <p>Thank you for your Order!</p>
         </div>
+      </div>
 
-        <div className="row">
-          <span>Total Interest Due</span>
-          <span>₹ {loanData.dueInterestAmount}</span>
-        </div>
-
-        <div className="solid-line"></div>
-
-        <div className="footer">
-          <div>Thank you!</div>
-          <div>Hambire Jewellery</div>
-        </div>
+      <div className="text-center mt-12 print:hidden">
+        {showStartSign && (
+          <div className="text-center mt-12 print:hidden">
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                setSelectedBillNo(loanData.loanBillNumber);
+                setSignType("START");
+                setSignDialogOpen(true);
+              }}
+            >
+              Start Sign
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* PRINT BUTTON */}
-      <div className="text-center mt-6 print:hidden">
+      <div className="text-center  print:hidden">
         <button
-          onClick={handlePrint}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          onClick={() => window.print()}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4"
         >
-          🖨️ Print
+          🖨️ Print Invoice
         </button>
       </div>
+      <div className="text-center mt-4 print:hidden">
+        <button
+          onClick={openWhatsAppModal} // Now defined
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+        >
+          📲 Send WhatsApp Message
+        </button>
+      </div>
+
+      {/* WhatsApp Modal */}
+      {showWhatsAppModal && loanData && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h2 className="text-lg font-bold mb-4">WhatsApp Message Preview</h2>
+            <pre className="whitespace-pre-wrap mb-4">
+              {getWhatsAppMessage(loanData, msgTitle)}
+            </pre>
+            <div className="flex justify-end gap-2">
+              <button
+                className="bg-blue-500 text-white px-3 py-1 rounded"
+                onClick={copyWhatsAppMessage}
+              >
+                Copy to Clipboard
+              </button>
+              <button
+                className="bg-gray-300 px-3 py-1 rounded"
+                onClick={() => setShowWhatsAppModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SIGNATURE DIALOG */}
+      <Dialog open={signDialogOpen} onClose={() => setSignDialogOpen(false)}>
+        <DialogTitle>
+          {signType === "START" ? "Start-Sign" : "End-Sign"}
+        </DialogTitle>
+
+        <DialogContent>
+          <div
+            style={{
+              width: "400px",
+              height: "200px",
+              border: "2px solid black",
+            }}
+          >
+            <SignatureCanvas ref={signPad} />
+          </div>
+
+          <Button
+            variant="outlined"
+            color="warning"
+            sx={{ mt: 2 }}
+            onClick={() => signPad.current?.clear()}
+          >
+            Clear
+          </Button>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setSignDialogOpen(false)}>Cancel</Button>
+
+          <Button
+            variant="contained"
+            onClick={async () => {
+              const signatureBase64 = signPad.current?.toDataURL();
+
+              if (!signatureBase64) return;
+
+              const token = localStorage.getItem("token");
+
+              const url =
+                signType === "START"
+                  ? `/admin/start-sign/${selectedBillNo}`
+                  : `/admin/end-sign/${selectedBillNo}`;
+
+              await api.post(
+                url,
+                { signature: signatureBase64 },
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+
+              alert("Signature saved!");
+
+              setSignDialogOpen(false);
+
+              await checkSignatureExists();
+            }}
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

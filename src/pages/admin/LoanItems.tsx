@@ -234,8 +234,10 @@ const LoanItems: React.FC = () => {
   };
   const handleViewMore = (loanId: number) => {
     sessionStorage.removeItem("itemsState");
+    localStorage.removeItem("from");
     // Save current state
     sessionStorage.setItem("itemsState", JSON.stringify({ itemsList }));
+    localStorage.setItem("from", "LoanItems");
 
     navigate(`/admin/loanItem-details/${loanId}`, {
       replace: true,

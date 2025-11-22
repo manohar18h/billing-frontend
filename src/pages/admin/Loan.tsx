@@ -217,11 +217,11 @@ const Loan: React.FC = () => {
 
   return (
     <div>
-      <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6 ">
+      <div className="mt-6 px-2 sm:mt-10 sm:p-3 flex flex-col items-center justify-center gap-6">
         <Paper
           elevation={4}
           sx={{ borderRadius: "24px" }}
-          className="relative p-6 rounded-xl w-full  max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
+          className="relative p-4 sm:p-6 rounded-xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
         >
           <Typography
             variant="h4"
@@ -233,11 +233,8 @@ const Loan: React.FC = () => {
           </Typography>
 
           <Box
-            mt={6}
-            display="flex"
-            gap={2}
-            maxWidth={600}
-            alignSelf="center"
+            mt={4}
+            className="flex flex-col sm:flex-row w-full max-w-md gap-3 sm:gap-2"
             mb={4}
           >
             <TextField
@@ -255,7 +252,7 @@ const Loan: React.FC = () => {
                 style: { fontWeight: 500 },
               }}
               sx={{
-                minWidth: "200px",
+                width: "100%",
                 "& .MuiOutlinedInput-notchedOutline": {
                   borderWidth: "2px",
                   borderColor: "gray",
@@ -269,7 +266,7 @@ const Loan: React.FC = () => {
               <MenuItem value="Phone Number">Phone Number</MenuItem>
             </TextField>
             <TextField
-              fullWidth
+              sx={{ width: "100%" }}
               variant="outlined"
               placeholder="Search customers..."
               value={searchQuery}
@@ -355,6 +352,7 @@ const Loan: React.FC = () => {
                       <TextField
                         {...params}
                         {...thickTextFieldProps}
+                        sx={{ width: "100%" }}
                         label="Village"
                         placeholder="Type 3 letters to search..."
                         helperText={
@@ -383,6 +381,7 @@ const Loan: React.FC = () => {
                 ) : key === "gender" ? (
                   <TextField
                     {...thickTextFieldProps}
+                    sx={{ width: "100%" }}
                     select
                     label="Gender"
                     value={customer.gender}
@@ -397,6 +396,7 @@ const Loan: React.FC = () => {
                 ) : (
                   <TextField
                     {...thickTextFieldProps}
+                    sx={{ width: "100%" }}
                     label={
                       key === "phoneNumber"
                         ? "Phone Number"

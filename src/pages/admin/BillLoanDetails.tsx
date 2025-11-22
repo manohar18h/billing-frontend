@@ -225,7 +225,7 @@ const BillLoanDetails: React.FC = () => {
     <div>
       <div className="mt-10 flex flex-col items-center justify-center">
         <div
-          className="w-full max-w-4xl rounded-2xl shadow-xl p-6"
+          className="w-full max-w-4xl rounded-2xl shadow-xl p-4 md:p-6"
           style={{
             background: "linear-gradient(135deg, #1e293b, #0f172a)", // dark gradient
             color: "#fff",
@@ -291,9 +291,9 @@ const BillLoanDetails: React.FC = () => {
           </div>
 
           {/* Grid Info */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left column */}
-            <div className="space-y-4 pr-4 border-r border-white/20">
+            <div className="space-y-4 pr-0 md:pr-4 border-r-0 md:border-r border-white/20">
               <p className="flex justify-between">
                 <span className="text-gray-300 font-medium">Bill Number:</span>
                 <span className="text-emerald-300 font-semibold">
@@ -324,17 +324,16 @@ const BillLoanDetails: React.FC = () => {
                   {loanCustomer?.emailId || "—"}
                 </span>
               </p>
-            </div>
-
-            {/* Right column */}
-            <div className="space-y-4 pl-4">
               <p className="flex justify-between">
                 <span className="text-gray-300 font-medium">Total Amount:</span>
                 <span className="text-green-400 font-semibold">
                   {loanCustomer?.totalAmount}
                 </span>
               </p>
+            </div>
 
+            {/* Right column */}
+            <div className="space-y-4 pl-0 md:pl-4">
               <p className="flex justify-between">
                 <span className="text-gray-300 font-medium">Paid Amount :</span>
                 <span className="text-blue-400 font-semibold">
@@ -363,6 +362,50 @@ const BillLoanDetails: React.FC = () => {
                   {loanCustomer?.dueInterestAmount}
                 </span>
               </p>
+              <div className="flex gap-4 pt-2">
+                {/* START SIGN BUTTON */}
+                {startSignature ? (
+                  <img
+                    src={startSignature}
+                    alt="Start Signature"
+                    className="w-24 h-16 md:w-28 md:h-20 object-contain border rounded-md bg-gray-100 p-1"
+                  />
+                ) : (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => {
+                      setSelectedBillNo(loanCustomer.loanBillNumber);
+                      setSignType("START");
+                      setSignDialogOpen(true);
+                    }}
+                  >
+                    Start Sign
+                  </Button>
+                )}
+
+                {/* END SIGN BUTTON */}
+                {endSignature ? (
+                  <img
+                    src={endSignature}
+                    alt="End Signature"
+                    className="w-28 h-20 object-contain border rounded-md bg-gray-100 p-1"
+                  />
+                ) : (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="secondary"
+                    onClick={() => {
+                      setSelectedBillNo(loanCustomer.loanBillNumber);
+                      setSignType("END");
+                      setSignDialogOpen(true);
+                    }}
+                  >
+                    End Sign
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -394,8 +437,6 @@ const BillLoanDetails: React.FC = () => {
                     <th className="border px-3 py-2">Pay</th>
                     <th className="border px-3 py-2">View</th>
                     <th className="border px-3 py-2">Edit</th>
-                    <th className="border px-3 py-2">Start Sign</th>
-                    <th className="border px-3 py-2">End Sign</th>
                   </tr>
                 </thead>
 
@@ -515,51 +556,6 @@ const BillLoanDetails: React.FC = () => {
                           >
                             <EditIcon />
                           </IconButton>
-                        )}
-                      </TableCell>
-
-                      <TableCell className="border px-3 py-2 text-center">
-                        {startSignature ? (
-                          <img
-                            src={startSignature}
-                            alt="Start Signature"
-                            className="w-24 h-16 object-contain border"
-                          />
-                        ) : (
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={() => {
-                              setSelectedBillNo(loanCustomer.loanBillNumber);
-                              setSignType("START");
-                              setSignDialogOpen(true);
-                            }}
-                          >
-                            Start Sign
-                          </Button>
-                        )}
-                      </TableCell>
-
-                      <TableCell className="border px-3 py-2 text-center">
-                        {endSignature ? (
-                          <img
-                            src={endSignature}
-                            alt="End Signature"
-                            className="w-24 h-16 object-contain border"
-                          />
-                        ) : (
-                          <Button
-                            variant="contained"
-                            size="small"
-                            color="secondary"
-                            onClick={() => {
-                              setSelectedBillNo(loanCustomer.loanBillNumber);
-                              setSignType("END");
-                              setSignDialogOpen(true);
-                            }}
-                          >
-                            End Sign
-                          </Button>
                         )}
                       </TableCell>
                     </TableRow>

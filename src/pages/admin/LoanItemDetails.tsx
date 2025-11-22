@@ -106,9 +106,9 @@ const LoanItemDetails: React.FC = () => {
         {/* Close button */}
         <button
           onClick={() => {
-            const from = sessionStorage.getItem("from");
+            const from = localStorage.getItem("from");
 
-            if (loanCustomerId) {
+            if (from === "LoanItems") {
               navigate("/admin/loanItems", {
                 state: { showItemsList: true, loanCustomerId },
               });
