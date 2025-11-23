@@ -38,7 +38,6 @@ const LoanItems: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const showItemsList = location.state?.showItemsList || false;
-  const [isBillLoanEditing, setIsBillLoanEditing] = useState(false);
   const fromLoanCustomer = location.state?.fromLoanCustomer || false;
   const fromBillLoanDetails = location.state?.fromBillLoanDetails || false;
   const numericLoanId = location.state?.loanId || null; // read from state
@@ -54,6 +53,9 @@ const LoanItems: React.FC = () => {
 
   const loanCustomerId =
     location.state?.loanCustomerId || localStorage.getItem("loanCustomerId");
+
+  const billLoanNumber =
+    location.state?.billLoanNumber || localStorage.getItem("billLoanNumber");
 
   const asNumber = (v: number | string | null | undefined): number =>
     v == null || v === "" ? 0 : Number(v);
@@ -191,6 +193,8 @@ const LoanItems: React.FC = () => {
   const handleUpdateItem = async () => {
     if (!editingItemId) return;
 
+    localStorage.removeItem("billLoanNumber");
+
     try {
       const { data: updatedItemFromBackend } = await api.put(
         `/admin/updateItem/${editingItemId}`,
@@ -219,11 +223,16 @@ const LoanItems: React.FC = () => {
 
       handleClearitem();
       setIsEditing(false);
-      setIsBillLoanEditing(true);
       setEditingItemId(null);
       alert(
         "Loan Item updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill"
       );
+
+      console.log("billLoanNumber", billLoanNumber);
+      localStorage.setItem("billLoanNumber", billLoanNumber);
+      navigate(`/admin/bill-loan-details`, {
+        replace: true,
+      });
     } catch (error: any) {
       if (error.response?.data) {
         setItemErrors(error.response.data);
@@ -259,27 +268,6 @@ const LoanItems: React.FC = () => {
 
     localStorage.setItem("checkEditLoanBill", "NoEdit");
 
-    navigate("/admin/generate-loan-bill", {
-      state: {
-        fromBillLoanDetails: location.state?.fromBillLoanDetails || false,
-        selectedItems: itemsList.map((item) => item.loanId),
-        billLoanNumber:
-          location.state?.billLoanNumber ||
-          localStorage.getItem("billLoanNumber"),
-      },
-    });
-  };
-
-  const handleUpdateBillLoanGenerate = () => {
-    sessionStorage.removeItem("itemsState");
-    localStorage.removeItem("checkEditLoanBill");
-    sessionStorage.setItem(
-      "itemsState",
-      JSON.stringify({ itemsList, loanCustomerId })
-    );
-
-    console.log("checkWhere im ", " handleUpdateBillGenerate ");
-    localStorage.setItem("checkEditLoanBill", "YesEdit");
     navigate("/admin/generate-loan-bill", {
       state: {
         fromBillLoanDetails: location.state?.fromBillLoanDetails || false,
@@ -839,49 +827,35 @@ const LoanItems: React.FC = () => {
       )}
 
       <Box display="flex" justifyContent="flex-end" mt={3}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={
-            isBillLoanEditing
-              ? handleUpdateBillLoanGenerate
-              : handleBillLoanGenerate
-          }
-          sx={{
-            position: "relative",
-            overflow: "hidden",
-            color: "#fff",
-            background: isBillLoanEditing
-              ? "linear-gradient(90deg, #00e676, #1b5e20, #00e676)"
-              : undefined,
-            backgroundSize: isBillLoanEditing ? "200% 100%" : undefined,
-            animation: isBillLoanEditing
-              ? "waveBright 2.5s linear infinite"
-              : undefined,
-            fontWeight: "bold",
-            textTransform: "none",
-            borderRadius: "8px",
-            boxShadow: isBillLoanEditing
-              ? "0 0 15px rgba(0, 230, 118, 0.8)"
-              : undefined,
-          }}
-        >
-          {isBillLoanEditing
-            ? "Update Loan Bill Generate"
-            : "Loan Bill Generate"}
-        </Button>
+        {!fromBillLoanDetails && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleBillLoanGenerate}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              color: "#fff",
+              fontWeight: "bold",
+              textTransform: "none",
+              borderRadius: "8px",
+            }}
+          >
+            Loan Bill Generate
+          </Button>
+        )}
 
         <style>
           {`
-                    @keyframes waveBright {
-                      0% {
-                        background-position: 0% 50%;
-                      }
-                      100% {
-                        background-position: 200% 50%;
-                      }
-                    }
-                  `}
+            @keyframes waveBright {
+              0% {
+                background-position: 0% 50%;
+              }
+              100% {
+                background-position: 200% 50%;
+              }
+            }
+          `}
         </style>
       </Box>
 
@@ -1027,10 +1001,6 @@ const LoanItems: React.FC = () => {
                 const checkPayEdit = localStorage.getItem(
                   "editBillFromBillLoanDetails"
                 );
-
-                if (checkPayEdit === "editBill") {
-                  setIsBillLoanEditing(true);
-                }
                 sessionStorage.setItem(
                   "intemsState",
                   JSON.stringify({

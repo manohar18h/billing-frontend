@@ -206,6 +206,8 @@ const Orders: React.FC = () => {
   const [editBillDetails, setEditBillDetails] = useState<string | null>(null);
 
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
+  const billNumber =
+    location.state?.billNumber || localStorage.getItem("billNumber");
 
   useEffect(() => {
     localStorage.removeItem("checkEditBill");
@@ -610,30 +612,6 @@ const Orders: React.FC = () => {
     });
   };
 
-  const handleUpdateBillGenerate = () => {
-    sessionStorage.removeItem("ordersState");
-    localStorage.removeItem("checkEditBill");
-    // Save updated order data
-    sessionStorage.setItem(
-      "ordersState",
-      JSON.stringify({ ordersList, exchangeList, customerId })
-    );
-
-    console.log("checkWhere im ", " handleUpdateBillGenerate ");
-    // ✅ Mark as Edit Bill
-    localStorage.setItem("checkEditBill", "YesEdit");
-
-    // Navigate to generate bill (update mode)
-    navigate("/admin/generate-bill", {
-      state: {
-        fromBillDetails: location.state?.fromBillDetails || false,
-        selectedOrders: ordersList.map((order) => order.orderId),
-        billNumber:
-          location.state?.billNumber || localStorage.getItem("billNumber"),
-      },
-    });
-  };
-
   const handleUpdateExchange = async () => {
     if (!editingExchangeId) return;
 
@@ -702,6 +680,11 @@ const Orders: React.FC = () => {
       setEditingExchangeId(null);
 
       alert("Exchange Data updated successfully");
+
+      localStorage.setItem("billNumber", billNumber);
+      navigate(`/admin/bill-details`, {
+        replace: true,
+      });
     } catch (error: any) {
       if (error.response?.data) {
         setExchangeErrors(error.response.data);
@@ -745,6 +728,11 @@ const Orders: React.FC = () => {
       alert(
         "Order updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill"
       );
+
+      localStorage.setItem("billNumber", billNumber);
+      navigate(`/admin/bill-details`, {
+        replace: true,
+      });
     } catch (error: any) {
       if (error.response?.data) {
         setOrderErrors(error.response.data);
@@ -2024,33 +2012,23 @@ const Orders: React.FC = () => {
         </Paper>
       )}
       <Box display="flex" justifyContent="flex-end" mt={3}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={
-            isBillEditing ? handleUpdateBillGenerate : handleBillGenerate
-          }
-          sx={{
-            position: "relative",
-            overflow: "hidden",
-            color: "#fff",
-            background: isBillEditing
-              ? "linear-gradient(90deg, #00e676, #1b5e20, #00e676)"
-              : undefined,
-            backgroundSize: isBillEditing ? "200% 100%" : undefined,
-            animation: isBillEditing
-              ? "waveBright 2.5s linear infinite"
-              : undefined,
-            fontWeight: "bold",
-            textTransform: "none",
-            borderRadius: "8px",
-            boxShadow: isBillEditing
-              ? "0 0 15px rgba(0, 230, 118, 0.8)"
-              : undefined,
-          }}
-        >
-          {isBillEditing ? "Update Bill Generate" : "Bill Generate"}
-        </Button>
+        {!fromBillDetails && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleBillGenerate}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              color: "#fff",
+              fontWeight: "bold",
+              textTransform: "none",
+              borderRadius: "8px",
+            }}
+          >
+            Bill Generate
+          </Button>
+        )}
 
         <style>
           {`

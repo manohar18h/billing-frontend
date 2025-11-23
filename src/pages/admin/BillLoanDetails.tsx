@@ -201,10 +201,13 @@ const BillLoanDetails: React.FC = () => {
 
     localStorage.setItem("editBillFromBillLoanDetails", "editBill");
 
+    localStorage.removeItem("billLoanNumber");
+
     navigate(`/admin/loanItems/`, {
       replace: true,
       state: {
         fromBillLoanDetails: true,
+        billLoanNumber: billLoanNumber,
         loanCustomerId: loanCustomer?.customerLoanId,
         loanId: loanId, // pass orderId directly
       },
