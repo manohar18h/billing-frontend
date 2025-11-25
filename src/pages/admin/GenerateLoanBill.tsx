@@ -9,6 +9,7 @@ import {
   DialogActions,
 } from "@mui/material";
 import SignatureCanvas from "./SignatureCanvas";
+import hjlogoo from "../../assets/hjlogoo.png";
 
 const GenerateLoanBill: React.FC = () => {
   interface LoanTotalAmtHistory {
@@ -337,6 +338,45 @@ We hope to serve you again soon!
   vertical-align: middle;
 }
 
+  .invoice-table th:nth-child(1),
+.invoice-table td:nth-child(1) {
+  width: 15%; 
+}
+
+ .invoice-table th:nth-child(2),
+.invoice-table td:nth-child(2) {
+  width: 7%; 
+}
+  .invoice-table th:nth-child(3),
+.invoice-table td:nth-child(3) {
+  width: 7%; 
+}
+  .invoice-table th:nth-child(4),
+.invoice-table td:nth-child(4) {
+  width: 7%; 
+}
+    .invoice-table th:nth-child(5),
+.invoice-table td:nth-child(5) {
+  width: 10%; 
+}
+     .invoice-table th:nth-child(6),
+.invoice-table td:nth-child(6) {
+  width: 10%; 
+}
+      .invoice-table th:nth-child(7),
+.invoice-table td:nth-child(7) {
+  width: 10%; 
+}
+
+    .invoice-table th:nth-child(8),
+.invoice-table td:nth-child(8) {
+  width: 8%; 
+}
+      .invoice-table th:nth-child(9),
+.invoice-table td:nth-child(9) {
+  width: 8%; 
+}
+
 
 
       /* Auto-shrink on smaller screens */
@@ -370,18 +410,25 @@ We hope to serve you again soon!
         className="p-6 bg-gray-100 shadow-2xl rounded-md max-w-[800px] mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
       >
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 pb-4 mb-4">
+        <div className="flex justify-between items-start border-b-2 pb-4 mb-4 mt-10">
           <div>
-            <h1 className="text-2xl font-bold text-[#B45309]">
+            <h1 className="text-2xl font-bold text-[#813801]">
               HAMBIRE JEWELLERY
             </h1>
             <strong className="text-[#374151]">Since 1977</strong>
-            <p className=" text-[#374151]">
+            <p className=" text-[#1a1d23]">
               Ramayampet, Subhash Road, Medak, Telangana, 502101
             </p>
-            <p className=" text-[#374151]">
+            <p className=" text-[#1a1d23]">
               Phone: 9703738824 | www.hambirejewellery.com
             </p>
+          </div>
+          <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200 mr-10">
+            <img
+              src={hjlogoo}
+              alt="HJ Logo"
+              className="w-20 h-20 object-contain"
+            />
           </div>
         </div>
         {/* Customer Info */}
@@ -389,38 +436,49 @@ We hope to serve you again soon!
           <div className="mb-4 invoice-header">
             <p>
               <strong className="text-[#B45309]">Name : </strong>
-              <span className="text-[#111827] ">{loanData.name}</span>
+              <span className="text-[#111827] font-semibold">
+                {loanData.name}
+              </span>
             </p>
             <p>
               <strong className="text-[#B45309]">Village : </strong>
-              <span className="text-[#111827] ">{loanData.village}</span>
+              <span className="text-[#000000] font-semibold">
+                {loanData.village}
+              </span>
             </p>
             <p>
               <strong className="text-[#B45309]">Phone : </strong>
-              <span className="text-[#111827] ">{loanData.phoneNumber}</span>
+              <span className="text-[#000000] font-semibold ">
+                {loanData.phoneNumber}
+              </span>
             </p>
             <p>
               <strong className="text-[#B45309]">Email : </strong>
-              <span className="text-[#111827] ">{loanData.emailId}</span>
-            </p>
-            <p>
-              <strong className="text-[#B45309]">Aadhar Card : </strong>
-              <span className="text-[#111827] ">{loanData.aadharCard}</span>
+              <span className="text-[#000000] font-semibold ">
+                {loanData.emailId}
+              </span>
             </p>
           </div>
-          <div className="text-right text-[#111827]">
+          <div className="text-right text-[#000000]">
             <p>
-              <strong>DATE : </strong> {new Date().toLocaleString()}
-            </p>
-            <p>
-              <strong>INVOICE : </strong>
-              <span className="text-[#10B981] font-bold">
+              <strong className="text-[#B45309]">INVOICE : </strong>
+              <span className="text-[#034c33] font-bold">
                 {" "}
                 {loanData.loanBillNumber}
               </span>
             </p>
             <p>
-              <strong>Loan Customer ID : </strong> {loanData.customerLoanId}
+              <strong className="text-[#B45309]">DATE : </strong>{" "}
+              <span className="font-bold text-[#000000]">
+                {new Date().toLocaleString()}
+              </span>
+            </p>
+
+            <p>
+              <strong className="text-[#B45309]">Aadhar Card : </strong>
+              <span className="text-[#000000] font-semibold">
+                {loanData.aadharCard}
+              </span>
             </p>
           </div>
         </div>
@@ -429,15 +487,33 @@ We hope to serve you again soon!
           <table className="invoice-table border border-collapse text-sm mb-6 invoice-table">
             <thead>
               <tr className="bg-[#B45309] text-[#F9FAFB]">
-                <th className="border px-2 py-1">Name</th>
-                <th className="border px-2 py-1">Metal</th>
-                <th className="border px-2 py-1">G.Wt</th>
-                <th className="border px-2 py-1">RI</th>
-                <th className="border px-2 py-1">Total</th>
-                <th className="border px-2 py-1">Paid</th>
-                <th className="border px-2 py-1">Due</th>
-                <th className="border px-2 py-1">I.P</th>
-                <th className="border px-2 py-1">I.D</th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Name
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Metal
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  G.Wt
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  RI
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Total
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Paid
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Due
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  I.P
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  I.D
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -452,39 +528,39 @@ We hope to serve you again soon!
                   }}
                 >
                   {" "}
-                  <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle text-[14px]">
                     {item.itemName}
                   </td>
-                  <td className="border px-2 py-1 text-[#d81275] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#af0058] font-bold text-center align-middle text-[13px]">
                     {item.metal === "22 Gold"
-                      ? "22k G"
+                      ? "22k"
                       : item.metal === "24 Gold"
-                      ? "24k G"
+                      ? "24k"
                       : item.metal === "995 Silver"
-                      ? "995 S"
+                      ? "995"
                       : item.metal === "999 Silver"
-                      ? "Kamal S"
+                      ? "Kamal"
                       : item.metal}
                   </td>
-                  <td className="border px-2 py-1 text-[#81745c] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#734d06] font-bold text-center align-middle text-[13px]">
                     {item.gross_weight}
                   </td>
-                  <td className="border px-2 py-1 text-[#146363] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#074949] font-bold text-center align-middle text-[13px]">
                     {item.rate_of_interest}
                   </td>
-                  <td className="border px-2 py-1 text-[#4682b4] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#073d6a] font-bold text-center align-middle text-[13px]">
                     {item.total_amount}
                   </td>
-                  <td className="border px-2 py-1 text-[#c000fe] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#4f0668] font-bold text-center align-middle text-[13px]">
                     {item.paid_amount}
                   </td>
-                  <td className="border px-2 py-1 text-[#D97706] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#603606] font-bold text-center align-middle text-[13px]">
                     {item.due_amount}
                   </td>
-                  <td className="border px-2 py-1 text-[#2c83ed] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#062a55] font-bold text-center align-middle text-[13px]">
                     {item.paid_interest_amount}
                   </td>
-                  <td className="border px-2 py-1 text-[#2c83ed] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#082f5f] font-bold text-center align-middle text-[13px]">
                     {item.due_interest_amount}
                   </td>
                 </tr>
@@ -493,52 +569,56 @@ We hope to serve you again soon!
           </table>
         </div>
         <div className="flex justify-end mt-10">
-          <div className=" p-4 rounded-md border border-orange-800">
+          <div className=" p-4 rounded-3xl border border-orange-900 mr-10">
             <table className="text-sm w-64 table-fixed">
               <tbody>
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
                     Total Items:
                   </td>
-                  <td className="text-right font-extrabold px-3 py-2 text-[#B45309]">
-                    ₹{loanData.numberOfItems}
+                  <td className="text-right font-bold px-3 py-2 text-[#B45309] text-[15px]">
+                    {loanData.numberOfItems}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
                     Total Amount :
                   </td>
-                  <td className="text-right px-3 py-2 font-extrabold  text-[#60A5FA]">
+                  <td className="text-right px-3 py-2 font-bold  text-[#070065] text-[15px]">
                     ₹{loanData.totalAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">Paid :</td>
-                  <td className="text-right px-3 py-2 font-extrabold  text-[#EC4899]">
+                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                    Paid :
+                  </td>
+                  <td className="text-right px-3 py-2 font-bold  text-[#0b4e06] text-[15px]">
                     ₹{loanData.paidAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">Due :</td>
-                  <td className="text-right px-3 py-2 font-extrabold  text-[#10B981]">
+                  <td className="px-3 py-2 text-[#1e1a1a] font-bold text-[15px]">
+                    Due :
+                  </td>
+                  <td className="text-right px-3 py-2 font-bold  text-[#EC4899] text-[15px]">
                     ₹{loanData.dueAmount}
                   </td>
                 </tr>
 
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
                     Interest Paid:
                   </td>
-                  <td className="text-right font-extrabold text-[#DC2626] px-3 py-2">
+                  <td className="text-right font-bold text-[#0b4e06] px-3 py-2 text-[15px]">
                     ₹{loanData.paidInterestAmount}
                   </td>
                 </tr>
 
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
                     Interest Due:
                   </td>
-                  <td className="text-right font-extrabold text-[#DC2626] px-3 py-2">
+                  <td className="text-right font-bold text-[#DC2626] px-3 py-2 text-[15px]">
                     ₹{loanData.dueInterestAmount}
                   </td>
                 </tr>
@@ -546,7 +626,7 @@ We hope to serve you again soon!
             </table>
           </div>
         </div>
-        <div className="mt-6 text-xs text-gray-800">
+        <div className="mt-6 text-xs text-gray-900 text-[16px] ml-10">
           <p>Thank you for your Order!</p>
         </div>
       </div>

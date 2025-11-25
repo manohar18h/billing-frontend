@@ -10,9 +10,9 @@ import {
   Box,
   MenuItem,
   Chip,
+  IconButton,
 } from "@mui/material";
 import api from "@/services/api";
-import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
 type Billing = {

@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import api from "@/services/api";
-import logo2 from "../../assets/logo2.png";
+import hjlogoo from "../../assets/hjlogoo.png";
 
 const GenerateBill: React.FC = () => {
   const printRef = useRef<HTMLDivElement>(null);
@@ -232,13 +232,13 @@ We hope to serve you again soon!
   }
 
   const shortLabels: Record<string, { weight: string; amount: string }> = {
-    stone: { weight: "S.Wt", amount: "S.Amt" },
-    wax: { weight: "W.Wt", amount: "W.Amt" },
-    diamond: { weight: "D.Wt", amount: "D.Amt" },
-    bits: { weight: "B.Wt", amount: "B.Amt" },
-    enamel: { weight: "E.Wt", amount: "E.Amt" },
-    pearls: { weight: "P.Wt", amount: "P.Amt" },
-    other: { weight: "O.Wt", amount: "O.Amt" },
+    stone: { weight: "S.W", amount: "S.A" },
+    wax: { weight: "W.W", amount: "W.A" },
+    diamond: { weight: "D.W", amount: "D.A" },
+    bits: { weight: "B.W", amount: "B.A" },
+    enamel: { weight: "E.W", amount: "E.A" },
+    pearls: { weight: "P.W", amount: "P.A" },
+    other: { weight: "O.W", amount: "O.A" },
   };
 
   const activeWeightKeys = React.useMemo(() => {
@@ -387,34 +387,42 @@ We hope to serve you again soon!
   text-align: center;
   vertical-align: middle;
 }
+.invoice-table th:nth-child(1),
+.invoice-table td:nth-child(1) {
+  width: 15%; 
+}
 
-/* Adjust specific columns (optional fine-tuning) */
+.invoice-table th:nth-child(2),
+.invoice-table td:nth-child(2) {
+  width: 6%; 
+}
 .invoice-table th:nth-child(3),
 .invoice-table td:nth-child(3) {
-  width: 7%; /* Item Name */
+  width: 7%; 
 }
 .invoice-table th:nth-child(4),
 .invoice-table td:nth-child(4) {
-  width: 8%; /* Metal */
+  width: 7%; 
 }
   .invoice-table th:nth-child(5),
 .invoice-table td:nth-child(5) {
-  width: 8%; /* Metal */
+  width: 7%; 
 }
-    .invoice-table th:nth-child(2),
-.invoice-table td:nth-child(2) {
-  width: 8%; /* Metal */
-}
+   
      .invoice-table th:nth-child(6),
 .invoice-table td:nth-child(6) {
-  width: 8%; /* Metal */
+  width: 7%;
 }   .invoice-table th:nth-child(7),
 .invoice-table td:nth-child(7) {
-  width: 8%; /* Metal */
+  width: 8%; 
+}
+  .invoice-table th:nth-last-child(2),
+.invoice-table td:nth-last-child(2) {
+  width: 8%;
 }
 .invoice-table th:last-child,
 .invoice-table td:last-child {
-  width: 8%; /* Amount */
+  width: 8%; 
 }
 
       /* Auto-shrink on smaller screens */
@@ -448,24 +456,24 @@ We hope to serve you again soon!
         className="p-6 bg-gray-100 shadow-2xl rounded-md max-w-[800px] mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
       >
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 pb-4 mb-4">
+        <div className="flex justify-between items-start border-b-2 pb-4 mb-4 mt-10">
           <div>
-            <h1 className="text-2xl font-bold text-[#B45309]">
+            <h1 className="text-2xl font-bold text-[#813801]">
               HAMBIRE JEWELLERY
             </h1>
             <strong className="text-[#374151]">Since 1977</strong>
-            <p className=" text-[#374151]">
+            <p className=" text-[#1a1d23]">
               Ramayampet, Subhash Road, Medak, Telangana, 502101
             </p>
-            <p className=" text-[#374151]">
+            <p className=" text-[#1a1d23]">
               Phone: 9703738824 | www.hambirejewellery.com
             </p>
           </div>
-          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200">
+          <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200 mr-10">
             <img
-              src={logo2}
+              src={hjlogoo}
               alt="HJ Logo"
-              className="w-12 h-12 object-contain"
+              className="w-20 h-20 object-contain"
             />
           </div>
         </div>
@@ -474,35 +482,41 @@ We hope to serve you again soon!
         <div className="invoice-container flex justify-between items-start border-b-2 pb-4 mb-4">
           <div className="mb-4 invoice-header">
             <p>
-              <strong className="text-[#B45309]">Name : </strong>
-              <span className="text-[#111827] ">{bill.name}</span>
+              <strong className="text-[#B45309] ">Name : </strong>
+              <span className="text-[#111827] font-semibold ">{bill.name}</span>
             </p>
             <p>
               <strong className="text-[#B45309]">Village : </strong>
-              <span className="text-[#111827] ">{bill.village}</span>
+              <span className="text-[#000000]  font-semibold ">
+                {bill.village}
+              </span>
             </p>
             <p>
               <strong className="text-[#B45309]">Phone : </strong>
-              <span className="text-[#111827] ">{bill.phoneNumber}</span>
+              <span className="text-[#000000] font-semibold ">
+                {bill.phoneNumber}
+              </span>
             </p>
             <p>
               <strong className="text-[#B45309]">Email : </strong>
-              <span className="text-[#111827] ">{bill.emailId}</span>
+              <span className="text-[#000000] font-semibold  ">
+                {bill.emailId}
+              </span>
             </p>
           </div>
-          <div className="text-right text-[#111827]">
+          <div className="text-right text-[#000000]">
             <p>
-              <strong>DATE : </strong> {new Date().toLocaleString()}
-            </p>
-            <p>
-              <strong>INVOICE : </strong>
-              <span className="text-[#10B981] font-bold">
+              <strong className="text-[#B45309]">INVOICE : </strong>
+              <span className="text-[#034c33] font-bold">
                 {" "}
                 {bill.billNumber}
               </span>
             </p>
             <p>
-              <strong>Customer ID : </strong> {bill.customerId}
+              <strong className="text-[#B45309]">DATE : </strong>{" "}
+              <span className="font-bold text-[#000000]">
+                {new Date().toLocaleString()}
+              </span>
             </p>
           </div>
         </div>
@@ -511,12 +525,22 @@ We hope to serve you again soon!
         <div className="w-full flex justify-center invoice-table-wrapper">
           <table className="invoice-table border border-collapse text-sm mb-6 invoice-table">
             <thead>
-              <tr className="bg-[#B45309] text-[#F9FAFB]">
-                <th className="border px-2 py-1">Name</th>
-                <th className="border px-2 py-1">Metal</th>
-                <th className="border px-2 py-1">RT</th>
-                <th className="border px-2 py-1">G.Wt</th>
-                <th className="border px-2 py-1">N.Wt</th>
+              <tr className="bg-[#B45309] text-[#ffffff]">
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Name
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Metal
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  RT
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  G.Wt
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  N.Wt
+                </th>
                 {activeWeightKeys.map((key) => (
                   <React.Fragment key={key}>
                     {/* Weight Header */}
@@ -544,10 +568,18 @@ We hope to serve you again soon!
                   </React.Fragment>
                 ))}
 
-                <th className="border px-2 py-1">WST</th>
-                <th className="border px-2 py-1">MC</th>
-                <th className="border px-2 py-1">Paid</th>
-                <th className="border px-2 py-1">Total</th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  WST
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  MC
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Paid
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Total
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -556,33 +588,33 @@ We hope to serve you again soon!
                   key={index}
                   className="border "
                   style={{
-                    backgroundColor: "#e7d8e2",
+                    backgroundColor: "#d3c0cc",
 
                     color: "#fff",
                   }}
                 >
                   {" "}
-                  <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#361d1d] font-bold  text-center align-middle text-[14px]">
                     {item.itemName}
                   </td>
-                  <td className="border px-2 py-1 text-[#d81275] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#af0058] font-bold  text-center align-middle text-[11px]">
                     {item.metal === "22 Gold"
-                      ? "22k G"
+                      ? "22k"
                       : item.metal === "24 Gold"
-                      ? "24k G"
+                      ? "24k"
                       : item.metal === "995 Silver"
-                      ? "995 S"
+                      ? "995"
                       : item.metal === "999 Silver"
-                      ? "Kamal S"
+                      ? "Kamal"
                       : item.metal}
                   </td>
-                  <td className="border px-2 py-1 text-[#146363] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#004848] font-bold text-center align-middle text-[13px]">
                     {item.metalPrice}
                   </td>
-                  <td className="border px-2 py-1 text-[#81745c] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#070065] font-bold text-center align-middle text-[13px]">
                     {item.gross_weight}
                   </td>
-                  <td className="border px-2 py-1 text-[#4682b4] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#00457d] font-bold text-center align-middle text-[13px]">
                     {item.metal_weight}
                   </td>
                   {activeWeightKeys.map((key) => (
@@ -592,7 +624,7 @@ We hope to serve you again soon!
                         key === "other" &&
                         (!item.other_weight || item.other_weight === 0)
                       ) && (
-                        <td className="border px-2 py-1 text-[#333333] font-bold text-center align-middle">
+                        <td className="border px-2 py-1 text-[#1f1f1f] font-bold text-center align-middle">
                           {getNumericField(
                             item,
                             `${key}_weight` as keyof Order
@@ -605,7 +637,7 @@ We hope to serve you again soon!
                         key === "other" &&
                         (!item.other_amount || item.other_amount === 0)
                       ) && (
-                        <td className="border px-2 py-1 text-[#333333] font-bold text-center align-middle">
+                        <td className="border px-2 py-1 text-[#1f1f1f]  font-bold text-center align-middle">
                           {getNumericField(
                             item,
                             `${key}_amount` as keyof Order
@@ -614,61 +646,16 @@ We hope to serve you again soon!
                       )}
                     </React.Fragment>
                   ))}
-                  <td className="border px-2 py-1 text-[#c000fe] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#51016c] font-bold text-center align-middle text-[13px]">
                     {item.wastage}%
                   </td>
-                  <td className="border px-2 py-1 text-[#D97706] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#965205] font-bold text-center align-middle text-[13px]">
                     {item.making_charges}
                   </td>
-                  <td className="border px-2 py-1 text-[#22C55E] font-bold text-center align-middle ">
-                    {item.transactions?.length > 0
-                      ? item.transactions.map((tx: Transaction, i: number) => {
-                          const shortMethod =
-                            tx.paymentMethod === "Phone Pay"
-                              ? "(O)"
-                              : tx.paymentMethod === "Cash"
-                              ? "(C)"
-                              : `(${tx.paymentMethod})`; // fallback for other methods
-
-                          return (
-                            <div
-                              key={i}
-                              className={`pb-1 ${
-                                i !== item.transactions.length - 1
-                                  ? "border-b border-dotted border-gray-400"
-                                  : ""
-                              }`}
-                            >
-                              <span className="text-[#333333] font-bold text-center align-middle">
-                                {(() => {
-                                  const d = new Date(tx.paymentDate);
-                                  const day = String(d.getDate()).padStart(
-                                    2,
-                                    "0"
-                                  );
-                                  const month = String(
-                                    d.getMonth() + 1
-                                  ).padStart(2, "0");
-                                  const year = String(d.getFullYear()).slice(
-                                    -2
-                                  ); // ✅ last 2 digits
-                                  return `${day}/${month}/${year}`;
-                                })()}
-                              </span>
-                              <span className="font-bold text-center align-middle">
-                                <span className="text-[#22C55E]">
-                                  ₹{tx.paidAmount}
-                                </span>{" "}
-                                <span className="text-[#f1699f]">
-                                  {shortMethod}
-                                </span>
-                              </span>
-                            </div>
-                          );
-                        })
-                      : "-"}
+                  <td className="border px-2 py-1 text-[#005a21] font-bold text-center align-middle text-[13px]">
+                    ₹{item.paidAmount}
                   </td>
-                  <td className="border px-2 py-1 text-[#2c83ed] font-bold text-center align-middle">
+                  <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
                     ₹{item.total_item_amount}
                   </td>
                 </tr>
@@ -681,26 +668,34 @@ We hope to serve you again soon!
                       key={`ex-${index}`}
                       className="border"
                       style={{
-                        backgroundColor: "#f1e8ed",
+                        backgroundColor: "#e7d8e2",
                       }}
                     >
-                      <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle">
+                      <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle text-[14px]">
                         {ex.exchange_metal_name + "  ( Ex )"}
                       </td>
 
-                      <td className="border px-2 py-1 text-[#d81275]  font-bold text-center align-middle">
-                        {ex.exchange_metal}
+                      <td className="border px-2 py-1 text-[#af0058]  font-bold text-center align-middle text-[11px]">
+                        {ex.exchange_metal === "22 Gold"
+                          ? "22k"
+                          : ex.exchange_metal === "24 Gold"
+                          ? "24k"
+                          : ex.exchange_metal === "995 Silver"
+                          ? "995"
+                          : ex.exchange_metal === "999 Silver"
+                          ? "Kamal"
+                          : ex.exchange_metal}
                       </td>
 
-                      <td className="border px-2 py-1 text-[#146363] font-bold text-center align-middle">
+                      <td className="border px-2 py-1 text-[#004848] font-bold text-center align-middle text-[13px]">
                         {ex.exchange_metal_price}
                       </td>
 
-                      <td className="border px-2 py-1 text-[#81745c] font-bold text-center align-middle">
+                      <td className="border px-2 py-1 text-[#070065] font-bold text-center align-middle text-[13px]">
                         {ex.exchange_metal_weight}
                       </td>
 
-                      <td className="border px-2 py-1  text-[#4682b4] font-bold text-center align-middle">
+                      <td className="border px-2 py-1  text-[#00457d] font-bold text-center align-middle text-[13px]">
                         {ex.exchange_purity_weight}
                       </td>
 
@@ -738,7 +733,7 @@ We hope to serve you again soon!
                       <td className="border px-2 py-1 text-center align-middle">
                         -
                       </td>
-                      <td className="border px-2 py-1  text-[#2c83ed] font-bold text-center align-middle">
+                      <td className="border px-2 py-1  text-[#00479f] font-bold text-center align-middle text-[13px]">
                         ₹{ex.exchange_item_amount}
                       </td>
                     </tr>
@@ -750,53 +745,57 @@ We hope to serve you again soon!
 
         {/* Totals */}
         <div className="flex justify-end mt-10">
-          <div className=" p-4 rounded-md border border-orange-800">
+          <div className=" p-4 rounded-3xl border border-orange-900 mr-10">
             <table className="text-sm w-64 table-fixed">
               <tbody>
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
                     Bill Total :
                   </td>
-                  <td className="text-right font-extrabold px-3 py-2 text-[#B45309]">
+                  <td className="text-right font-bold px-3 py-2 text-[#5e2a03] text-[15px] ">
                     ₹{bill.billTotalAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
                     Exchange Amount :
                   </td>
-                  <td className="text-right px-3 py-2 font-extrabold  text-[#60A5FA]">
+                  <td className="text-right px-3 py-2 font-bold  text-[#002d65] text-[15px]">
                     ₹{bill.exchangeAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">
+                  <td className="px-3 py-2 text-[#1b1919] font-bold text-[15px]">
                     Discount :
                   </td>
-                  <td className="text-right px-3 py-2 font-extrabold  text-[#EC4899]">
+                  <td className="text-right px-3 py-2 font-bold  text-[#93094e] text-[15px]">
                     ₹{bill.billDiscountAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">Paid :</td>
-                  <td className="text-right px-3 py-2 font-extrabold  text-[#10B981]">
+                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                    Paid :
+                  </td>
+                  <td className="text-right px-3 py-2 font-bold  text-[#006644] text-[15px]">
                     ₹{bill.billPaidAmount}
                   </td>
                 </tr>
                 {/* ✅ Conditionally render Received row */}
                 {bill.billResAmount > 0 && (
                   <tr>
-                    <td className="px-3 py-2 text-[#1F2937] font-bold">
+                    <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
                       Received :
                     </td>
-                    <td className="text-right px-3 py-2 font-bold text-[#49505b]">
+                    <td className="text-right px-3 py-2 font-bold text-[#343c49] text-[15px]">
                       ₹{bill.billResAmount}
                     </td>
                   </tr>
                 )}
-                <tr className="border-t border-[#D97706]">
-                  <td className="px-3 py-2 text-[#1F2937] font-bold">Due:</td>
-                  <td className="text-right font-extrabold text-[#DC2626] px-3 py-2">
+                <tr className="border-t border-[#D97706] mt-5">
+                  <td className="px-3 py-2 text-[#1F2937] font-bold mt-5 text-[15px]">
+                    Due:
+                  </td>
+                  <td className="text-right font-bold text-[#9e0303] px-3 py-2 text-[15px]">
                     ₹{bill.billDueAmount}
                   </td>
                 </tr>
@@ -806,7 +805,7 @@ We hope to serve you again soon!
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-xs text-gray-800">
+        <div className="mt-6 text-xs text-gray-900 text-[16px] ml-10">
           <p>Thank you for your Order!</p>
         </div>
       </div>
