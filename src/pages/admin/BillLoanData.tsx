@@ -30,6 +30,7 @@ export interface LoanBilling {
   village: string;
   phoneNumber: string;
   emailId: string;
+  aadharCard: string;
   numberOfItems: number;
   totalAmount: number;
   paidAmount: number;
@@ -215,6 +216,12 @@ const BillLoanData: React.FC = () => {
 
             {/* Right column */}
             <div className="space-y-4 pl-4">
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Aadhar Card:</span>
+                <span className="text-orange-300 font-semibold">
+                  {loanCustomer.aadharCard || "—"}
+                </span>
+              </p>
               <p className="flex justify-between">
                 <span className="text-gray-300 font-medium">
                   Number of Items:

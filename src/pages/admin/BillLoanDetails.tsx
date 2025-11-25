@@ -45,6 +45,7 @@ export interface LoanCustomer {
   village: string;
   phoneNumber: string;
   emailId: string;
+  aadharCard: string;
   totalAmount: number;
   paidAmount: number;
   dueAmount: number;
@@ -91,7 +92,7 @@ const BillLoanDetails: React.FC = () => {
   const checkBackFrom = localStorage.getItem("checkBackFrom");
 
   const handleBackClick = () => {
-    if (checkBackFrom === "Bill-Number") {
+    if (checkBackFrom === "billLoanNumber" || checkBackFrom === "Loan") {
       navigate("/admin/Loan");
     } else {
       navigate("/admin/bill-loan-data");
@@ -328,15 +329,21 @@ const BillLoanDetails: React.FC = () => {
                 </span>
               </p>
               <p className="flex justify-between">
-                <span className="text-gray-300 font-medium">Total Amount:</span>
-                <span className="text-green-400 font-semibold">
-                  {loanCustomer?.totalAmount}
+                <span className="text-gray-300 font-medium">Aadhar Card:</span>
+                <span className="text-orange-300 font-semibold">
+                  {loanCustomer?.aadharCard || "—"}
                 </span>
               </p>
             </div>
 
             {/* Right column */}
             <div className="space-y-4 pl-0 md:pl-4">
+              <p className="flex justify-between">
+                <span className="text-gray-300 font-medium">Total Amount:</span>
+                <span className="text-green-400 font-semibold">
+                  {loanCustomer?.totalAmount}
+                </span>
+              </p>
               <p className="flex justify-between">
                 <span className="text-gray-300 font-medium">Paid Amount :</span>
                 <span className="text-blue-400 font-semibold">
@@ -604,7 +611,7 @@ const BillLoanDetails: React.FC = () => {
                 <em>Select Payment Type</em>
               </MenuItem>
               <MenuItem value="Paying Principle">Paying Principle</MenuItem>
-              <MenuItem value="Giving Money">Giving Money</MenuItem>
+              <MenuItem value="Adding Principle">Adding Principle</MenuItem>
               <MenuItem value="Paying Interest">Paying Interest</MenuItem>
             </TextField>
             <TextField
@@ -687,7 +694,7 @@ const BillLoanDetails: React.FC = () => {
                   } else if (payType === "Paying Principle") {
                     newExistDue = Math.max(newExistDue - paid, 0);
                     newPaid += paid;
-                  } else if (payType === "Giving Money") {
+                  } else if (payType === "Adding Principle") {
                     newTotal += paid;
                     newExistDue += paid;
                   }

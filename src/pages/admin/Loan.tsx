@@ -1,21 +1,81 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   TextField,
   Box,
   Grid,
   Button,
   InputAdornment,
+  CircularProgress,
   Autocomplete,
   Typography,
-  MenuItem,
   Paper,
+  MenuItem,
+  Chip,
+  IconButton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
 import api from "@/services/api";
 import debounce from "lodash/debounce";
+import { useNavigate } from "react-router-dom";
+
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
+export interface LoanCustomer {
+  loanBillId: number;
+  loanBillNumber: string;
+  customerLoanId: number;
+  name: string;
+  village: string;
+  phoneNumber: number;
+  emailId: string;
+  aadharCard: number;
+  deliveryStatus: string;
+  numberOfItems: number;
+  totalAmount: number;
+  paidAmount: number;
+  dueAmount: number;
+  paidInterestAmount: number;
+  dueInterestAmount: number;
+  selectedItemsIds: number[];
+  loanBillingDate: string;
+}
+
+function toDateOnlyYYYYMMDD(s: string | null): string | null {
+  if (!s) return null;
+  const d1 = new Date(s);
+  if (!Number.isNaN(d1.getTime())) {
+    const y = d1.getFullYear();
+    const m = String(d1.getMonth() + 1).padStart(2, "0");
+    const d = String(d1.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  const firstPart = s.split(",")[0]?.trim();
+  const parts = firstPart?.split("/") ?? [];
+  if (parts.length === 3) {
+    const m = Number(parts[0]);
+    const d = Number(parts[1]);
+    const y = Number(parts[2]);
+    const safe = new Date(y, m - 1, d);
+    if (!Number.isNaN(safe.getTime())) {
+      const mm = String(safe.getMonth() + 1).padStart(2, "0");
+      const dd = String(safe.getDate()).padStart(2, "0");
+      return `${y}-${mm}-${dd}`;
+    }
+  }
+  return null;
+}
+
+function normalizeStatus(
+  s: string | undefined | null
+): "delivered" | "pending" | "other" {
+  const v = (s ?? "").toLowerCase().trim();
+  if (v.includes("deliver")) return "delivered";
+  if (v.includes("pend")) return "pending";
+  return "other";
+}
+
 const Loan: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("");
@@ -27,7 +87,7 @@ const Loan: React.FC = () => {
 
   localStorage.removeItem("editBillFromBillDetails");
 
-  localStorage.removeItem("billNumber");
+  localStorage.removeItem("billLoanNumber");
   localStorage.removeItem("bill-phnNumber");
   localStorage.removeItem("phnNumber");
 
@@ -38,6 +98,7 @@ const Loan: React.FC = () => {
     phoneNumber: string;
     emailId: string;
     gender: string;
+    aadharCard: string;
     numberOfActiveItems: number;
     finalAmount: number;
     totalDueAmount: number;
@@ -52,6 +113,7 @@ const Loan: React.FC = () => {
     phoneNumber: "",
     emailId: "",
     gender: "",
+    aadharCard: "",
     numberOfActiveItems: 0,
     finalAmount: 0.0,
     totalDueAmount: 0.0,
@@ -134,7 +196,7 @@ const Loan: React.FC = () => {
       localStorage.removeItem("bill-loan-phnNumber");
       localStorage.removeItem("checkBackFrom");
       localStorage.setItem("billLoanNumber", "L-" + trimmedQuery);
-      localStorage.setItem("checkBackFrom", "Bill-Number");
+      localStorage.setItem("checkBackFrom", "billLoanNumber");
       navigate("/admin/bill-loan-details");
     } else if (searchType === "Phone Number") {
       localStorage.removeItem("checkBackFrom");
@@ -215,6 +277,85 @@ const Loan: React.FC = () => {
     }
   }, [location.state]);
 
+  const [rows, setRows] = useState<LoanCustomer[]>([]);
+  const [err, setErr] = useState<string | null>(null);
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "delivered" | "pending"
+  >("all");
+
+  const loadAllLoanCustomers = async () => {
+    setLoading(true);
+    setErr(null);
+
+    try {
+      const token = localStorage.getItem("token") ?? "";
+
+      const { data } = await api.get<LoanCustomer[]>("/admin/getALlLoanBills", {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      setRows(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Failed to fetch all bills:", e);
+      setErr("Failed to load billing orders.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredRows = useMemo(() => {
+    const f = fromDate.trim();
+    const t = toDate.trim();
+    return rows.filter((bill) => {
+      const norm = normalizeStatus(bill.deliveryStatus);
+      if (statusFilter !== "all" && norm !== statusFilter) return false;
+
+      if (!f && !t) return true;
+      const billDay = toDateOnlyYYYYMMDD(bill.loanBillingDate);
+      if (!billDay) return false;
+
+      if (f && t) return billDay >= f && billDay <= t;
+      if (f && !t) return billDay === f;
+      if (!f && t) return billDay === t;
+      return true;
+    });
+  }, [rows, fromDate, toDate, statusFilter]);
+
+  const clearFilters = () => {
+    setFromDate("");
+    setToDate("");
+    setStatusFilter("all"); // 👈 also reset status to ALL
+  };
+
+  const renderStatusChip = (raw: string) => {
+    const n = normalizeStatus(raw);
+    if (n === "delivered")
+      return (
+        <Chip
+          label="Delivered"
+          size="small"
+          sx={{ bgcolor: "#d9f7d9", color: "#1b5e20", fontWeight: 600 }}
+        />
+      );
+    if (n === "pending")
+      return (
+        <Chip
+          label="Pending"
+          size="small"
+          sx={{ bgcolor: "#fff3e0", color: "#e65100", fontWeight: 600 }}
+        />
+      );
+    return (
+      <Chip
+        label={raw || "-"}
+        size="small"
+        sx={{ bgcolor: "#eeeeee", color: "#424242" }}
+      />
+    );
+  };
+
   return (
     <div>
       <div className="mt-6 px-2 sm:mt-10 sm:p-3 flex flex-col items-center justify-center gap-6">
@@ -241,61 +382,61 @@ const Loan: React.FC = () => {
               select
               label="Search Type"
               value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
+              onChange={(e) => {
+                setSearchType(e.target.value);
+                if (e.target.value === "ALL") {
+                  setSearchQuery("");
+                }
+              }}
               fullWidth
               variant="outlined"
-              InputLabelProps={{
-                style: { color: "#333" },
-                shrink: true, // ✅ ensures label is always visible
-              }}
-              InputProps={{
-                style: { fontWeight: 500 },
-              }}
-              sx={{
-                width: "100%",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderWidth: "2px",
-                  borderColor: "gray",
-                },
-              }}
+              InputLabelProps={{ shrink: true }}
             >
               <MenuItem value="">
                 <em>Select Search Type</em>
               </MenuItem>
               <MenuItem value="Bill Number">Bill Number</MenuItem>
               <MenuItem value="Phone Number">Phone Number</MenuItem>
+              <MenuItem value="ALL">ALL</MenuItem>
             </TextField>
+
             <TextField
               sx={{ width: "100%" }}
               variant="outlined"
               placeholder="Search customers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={searchType === "ALL"}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon color="action" />
+                    <SearchIcon
+                      color={searchType === "ALL" ? "disabled" : "action"}
+                    />
                   </InputAdornment>
                 ),
                 style: {
-                  borderRadius: "25px",
-                  backgroundColor: "#fff",
-                  paddingLeft: 8,
+                  backgroundColor: searchType === "ALL" ? "#f0f0f0" : "#fff",
                 },
               }}
             />
+
             <Button
               variant="outlined"
-              onClick={handleSearch}
+              onClick={async () => {
+                if (searchType === "ALL") {
+                  await loadAllLoanCustomers();
+                  return;
+                }
+                handleSearch();
+              }}
               sx={{
                 paddingX: 6,
                 paddingY: 0.2,
                 borderRadius: "12px",
                 fontWeight: "bold",
-                boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
                 borderColor: "#8847FF",
                 color: "#8847FF",
-                transition: "all 0.3s",
                 "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
               }}
             >
@@ -327,6 +468,7 @@ const Loan: React.FC = () => {
                 "phoneNumber",
                 "emailId",
                 "gender",
+                "aadharCard",
               ] as (keyof Customer)[]
             ).map((key) => (
               <Grid key={key} size={{ xs: 6, sm: 4 }}>
@@ -402,6 +544,8 @@ const Loan: React.FC = () => {
                         ? "Phone Number"
                         : key === "emailId"
                         ? "Email ID"
+                        : key === "aadharCard"
+                        ? "Aadhar Card"
                         : key.charAt(0).toUpperCase() + key.slice(1)
                     }
                     value={customer[key]}
@@ -433,6 +577,227 @@ const Loan: React.FC = () => {
               Next
             </Button>
           </Box>
+        </Paper>
+      </div>
+      <div className="mt-10 p-3 flex flex-col items-center justify-center">
+        <Paper
+          elevation={0}
+          sx={{
+            p: 6,
+            width: "100%",
+            maxWidth: "80rem",
+            borderRadius: "24px",
+            backgroundColor: "rgba(255,255,255,0.75)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid #d0b3ff",
+            boxShadow: "0 10px 30px rgba(136,71,255,0.3)",
+          }}
+        >
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            color="primary"
+            gutterBottom
+          >
+            All Loan Billing Orders
+          </Typography>
+
+          {/* Filters row */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 2,
+              mt: 2,
+              mb: 3,
+            }}
+          >
+            <TextField
+              label="From"
+              type="date"
+              size="small"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
+            />
+
+            <TextField
+              label="To"
+              type="date"
+              size="small"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
+            />
+
+            <TextField
+              select
+              label="Status"
+              size="small"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              sx={{ width: 170, ml: { xs: 0, sm: 1 } }}
+              InputLabelProps={{ shrink: true }}
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="delivered">Delivered</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+            </TextField>
+
+            {/* 👇 moved to the end and clears all filters */}
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={clearFilters}
+              sx={{ whiteSpace: "nowrap" }}
+            >
+              Clear
+            </Button>
+          </Box>
+
+          {loading ? (
+            <div className="flex items-center gap-3 py-6">
+              <CircularProgress size={22} />
+              <span>Loading…</span>
+            </div>
+          ) : err ? (
+            <p className="text-red-600 py-4">{err}</p>
+          ) : filteredRows.length === 0 ? (
+            <p className="py-4">No billing orders found.</p>
+          ) : (
+            <div className="mt-4">
+              <Box
+                sx={{
+                  width: "100%",
+                  overflowX: "auto", // allows horizontal scrolling on small screens
+                }}
+              >
+                <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden sx={{ minWidth: 800">
+                  <thead className="bg-gray-200">
+                    <tr>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          Billing Date
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          Loan Bill Number
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          Name
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          Delivery Status
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          Items
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          Total Amount
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          Due Amount
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          Action
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRows.map((bill) => (
+                      <tr key={bill.loanBillId} className="bg-white/90">
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.loanBillingDate ?? "N/A"}
+                          </div>
+                        </td>
+
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.loanBillNumber}{" "}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.name}{" "}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {renderStatusChip(bill.deliveryStatus)}
+                          </div>
+                        </td>
+
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.numberOfItems ?? 0}
+                          </div>
+                        </td>
+
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.totalAmount != null
+                              ? bill.totalAmount.toFixed(2)
+                              : "-"}
+                          </div>
+                        </td>
+
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.dueAmount != null
+                              ? bill.dueAmount.toFixed(2)
+                              : "-"}
+                          </div>
+                        </td>
+
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            <IconButton
+                              size="medium"
+                              color="primary"
+                              sx={{
+                                "&:hover": { backgroundColor: "#E0E0E0" },
+                              }}
+                              onClick={() => {
+                                localStorage.removeItem("billLoanNumber");
+                                localStorage.removeItem("checkBackFrom");
+
+                                localStorage.setItem(
+                                  "billLoanNumber",
+                                  bill.loanBillNumber
+                                );
+                                localStorage.setItem("checkBackFrom", "Loan");
+                                navigate("/admin/bill-loan-details");
+                              }}
+                            >
+                              <VisibilityIcon fontSize="medium" />
+                            </IconButton>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Box>
+            </div>
+          )}
         </Paper>
       </div>
     </div>

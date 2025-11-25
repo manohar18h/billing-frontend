@@ -937,7 +937,44 @@ const DueAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
       </div>
 
       <div className="text-xs text-gray-500 mt-2">
-        Total outstanding due amount from all customers
+        Total outstanding due amount from all Customers
+      </div>
+    </div>
+  );
+};
+
+const DueLoanAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
+  const [dueLoanAmount, setDueLoanAmount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchDueLoanAmount = async () => {
+      try {
+        const response = await api.get<number>("/admin/getTotalLoanDueAmount", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setDueLoanAmount(response.data);
+      } catch (error) {
+        console.error("Error fetching due amount:", error);
+      }
+    };
+
+    if (token) fetchDueLoanAmount();
+  }, [token]);
+
+  return (
+    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm text-gray-500 font-medium">Total Loan Due</div>
+      </div>
+
+      <div className="text-2xl font-bold">
+        ₹{dueLoanAmount !== null ? dueLoanAmount.toLocaleString() : "..."}
+      </div>
+
+      <div className="text-xs text-gray-500 mt-2">
+        Total outstanding Loan due amount from all Loan Customers
       </div>
     </div>
   );
@@ -1189,7 +1226,8 @@ const Dashboard: React.FC = () => {
           endpoint="/admin/revenueStats"
           token={token}
         />
-        <DueAmountCard token={token} /> {/* ✅ Added here */}
+        <DueAmountCard token={token} />
+        <DueLoanAmountCard token={token} />
       </div>
 
       {/* Charts row */}

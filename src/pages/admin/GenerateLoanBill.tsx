@@ -56,6 +56,7 @@ const GenerateLoanBill: React.FC = () => {
     name: string;
     village: string;
     phoneNumber: string;
+    aadharCard: string;
     emailId: string;
     deliveryStatus: string;
     numberOfItems: number;
@@ -401,6 +402,10 @@ We hope to serve you again soon!
             <p>
               <strong className="text-[#B45309]">Email : </strong>
               <span className="text-[#111827] ">{loanData.emailId}</span>
+            </p>
+            <p>
+              <strong className="text-[#B45309]">Aadhar Card : </strong>
+              <span className="text-[#111827] ">{loanData.aadharCard}</span>
             </p>
           </div>
           <div className="text-right text-[#111827]">

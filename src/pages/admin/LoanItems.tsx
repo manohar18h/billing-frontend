@@ -76,6 +76,10 @@ const LoanItems: React.FC = () => {
       net_weight: 0.0,
       rate_of_interest: 0.0,
       total_amount: 0.0,
+      total_amount1: 0.0,
+      paymentMethod1: "",
+      total_amount2: 0.0,
+      paymentMethod2: "",
       due_interest_amount: 0.0,
       deliveryStatus: "",
     });
@@ -89,6 +93,10 @@ const LoanItems: React.FC = () => {
     net_weight: 0.0,
     rate_of_interest: 0.0,
     total_amount: 0.0,
+    total_amount1: 0.0,
+    paymentMethod1: "",
+    total_amount2: 0.0,
+    paymentMethod2: "",
     due_interest_amount: 0.0,
     deliveryStatus: "",
   });
@@ -476,6 +484,78 @@ const LoanItems: React.FC = () => {
                     <MenuItem value="Delivered">Delivered</MenuItem>
                     <MenuItem value="Pending">Pending</MenuItem>
                   </TextField>
+                ) : key === "paymentMethod1" ? (
+                  <TextField
+                    select
+                    label="Payment Method"
+                    value={item.paymentMethod1}
+                    onChange={(e) =>
+                      setItem({
+                        ...item,
+                        paymentMethod1: e.target.value,
+                      })
+                    }
+                    error={!!itemErrors.paymentMethod1}
+                    helperText={itemErrors.paymentMethod1 || ""}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      style: { color: "#333" },
+                      shrink: true, // ✅ ensures label is always visible
+                    }}
+                    InputProps={{
+                      style: { fontWeight: 500 },
+                    }}
+                    sx={{
+                      minWidth: "200px",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderWidth: "2px",
+                        borderColor: "gray",
+                      },
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Payment Method</em>
+                    </MenuItem>
+                    <MenuItem value="Phone Pay">Phone Pay</MenuItem>
+                    <MenuItem value="Cash">Cash</MenuItem>
+                  </TextField>
+                ) : key === "paymentMethod2" ? (
+                  <TextField
+                    select
+                    label="Payment Method"
+                    value={item.paymentMethod2}
+                    onChange={(e) =>
+                      setItem({
+                        ...item,
+                        paymentMethod2: e.target.value,
+                      })
+                    }
+                    error={!!itemErrors.paymentMethod2}
+                    helperText={itemErrors.paymentMethod2 || ""}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      style: { color: "#333" },
+                      shrink: true, // ✅ ensures label is always visible
+                    }}
+                    InputProps={{
+                      style: { fontWeight: 500 },
+                    }}
+                    sx={{
+                      minWidth: "200px",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderWidth: "2px",
+                        borderColor: "gray",
+                      },
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Payment Method</em>
+                    </MenuItem>
+                    <MenuItem value="Phone Pay">Phone Pay</MenuItem>
+                    <MenuItem value="Cash">Cash</MenuItem>
+                  </TextField>
                 ) : key === "itemName" ? (
                   <TextField
                     select
@@ -757,9 +837,12 @@ const LoanItems: React.FC = () => {
                                 net_weight: itm.net_weight || 0,
                                 rate_of_interest: itm.rate_of_interest || 0,
                                 total_amount: itm.total_amount || 0,
+                                total_amount1: itm.total_amount1 || 0,
+                                paymentMethod1: itm.paymentMethod1 || "",
+                                total_amount2: itm.total_amount2 || 0,
+                                paymentMethod2: itm.paymentMethod2 || "",
                                 due_interest_amount:
                                   itm.due_interest_amount || 0,
-
                                 deliveryStatus:
                                   itm.deliveryStatus ||
                                   itm.delivery_status ||
@@ -893,7 +976,7 @@ const LoanItems: React.FC = () => {
                 <em>Select Payment Type</em>
               </MenuItem>
               <MenuItem value="Paying Principle">Paying Principle</MenuItem>
-              <MenuItem value="Giving Money">Giving Money</MenuItem>
+              <MenuItem value="Adding Principle">Adding Principle</MenuItem>
               <MenuItem value="Paying Interest">Paying Interest</MenuItem>
             </TextField>
             <TextField
@@ -976,7 +1059,7 @@ const LoanItems: React.FC = () => {
                   } else if (payType === "Paying Principle") {
                     newExistDue = Math.max(newExistDue - paid, 0);
                     newPaid += paid;
-                  } else if (payType === "Giving Money") {
+                  } else if (payType === "Adding Principle") {
                     newTotal += paid;
                     newExistDue += paid;
                   }
