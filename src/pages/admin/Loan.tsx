@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   TextField,
   Box,
@@ -84,6 +84,7 @@ const Loan: React.FC = () => {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   localStorage.removeItem("editBillFromBillDetails");
 
@@ -426,6 +427,7 @@ const Loan: React.FC = () => {
               onClick={async () => {
                 if (searchType === "ALL") {
                   await loadAllLoanCustomers();
+                  bottomRef.current?.scrollIntoView({ behavior: "smooth" });
                   return;
                 }
                 handleSearch();
@@ -579,7 +581,10 @@ const Loan: React.FC = () => {
           </Box>
         </Paper>
       </div>
-      <div className="mt-10 p-3 flex flex-col items-center justify-center">
+      <div
+        className="mt-10 p-3 flex flex-col items-center justify-center"
+        ref={bottomRef}
+      >
         <Paper
           elevation={0}
           sx={{

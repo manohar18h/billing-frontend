@@ -148,6 +148,7 @@ We appreciate your trust in Hambire Jewellery 💎
 ${orderLines.join("\n\n")}
 
 💰 Total Bill Amount: ₹${bill.billTotalAmount.toFixed(2)}
+💰 Exchange Amount: ₹${bill.exchangeAmount.toFixed(2)}
 ✅ Paid: ₹${bill.billPaidAmount.toFixed(2)}
 🎉 Discount: ₹${bill.billDiscountAmount.toFixed(2)}
 ⚠️ Due: ₹${bill.billDueAmount.toFixed(2)}
