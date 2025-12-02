@@ -170,6 +170,14 @@ const BillLoanDetails: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (signDialogOpen) {
+      document.body.style.overflow = "hidden"; // lock scroll
+    } else {
+      document.body.style.overflow = "auto"; // unlock scroll
+    }
+  }, [signDialogOpen]);
+
   const formatDate = (isoString: string) => {
     if (!isoString) return "-";
     return new Date(isoString).toLocaleString("en-IN", {
@@ -743,15 +751,25 @@ const BillLoanDetails: React.FC = () => {
           {signType === "START" ? "Start-Sign" : "End-Sign"}
         </DialogTitle>
 
-        <DialogContent>
+        <DialogContent
+          sx={{
+            overflow: "hidden",
+            touchAction: "none",
+          }}
+        >
           <div
             style={{
-              width: "400px",
+              width: "100%",
+              maxWidth: "400px",
               height: "200px",
               border: "2px solid black",
+              touchAction: "none", // IMPORTANT: prevents scrolling while drawing
             }}
           >
-            <SignatureCanvas ref={signPad} />
+            <SignatureCanvas
+              ref={signPad}
+              canvasProps={{ style: { width: "100%", height: "100%" } }}
+            />{" "}
           </div>
 
           <Button
