@@ -17,6 +17,11 @@ import { useLocation } from "react-router-dom";
 import api from "@/services/api";
 import debounce from "lodash/debounce";
 
+interface VillageCustomer {
+  phoneNumber: string;
+  name: string;
+}
+
 const SearchAddCustomer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("");
@@ -25,7 +30,9 @@ const SearchAddCustomer: React.FC = () => {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [villageCustomers, setVillageCustomers] = useState<any[]>([]);
+  const [villageCustomers, setVillageCustomers] = useState<VillageCustomer[]>(
+    []
+  );
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   localStorage.removeItem("editBillFromBillDetails");
@@ -145,8 +152,7 @@ const SearchAddCustomer: React.FC = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
-        setVillageCustomers(res.data); // <-- update table
+        setVillageCustomers(res.data as VillageCustomer[]);
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
       } catch (err) {
         toast.error("Failed to fetch customers");
