@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   TextField,
   Box,
@@ -25,6 +25,8 @@ const SearchAddCustomer: React.FC = () => {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [villageCustomers, setVillageCustomers] = useState<any[]>([]);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   localStorage.removeItem("editBillFromBillDetails");
 
@@ -134,6 +136,21 @@ const SearchAddCustomer: React.FC = () => {
       localStorage.removeItem("bill-phnNumber");
       localStorage.setItem("bill-phnNumber", trimmedQuery);
       navigate("/admin/bill-Data");
+    } else if (searchType === "Village") {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await api.get(
+          `/admin/customers/by-village?village=${trimmedQuery}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        setVillageCustomers(res.data); // <-- update table
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      } catch (err) {
+        toast.error("Failed to fetch customers");
+      }
     }
   };
 
@@ -258,26 +275,65 @@ const SearchAddCustomer: React.FC = () => {
               </MenuItem>
               <MenuItem value="Bill Number">Bill Number</MenuItem>
               <MenuItem value="Phone Number">Phone Number</MenuItem>
+              <MenuItem value="Village">Village</MenuItem>
             </TextField>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Search customers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" />
-                  </InputAdornment>
-                ),
-                style: {
-                  borderRadius: "25px",
-                  backgroundColor: "#fff",
-                  paddingLeft: 8,
-                },
-              }}
-            />
+            {searchType === "Village" ? (
+              <Autocomplete
+                fullWidth
+                options={results}
+                value={searchQuery}
+                loading={loading}
+                onChange={(event, newValue) => {
+                  handleChange("village", newValue || "");
+                  setSearchQuery(newValue || ""); // IMPORTANT
+                }}
+                onInputChange={(event, newInputValue) => {
+                  setSearchQuery(newInputValue); // triggers typing
+                  setSearch(newInputValue); // triggers API search
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    placeholder="Type village name..."
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon color="action" />
+                        </InputAdornment>
+                      ),
+                      style: {
+                        borderRadius: "25px",
+                        backgroundColor: "#fff",
+                        paddingLeft: 8,
+                      },
+                    }}
+                  />
+                )}
+              />
+            ) : (
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Search customers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                  style: {
+                    borderRadius: "25px",
+                    backgroundColor: "#fff",
+                    paddingLeft: 8,
+                  },
+                }}
+              />
+            )}
+
             <Button
               variant="outlined"
               onClick={handleSearch}
@@ -413,6 +469,48 @@ const SearchAddCustomer: React.FC = () => {
             </Button>
           </Box>
         </Paper>
+      </div>
+      <div
+        className="mt-10 p-3 flex flex-col items-center  gap-1"
+        style={{ paddingBottom: "300px" }}
+        ref={bottomRef}
+      >
+        {searchType === "Village" && villageCustomers.length > 0 && (
+          <Paper
+            elevation={4}
+            sx={{ borderRadius: "20px" }}
+            className="p-6 mt-6 w-full max-w-4xl bg-white/80 backdrop-blur-lg shadow-lg"
+          >
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              color="primary"
+              gutterBottom
+            >
+              Customers in Village
+            </Typography>
+
+            <table className="w-full mt-4 border border-gray-300 rounded-lg overflow-hidden">
+              <thead className="bg-purple-200">
+                <tr>
+                  <th className="p-3 text-left font-bold">Name</th>
+                  <th className="p-3 text-left font-bold">Phone Number</th>
+                </tr>
+              </thead>
+              <tbody>
+                {villageCustomers.map((c: any, index) => (
+                  <tr
+                    key={index}
+                    className="border-b hover:bg-purple-50 transition-all"
+                  >
+                    <td className="p-3">{c.name}</td>
+                    <td className="p-3">{c.phoneNumber}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Paper>
+        )}
       </div>
     </div>
   );

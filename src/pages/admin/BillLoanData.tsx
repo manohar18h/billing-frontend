@@ -178,7 +178,7 @@ const BillLoanData: React.FC = () => {
                 }}
                 onClick={handleAddOrder}
               >
-                Add Order
+                Add Item
               </Button>
             </div>
           </div>

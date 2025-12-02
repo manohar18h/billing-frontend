@@ -90,7 +90,7 @@ const RepairWork: React.FC = () => {
   };
 
   return (
-    <div className="mt-10 px-12 py-14 min-h-[500px] w-full max-w-[750px] mx-auto rounded-[24px] bg-white/80 backdrop-blur-md border border-[#d0b3ff] shadow-[0_10px_40px_rgba(136,71,255,0.3)]">
+    <div className=" px-12 py-10 min-h-[300px] w-full max-w-[750px] mx-auto rounded-[24px] bg-white/80 backdrop-blur-md border border-[#d0b3ff] shadow-[0_10px_40px_rgba(136,71,255,0.3)]">
       <Typography
         variant="h4"
         fontWeight="bold"

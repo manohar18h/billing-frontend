@@ -4,7 +4,6 @@ import {
   Users,
   PersonStanding,
   LogOut,
-  Boxes,
   PackagePlus,
   Sun,
   Box as BoxIcon,
@@ -12,9 +11,10 @@ import {
   Gem,
   ReceiptText,
   BadgeIndianRupee,
+  ChartNoAxesCombined,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo2 from "../assets/logo2.png";
+import hjlogoo from "../assets/hjlogoo.png";
 
 import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import classNames from "classnames";
@@ -32,7 +32,6 @@ import RepairWork from "./admin/RepairWork";
 import LotWork from "./admin/LotWork";
 import WorkerTransaction from "./admin/WorkerTransaction";
 import WorkerDetails from "./admin/WorkerDetails";
-import AdminService from "./admin/Service";
 import { WorkersProvider } from "@/contexts/WorkersContext";
 import BillData from "./admin/BillData";
 import ShowroomMetalStock from "./admin/ShowroomMetalStock";
@@ -49,12 +48,12 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
   { icon: Users, label: "Customers", path: "/admin/Customers" },
   { icon: PersonStanding, label: "Workers", path: "/admin/workers" },
-  { icon: Boxes, label: "Services", path: "/admin/service" },
   { icon: PackagePlus, label: "Products", path: "/admin/products" },
   { icon: Gem, label: "Showroom", path: "/admin/showroom-metal-stock" },
   { icon: BoxIcon, label: "Stock Box", path: "/admin/stockBox" },
   { icon: ReceiptText, label: "Billing", path: "/admin/billing-orders" },
   { icon: BadgeIndianRupee, label: "Loan", path: "/admin/Loan" },
+  { icon: ChartNoAxesCombined, label: "BullionX", path: "/admin/Loan" },
 ];
 
 type SidebarProps = {
@@ -244,7 +243,7 @@ function AdminPanelContent() {
           </div>
           <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200">
             <img
-              src={logo2}
+              src={hjlogoo}
               alt="HJ Logo"
               className="w-12 h-12 object-contain"
             />
@@ -275,7 +274,6 @@ function AdminPanelContent() {
               element={<StockBoxDetails />}
             />
             <Route path="workers" element={<Workers />} />
-            <Route path="service" element={<AdminService />} />
             <Route path="products" element={<Products />} />
             <Route path="billing-orders" element={<AllBillingOrders />} />
             <Route path="Loan" element={<Loan />} />

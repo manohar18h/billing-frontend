@@ -583,6 +583,7 @@ const Loan: React.FC = () => {
       </div>
       <div
         className="mt-10 p-3 flex flex-col items-center justify-center"
+        style={{ paddingBottom: "300px" }}
         ref={bottomRef}
       >
         <Paper
