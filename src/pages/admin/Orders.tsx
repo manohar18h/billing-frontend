@@ -211,6 +211,7 @@ const Orders: React.FC = () => {
 
   useEffect(() => {
     localStorage.removeItem("checkEditBill");
+
     api
       .get<AppWorker[]>(`/admin/getAllWorkers`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -230,12 +231,12 @@ const Orders: React.FC = () => {
       setExchangeList([]);
       sessionStorage.removeItem("ordersState");
     } else if (showOrdersList && savedState) {
-      // Restore state when showOrdersList flag is true
+      localStorage.removeItem("AllowEdit");
+      localStorage.removeItem("AllowExEdit");
       const { ordersList, exchangeList } = JSON.parse(savedState);
       setOrdersList(ordersList || []);
       setExchangeList(exchangeList || []);
     } else if (!showOrdersList && savedState) {
-      // Coming back from generate-bill or browser back
       const { ordersList, exchangeList } = JSON.parse(savedState);
       setOrdersList(ordersList || []);
       setExchangeList(exchangeList || []);
@@ -244,6 +245,8 @@ const Orders: React.FC = () => {
 
   useEffect(() => {
     if (fromBillDetails && numericOrderId) {
+      localStorage.removeItem("AllowEdit");
+      localStorage.removeItem("AllowExEdit");
       fetchOrderDetails();
     }
   }, [location.key]);
@@ -284,7 +287,6 @@ const Orders: React.FC = () => {
     console.log("customerid  in order  :  " + customerId);
     console.log("Token id: " + token);
     console.log("Request Body:", JSON.stringify(order, null, 2));
-    localStorage.removeItem("AllowEdit");
 
     try {
       const response = await api.post(`/admin/addOrder/${customerId}`, order, {
@@ -354,6 +356,8 @@ const Orders: React.FC = () => {
       handleClearExchange();
 
       setShowExchangeForm(false);
+
+      localStorage.setItem("AllowExEdit", "AllowExEdit");
 
       sessionStorage.setItem(
         "ordersState",
@@ -578,11 +582,24 @@ const Orders: React.FC = () => {
 
       if (response.status === 200) {
         console.log(response.data); // "Yes Its Deleted"
-
-        // Remove deleted item from the state
         setExchangeList((prev) =>
           prev.filter((item) => item.oldItemId !== slectOldItemId)
         );
+        const exchangeItemAmount = localStorage.getItem("exchangeItemAmount");
+        const orderId = localStorage.getItem("exchangeOrderId");
+
+        console.log("exchangeItemAmount :", exchangeItemAmount);
+        console.log("orderId :", orderId);
+
+        const updatedOrders = ordersList.map((o) => {
+          if (o.orderId === Number(orderId)) {
+            const newDue = Number(o.dueAmount) + Number(exchangeItemAmount);
+            return { ...o, dueAmount: newDue };
+          }
+          return o;
+        });
+
+        setOrdersList(updatedOrders);
       }
     } catch (error) {
       console.error("Delete failed:", error);
@@ -685,9 +702,13 @@ const Orders: React.FC = () => {
       alert("Exchange Data updated successfully");
 
       localStorage.setItem("billNumber", billNumber);
-      navigate(`/admin/bill-details`, {
-        replace: true,
-      });
+      const checkEditExAllow = localStorage.getItem("AllowExEdit");
+
+      if (checkEditExAllow !== "AllowExEdit") {
+        navigate(`/admin/bill-details`, {
+          replace: true,
+        });
+      }
     } catch (error: any) {
       if (error.response?.data) {
         setExchangeErrors(error.response.data);
@@ -1982,16 +2003,22 @@ const Orders: React.FC = () => {
                       sx={{ fontSize: "0.95rem" }}
                     >
                       <div className="flex justify-center items-center">
-                        <IconButton
-                          size="small"
-                          color="warning"
-                          sx={{
-                            "&:hover": { backgroundColor: "#E0E0E0" },
-                          }}
-                          onClick={() => handleClickOldItemOpen(ex.oldItemId)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        {order.deliveryStatus === "Canceled" ? (
+                          <CheckCircleIcon color="success" />
+                        ) : editBillDetails === "editBill" ? (
+                          "-"
+                        ) : (
+                          <IconButton
+                            size="small"
+                            sx={{
+                              color: "#A0522D",
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                            }}
+                            onClick={() => handleClickOldItemOpen(ex.oldItemId)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

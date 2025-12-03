@@ -417,6 +417,15 @@ We hope to serve you again soon!
 .invoice-table td:nth-child(7) {
   width: 8%; 
 }
+
+  .invoice-table th:nth-last-child(3),
+.invoice-table td:nth-last-child(3) {
+  width: 8%;
+}
+    .invoice-table th:nth-last-child(4),
+.invoice-table td:nth-last-child(4) {
+  width: 8%;
+}
   .invoice-table th:nth-last-child(2),
 .invoice-table td:nth-last-child(2) {
   width: 8%;
