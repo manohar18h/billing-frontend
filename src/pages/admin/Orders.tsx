@@ -284,6 +284,7 @@ const Orders: React.FC = () => {
     console.log("customerid  in order  :  " + customerId);
     console.log("Token id: " + token);
     console.log("Request Body:", JSON.stringify(order, null, 2));
+    localStorage.removeItem("AllowEdit");
 
     try {
       const response = await api.post(`/admin/addOrder/${customerId}`, order, {
@@ -295,6 +296,8 @@ const Orders: React.FC = () => {
       setOrderErrors({});
 
       handleClearOrder();
+
+      localStorage.setItem("AllowEdit", "AllowEdit");
 
       sessionStorage.setItem(
         "ordersState",
@@ -728,11 +731,15 @@ const Orders: React.FC = () => {
       alert(
         "Order updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill"
       );
-
       localStorage.setItem("billNumber", billNumber);
-      navigate(`/admin/bill-details`, {
-        replace: true,
-      });
+
+      const checkEditAllow = localStorage.getItem("AllowEdit");
+
+      if (checkEditAllow !== "AllowEdit") {
+        navigate(`/admin/bill-details`, {
+          replace: true,
+        });
+      }
     } catch (error: any) {
       if (error.response?.data) {
         setOrderErrors(error.response.data);
