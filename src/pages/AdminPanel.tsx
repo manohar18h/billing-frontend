@@ -43,6 +43,7 @@ import LoanItemDetails from "./admin/LoanItemDetails";
 import GenerateLoanBill from "./admin/GenerateLoanBill";
 import BillLoanDetails from "./admin/BillLoanDetails";
 import BillLoanData from "./admin/BillLoanData";
+import BullionX from "./admin/BullionX";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
@@ -53,7 +54,7 @@ const menuItems = [
   { icon: BoxIcon, label: "Stock Box", path: "/admin/stockBox" },
   { icon: ReceiptText, label: "Billing", path: "/admin/billing-orders" },
   { icon: BadgeIndianRupee, label: "Loan", path: "/admin/Loan" },
-  { icon: ChartNoAxesCombined, label: "BullionX", path: "/admin/Loan" },
+  { icon: ChartNoAxesCombined, label: "BullionX", path: "/admin/bullion-x" },
 ];
 
 type SidebarProps = {
@@ -208,7 +209,7 @@ function AdminPanelContent() {
     location.pathname === "/admin/bill-loan-details" ||
     location.pathname === "/admin/bill-loan-data"
   ) {
-    activeIndex = 8;
+    activeIndex = 7;
   }
 
   if (activeIndex === -1) activeIndex = 0;
@@ -257,6 +258,7 @@ function AdminPanelContent() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="customers" element={<Customers />} />
             <Route path="orders" element={<Orders />} />
+            <Route path="bullion-x" element={<BullionX />} />
             <Route path="generate-bill" element={<GenerateBill />} />
             <Route path="generate-loan-bill" element={<GenerateLoanBill />} />
             <Route path="bill-details" element={<BillDetails />} />

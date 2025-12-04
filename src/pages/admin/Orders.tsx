@@ -64,6 +64,38 @@ type AppWorker = {
 };
 
 const Orders: React.FC = () => {
+  const goldItems = [
+    "Pusthela Thadu",
+    "Mattalu",
+    "Ring",
+    "Finger Ring",
+    "Vaddanam",
+    "Bracelet",
+    "Bangles",
+    "Vathulu",
+    "Gundla Mala",
+    "Papidi Billa",
+    "Necklace",
+    "Nose Ring",
+    "Neck Chains",
+    "Jhumkas",
+    "Earring",
+  ];
+
+  const silverItems = [
+    "Kadiyam",
+    "Finger Ring",
+    "Ring",
+    "Ring2",
+    "Neck Chains",
+    "Pattilu",
+    "Bangles",
+    "Bracelet",
+    "Mettalu",
+    "Pilenlu",
+  ];
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
   const handleClearExchange = () => {
     setExchange({
       exchange_metal: "",
@@ -308,6 +340,7 @@ const Orders: React.FC = () => {
           exchangeList,
         })
       );
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     } catch (error: any) {
       if (error.response && error.response.data) {
         setOrderErrors(error.response.data); // assumes { field: "error message" }
@@ -321,6 +354,8 @@ const Orders: React.FC = () => {
     try {
       localStorage.removeItem("exchangeItemAmount");
       localStorage.removeItem("exchangeOrderId");
+      localStorage.removeItem("updatedDueAmount");
+      localStorage.removeItem("newExchangeAmount");
 
       const exchangeItemAmount = exchange.exchange_item_amount;
       const orderId = ordersList[ordersList.length - 1]?.orderId;
@@ -419,37 +454,6 @@ const Orders: React.FC = () => {
       navigate("/admin"); // fallback
     }
   };
-
-  const goldItems = [
-    "Pusthela Thadu",
-    "Mattalu",
-    "Ring",
-    "Finger Ring",
-    "Vaddanam",
-    "Bracelet",
-    "Bangles",
-    "Vathulu",
-    "Gundla Mala",
-    "Papidi Billa",
-    "Necklace",
-    "Nose Ring",
-    "Neck Chains",
-    "Jhumkas",
-    "Earring",
-  ];
-
-  const silverItems = [
-    "Kadiyam",
-    "Finger Ring",
-    "Ring",
-    "Ring2",
-    "Neck Chains",
-    "Pattilu",
-    "Bangles",
-    "Bracelet",
-    "Mettalu",
-    "Pilenlu",
-  ];
 
   const getItemOptions = () => {
     if (order.metal === "24 Gold" || order.metal === "22 Gold")
@@ -591,10 +595,27 @@ const Orders: React.FC = () => {
         console.log("exchangeItemAmount :", exchangeItemAmount);
         console.log("orderId :", orderId);
 
+        const updatedDueAmount = Number(
+          localStorage.getItem("updatedDueAmount")
+        );
+
+        const newExchangeAmount = Number(
+          localStorage.getItem("newExchangeAmount")
+        );
+
+        console.log("updatedDueAmount", updatedDueAmount);
+        console.log("newExchangeAmount 606", newExchangeAmount);
+
         const updatedOrders = ordersList.map((o) => {
           if (o.orderId === Number(orderId)) {
-            const newDue = Number(o.dueAmount) + Number(exchangeItemAmount);
-            return { ...o, dueAmount: newDue };
+            console.log("Check 605 DueAmount", Number(o.dueAmount));
+            if (updatedDueAmount > 0) {
+              const newDue = updatedDueAmount + Number(newExchangeAmount);
+              return { ...o, dueAmount: newDue };
+            } else {
+              const newDue = Number(o.dueAmount) + Number(exchangeItemAmount);
+              return { ...o, dueAmount: newDue };
+            }
           }
           return o;
         });
@@ -633,6 +654,8 @@ const Orders: React.FC = () => {
   };
 
   const handleUpdateExchange = async () => {
+    localStorage.removeItem("updatedDueAmount");
+    localStorage.removeItem("newExchangeAmount");
     if (!editingExchangeId) return;
 
     const orderId = ordersList[ordersList.length - 1]?.orderId;
@@ -680,6 +703,12 @@ const Orders: React.FC = () => {
         dueAmount: recalculatedDue,
       };
 
+      localStorage.setItem("updatedDueAmount", recalculatedDue.toString());
+      localStorage.setItem(
+        "newExchangeAmount",
+        newExchange.exchange_item_amount.toString()
+      );
+
       const updatedOrders = ordersList.map((order) =>
         order.orderId === orderId ? { ...order, ...orderWithDue } : order
       );
@@ -703,6 +732,7 @@ const Orders: React.FC = () => {
 
       localStorage.setItem("billNumber", billNumber);
       const checkEditExAllow = localStorage.getItem("AllowExEdit");
+      handleClearExchange();
 
       if (checkEditExAllow !== "AllowExEdit") {
         navigate(`/admin/bill-details`, {
@@ -1393,6 +1423,7 @@ const Orders: React.FC = () => {
         <Paper
           elevation={4}
           className="p-6 mt-6 rounded-3xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
+          ref={bottomRef}
         >
           <h3 className=" text-3xl font-bold mb-10 text-blue-600">
             Order Summary
@@ -1983,10 +2014,9 @@ const Orders: React.FC = () => {
                             "&:hover": { backgroundColor: "#E0E0E0" },
                           }}
                           onClick={() => {
-                            setExchange({
-                              ...ex, // ensure dropdown works if needed
-                            });
-
+                            const rest = { ...ex }; // copy the object
+                            delete rest.orderId; // remove orderId safely
+                            setExchange(rest);
                             setShowExchangeForm((prev) => !prev);
                             setIsEditing(true);
                             setEditingExchangeId(ex.oldItemId);
@@ -2260,12 +2290,9 @@ const Orders: React.FC = () => {
                   workerId: selectedWorkerId,
                 };
 
-                // add only one of them
-                if (workerPayAmount) {
-                  requestBody.workPay = Number(workerPayAmount);
-                } else if (workerPayWastage) {
-                  requestBody.wastage = Number(workerPayWastage);
-                }
+                requestBody.workPay = Number(workerPayAmount);
+
+                requestBody.wastage = Number(workerPayWastage);
 
                 await api.post(
                   `/admin/addWorkerPay/${assignOrderId}`,

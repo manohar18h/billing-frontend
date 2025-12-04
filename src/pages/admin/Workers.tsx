@@ -93,6 +93,20 @@ const Workers: React.FC = () => {
     goldStock: 0.0,
     silverStock: 0.0,
   });
+  const handleClearFields = () => {
+    setWorker({
+      fullName: "",
+      userName: "",
+      password: "",
+      phnNumber: "",
+      village: "",
+      earnedAmount: 0.0,
+      receivedAmount: 0.0,
+      pendingAmount: 0.0,
+      goldStock: 0.0,
+      silverStock: 0.0,
+    });
+  };
   const [fieldErrors, setFieldErrors] = useState<{ [k: string]: string }>({});
 
   const handleChange = (field: string, value: string) =>
@@ -110,7 +124,8 @@ const Workers: React.FC = () => {
       alert("Worker added successfully!");
       await invalidate();
       await refresh();
-      navigate("/admin/dashboard");
+
+      handleClearFields();
     } catch (err: any) {
       console.error(err);
 

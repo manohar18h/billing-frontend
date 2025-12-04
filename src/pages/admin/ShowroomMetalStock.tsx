@@ -69,6 +69,7 @@ interface OldReturnMetals {
   onlyExchange_total_amount: string;
   onlyExchange_item_cash_amount: string;
   onlyExchange_item_phnpay_amount: string;
+  active: boolean;
   date: string;
 }
 
@@ -236,7 +237,11 @@ const ShowroomMetalStock: React.FC = () => {
       const res = await api.get<OldReturnMetals[]>("/admin/oldReturnData", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setOldReturnData(res.data || []);
+      const activeItems = (res.data || []).filter(
+        (item) => item.active === true
+      );
+
+      setOldReturnData(activeItems);
     } catch (error) {
       console.error("Error fetching worker stock:", error);
     }

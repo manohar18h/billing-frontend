@@ -784,12 +784,9 @@ const BillDetails: React.FC = () => {
                   workerId: selectedWorkerId,
                 };
 
-                // add only one of them
-                if (workerPayAmount) {
-                  requestBody.workPay = Number(workerPayAmount);
-                } else if (workerPayWastage) {
-                  requestBody.wastage = Number(workerPayWastage);
-                }
+                requestBody.workPay = Number(workerPayAmount);
+
+                requestBody.wastage = Number(workerPayWastage);
 
                 const res = await api.post(
                   `/admin/addWorkerPay/${assignOrderId}`,
