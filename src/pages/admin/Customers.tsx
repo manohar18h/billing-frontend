@@ -112,9 +112,21 @@ const SearchAddCustomer: React.FC = () => {
   >({});
 
   const handleChange = (field: string, value: string | number) => {
-    setCustomer({ ...customer, [field]: value });
-  };
+    let newValue = value;
+    if (field === "name" && typeof value === "string") {
+      newValue = value
+        .split(" ")
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ");
+    }
 
+    setCustomer((prev) => ({
+      ...prev,
+      [field]: newValue,
+    }));
+  };
   const thickTextFieldProps = {
     variant: "outlined" as const,
     fullWidth: true,

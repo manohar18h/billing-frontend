@@ -94,7 +94,7 @@ const Orders: React.FC = () => {
     "Mettalu",
     "Pilenlu",
   ];
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const bottomOrderRef = useRef<HTMLDivElement | null>(null);
 
   const handleClearExchange = () => {
     setExchange({
@@ -340,7 +340,6 @@ const Orders: React.FC = () => {
           exchangeList,
         })
       );
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     } catch (error: any) {
       if (error.response && error.response.data) {
         setOrderErrors(error.response.data); // assumes { field: "error message" }
@@ -350,6 +349,11 @@ const Orders: React.FC = () => {
       }
     }
   };
+  useEffect(() => {
+    if (ordersList.length > 0) {
+      bottomOrderRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [ordersList]);
   const handleExchangeSubmit = async () => {
     try {
       localStorage.removeItem("exchangeItemAmount");
@@ -1423,7 +1427,6 @@ const Orders: React.FC = () => {
         <Paper
           elevation={4}
           className="p-6 mt-6 rounded-3xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
-          ref={bottomRef}
         >
           <h3 className=" text-3xl font-bold mb-10 text-blue-600">
             Order Summary
@@ -1722,6 +1725,7 @@ const Orders: React.FC = () => {
               </TableBody>
             </Table>
           </Box>
+          <div ref={bottomOrderRef} style={{ height: "1px" }} />
         </Paper>
       )}
 
@@ -1796,12 +1800,12 @@ const Orders: React.FC = () => {
                       <MenuItem value="">
                         <em>Select Metal</em>
                       </MenuItem>
+                      <MenuItem value="Gold">Gold</MenuItem>
+                      <MenuItem value="Silver">Silver</MenuItem>
                       <MenuItem value="24 Gold">24 Gold</MenuItem>
                       <MenuItem value="22 Gold">22 Gold</MenuItem>
                       <MenuItem value="999 Silver">999 Silver</MenuItem>
                       <MenuItem value="995 Silver">995 Silver</MenuItem>
-                      <MenuItem value="Gold">Gold</MenuItem>
-                      <MenuItem value="Silver">Silver</MenuItem>
                     </TextField>
                   ) : key === "exchange_metal_price" ? (
                     // 🔸 Editable Exchange Metal Price field
@@ -1851,6 +1855,15 @@ const Orders: React.FC = () => {
                             ? e.target.value === ""
                               ? 0
                               : Number(e.target.value)
+                            : key === "exchange_metal_name"
+                            ? e.target.value
+                                .split(" ")
+                                .map(
+                                  (word) =>
+                                    word.charAt(0).toUpperCase() +
+                                    word.slice(1).toLowerCase()
+                                )
+                                .join(" ")
                             : e.target.value;
 
                         setExchange((prev) => ({

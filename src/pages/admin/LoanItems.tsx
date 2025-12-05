@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   TextField,
   Button,
@@ -43,7 +43,9 @@ const LoanItems: React.FC = () => {
   const numericLoanId = location.state?.loanId || null; // read from state
   const fromLoanCustomerDetails =
     location.state?.fromLoanCustomerDetails || false;
-  const from = location.state?.from || localStorage.getItem("from");
+  const from = location.state?.from;
+
+  const bottomOrderRef = useRef<HTMLDivElement | null>(null);
 
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const token = localStorage.getItem("token");
@@ -198,6 +200,11 @@ const LoanItems: React.FC = () => {
       }
     }
   };
+  useEffect(() => {
+    if (itemsList.length > 0) {
+      bottomOrderRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [itemsList]);
   const handleUpdateItem = async () => {
     if (!editingItemId) return;
 
@@ -342,15 +349,35 @@ const LoanItems: React.FC = () => {
   }, [location.key]);
 
   const handleBackClick = () => {
-    if (from === "loanCustomerDetails") {
-      navigate("/admin/bill-loan-data", {
-        state: { loanCustomerId: location.state?.loanCustomerId }, // optionally pass back
+    const loanFromState = location.state?.loanFrom;
+    const loanFromLocal = localStorage.getItem("loanItemsFrom");
+    const loanFrom = loanFromState || loanFromLocal;
+
+    if (loanFrom === "BillLoanDetails") {
+      // read from localStorage if state missing
+      const billLoanNumber =
+        location.state?.billLoanNumber ||
+        localStorage.getItem("billLoanNumber");
+
+      const loanCustomerId =
+        location.state?.loanCustomerId ||
+        localStorage.getItem("loanCustomerId");
+
+      const loanId =
+        location.state?.loanId || localStorage.getItem("billLoanLoanId");
+
+      navigate("/admin/bill-loan-details", {
         replace: true,
+        state: {
+          billLoanNumber,
+          loanCustomerId,
+          loanId,
+        },
       });
-    } else if (from === "LoanCustomer") {
+    } else if (loanFrom === "LoanPage") {
       navigate("/admin/Loan", { replace: true });
     } else {
-      navigate("/admin"); // fallback
+      navigate("/admin");
     }
   };
 
@@ -906,6 +933,7 @@ const LoanItems: React.FC = () => {
               </TableBody>
             </Table>
           </Box>
+          <div ref={bottomOrderRef} style={{ height: "1px" }} />
         </Paper>
       )}
 

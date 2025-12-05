@@ -105,6 +105,7 @@ const BillLoanDetails: React.FC = () => {
 
   const fetchLoanCustomerDetails = async () => {
     localStorage.removeItem("checkEditLoanBill");
+    localStorage.removeItem("loanItemsFrom");
 
     try {
       const res = await api.get(
@@ -200,6 +201,8 @@ const BillLoanDetails: React.FC = () => {
   };
 
   const handleEditItem = (loanId: number) => {
+    localStorage.removeItem("loanItemsFrom");
+
     localStorage.removeItem("editBillFromBillLoanDetails");
     if (!loanId) {
       console.error("❌ editingItemId is missing before navigation");
@@ -211,16 +214,25 @@ const BillLoanDetails: React.FC = () => {
     localStorage.setItem("editBillFromBillLoanDetails", "editBill");
 
     localStorage.removeItem("billLoanNumber");
+    localStorage.removeItem("loanCustomerId");
 
-    navigate(`/admin/loanItems/`, {
+    localStorage.setItem("billLoanNumber", billLoanNumber ?? "");
+    localStorage.setItem(
+      "loanCustomerId",
+      (loanCustomer?.customerLoanId ?? "").toString()
+    );
+    navigate("/admin/loanItems", {
       replace: true,
       state: {
+        loanFrom: "BillLoanDetails",
         fromBillLoanDetails: true,
         billLoanNumber: billLoanNumber,
         loanCustomerId: loanCustomer?.customerLoanId,
-        loanId: loanId, // pass orderId directly
+        loanId: loanId,
       },
     });
+
+    localStorage.setItem("loanItemsFrom", "BillLoanDetails");
   };
 
   const asNumber = (v: string | number | null | undefined): number =>

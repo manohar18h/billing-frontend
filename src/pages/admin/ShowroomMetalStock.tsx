@@ -870,7 +870,17 @@ const ShowroomMetalStock: React.FC = () => {
               type="text"
               label="Metal Name"
               value={returnMetalName}
-              onChange={(e) => setReturnMetalName(e.target.value)}
+              onChange={(e) => {
+                const formatted = e.target.value
+                  .split(" ")
+                  .map(
+                    (word) =>
+                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                  )
+                  .join(" ");
+
+                setReturnMetalName(formatted);
+              }}
               required
             />
           </Grid>
@@ -995,7 +1005,17 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               label="Name"
               value={personName}
-              onChange={(e) => setPersonName(e.target.value)}
+              onChange={(e) => {
+                const formatted = e.target.value
+                  .split(" ")
+                  .map(
+                    (word) =>
+                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                  )
+                  .join(" ");
+
+                setPersonName(formatted);
+              }}
             />
           </Grid>
 

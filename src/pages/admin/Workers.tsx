@@ -109,8 +109,22 @@ const Workers: React.FC = () => {
   };
   const [fieldErrors, setFieldErrors] = useState<{ [k: string]: string }>({});
 
-  const handleChange = (field: string, value: string) =>
-    setWorker({ ...worker, [field]: value });
+  const handleChange = (field: string, value: string | number) => {
+    let newValue = value;
+    if (field === "fullName" && typeof value === "string") {
+      newValue = value
+        .split(" ")
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ");
+    }
+
+    setWorker((prev) => ({
+      ...prev,
+      [field]: newValue,
+    }));
+  };
 
   const addWorker = async () => {
     try {

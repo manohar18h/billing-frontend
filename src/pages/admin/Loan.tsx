@@ -153,6 +153,8 @@ const Loan: React.FC = () => {
 
   // Trigger when user types 3+ chars
   useEffect(() => {
+    localStorage.removeItem("loanItemsFrom");
+
     if (search.trim().length >= 3) {
       fetchData(search);
     } else {
@@ -169,7 +171,20 @@ const Loan: React.FC = () => {
   >({});
 
   const handleChange = (field: string, value: string | number) => {
-    setCustomer({ ...customer, [field]: value });
+    let newValue = value;
+    if (field === "name" && typeof value === "string") {
+      newValue = value
+        .split(" ")
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ");
+    }
+
+    setCustomer((prev) => ({
+      ...prev,
+      [field]: newValue,
+    }));
   };
 
   const thickTextFieldProps = {
@@ -210,11 +225,12 @@ const Loan: React.FC = () => {
   };
 
   const handleAddCustomer = async () => {
+    localStorage.removeItem("loanItemsFrom");
+
     try {
       const token = localStorage.getItem("token");
       localStorage.removeItem("loanCusDetailsCustomerId");
       localStorage.removeItem("loanCustomerId");
-      localStorage.removeItem("from");
 
       setFieldErrors({});
 
@@ -247,13 +263,17 @@ const Loan: React.FC = () => {
 
       if (result?.loanCusId) {
         localStorage.setItem("loanCustomerId", result.loanCusId);
-        localStorage.setItem("from", "LoanCustomer");
         console.log(" Loan customerId in customer:", result.loanCusId);
 
         navigate("/admin/loanItems", {
           replace: true,
-          state: { fromLoanCustomer: true },
+          state: {
+            loanFrom: "LoanPage",
+            fromLoanCustomer: true,
+          },
         });
+
+        localStorage.setItem("loanItemsFrom", "LoanPage");
       } else {
         toast.error("Failed to add customer");
       }

@@ -410,7 +410,7 @@ We hope to serve you again soon!
         className="p-6 bg-gray-100 shadow-2xl rounded-md max-w-[800px] mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
       >
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 pb-4 mb-4 mt-10">
+        <div className="flex justify-between items-start border-b-2 pb-4 mb-4 mt-20">
           <div>
             <h1 className="text-2xl font-bold text-[#813801]">
               HAMBIRE JEWELLERY
