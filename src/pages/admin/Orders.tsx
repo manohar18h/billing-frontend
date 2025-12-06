@@ -66,7 +66,6 @@ type AppWorker = {
 const Orders: React.FC = () => {
   const goldItems = [
     "Batuvu",
-
     "One Stone Pulla",
     "Gundu Pulla",
     "3-Pujala Pulla",
@@ -96,6 +95,7 @@ const Orders: React.FC = () => {
     "Silva Puste",
     "Fancy Puste",
     "House Puste",
+    "Chaknam Puste",
     "Matilu",
     "Pusthela Thadu",
     "Kadiyam",
@@ -138,6 +138,8 @@ const Orders: React.FC = () => {
     "Kadiyam",
     "R.D Kadam",
     "Ragi Kadiyam",
+    "Bolgajal Kadiyal",
+    "R.D Sadan Kadiyal",
     "Bolgajal Pattilu",
     "Single Chain Pattilu",
     "Fancy Pattilu",
@@ -156,6 +158,7 @@ const Orders: React.FC = () => {
     "Flowers",
     "Kamakshi Deepam",
     "Panchapali",
+    "Chemmalu",
     "Small Deepam Plates",
     "Kumkum Bharani",
     "Kalash",
