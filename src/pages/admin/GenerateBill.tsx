@@ -463,7 +463,7 @@ We hope to serve you again soon!
       <div
         id="print-section"
         ref={printRef}
-        className="p-6 bg-gray-100 shadow-2xl rounded-md max-w-[800px] mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
+        className="p-6 bg-white shadow-2xl rounded-md max-w-[800px] mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
       >
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 pb-4 mb-4 mt-20">
@@ -759,7 +759,7 @@ We hope to serve you again soon!
             <table className="text-sm w-64 table-fixed">
               <tbody>
                 <tr>
-                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-[#5e2a03] font-bold text-[15px]">
                     Bill Total :
                   </td>
                   <td className="text-right font-bold px-3 py-2 text-[#5e2a03] text-[15px] ">
@@ -767,15 +767,15 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-[#022754] font-bold text-[15px]">
                     Exchange Amount :
                   </td>
-                  <td className="text-right px-3 py-2 font-bold  text-[#002d65] text-[15px]">
+                  <td className="text-right px-3 py-2 font-bold  text-[#022754] text-[15px]">
                     ₹{bill.exchangeAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#1b1919] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-[#93094e] font-bold text-[15px]">
                     Discount :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#93094e] text-[15px]">
@@ -783,29 +783,29 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
-                    Paid :
+                  <td className="px-3 py-2 text-[#0b4e06] font-bold text-[15px]">
+                    Total Paid :
                   </td>
-                  <td className="text-right px-3 py-2 font-bold  text-[#006644] text-[15px]">
+                  <td className="text-right px-3 py-2 font-bold  text-[#0b4e06] text-[15px]">
                     ₹{bill.billPaidAmount}
                   </td>
                 </tr>
                 {/* ✅ Conditionally render Received row */}
                 {bill.billResAmount > 0 && (
                   <tr>
-                    <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                    <td className="px-3 py-2 text-[#5f034e] font-bold text-[15px]">
                       Received :
                     </td>
-                    <td className="text-right px-3 py-2 font-bold text-[#343c49] text-[15px]">
+                    <td className="text-right px-3 py-2 font-bold text-[#5f034e] text-[15px]">
                       ₹{bill.billResAmount}
                     </td>
                   </tr>
                 )}
                 <tr className="border-t border-[#D97706] mt-5">
-                  <td className="px-3 py-2 text-[#1F2937] font-bold mt-5 text-[15px]">
+                  <td className="px-3 py-2 text-[#ff0000] font-bold mt-5 text-[15px]">
                     Due:
                   </td>
-                  <td className="text-right font-bold text-[#9e0303] px-3 py-2 text-[15px]">
+                  <td className="text-right font-bold text-[#ff0000] px-3 py-2 text-[15px]">
                     ₹{bill.billDueAmount}
                   </td>
                 </tr>
