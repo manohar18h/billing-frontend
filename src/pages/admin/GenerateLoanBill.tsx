@@ -588,22 +588,6 @@ We hope to serve you again soon!
                     ₹{loanData.totalAmount}
                   </td>
                 </tr>
-                <tr>
-                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
-                    Paid :
-                  </td>
-                  <td className="text-right px-3 py-2 font-bold  text-[#0b4e06] text-[15px]">
-                    ₹{loanData.paidAmount}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-3 py-2 text-[#1e1a1a] font-bold text-[15px]">
-                    Due :
-                  </td>
-                  <td className="text-right px-3 py-2 font-bold  text-[#EC4899] text-[15px]">
-                    ₹{loanData.dueAmount}
-                  </td>
-                </tr>
 
                 <tr>
                   <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
@@ -613,13 +597,28 @@ We hope to serve you again soon!
                     ₹{loanData.paidInterestAmount}
                   </td>
                 </tr>
-
                 <tr>
                   <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
                     Interest Due:
                   </td>
                   <td className="text-right font-bold text-[#DC2626] px-3 py-2 text-[15px]">
                     ₹{loanData.dueInterestAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                    Total Paid :
+                  </td>
+                  <td className="text-right px-3 py-2 font-bold  text-[#0b4e06] text-[15px]">
+                    ₹{loanData.paidAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-[#100f0f] font-bold text-[15px]">
+                    Total Due :
+                  </td>
+                  <td className="text-right px-3 py-2 font-bold  text-[#EC4899] text-[15px]">
+                    ₹{loanData.dueAmount}
                   </td>
                 </tr>
               </tbody>
