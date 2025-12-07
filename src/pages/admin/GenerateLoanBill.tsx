@@ -581,7 +581,7 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-[#B45309] font-bold text-[15px]">
                     Total Amount :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#070065] text-[15px]">
@@ -590,7 +590,7 @@ We hope to serve you again soon!
                 </tr>
 
                 <tr>
-                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-[#0b4e06] font-bold text-[15px]">
                     Interest Paid:
                   </td>
                   <td className="text-right font-bold text-[#0b4e06] px-3 py-2 text-[15px]">
@@ -598,15 +598,15 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-[#ff0000] font-bold text-[15px]">
                     Interest Due:
                   </td>
-                  <td className="text-right font-bold text-[#DC2626] px-3 py-2 text-[15px]">
+                  <td className="text-right font-bold text-[#EC4899] px-3 py-2 text-[15px]">
                     ₹{loanData.dueInterestAmount}
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#000000] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-[#0b4e06] font-bold text-[15px]">
                     Total Paid :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#0b4e06] text-[15px]">
@@ -614,7 +614,7 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#100f0f] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-[#ff0000] font-bold text-[15px]">
                     Total Due :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#EC4899] text-[15px]">
