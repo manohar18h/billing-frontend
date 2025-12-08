@@ -824,7 +824,7 @@ We hope to serve you again soon!
               మా వద్ద చెయించిన్న ☆ పట్టీలు 80% సోక్కం ఇవ్వబడును.
             </h6>
           </div>
-          <h5 className="text-base mt-4">
+          <h5 className="text-base mt-4 ml-14">
             Thank you for your order! We appreciate your trust.
           </h5>
         </div>
