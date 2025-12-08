@@ -463,7 +463,7 @@ We hope to serve you again soon!
       <div
         id="print-section"
         ref={printRef}
-        className="p-6 bg-white shadow-2xl rounded-md max-w-[800px] mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
+        className="p-6 bg-white shadow-2xl rounded-md max-w-[800px] mx-auto mt-15 print:shadow-none print:rounded-none print:p-4 print:bg-white"
       >
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 pb-4 mb-4 mt-20">
