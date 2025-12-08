@@ -1331,6 +1331,27 @@ const Orders: React.FC = () => {
                   <MenuItem value="Royal Gold">Royal Gold</MenuItem>
                   <MenuItem value="Star">Star</MenuItem>
                   <MenuItem value="SSP">SSP</MenuItem>
+                  <MenuItem value="Navkar">Navkar</MenuItem>
+                  <MenuItem value="Vardhaman">Vardhaman</MenuItem>
+                  <MenuItem value="MJR">MJR</MenuItem>
+                  <MenuItem value="MDC">MDC</MenuItem>
+                  <MenuItem value="SWM">SWM</MenuItem>
+                  <MenuItem value="OSS">OSS</MenuItem>
+                  <MenuItem value="Gold Works">Gold Works</MenuItem>
+                  <MenuItem value="Sri Mondal Jewels">
+                    Sri Mondal Jewels
+                  </MenuItem>
+                  <MenuItem value="SK Jewels">SK Jewels</MenuItem>
+                  <MenuItem value="Navratan Collection">
+                    Navratan Collection
+                  </MenuItem>
+                  <MenuItem value="Tops Collection">Tops Collection</MenuItem>
+                  <MenuItem value="Jhumkhi Collection">
+                    Tops Collection
+                  </MenuItem>
+                  <MenuItem value="Royal Ringtone">Royal Ringtone</MenuItem>
+                  <MenuItem value="Gold Bond">Gold Bond</MenuItem>
+                  <MenuItem value="Shree Viswakarma">Shree Viswakarma</MenuItem>
                   <MenuItem value="Self">Self</MenuItem>
                 </TextField>
               ) : key === "deliveryStatus" ? (

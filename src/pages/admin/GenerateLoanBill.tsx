@@ -598,7 +598,7 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-black  font-bold text-[15px]">
+                  <td className="px-3 py-2 text-gray-900  font-bold text-[15px]">
                     Interest Due:
                   </td>
                   <td className="text-right font-bold text-[#EC4899] px-3 py-2 text-[15px]">

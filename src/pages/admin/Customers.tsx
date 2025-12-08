@@ -34,6 +34,7 @@ const SearchAddCustomer: React.FC = () => {
     []
   );
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [deleteMessage, setDeleteMessage] = useState("");
 
   localStorage.removeItem("editBillFromBillDetails");
 
@@ -169,6 +170,29 @@ const SearchAddCustomer: React.FC = () => {
       } catch (err) {
         toast.error("Failed to fetch customers");
       }
+    } else if (searchType === "Delete Phone Number") {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await api.delete<string>(
+          `/admin/deleteCustomerByPhone/${trimmedQuery}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        // show API response in screen
+        setVillageCustomers([]); // optional reset
+        toast.success(res.data); // show success message
+
+        // ALSO display output on screen
+        setDeleteMessage(res.data);
+      } catch (err: any) {
+        const errorMessage = err?.response?.data || "Something went wrong";
+
+        toast.error(errorMessage);
+        setDeleteMessage(errorMessage);
+      }
     }
   };
 
@@ -294,6 +318,9 @@ const SearchAddCustomer: React.FC = () => {
               <MenuItem value="Bill Number">Bill Number</MenuItem>
               <MenuItem value="Phone Number">Phone Number</MenuItem>
               <MenuItem value="Village">Village</MenuItem>
+              <MenuItem value="Delete Phone Number">
+                Delete Phone Number
+              </MenuItem>
             </TextField>
             {searchType === "Village" ? (
               <Autocomplete
@@ -530,6 +557,11 @@ const SearchAddCustomer: React.FC = () => {
           </Paper>
         )}
       </div>
+      {deleteMessage && (
+        <div className="mt-4 p-3 bg-gray-100 text-black rounded-md shadow">
+          {deleteMessage}
+        </div>
+      )}
     </div>
   );
 };
