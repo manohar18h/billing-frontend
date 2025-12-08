@@ -214,6 +214,7 @@ const Orders: React.FC = () => {
       gross_weight: 0.0,
       discount: 0.0,
       deliveryStatus: "",
+      workStatus: "",
       total_item_amount: 0,
     });
     setOrderErrors({});
@@ -256,6 +257,7 @@ const Orders: React.FC = () => {
     gross_weight: 0.0,
     discount: 0.0,
     deliveryStatus: "",
+    workStatus: "",
     total_item_amount: 0,
   });
 
@@ -1390,6 +1392,42 @@ const Orders: React.FC = () => {
                   <MenuItem value="Delivered">Delivered</MenuItem>
                   <MenuItem value="Pending">Pending</MenuItem>
                 </TextField>
+              ) : key === "workStatus" ? (
+                <TextField
+                  select
+                  label="Work Status"
+                  value={order.workStatus}
+                  onChange={(e) =>
+                    setOrder({
+                      ...order,
+                      workStatus: e.target.value,
+                    })
+                  }
+                  error={!!orderErrors.workStatus}
+                  helperText={orderErrors.workStatus || ""}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    style: { color: "#333" },
+                    shrink: true, // ✅ ensures label is always visible
+                  }}
+                  InputProps={{
+                    style: { fontWeight: 500 },
+                  }}
+                  sx={{
+                    minWidth: "200px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderWidth: "2px",
+                      borderColor: "gray",
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select Work Status</em>
+                  </MenuItem>
+                  <MenuItem value="Pending">Pending</MenuItem>
+                  <MenuItem value="Done">Done</MenuItem>
+                </TextField>
               ) : key === "itemName" ? (
                 <TextField
                   select
@@ -1761,6 +1799,8 @@ const Orders: React.FC = () => {
                                   ord.deliveryStatus ||
                                   ord.delivery_status ||
                                   "",
+                                workStatus:
+                                  ord.workStatus || ord.work_status || "",
                                 total_item_amount:
                                   calculateTotals(ord).total_item_amount,
                               });
