@@ -466,7 +466,7 @@ We hope to serve you again soon!
         className="p-6 bg-white shadow-2xl rounded-md max-w-[800px] mx-auto mt-10 print:shadow-none print:rounded-none print:p-4 print:bg-white"
       >
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 pb-4 mb-4 mt-20">
+        <div className="flex justify-between items-start border-b-2 pb-4 mb-4 mt-15">
           <div>
             <h1 className="text-2xl font-bold text-[#813801]">
               HAMBIRE JEWELLERY
@@ -759,7 +759,7 @@ We hope to serve you again soon!
             <table className="text-sm w-64 table-fixed">
               <tbody>
                 <tr>
-                  <td className="px-3 py-2 text-[#5e2a03] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-black  font-bold text-[15px]">
                     Bill Total :
                   </td>
                   <td className="text-right font-bold px-3 py-2 text-[#5e2a03] text-[15px] ">
@@ -767,7 +767,7 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#022754] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-black  font-bold text-[15px]">
                     Exchange Amount :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#022754] text-[15px]">
@@ -775,7 +775,7 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#93094e] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-black  font-bold text-[15px]">
                     Discount :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#93094e] text-[15px]">
@@ -783,7 +783,7 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-[#0b4e06] font-bold text-[15px]">
+                  <td className="px-3 py-2 text-black  font-bold text-[15px]">
                     Total Paid :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#0b4e06] text-[15px]">
@@ -793,7 +793,7 @@ We hope to serve you again soon!
                 {/* ✅ Conditionally render Received row */}
                 {bill.billResAmount > 0 && (
                   <tr>
-                    <td className="px-3 py-2 text-[#5f034e] font-bold text-[15px]">
+                    <td className="px-3 py-2 text-black  font-bold text-[15px]">
                       Received :
                     </td>
                     <td className="text-right px-3 py-2 font-bold text-[#5f034e] text-[15px]">
@@ -802,7 +802,7 @@ We hope to serve you again soon!
                   </tr>
                 )}
                 <tr className="border-t border-[#D97706] mt-5">
-                  <td className="px-3 py-2 text-[#ff0000] font-bold mt-5 text-[15px]">
+                  <td className="px-3 py-2 text-black  font-bold mt-5 text-[15px]">
                     Due:
                   </td>
                   <td className="text-right font-bold text-[#ff0000] px-3 py-2 text-[15px]">
@@ -816,7 +816,17 @@ We hope to serve you again soon!
 
         {/* Footer */}
         <div className="mt-6 text-xs text-gray-900 text-[16px] ml-10">
-          <p>Thank you for your Order!</p>
+          <div className="p-5 text-center inline-block border-b border-gray-500 pb-1 ">
+            <h6 className="text-base">
+              మా వద్ద చేయించిన 91.6 గోల్డ్ ఆభరణాలు తిరిగి 90% ఇవ్వబడును.
+            </h6>
+            <h6 className="text-base">
+              మా వద్ద చెయించిన్న ☆ పట్టీలు 80% సోక్కం ఇవ్వబడును.
+            </h6>
+          </div>
+          <h5 className="text-base mt-4">
+            Thank you for your order! We appreciate your trust.
+          </h5>
         </div>
       </div>
 
