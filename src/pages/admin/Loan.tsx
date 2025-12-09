@@ -32,6 +32,7 @@ export interface LoanCustomer {
   emailId: string;
   aadharCard: number;
   deliveryStatus: string;
+  itemStatus: string;
   numberOfItems: number;
   totalAmount: number;
   paidAmount: number;
@@ -721,6 +722,11 @@ const Loan: React.FC = () => {
                       </th>
                       <th className="border px-3 py-2 text-center">
                         <div className="flex justify-center items-center">
+                          Item Status
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
                           Delivery Status
                         </div>
                       </th>
@@ -763,6 +769,11 @@ const Loan: React.FC = () => {
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
                             {bill.name}{" "}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {renderStatusChip(bill.itemStatus)}
                           </div>
                         </td>
                         <td className="border px-3 py-2 text-center">

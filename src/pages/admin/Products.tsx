@@ -93,6 +93,7 @@ const silverItems = [
   "Ragi Kadiyam",
   "Bolgajal Kadiyal",
   "R.D Sadan Kadiyal",
+  "Patilu",
   "Bolgajal Pattilu",
   "Single Chain Pattilu",
   "Fancy Pattilu",

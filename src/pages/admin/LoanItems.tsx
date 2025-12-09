@@ -83,6 +83,7 @@ const LoanItems: React.FC = () => {
       total_amount2: 0.0,
       paymentMethod2: "",
       due_interest_amount: 0.0,
+      itemStatus: "",
       deliveryStatus: "",
     });
     setItemErrors({});
@@ -100,6 +101,7 @@ const LoanItems: React.FC = () => {
     total_amount2: 0.0,
     paymentMethod2: "",
     due_interest_amount: 0.0,
+    itemStatus: "",
     deliveryStatus: "",
   });
   const goldItems = [
@@ -178,6 +180,7 @@ const LoanItems: React.FC = () => {
     "Ragi Kadiyam",
     "Bolgajal Kadiyal",
     "R.D Sadan Kadiyal",
+    "Pattilu",
     "Bolgajal Pattilu",
     "Single Chain Pattilu",
     "Fancy Pattilu",
@@ -586,6 +589,42 @@ const LoanItems: React.FC = () => {
                     <MenuItem value="Delivered">Delivered</MenuItem>
                     <MenuItem value="Pending">Pending</MenuItem>
                   </TextField>
+                ) : key === "itemStatus" ? (
+                  <TextField
+                    select
+                    label="Item Status"
+                    value={item.itemStatus}
+                    onChange={(e) =>
+                      setItem({
+                        ...item,
+                        itemStatus: e.target.value,
+                      })
+                    }
+                    error={!!itemErrors.itemStatus}
+                    helperText={itemErrors.itemStatus || ""}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      style: { color: "#333" },
+                      shrink: true, // ✅ ensures label is always visible
+                    }}
+                    InputProps={{
+                      style: { fontWeight: 500 },
+                    }}
+                    sx={{
+                      minWidth: "200px",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderWidth: "2px",
+                        borderColor: "gray",
+                      },
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Item Status</em>
+                    </MenuItem>
+                    <MenuItem value="Packed">Packed</MenuItem>
+                    <MenuItem value="Not Packed">Not Packed</MenuItem>
+                  </TextField>
                 ) : key === "paymentMethod1" ? (
                   <TextField
                     select
@@ -949,6 +988,8 @@ const LoanItems: React.FC = () => {
                                   itm.deliveryStatus ||
                                   itm.delivery_status ||
                                   "",
+                                itemStatus:
+                                  itm.itemStatus || itm.item_status || "",
                               });
 
                               setIsEditing(true);

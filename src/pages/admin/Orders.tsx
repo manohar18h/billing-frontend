@@ -140,6 +140,7 @@ const Orders: React.FC = () => {
     "Ragi Kadiyam",
     "Bolgajal Kadiyal",
     "R.D Sadan Kadiyal",
+    "Pattilu",
     "Bolgajal Pattilu",
     "Single Chain Pattilu",
     "Fancy Pattilu",
