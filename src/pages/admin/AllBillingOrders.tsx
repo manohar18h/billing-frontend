@@ -24,6 +24,7 @@ type Billing = {
   phoneNumber: string;
   emailId: string;
   deliveryStatus: string;
+  workStatus: string;
   numberOfOrders: number;
   billTotalAmount: number;
   billDiscountAmount: number;
@@ -267,6 +268,11 @@ const AllBillingOrders: React.FC = () => {
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
+                        Work Status
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
                         Delivery Status
                       </div>
                     </th>
@@ -309,6 +315,11 @@ const AllBillingOrders: React.FC = () => {
                       <td className="border px-3 py-2 text-center">
                         <div className="flex justify-center items-center">
                           {bill.name}{" "}
+                        </div>
+                      </td>
+                      <td className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          {renderStatusChip(bill.workStatus)}
                         </div>
                       </td>
                       <td className="border px-3 py-2 text-center">

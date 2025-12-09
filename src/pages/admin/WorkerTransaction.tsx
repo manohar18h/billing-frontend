@@ -21,6 +21,7 @@ import {
 type FormState = {
   workerId: string;
   amount: string;
+  reason: string;
 };
 
 interface WorkerPaymentResponse {
@@ -28,6 +29,7 @@ interface WorkerPaymentResponse {
   paymentDate: string;
   wtid: number;
   message?: string;
+  reason: string;
 }
 
 const WorkerTransaction: React.FC = () => {
@@ -35,6 +37,7 @@ const WorkerTransaction: React.FC = () => {
   const [form, setForm] = useState<FormState>({
     workerId: "",
     amount: "",
+    reason: "",
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,8 +52,8 @@ const WorkerTransaction: React.FC = () => {
     setForm((prev) => ({ ...prev, [field]: val }));
 
   const handleSubmit = async () => {
-    const { workerId, amount } = form;
-    if (!workerId || !amount) {
+    const { workerId, amount, reason } = form;
+    if (!workerId || !amount || !reason) {
       alert("Please select a worker and enter an amount.");
       return;
     }
@@ -59,7 +62,9 @@ const WorkerTransaction: React.FC = () => {
       const token = localStorage.getItem("token");
 
       const res = await api.post<WorkerPaymentResponse>(
-        `/admin/addAmountWorker/${workerId}?paidAmount=${amount}`,
+        `/admin/addAmountWorker/${workerId}?paidAmount=${amount}&reason=${encodeURIComponent(
+          reason
+        )}`,
         {}, // empty body since params are in URL
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -76,7 +81,7 @@ const WorkerTransaction: React.FC = () => {
       setIsSuccess(true);
       setDialogOpen(true);
 
-      setForm({ workerId: "", amount: "" });
+      setForm({ workerId: "", amount: "", reason: "" });
       await invalidate();
       await refresh();
     } catch (err: any) {
@@ -147,6 +152,16 @@ const WorkerTransaction: React.FC = () => {
               label="Enter Amount"
               value={form.amount}
               onChange={(e) => handleChange("amount", e.target.value)}
+              required
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Enter Reason"
+              value={form.reason}
+              onChange={(e) => handleChange("reason", e.target.value)}
               required
             />
           </Grid>
