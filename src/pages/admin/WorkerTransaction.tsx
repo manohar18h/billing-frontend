@@ -29,7 +29,6 @@ interface WorkerPaymentResponse {
   paymentDate: string;
   wtid: number;
   message?: string;
-  reason: string;
 }
 
 const WorkerTransaction: React.FC = () => {
