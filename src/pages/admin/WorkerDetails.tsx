@@ -518,7 +518,6 @@ const WorkerDetails: React.FC = () => {
                 </li>
               ))}
             </ul>
-
             {/* Toggle Button */}
             {filteredTxs.length > 4 && (
               <Typography

@@ -58,6 +58,7 @@ export interface Worker {
   workerTransactionHistories: {
     paidAmount: number;
     paymentDate: string;
+    reason?: string;
     wtid: number;
   }[];
 }
