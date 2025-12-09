@@ -514,7 +514,7 @@ const WorkerDetails: React.FC = () => {
               {visibleTxs.map((t) => (
                 <li key={t.wtid}>
                   ₹{t.paidAmount} on {displayFromRaw(t.paymentDate)},{" "}
-                  {t.reason ?? ""}
+                  {t.reason ?? "-"}
                 </li>
               ))}
             </ul>
