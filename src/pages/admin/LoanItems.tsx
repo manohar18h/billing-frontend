@@ -120,6 +120,7 @@ const LoanItems: React.FC = () => {
     "Pressing One Stone Pulla",
     "Pressing Gundu Pulla",
     "Kammalu",
+    "Stone Kammalu",
     "Mukku Pogu",
     "Sadha Mukku Pogu",
     "Earring",
@@ -227,8 +228,17 @@ const LoanItems: React.FC = () => {
   ];
 
   const getItemOptions = () => {
-    if (item.metal === "24 Gold" || item.metal === "22 Gold") return goldItems;
-    if (item.metal === "999 Silver" || item.metal === "995 Silver")
+    if (
+      item.metal === "24 Gold" ||
+      item.metal === "22 Gold" ||
+      item.metal === "Gold"
+    )
+      return goldItems;
+    if (
+      item.metal === "999 Silver" ||
+      item.metal === "995 Silver" ||
+      item.metal === "Silver"
+    )
       return silverItems;
     return [];
   };

@@ -537,9 +537,9 @@ We hope to serve you again soon!
                       : item.metal === "24 Gold"
                       ? "24k"
                       : item.metal === "995 Silver"
-                      ? "995"
+                      ? "Silver"
                       : item.metal === "999 Silver"
-                      ? "Kamal"
+                      ? "999 K"
                       : item.metal}
                   </td>
                   <td className="border px-2 py-1 text-[#734d06] font-bold text-center align-middle text-[13px]">

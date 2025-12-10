@@ -691,9 +691,9 @@ We hope to serve you again soon!
                           : ex.exchange_metal === "24 Gold"
                           ? "24k"
                           : ex.exchange_metal === "995 Silver"
-                          ? "995"
+                          ? "999 S"
                           : ex.exchange_metal === "999 Silver"
-                          ? "Kamal"
+                          ? "999 K"
                           : ex.exchange_metal}
                       </td>
 
