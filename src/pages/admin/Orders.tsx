@@ -1764,30 +1764,7 @@ const Orders: React.FC = () => {
                             onClick={() => {
                               setOrder({
                                 metal: ord.metal || "",
-                                metalPrice:
-                                  ord.metal === "24 Gold"
-                                    ? parseFloat(
-                                        localStorage.getItem("Gold24Price") ||
-                                          "0"
-                                      )
-                                    : ord.metal === "22 Gold"
-                                    ? parseFloat(
-                                        localStorage.getItem("Gold22Price") ||
-                                          "0"
-                                      )
-                                    : ord.metal === "999 Silver"
-                                    ? parseFloat(
-                                        localStorage.getItem(
-                                          "Silver999Price"
-                                        ) || "0"
-                                      )
-                                    : ord.metal === "995 Silver"
-                                    ? parseFloat(
-                                        localStorage.getItem(
-                                          "Silver995Price"
-                                        ) || "0"
-                                      )
-                                    : 0,
+                                metalPrice: ord.metalPrice || 0,
                                 itemName: ord.itemName || "",
                                 catalogue: ord.catalogue || "",
                                 design: ord.design || "",
