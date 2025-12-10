@@ -176,6 +176,10 @@ const LoanItems: React.FC = () => {
     "Small Ring",
     "Fancy Ring",
     "Kadiyam",
+    "Small Kadiyam",
+    "Sadan Kadiyam",
+    "Billa Kadiyam",
+    "Bongu Kadiyam",
     "R.D Kadam",
     "Ragi Kadiyam",
     "Bolgajal Kadiyal",
@@ -208,6 +212,16 @@ const LoanItems: React.FC = () => {
     "Glass",
     "Bowls",
     "Spoons",
+    "Glass & Bowls",
+    "Glass & Spoons",
+    "Bowls & Spoons",
+    "Plates & Bowls",
+    "Plates & Spoons",
+    "Plates & Glass",
+    "Plates & Glass & Spoons",
+    "Plates & Bowls & Spoons",
+    "Plates & Glass & Bowls",
+    "Plates & Glass & Bowls & Spoons",
     "Other",
   ];
 
@@ -548,6 +562,8 @@ const LoanItems: React.FC = () => {
                     <MenuItem value="">
                       <em>Select Metal</em>
                     </MenuItem>
+                    <MenuItem value="Silver">Silver</MenuItem>
+                    <MenuItem value="Gold">Gold</MenuItem>
                     <MenuItem value="22 Gold">22 Gold</MenuItem>
                     <MenuItem value="995 Silver">995 Silver</MenuItem>
                     <MenuItem value="24 Gold">24 Gold</MenuItem>

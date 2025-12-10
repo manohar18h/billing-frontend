@@ -527,7 +527,7 @@ const RevenueCard: React.FC<{
 const TargetCard: React.FC<{ token?: string | null }> = ({ token }) => {
   const [filter, setFilter] = useState("TODAY");
   const data = useRevenueMetric("/admin/revenueStats", filter, token ?? null);
-  const BASE_TARGET = 1000000; // ₹ per day target
+  const BASE_TARGET = 200000; // ₹ per day target
 
   const getDynamicTarget = (filter: string): number => {
     const today = new Date();

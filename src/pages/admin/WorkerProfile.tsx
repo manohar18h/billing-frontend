@@ -590,7 +590,8 @@ const WorkerProfile: React.FC = () => {
             <ul className="mb-8 pl-5 list-disc">
               {visibleTxs.map((t) => (
                 <li key={t.wtid}>
-                  ₹{t.paidAmount} on {displayFromRaw(t.paymentDate)}
+                  ₹{t.paidAmount} on {displayFromRaw(t.paymentDate)},{" "}
+                  {t.reason ?? "-"}
                 </li>
               ))}
             </ul>
