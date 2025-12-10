@@ -86,6 +86,7 @@ const Loan: React.FC = () => {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [villageSearch, setVillageSearch] = useState("");
 
   localStorage.removeItem("editBillFromBillDetails");
 
@@ -330,9 +331,13 @@ const Loan: React.FC = () => {
   const filteredRows = useMemo(() => {
     const f = fromDate.trim();
     const t = toDate.trim();
+    const v = villageSearch.trim().toLowerCase();
+
     return rows.filter((bill) => {
       const norm = normalizeStatus(bill.deliveryStatus);
       if (statusFilter !== "all" && norm !== statusFilter) return false;
+
+      if (v && !bill.village?.toLowerCase().includes(v)) return false;
 
       if (!f && !t) return true;
       const billDay = toDateOnlyYYYYMMDD(bill.loanBillingDate);
@@ -343,12 +348,13 @@ const Loan: React.FC = () => {
       if (!f && t) return billDay === t;
       return true;
     });
-  }, [rows, fromDate, toDate, statusFilter]);
+  }, [rows, fromDate, toDate, statusFilter, villageSearch]);
 
   const clearFilters = () => {
     setFromDate("");
     setToDate("");
     setStatusFilter("all"); // 👈 also reset status to ALL
+    setVillageSearch("");
   };
 
   const renderStatusChip = (raw: string) => {
@@ -674,6 +680,62 @@ const Loan: React.FC = () => {
               <MenuItem value="pending">Pending</MenuItem>
             </TextField>
 
+            <Autocomplete
+              freeSolo
+              disableClearable
+              options={results || []}
+              loading={loading}
+              value={villageSearch || ""}
+              sx={{ width: 170, ml: { xs: 0, sm: 1 } }}
+              onInputChange={(event, newValue) => {
+                setVillageSearch(newValue); // update input box
+
+                if (newValue.length >= 3) {
+                  fetchData(newValue); // your debounce API call
+                } else {
+                  setResults([]); // clear suggestions
+                }
+              }}
+              onChange={(event, newValue) => {
+                setVillageSearch(newValue || ""); // update selected value
+              }}
+              renderOption={(props, option) => (
+                <li {...props} key={option}>
+                  {option}
+                </li>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  variant="outlined"
+                  className="mb-3"
+                  label="Search by Village"
+                  placeholder="Type 3 letters to search..."
+                  helperText={
+                    villageSearch.length >= 3
+                      ? results.length > 0
+                        ? "Select from the list"
+                        : "No villages found"
+                      : ""
+                  }
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loading ? (
+                          <span className="text-gray-400 text-sm pr-2">
+                            Loading...
+                          </span>
+                        ) : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+            />
+
             {/* 👇 moved to the end and clears all filters */}
             <Button
               variant="outlined"
@@ -718,6 +780,11 @@ const Loan: React.FC = () => {
                       <th className="border px-3 py-2 text-center">
                         <div className="flex justify-center items-center">
                           Name
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
+                          Village
                         </div>
                       </th>
                       <th className="border px-3 py-2 text-center">
@@ -769,6 +836,11 @@ const Loan: React.FC = () => {
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
                             {bill.name}{" "}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.village}{" "}
                           </div>
                         </td>
                         <td className="border px-3 py-2 text-center">

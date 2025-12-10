@@ -131,6 +131,7 @@ const Orders: React.FC = () => {
     "Bracelet M.M",
     "Chain H.M",
     "Chain M.M",
+    "Kathi Billa",
     "Nalla Pusala Danda ",
     "Ladies Ring",
     "Men Ring",
