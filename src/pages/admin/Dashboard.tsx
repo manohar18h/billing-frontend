@@ -281,7 +281,12 @@ const MetalPricesCard: React.FC = () => {
                 <input
                   type="number"
                   value={g24Draft}
-                  onChange={(e) => setG24Draft(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setG24Draft(value);
+                    const new22 = (Number(value) * 91.67) / 100;
+                    setG22Draft(new22.toFixed(0));
+                  }}
                   className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
                 />
               </label>
@@ -319,7 +324,7 @@ const MetalPricesCard: React.FC = () => {
                 className="rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
               >
                 Cancel
-              </button>
+              </button>{" "}
               <button
                 onClick={save}
                 className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-700"

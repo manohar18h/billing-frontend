@@ -87,6 +87,7 @@ const Loan: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [villageSearch, setVillageSearch] = useState("");
+  const [deleteMessage, setDeleteMessage] = useState("");
 
   localStorage.removeItem("editBillFromBillDetails");
 
@@ -223,6 +224,25 @@ const Loan: React.FC = () => {
       localStorage.setItem("bill-loan-phnNumber", trimmedQuery);
       localStorage.setItem("checkBackFrom", "Phn-Number");
       navigate("/admin/bill-loan-data");
+    } else if (searchType === "Delete Phone Number") {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await api.delete<string>(
+          `/admin/deleteLoanCustomerByPhone/${trimmedQuery}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        toast.success(res.data);
+        setDeleteMessage(res.data);
+      } catch (err: any) {
+        const errorMessage = err?.response?.data || "Something went wrong";
+
+        toast.error(errorMessage);
+        setDeleteMessage(errorMessage);
+      }
     }
   };
 
@@ -425,6 +445,9 @@ const Loan: React.FC = () => {
               </MenuItem>
               <MenuItem value="Bill Number">Bill Number</MenuItem>
               <MenuItem value="Phone Number">Phone Number</MenuItem>
+              <MenuItem value="Delete Phone Number">
+                Delete Phone Number
+              </MenuItem>
               <MenuItem value="ALL">ALL</MenuItem>
             </TextField>
 
@@ -789,6 +812,11 @@ const Loan: React.FC = () => {
                       </th>
                       <th className="border px-3 py-2 text-center">
                         <div className="flex justify-center items-center">
+                          Item
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
                           Item Status
                         </div>
                       </th>
@@ -843,6 +871,7 @@ const Loan: React.FC = () => {
                             {bill.village}{" "}
                           </div>
                         </td>
+
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
                             {renderStatusChip(bill.itemStatus)}
@@ -909,6 +938,11 @@ const Loan: React.FC = () => {
           )}
         </Paper>
       </div>
+      {deleteMessage && (
+        <div className="mt-4 p-3 bg-gray-100 text-black rounded-md shadow">
+          {deleteMessage}
+        </div>
+      )}
     </div>
   );
 };

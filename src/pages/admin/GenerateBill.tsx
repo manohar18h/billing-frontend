@@ -609,7 +609,7 @@ We hope to serve you again soon!
                   </td>
                   <td className="border px-2 py-1 text-[#af0058] font-bold  text-center align-middle text-[11px]">
                     {item.metal === "22 Gold"
-                      ? "22k"
+                      ? "22k-916"
                       : item.metal === "24 Gold"
                       ? "24k"
                       : item.metal === "995 Silver"
