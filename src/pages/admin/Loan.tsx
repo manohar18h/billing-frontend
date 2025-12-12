@@ -328,6 +328,10 @@ const Loan: React.FC = () => {
     "all" | "delivered" | "pending"
   >("all");
 
+  useEffect(() => {
+    loadAllLoanCustomers();
+  }, []);
+
   const loadAllLoanCustomers = async () => {
     setLoading(true);
     setErr(null);
@@ -423,7 +427,7 @@ const Loan: React.FC = () => {
 
           <Box
             mt={4}
-            className="flex flex-col sm:flex-row w-full max-w-md gap-3 sm:gap-2"
+            className="flex flex-col sm:flex-row w-full max-w-2xl gap-3 sm:gap-2"
             mb={4}
           >
             <TextField
@@ -439,6 +443,7 @@ const Loan: React.FC = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
+              sx={{ width: "1500px" }}
             >
               <MenuItem value="">
                 <em>Select Search Type</em>
@@ -448,11 +453,10 @@ const Loan: React.FC = () => {
               <MenuItem value="Delete Phone Number">
                 Delete Phone Number
               </MenuItem>
-              <MenuItem value="ALL">ALL</MenuItem>
             </TextField>
 
             <TextField
-              sx={{ width: "100%" }}
+              sx={{ width: "200%" }}
               variant="outlined"
               placeholder="Search customers..."
               value={searchQuery}
@@ -475,11 +479,6 @@ const Loan: React.FC = () => {
             <Button
               variant="outlined"
               onClick={async () => {
-                if (searchType === "ALL") {
-                  await loadAllLoanCustomers();
-                  bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-                  return;
-                }
                 handleSearch();
               }}
               sx={{
@@ -808,11 +807,6 @@ const Loan: React.FC = () => {
                       <th className="border px-3 py-2 text-center">
                         <div className="flex justify-center items-center">
                           Village
-                        </div>
-                      </th>
-                      <th className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          Item
                         </div>
                       </th>
                       <th className="border px-3 py-2 text-center">
