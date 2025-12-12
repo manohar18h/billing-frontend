@@ -236,7 +236,6 @@ const Orders: React.FC = () => {
       discount: 0.0,
       deliveryStatus: "",
       workStatus: "",
-
       total_item_amount: 0,
     });
     setOrderErrors({});
@@ -244,6 +243,7 @@ const Orders: React.FC = () => {
   };
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isBillEditing, setIsBillEditing] = useState(false);
 
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [editingExchangeId, setEditingExchangeId] = useState<number | null>(
