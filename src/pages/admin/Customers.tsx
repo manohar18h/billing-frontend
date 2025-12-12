@@ -181,11 +181,8 @@ const SearchAddCustomer: React.FC = () => {
           }
         );
 
-        // show API response in screen
-        setVillageCustomers([]); // optional reset
-        toast.success(res.data); // show success message
-
-        // ALSO display output on screen
+        setVillageCustomers([]);
+        toast.success(res.data);
         setDeleteMessage(res.data);
       } catch (err: any) {
         const errorMessage = err?.response?.data || "Something went wrong";

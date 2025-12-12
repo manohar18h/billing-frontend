@@ -55,6 +55,18 @@ export interface Worker {
     metal_weight: number;
   }[];
 
+  speclWorks: {
+    itemName?: string;
+    metal?: string;
+    workerMetalWeight?: number;
+    otherMetalName?: string;
+    otherWeight?: number;
+    amount?: number;
+    wastage?: number;
+    itemLinkCode?: string;
+    deliveryDate?: string | null;
+  }[];
+
   workerTransactionHistories: {
     paidAmount: number;
     paymentDate: string;

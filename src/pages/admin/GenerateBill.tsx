@@ -64,6 +64,7 @@ const GenerateBill: React.FC = () => {
     other_weight: number;
     other_amount: number;
     stock_box: number;
+    itemCode: string;
     gross_weight: number;
     total_item_amount: number;
     discount: number;
@@ -528,6 +529,26 @@ We hope to serve you again soon!
                 {new Date().toLocaleString()}
               </span>
             </p>
+
+            {Array.isArray(bill.selectedOrders) &&
+              bill.selectedOrders.some(
+                (order) => order.itemCode?.trim() !== ""
+              ) && (
+                <div className="mt-1">
+                  {bill.selectedOrders
+                    .filter((order) => order.itemCode?.trim() !== "")
+                    .map((order: Order, index: number) => (
+                      <p
+                        key={index}
+                        className="text-[#361d1d] font-bold text-[14px]"
+                      >
+                        {bill.selectedOrders.length > 1
+                          ? `Item ${index + 1} code : ${order.itemCode}`
+                          : `Item code : ${order.itemCode}`}
+                      </p>
+                    ))}
+                </div>
+              )}
           </div>
         </div>
 

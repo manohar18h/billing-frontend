@@ -138,6 +138,8 @@ const LoanItems: React.FC = () => {
     "House Puste",
     "Chaknam Puste",
     "Matilu",
+    "Matilu Small",
+    "Matilu Big",
     "Pusthela Thadu",
     "Kadiyam",
     "Ladies Ring",

@@ -175,7 +175,13 @@ const BillDetails: React.FC = () => {
   };
 
   const handleBackClick = () => {
-    navigate("/admin/bill-Data");
+    const CheckBack = localStorage.getItem("CheckBack");
+
+    if (CheckBack === "AllBillBack") {
+      navigate("/admin/billing-orders");
+    } else {
+      navigate("/admin/bill-Data");
+    }
   };
 
   const formatDate = (isoString: string) => {

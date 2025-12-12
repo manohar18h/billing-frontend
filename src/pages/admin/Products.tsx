@@ -16,6 +16,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import api from "@/services/api";
+import { useWorkers } from "@/contexts/WorkersContext";
 
 const goldItems = [
   "Batuvu",
@@ -51,6 +52,8 @@ const goldItems = [
   "House Puste",
   "Chaknam Puste",
   "Matilu",
+  "Matilu Small",
+  "Matilu Big",
   "Pusthela Thadu",
   "Kadiyam",
   "Ladies Ring",
@@ -190,6 +193,7 @@ type StockProduct = {
   stock?: number;
   stockBox: string;
   barcodeValue?: string;
+  itemCode?: string;
   barcodeImageBase64?: string;
 };
 
@@ -241,11 +245,6 @@ type ProductForm = {
   gross_weight: string; // auto (metal_weight + stone_weight)
 };
 
-/* ---------- Helpers ---------- */
-const labelize = (k: string) =>
-  k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-const toNum = (v: string | number | undefined): number =>
-  v === "" || v === null || v === undefined ? 0 : Number(v);
 /* ---------- Initial State ---------- */
 const initialQuery: ProductQuery = {
   metal: "",
@@ -300,6 +299,17 @@ const requiredProductKeys: (keyof ProductForm)[] = [
   "metal_weight",
 ];
 
+export interface SpeclWorkRequest {
+  itemName: string;
+  metal: string;
+  workerMetalWeight: number;
+  otherMetalName: string;
+  otherWeight: number;
+  amount: number;
+  wastage: number;
+  itemLinkCode: string;
+}
+
 /* ============================ Component ============================ */
 const Products: React.FC = () => {
   /* --------- SEARCH (top) --------- */
@@ -313,6 +323,8 @@ const Products: React.FC = () => {
   const [savingId, setSavingId] = useState<number | null>(null);
 
   const [totalStock, setTotalStock] = useState<number>(0);
+  const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
+  const { workers, invalidate, refresh } = useWorkers();
 
   // controls visibility of the Products form
   const [showProductForm, setShowProductForm] = useState(false);
@@ -323,6 +335,87 @@ const Products: React.FC = () => {
 
   const addProductStock = async () => {
     setShowProductForm(true);
+  };
+
+  const [spclWork, setSpclWork] = useState<SpeclWorkRequest>({
+    itemName: "",
+    metal: "",
+    workerMetalWeight: 0,
+    otherMetalName: "",
+    otherWeight: 0,
+    amount: 0,
+    wastage: 0,
+    itemLinkCode: "",
+  });
+
+  const handleChange =
+    (field: keyof SpeclWorkRequest) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setSpclWork({ ...spclWork, [field]: e.target.value });
+    };
+
+  const handleSelect = (field: keyof SpeclWorkRequest) => (e: any) => {
+    setSpclWork({ ...spclWork, [field]: e.target.value });
+  };
+
+  const handleWorkAdding = async () => {
+    if (!selectedWorkerId) {
+      alert("Please select a worker.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const requestBody = {
+        itemName: spclWork.itemName,
+        metal: spclWork.metal,
+        workerMetalWeight: parseFloat(spclWork.workerMetalWeight.toString()),
+        otherMetalName: parseInt(spclWork.otherMetalName.toString()),
+        otherWeight: parseFloat(spclWork.otherWeight.toString()),
+        amount: parseFloat(spclWork.amount.toString()),
+        wastage: parseFloat(spclWork.wastage.toString()),
+        itemLinkCode: spclWork.itemLinkCode,
+      };
+
+      console.log("requestBody", JSON.stringify(requestBody));
+
+      const res = await api.post(
+        `/admin/addSpeclWork/${selectedWorkerId}`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const result = res.data;
+      console.log("API result:", result);
+
+      await invalidate();
+      await refresh();
+
+      // optional: clear form
+      setSpclWork({
+        itemName: "",
+        metal: "",
+        workerMetalWeight: 0,
+        otherMetalName: "",
+        otherWeight: 0,
+        amount: 0,
+        wastage: 0,
+        itemLinkCode: "",
+      });
+      setSelectedWorkerId("");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error submitting lot work:", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+        alert("Failed to submit lot work.");
+      }
+    }
   };
 
   const searchTop = async () => {
@@ -966,486 +1059,655 @@ const Products: React.FC = () => {
 
       {/* ---------- PRODUCTS FORM (shown only when search failed or fields missing) ---------- */}
       {showProductForm && (
-        <Box component="form" onSubmit={onSubmitProduct}>
-          <Paper
-            elevation={0}
-            sx={{
-              mt: 4,
-              p: 4,
-              borderRadius: 3,
-              backgroundColor: "background.paper",
-              border: "1px solid #d0b3ff",
-              boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
-            }}
-          >
-            <Typography variant="h4" fontWeight={700} color="primary" mb={3}>
-              Products
-            </Typography>
+        <div>
+          <Box component="form" onSubmit={onSubmitProduct}>
+            <Paper
+              elevation={0}
+              sx={{
+                mt: 4,
+                p: 4,
+                borderRadius: 3,
+                backgroundColor: "background.paper",
+                border: "1px solid #d0b3ff",
+                boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
+              }}
+            >
+              <Typography variant="h4" fontWeight={700} color="primary" mb={3}>
+                Products
+              </Typography>
 
-            <Grid container spacing={2}>
-              {/* Metal select */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  select
-                  label="Metal"
-                  value={product.metal}
-                  onChange={onProductChange("metal")}
-                  fullWidth
-                  sx={prettySelectSx}
-                  InputLabelProps={{ shrink: true }}
-                  SelectProps={{
-                    displayEmpty: true,
-                    renderValue: (val) =>
-                      val ? (
-                        (val as string)
-                      ) : (
-                        <span style={{ color: "#9aa0a6" }}>Select metal</span>
-                      ),
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>Select Metal</em>
-                  </MenuItem>
-                  <MenuItem value="24 Gold">24 Gold</MenuItem>
-                  <MenuItem value="999 Silver">999 Silver</MenuItem>
-                  <MenuItem value="22 Gold">22 Gold</MenuItem>
-                  <MenuItem value="995 Silver">995 Silver</MenuItem>
-                </TextField>
-              </Grid>
-
-              {/* ItemName select (depends on metal) */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  select
-                  label="ItemName"
-                  value={product.itemName}
-                  onChange={onProductChange("itemName")}
-                  fullWidth
-                  sx={prettySelectSx}
-                  InputLabelProps={{ shrink: true }}
-                  disabled={!product.metal}
-                  SelectProps={{
-                    displayEmpty: true,
-                    renderValue: (val) =>
-                      val ? (
-                        (val as string)
-                      ) : (
-                        <span style={{ color: "#9aa0a6" }}>Select item</span>
-                      ),
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>Select Item</em>
-                  </MenuItem>
-                  {(product.metal.toLowerCase() === "24 gold" ||
-                  product.metal.toLowerCase() === "22 gold"
-                    ? goldItems
-                    : product.metal.toLowerCase() === "999 silver" ||
-                      product.metal.toLowerCase() === "995 silver"
-                    ? silverItems
-                    : []
-                  ).map((it) => (
-                    <MenuItem key={it} value={it}>
-                      {it}
+              <Grid container spacing={2}>
+                {/* Metal select */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    select
+                    label="Metal"
+                    value={product.metal}
+                    onChange={onProductChange("metal")}
+                    fullWidth
+                    sx={prettySelectSx}
+                    InputLabelProps={{ shrink: true }}
+                    SelectProps={{
+                      displayEmpty: true,
+                      renderValue: (val) =>
+                        val ? (
+                          (val as string)
+                        ) : (
+                          <span style={{ color: "#9aa0a6" }}>Select metal</span>
+                        ),
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Metal</em>
                     </MenuItem>
-                  ))}
-                </TextField>
+                    <MenuItem value="24 Gold">24 Gold</MenuItem>
+                    <MenuItem value="999 Silver">999 Silver</MenuItem>
+                    <MenuItem value="22 Gold">22 Gold</MenuItem>
+                    <MenuItem value="995 Silver">995 Silver</MenuItem>
+                  </TextField>
+                </Grid>
+
+                {/* ItemName select (depends on metal) */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    select
+                    label="ItemName"
+                    value={product.itemName}
+                    onChange={onProductChange("itemName")}
+                    fullWidth
+                    sx={prettySelectSx}
+                    InputLabelProps={{ shrink: true }}
+                    disabled={!product.metal}
+                    SelectProps={{
+                      displayEmpty: true,
+                      renderValue: (val) =>
+                        val ? (
+                          (val as string)
+                        ) : (
+                          <span style={{ color: "#9aa0a6" }}>Select item</span>
+                        ),
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Item</em>
+                    </MenuItem>
+                    {(product.metal.toLowerCase() === "24 gold" ||
+                    product.metal.toLowerCase() === "22 gold"
+                      ? goldItems
+                      : product.metal.toLowerCase() === "999 silver" ||
+                        product.metal.toLowerCase() === "995 silver"
+                      ? silverItems
+                      : []
+                    ).map((it) => (
+                      <MenuItem key={it} value={it}>
+                        {it}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    select
+                    label="catalogue"
+                    value={product.catalogue}
+                    onChange={onProductChange("catalogue")}
+                    fullWidth
+                    sx={prettySelectSx}
+                    InputLabelProps={{ shrink: true }}
+                    SelectProps={{
+                      displayEmpty: true,
+                      renderValue: (val) =>
+                        val ? (
+                          (val as string)
+                        ) : (
+                          <span style={{ color: "#9aa0a6" }}>
+                            Select Catalogue
+                          </span>
+                        ),
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Catalogue</em>
+                    </MenuItem>
+                    <MenuItem value="Royal Gold">Royal Gold</MenuItem>
+                    <MenuItem value="Star">Star</MenuItem>
+                    <MenuItem value="SSP">SSP</MenuItem>
+                    <MenuItem value="Navkar">Navkar</MenuItem>
+                    <MenuItem value="Vardhaman">Vardhaman</MenuItem>
+                    <MenuItem value="MJR">MJR</MenuItem>
+                    <MenuItem value="MDC">MDC</MenuItem>
+                    <MenuItem value="SWM">SWM</MenuItem>
+                    <MenuItem value="OSS">OSS</MenuItem>
+                    <MenuItem value="Gold Works">Gold Works</MenuItem>
+                    <MenuItem value="Sri Mondal Jewels">
+                      Sri Mondal Jewels
+                    </MenuItem>
+                    <MenuItem value="SK Jewels">SK Jewels</MenuItem>
+                    <MenuItem value="Navratan Collection">
+                      Navratan Collection
+                    </MenuItem>
+                    <MenuItem value="Tops Collection">Tops Collection</MenuItem>
+                    <MenuItem value="Jhumkhi Collection">
+                      Tops Collection
+                    </MenuItem>
+                    <MenuItem value="Royal Ringtone">Royal Ringtone</MenuItem>
+                    <MenuItem value="Gold Bond">Gold Bond</MenuItem>
+                    <MenuItem value="Shree Viswakarma">
+                      Shree Viswakarma
+                    </MenuItem>
+                    <MenuItem value="Self">Self</MenuItem>
+                  </TextField>
+                </Grid>
+
+                {/* Design */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Design"
+                    value={product.design}
+                    onChange={onProductChange("design")}
+                    fullWidth
+                    error={!!errors.design}
+                    helperText={errors.design || ""}
+                  />
+                </Grid>
+
+                {/* Size */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Size"
+                    type="number"
+                    inputProps={{ step: "any" }}
+                    value={product.size}
+                    onChange={onProductChange("size")}
+                    fullWidth
+                    error={!!errors.size}
+                    helperText={errors.size || ""}
+                  />
+                </Grid>
+
+                {/* Metal Weight */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Metal Weight"
+                    type="number"
+                    inputProps={{ step: "any" }}
+                    value={product.metal_weight}
+                    onChange={onProductChange("metal_weight")}
+                    fullWidth
+                    error={!!errors.metal_weight}
+                    helperText={errors.metal_weight || ""}
+                  />
+                </Grid>
+
+                {/* Wastage */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Wastage"
+                    type="number"
+                    inputProps={{ step: "any" }}
+                    value={product.wastage}
+                    onChange={onProductChange("wastage")}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* Making Charges */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Making Charges"
+                    type="number"
+                    inputProps={{ step: "any" }}
+                    value={product.making_charges}
+                    onChange={onProductChange("making_charges")}
+                    fullWidth
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Stone Weight"
+                    type="number"
+                    value={product.stone_weight}
+                    onChange={(e) =>
+                      handleMaterialChange("stone", "weight", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Stone Rate"
+                    type="number"
+                    value={product.stone_rate}
+                    onChange={(e) =>
+                      handleMaterialChange("stone", "rate", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Stone Amount"
+                    value={product.stone_amount}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* ---- Bits ---- */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Bits Weight"
+                    type="number"
+                    value={product.bits_weight}
+                    onChange={(e) =>
+                      handleMaterialChange("bits", "weight", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Bits Rate"
+                    type="number"
+                    value={product.bits_rate}
+                    onChange={(e) =>
+                      handleMaterialChange("bits", "rate", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Bits Amount"
+                    value={product.bits_amount}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* ---- Diamond ---- */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Diamond Weight"
+                    type="number"
+                    value={product.diamond_weight}
+                    onChange={(e) =>
+                      handleMaterialChange("diamond", "weight", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Diamond Rate"
+                    type="number"
+                    value={product.diamond_rate}
+                    onChange={(e) =>
+                      handleMaterialChange("diamond", "rate", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Diamond Amount"
+                    value={product.diamond_amount}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* ---- Enamel ---- */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Enamel Weight"
+                    type="number"
+                    value={product.enamel_weight}
+                    onChange={(e) =>
+                      handleMaterialChange("enamel", "weight", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Enamel Rate"
+                    type="number"
+                    value={product.enamel_rate}
+                    onChange={(e) =>
+                      handleMaterialChange("enamel", "rate", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Enamel Amount"
+                    value={product.enamel_amount}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* ---- Pearls ---- */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Pearls Weight"
+                    type="number"
+                    value={product.pearls_weight}
+                    onChange={(e) =>
+                      handleMaterialChange("pearls", "weight", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Pearls Rate"
+                    type="number"
+                    value={product.pearls_rate}
+                    onChange={(e) =>
+                      handleMaterialChange("pearls", "rate", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Pearls Amount"
+                    value={product.pearls_amount}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* ---- Wax ---- */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Wax Weight"
+                    type="number"
+                    value={product.wax_weight}
+                    onChange={(e) =>
+                      handleMaterialChange("wax", "weight", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Wax Rate"
+                    type="number"
+                    value={product.wax_rate}
+                    onChange={(e) =>
+                      handleMaterialChange("wax", "rate", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Wax Amount"
+                    value={product.wax_amount}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* Other Weight */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Other Weight"
+                    type="number"
+                    value={product.other_weight}
+                    onChange={(e) =>
+                      handleMaterialChange("other", "weight", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Other Rate"
+                    type="number"
+                    value={product.other_rate}
+                    onChange={(e) =>
+                      handleMaterialChange("other", "rate", e.target.value)
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Other Amount"
+                    value={product.other_amount}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Gross Weight (auto)"
+                    value={product.gross_weight}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* Stock */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Stock"
+                    type="number"
+                    inputProps={{ step: "any" }}
+                    value={product.stock}
+                    onChange={onProductChange("stock")}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* Stock */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Stock Box"
+                    inputProps={{ step: "any" }}
+                    value={product.stockBox}
+                    onChange={onProductChange("stockBox")}
+                    fullWidth
+                  />
+                </Grid>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  select
-                  label="catalogue"
-                  value={product.catalogue}
-                  onChange={onProductChange("catalogue")}
-                  fullWidth
-                  sx={prettySelectSx}
-                  InputLabelProps={{ shrink: true }}
-                  SelectProps={{
-                    displayEmpty: true,
-                    renderValue: (val) =>
-                      val ? (
-                        (val as string)
-                      ) : (
-                        <span style={{ color: "#9aa0a6" }}>
-                          Select Catalogue
-                        </span>
-                      ),
+              <Box display="flex" justifyContent="flex-end" mt={4}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={submitLoading}
+                  sx={{
+                    background: "#8847FF",
+                    fontWeight: 600,
+                    textTransform: "none",
+                    "&:hover": { background: "#6c30cc" },
+                    px: 5,
                   }}
                 >
-                  <MenuItem value="">
-                    <em>Select Catalogue</em>
-                  </MenuItem>
-                  <MenuItem value="Royal Gold">Royal Gold</MenuItem>
-                  <MenuItem value="Star">Star</MenuItem>
-                  <MenuItem value="SSP">SSP</MenuItem>
-                  <MenuItem value="Navkar">Navkar</MenuItem>
-                  <MenuItem value="Vardhaman">Vardhaman</MenuItem>
-                  <MenuItem value="MJR">MJR</MenuItem>
-                  <MenuItem value="MDC">MDC</MenuItem>
-                  <MenuItem value="SWM">SWM</MenuItem>
-                  <MenuItem value="OSS">OSS</MenuItem>
-                  <MenuItem value="Gold Works">Gold Works</MenuItem>
-                  <MenuItem value="Sri Mondal Jewels">
-                    Sri Mondal Jewels
-                  </MenuItem>
-                  <MenuItem value="SK Jewels">SK Jewels</MenuItem>
-                  <MenuItem value="Navratan Collection">
-                    Navratan Collection
-                  </MenuItem>
-                  <MenuItem value="Tops Collection">Tops Collection</MenuItem>
-                  <MenuItem value="Jhumkhi Collection">
-                    Tops Collection
-                  </MenuItem>
-                  <MenuItem value="Royal Ringtone">Royal Ringtone</MenuItem>
-                  <MenuItem value="Gold Bond">Gold Bond</MenuItem>
-                  <MenuItem value="Shree Viswakarma">Shree Viswakarma</MenuItem>
-                  <MenuItem value="Self">Self</MenuItem>
-                </TextField>
+                  {submitLoading ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : (
+                    "Submit"
+                  )}
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
+          <Box component="form" onSubmit={onSubmitProduct}>
+            <Paper
+              elevation={0}
+              sx={{
+                mt: 4,
+                p: 4,
+                borderRadius: 3,
+                backgroundColor: "background.paper",
+                border: "1px solid #d0b3ff",
+                boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
+              }}
+            >
+              <Typography variant="h4" fontWeight={700} color="primary" mb={3}>
+                Worker Spcl Work
+              </Typography>
+
+              <Grid container spacing={2}>
+                {/* Worker */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Full Name"
+                    value={selectedWorkerId}
+                    onChange={(e) =>
+                      setSelectedWorkerId(Number(e.target.value))
+                    }
+                    required
+                    InputLabelProps={{ shrink: true }}
+                    SelectProps={{ displayEmpty: true }}
+                  >
+                    <MenuItem value="" disabled>
+                      -- Select Worker --
+                    </MenuItem>
+                    {workers.map(({ workerId, fullName }) => (
+                      <MenuItem key={workerId} value={workerId}>
+                        {fullName}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                {/* Metal select */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    select
+                    label="Metal"
+                    value={spclWork.metal}
+                    onChange={handleSelect("metal")}
+                    fullWidth
+                  >
+                    <MenuItem value="">Select Metal</MenuItem>
+                    <MenuItem value="24 Gold">24 Gold</MenuItem>
+                    <MenuItem value="22 Gold">22 Gold</MenuItem>
+                    <MenuItem value="999 Silver">999 Silver</MenuItem>
+                    <MenuItem value="995 Silver">995 Silver</MenuItem>
+                  </TextField>
+                </Grid>
+
+                {/* ItemName select (depends on metal) */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    select
+                    label="Item Name"
+                    value={spclWork.itemName}
+                    onChange={handleSelect("itemName")}
+                    disabled={!spclWork.metal}
+                    fullWidth
+                  >
+                    <MenuItem value="">Select Item</MenuItem>
+
+                    {(spclWork.metal.includes("Gold")
+                      ? goldItems
+                      : silverItems
+                    ).map((it) => (
+                      <MenuItem key={it} value={it}>
+                        {it}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
+                {/* Metal Weight */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Worker Metal Weight"
+                    type="number"
+                    value={spclWork.workerMetalWeight}
+                    onChange={handleChange("workerMetalWeight")}
+                    fullWidth
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Other Metal Name"
+                    value={spclWork.otherMetalName}
+                    onChange={handleChange("otherMetalName")}
+                    fullWidth
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Other Metal Weight"
+                    type="number"
+                    value={spclWork.otherWeight}
+                    onChange={handleChange("otherWeight")}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* Wastage */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Wastage"
+                    type="number"
+                    value={spclWork.wastage}
+                    onChange={handleChange("wastage")}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* Making Charges */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Amount"
+                    type="number"
+                    value={spclWork.amount}
+                    onChange={handleChange("amount")}
+                    fullWidth
+                  />
+                </Grid>
+
+                {/* Other Weight */}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    label="Item Link Code"
+                    value={spclWork.itemLinkCode}
+                    onChange={handleChange("itemLinkCode")}
+                    fullWidth
+                  />
+                </Grid>
               </Grid>
 
-              {/* Design */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Design"
-                  value={product.design}
-                  onChange={onProductChange("design")}
-                  fullWidth
-                  error={!!errors.design}
-                  helperText={errors.design || ""}
-                />
-              </Grid>
-
-              {/* Size */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Size"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.size}
-                  onChange={onProductChange("size")}
-                  fullWidth
-                  error={!!errors.size}
-                  helperText={errors.size || ""}
-                />
-              </Grid>
-
-              {/* Metal Weight */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Metal Weight"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.metal_weight}
-                  onChange={onProductChange("metal_weight")}
-                  fullWidth
-                  error={!!errors.metal_weight}
-                  helperText={errors.metal_weight || ""}
-                />
-              </Grid>
-
-              {/* Wastage */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Wastage"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.wastage}
-                  onChange={onProductChange("wastage")}
-                  fullWidth
-                />
-              </Grid>
-
-              {/* Making Charges */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Making Charges"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.making_charges}
-                  onChange={onProductChange("making_charges")}
-                  fullWidth
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Stone Weight"
-                  type="number"
-                  value={product.stone_weight}
-                  onChange={(e) =>
-                    handleMaterialChange("stone", "weight", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Stone Rate"
-                  type="number"
-                  value={product.stone_rate}
-                  onChange={(e) =>
-                    handleMaterialChange("stone", "rate", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Stone Amount"
-                  value={product.stone_amount}
-                  InputProps={{ readOnly: true }}
-                  fullWidth
-                />
-              </Grid>
-
-              {/* ---- Bits ---- */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Bits Weight"
-                  type="number"
-                  value={product.bits_weight}
-                  onChange={(e) =>
-                    handleMaterialChange("bits", "weight", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Bits Rate"
-                  type="number"
-                  value={product.bits_rate}
-                  onChange={(e) =>
-                    handleMaterialChange("bits", "rate", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Bits Amount"
-                  value={product.bits_amount}
-                  InputProps={{ readOnly: true }}
-                  fullWidth
-                />
-              </Grid>
-
-              {/* ---- Diamond ---- */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Diamond Weight"
-                  type="number"
-                  value={product.diamond_weight}
-                  onChange={(e) =>
-                    handleMaterialChange("diamond", "weight", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Diamond Rate"
-                  type="number"
-                  value={product.diamond_rate}
-                  onChange={(e) =>
-                    handleMaterialChange("diamond", "rate", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Diamond Amount"
-                  value={product.diamond_amount}
-                  InputProps={{ readOnly: true }}
-                  fullWidth
-                />
-              </Grid>
-
-              {/* ---- Enamel ---- */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Enamel Weight"
-                  type="number"
-                  value={product.enamel_weight}
-                  onChange={(e) =>
-                    handleMaterialChange("enamel", "weight", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Enamel Rate"
-                  type="number"
-                  value={product.enamel_rate}
-                  onChange={(e) =>
-                    handleMaterialChange("enamel", "rate", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Enamel Amount"
-                  value={product.enamel_amount}
-                  InputProps={{ readOnly: true }}
-                  fullWidth
-                />
-              </Grid>
-
-              {/* ---- Pearls ---- */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Pearls Weight"
-                  type="number"
-                  value={product.pearls_weight}
-                  onChange={(e) =>
-                    handleMaterialChange("pearls", "weight", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Pearls Rate"
-                  type="number"
-                  value={product.pearls_rate}
-                  onChange={(e) =>
-                    handleMaterialChange("pearls", "rate", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Pearls Amount"
-                  value={product.pearls_amount}
-                  InputProps={{ readOnly: true }}
-                  fullWidth
-                />
-              </Grid>
-
-              {/* ---- Wax ---- */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Wax Weight"
-                  type="number"
-                  value={product.wax_weight}
-                  onChange={(e) =>
-                    handleMaterialChange("wax", "weight", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Wax Rate"
-                  type="number"
-                  value={product.wax_rate}
-                  onChange={(e) =>
-                    handleMaterialChange("wax", "rate", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Wax Amount"
-                  value={product.wax_amount}
-                  InputProps={{ readOnly: true }}
-                  fullWidth
-                />
-              </Grid>
-
-              {/* Other Weight */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Other Weight"
-                  type="number"
-                  value={product.other_weight}
-                  onChange={(e) =>
-                    handleMaterialChange("other", "weight", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Other Rate"
-                  type="number"
-                  value={product.other_rate}
-                  onChange={(e) =>
-                    handleMaterialChange("other", "rate", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Other Amount"
-                  value={product.other_amount}
-                  InputProps={{ readOnly: true }}
-                  fullWidth
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Gross Weight (auto)"
-                  value={product.gross_weight}
-                  InputProps={{ readOnly: true }}
-                  fullWidth
-                />
-              </Grid>
-
-              {/* Stock */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Stock"
-                  type="number"
-                  inputProps={{ step: "any" }}
-                  value={product.stock}
-                  onChange={onProductChange("stock")}
-                  fullWidth
-                />
-              </Grid>
-
-              {/* Stock */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  label="Stock Box"
-                  inputProps={{ step: "any" }}
-                  value={product.stockBox}
-                  onChange={onProductChange("stockBox")}
-                  fullWidth
-                />
-              </Grid>
-            </Grid>
-
-            <Box display="flex" justifyContent="flex-end" mt={4}>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={submitLoading}
-                sx={{
-                  background: "#8847FF",
-                  fontWeight: 600,
-                  textTransform: "none",
-                  "&:hover": { background: "#6c30cc" },
-                  px: 5,
-                }}
-              >
-                {submitLoading ? (
-                  <CircularProgress size={18} color="inherit" />
-                ) : (
-                  "Submit"
-                )}
-              </Button>
-            </Box>
-          </Paper>
-        </Box>
+              <Box display="flex" justifyContent="flex-end" mt={4}>
+                <Button
+                  variant="outlined"
+                  onClick={handleWorkAdding}
+                  sx={{
+                    paddingX: 6,
+                    paddingY: 0.2,
+                    borderRadius: "12px",
+                    fontWeight: "bold",
+                    boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+                    borderColor: "#8847FF",
+                    color: "#8847FF",
+                    transition: "all 0.3s",
+                    "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+                  }}
+                >
+                  Submmit
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
+        </div>
       )}
 
       {bottomResults && (
@@ -1616,6 +1878,21 @@ const Products: React.FC = () => {
                       </Typography>
                       <Typography fontSize={12}>
                         N.W: {r.metal_weight ?? "-"}g
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 5,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        backgroundColor: "#f5f5f5",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      <Typography fontSize={12} fontWeight={600}>
+                        Item Code: {r.itemCode ?? "-"}
                       </Typography>
                     </Box>
                   </Box>

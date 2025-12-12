@@ -82,6 +82,7 @@ const AllBillingOrders: React.FC = () => {
 
   useEffect(() => {
     let alive = true;
+    localStorage.removeItem("CheckBack");
     (async () => {
       setLoading(true);
       setErr(null);
@@ -363,6 +364,7 @@ const AllBillingOrders: React.FC = () => {
                                 "billNumber",
                                 bill.billNumber
                               );
+                              localStorage.setItem("CheckBack", "AllBillBack");
                               navigate("/admin/bill-details");
                             }}
                           >

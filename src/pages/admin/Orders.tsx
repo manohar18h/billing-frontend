@@ -55,6 +55,7 @@ type BarcodeProduct = {
   other_weight: number;
   other_amount: number;
   stockBox: string;
+  itemCode: string;
   gross_weight: number;
 };
 
@@ -98,6 +99,8 @@ const Orders: React.FC = () => {
     "House Puste",
     "Chaknam Puste",
     "Matilu",
+    "Matilu Small",
+    "Matilu Big",
     "Pusthela Thadu",
     "Kadiyam",
     "Ladies Ring",
@@ -228,10 +231,12 @@ const Orders: React.FC = () => {
       other_weight: 0.0,
       other_amount: 0.0,
       stockBox: "",
+      itemCode: "",
       gross_weight: 0.0,
       discount: 0.0,
       deliveryStatus: "",
       workStatus: "",
+
       total_item_amount: 0,
     });
     setOrderErrors({});
@@ -239,7 +244,6 @@ const Orders: React.FC = () => {
   };
 
   const [isEditing, setIsEditing] = useState(false);
-  const [isBillEditing, setIsBillEditing] = useState(false);
 
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [editingExchangeId, setEditingExchangeId] = useState<number | null>(
@@ -271,6 +275,7 @@ const Orders: React.FC = () => {
     other_weight: 0.0,
     other_amount: 0.0,
     stockBox: "",
+    itemCode: "",
     gross_weight: 0.0,
     discount: 0.0,
     deliveryStatus: "",
@@ -992,6 +997,7 @@ const Orders: React.FC = () => {
         other_weight: data.other_weight ?? prev.other_weight,
         other_amount: data.other_amount ?? prev.other_amount,
         stockBox: data.stockBox ?? prev.stockBox,
+        itemCode: data.itemCode ?? prev.itemCode,
         gross_weight: data.gross_weight ?? prev.gross_weight,
 
         // ✅ newly added
@@ -1788,6 +1794,7 @@ const Orders: React.FC = () => {
                                 other_amount: ord.other_amount || 0,
                                 gross_weight: ord.gross_weight || 0,
                                 stockBox: ord.stockBox || 0,
+                                itemCode: ord.itemCode || 0,
                                 discount: ord.discount || 0,
                                 deliveryStatus:
                                   ord.deliveryStatus ||

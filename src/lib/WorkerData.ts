@@ -54,6 +54,18 @@ export interface WorkerData {
     wastage?: number;
   }[];
 
+  speclWorks: {
+    itemName?: string;
+    metal?: string;
+    workerMetalWeight?: number;
+    otherMetalName?: string;
+    otherWeight?: number;
+    amount?: number;
+    wastage?: number;
+    itemLinkCode?: string;
+    deliveryDate?: string | null;
+  }[];
+
   workerTransactionHistories: {
     paidAmount: number;
     paymentDate: string;
