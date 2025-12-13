@@ -371,7 +371,7 @@ const Products: React.FC = () => {
         itemName: spclWork.itemName,
         metal: spclWork.metal,
         workerMetalWeight: parseFloat(spclWork.workerMetalWeight.toString()),
-        otherMetalName: parseInt(spclWork.otherMetalName.toString()),
+        otherMetalName: spclWork.otherMetalName.toString(),
         otherWeight: parseFloat(spclWork.otherWeight.toString()),
         amount: parseFloat(spclWork.amount.toString()),
         wastage: parseFloat(spclWork.wastage.toString()),

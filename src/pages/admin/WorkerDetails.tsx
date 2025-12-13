@@ -245,7 +245,7 @@ const WorkerDetails: React.FC = () => {
                   ],
                   [
                     "Earned Wastage",
-                    `${worker.earnedWastage}%`,
+                    `${worker.earnedWastage}`,
                     "text-pink-300 font-semibold",
                   ],
                 ].map(([label, value, color], i) => (
@@ -444,7 +444,7 @@ const WorkerDetails: React.FC = () => {
                   {line("Item", s.itemName)}
                   {line("Weight", `${s.workerMetalWeight} g`)}
                   {line("Other Metal", s.otherMetalName)}
-                  {line("Other Weight", `${s.otherWeight} %`)}
+                  {line("Other Weight", `${s.otherWeight} g`)}
                 </div>
                 <div className="pl-4">
                   {line("Amount", `₹${s.amount}`)}

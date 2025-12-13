@@ -51,6 +51,27 @@ type Billing = {
   billingDate: string | null;
 };
 
+interface LoanBill {
+  loanBillId: number;
+  loanBillNumber: string;
+  customerLoanId: number;
+  name: string;
+  village: string;
+  phoneNumber: string;
+  aadharCard: string;
+  emailId: string;
+  deliveryStatus: string;
+  itemStatus: string;
+  numberOfItems: number;
+  totalAmount: number;
+  paidAmount: number;
+  dueAmount: number;
+  paidInterestAmount: number;
+  dueInterestAmount: number;
+  selectedItemsIds: string;
+  loanBillingDate: string;
+}
+
 function normalizeStatus(
   s: string | undefined | null
 ): "delivered" | "pending" | "other" {
@@ -1133,6 +1154,166 @@ const LatestOrders: React.FC = () => {
   );
 };
 
+const LatestLoanOrders: React.FC = () => {
+  const [rows, setRows] = useState<LoanBill[]>([]);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const token = localStorage.getItem("token") ?? "";
+        const { data } = await api.get<LoanBill[]>(`/admin/today-loan-bills`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!alive) return;
+        setRows(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!alive) return;
+        console.error("Failed to fetch Todays Loan bills:", e);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const renderStatusChip = (raw: string) => {
+    const n = normalizeStatus(raw);
+    if (n === "delivered")
+      return (
+        <Chip
+          label="Delivered"
+          size="small"
+          sx={{ bgcolor: "#d9f7d9", color: "#1b5e20", fontWeight: 600 }}
+        />
+      );
+    if (n === "pending")
+      return (
+        <Chip
+          label="Pending"
+          size="small"
+          sx={{ bgcolor: "#fff3e0", color: "#e65100", fontWeight: 600 }}
+        />
+      );
+    return (
+      <Chip
+        label={raw || "-"}
+        size="small"
+        sx={{ bgcolor: "#eeeeee", color: "#424242" }}
+      />
+    );
+  };
+
+  return (
+    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
+      <div className=" text-[#85400b] mb-3 font-bold text-lg">
+        Today's Loan Order
+      </div>
+      <div className="mt-4">
+        <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center ">
+                  Loan Bill Number
+                </div>
+              </th>
+              <th className="border px-3 py-2 text-center ">
+                <div className="flex justify-center items-center">Name</div>
+              </th>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">Total</div>
+              </th>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">
+                  Interest Paid
+                </div>
+              </th>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">
+                  Item Status
+                </div>
+              </th>
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">
+                  Delivery Status
+                </div>
+              </th>
+
+              <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">View</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {rows.map((r, i) => (
+              <tr key={i} className="bg-white">
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center text-[#4911a9] font-semibold">
+                    {r.loanBillNumber}
+                  </div>
+                </td>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center text-[#b6276f] font-semibold">
+                    {r.name}
+                  </div>
+                </td>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center  text-[#e38111]  font-semibold">
+                    {r.totalAmount}
+                  </div>
+                </td>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center text-[#e60b0b] font-semibold">
+                    {r.paidInterestAmount}
+                  </div>
+                </td>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center font-semibold">
+                    {renderStatusChip(r.itemStatus)}
+                  </div>
+                </td>
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center font-semibold">
+                    {renderStatusChip(r.deliveryStatus)}
+                  </div>
+                </td>
+
+                <td>
+                  <div className="flex justify-center items-center">
+                    <IconButton
+                      size="medium"
+                      color="primary"
+                      sx={{
+                        "&:hover": { backgroundColor: "#E0E0E0" },
+                      }}
+                      onClick={() => {
+                        localStorage.removeItem("billLoanNumber");
+                        localStorage.removeItem("checkBackFrom");
+
+                        localStorage.setItem(
+                          "billLoanNumber",
+                          r.loanBillNumber
+                        );
+                        localStorage.setItem("checkBackFrom", "DashBoard");
+                        navigate("/admin/bill-loan-details");
+                      }}
+                    >
+                      <VisibilityIcon fontSize="medium" />
+                    </IconButton>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 /* ---------- Business Growth: static country list + bars ---------- */
 const BusinessGrowth: React.FC = () => {
   const [villages, setVillages] = useState<{ name: string; value: number }[]>(
@@ -1255,10 +1436,16 @@ const Dashboard: React.FC = () => {
 
       {/* Tables / Growth row */}
       <div className="grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        {/* LEFT SIDE */}
+        <div className="lg:col-span-2 space-y-5">
           <LatestOrders />
+          <LatestLoanOrders />
         </div>
-        <BusinessGrowth />
+
+        {/* RIGHT SIDE */}
+        <div className="lg:col-span-1">
+          <BusinessGrowth />
+        </div>
       </div>
     </div>
   );

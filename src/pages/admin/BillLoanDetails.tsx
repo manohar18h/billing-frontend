@@ -94,6 +94,8 @@ const BillLoanDetails: React.FC = () => {
   const handleBackClick = () => {
     if (checkBackFrom === "billLoanNumber" || checkBackFrom === "Loan") {
       navigate("/admin/Loan");
+    } else if (checkBackFrom === "DashBoard") {
+      navigate("/admin/dashboard");
     } else {
       navigate("/admin/bill-loan-data");
     }
