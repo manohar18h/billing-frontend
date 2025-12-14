@@ -1,4 +1,3 @@
-// src/pages/admin/Products.tsx
 import React, { useState } from "react";
 import {
   Box,
@@ -192,6 +191,7 @@ type StockProduct = {
   gross_weight: number;
   stock?: number;
   stockBox: string;
+  linkWorker?: string;
   barcodeValue?: string;
   itemCode?: string;
   barcodeImageBase64?: string;
@@ -242,6 +242,7 @@ type ProductForm = {
   other_amount: string;
   stock: string;
   stockBox: string;
+  linkWorker?: string;
   gross_weight: string; // auto (metal_weight + stone_weight)
 };
 
@@ -287,15 +288,13 @@ const initialProduct: ProductForm = {
   other_amount: "",
   stock: "",
   stockBox: "",
+  linkWorker: "",
   gross_weight: "",
 };
 
 const requiredProductKeys: (keyof ProductForm)[] = [
   "metal",
   "itemName",
-  "catalogue",
-  "design",
-  "size",
   "metal_weight",
 ];
 
@@ -608,6 +607,7 @@ const Products: React.FC = () => {
 
       stock: safeNum(product.stock),
       stockBox: product.stockBox.trim(),
+      linkWorker: product.linkWorker?.trim(),
       gross_weight: safeNum(product.gross_weight),
     };
 
@@ -715,7 +715,6 @@ const Products: React.FC = () => {
     );
   };
 
-  /* ------------------------------ UI ----------------------------- */
   return (
     <Box>
       {/* ---------- SEARCH STOCK PRODUCT ---------- */}
@@ -1517,6 +1516,34 @@ const Products: React.FC = () => {
                     onChange={onProductChange("stockBox")}
                     fullWidth
                   />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    select
+                    label="Link Worker"
+                    value={product.linkWorker}
+                    onChange={onProductChange("linkWorker")}
+                    fullWidth
+                    sx={prettySelectSx}
+                    InputLabelProps={{ shrink: true }}
+                    SelectProps={{
+                      displayEmpty: true,
+                      renderValue: (val) =>
+                        val ? (
+                          (val as string)
+                        ) : (
+                          <span style={{ color: "#9aa0a6" }}>
+                            Select Link Worker
+                          </span>
+                        ),
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Link Worker</em>
+                    </MenuItem>
+                    <MenuItem value="No">No</MenuItem>
+                    <MenuItem value="Yes">Yes</MenuItem>
+                  </TextField>
                 </Grid>
               </Grid>
 
