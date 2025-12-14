@@ -295,6 +295,9 @@ const initialProduct: ProductForm = {
 const requiredProductKeys: (keyof ProductForm)[] = [
   "metal",
   "itemName",
+  "catalogue",
+  "design",
+  "size",
   "metal_weight",
 ];
 
