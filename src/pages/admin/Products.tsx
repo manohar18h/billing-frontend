@@ -64,10 +64,12 @@ const goldItems = [
   "Chain",
   "Gundla Mala",
   "Champaswaralu",
+  "kankanalu",
   "Long Haram",
   "Short Haram",
   "Locket",
   "Bangle",
+  "kankanalu",
   "Baby Bangle",
   "Papidi Billa",
   "God Idol",
@@ -1800,7 +1802,7 @@ const Products: React.FC = () => {
     align-items:flex-start;
     font-size:2mm;
     line-height:1.3;
-    padding-left:10mm;
+    padding-left:8mm;
     height:100%;
   ">
     <div style="font-weight:bold;">${r.barcodeValue ?? "-"}</div>

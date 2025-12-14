@@ -116,6 +116,7 @@ const Orders: React.FC = () => {
     "Short Haram",
     "Locket",
     "Bangle",
+    "kankanalu",
     "Baby Bangle",
     "Papidi Billa",
     "God Idol",
