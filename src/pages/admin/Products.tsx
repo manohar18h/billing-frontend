@@ -1800,8 +1800,7 @@ const Products: React.FC = () => {
     align-items:flex-start;
     font-size:2mm;
     line-height:1.3;
-    margin:0;
-    padding-left:1mm;
+    padding-left:10mm;
     height:100%;
   ">
     <div style="font-weight:bold;">${r.barcodeValue ?? "-"}</div>
