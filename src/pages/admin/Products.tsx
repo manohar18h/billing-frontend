@@ -550,8 +550,10 @@ const Products: React.FC = () => {
 
   const validateProduct = (): boolean => {
     const newErrors: { [key: string]: string } = {};
-    for (let key of requiredProductKeys) {
-      if (!product[key].trim()) {
+    for (const key of requiredProductKeys) {
+      const value = product[key];
+
+      if (!value || String(value).trim() === "") {
         newErrors[key] = "Required";
       }
     }
