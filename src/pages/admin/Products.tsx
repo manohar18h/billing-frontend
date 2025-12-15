@@ -34,6 +34,7 @@ const goldItems = [
   "Pressing Gundu Pulla",
   "Stone Kammalu",
   "Kammalu",
+  "Pogulu",
   "Mukku Pogu",
   "Sadha Mukku Pogu",
   "Earring",
@@ -1736,7 +1737,6 @@ const Products: React.FC = () => {
                   <TextField
                     label="Stock"
                     type="number"
-                    inputProps={{ step: "any" }}
                     value={product.stock}
                     onChange={onProductChange("stock")}
                     inputProps={{
