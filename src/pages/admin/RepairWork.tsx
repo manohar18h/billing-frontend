@@ -164,6 +164,15 @@ const RepairWork: React.FC = () => {
               fullWidth
               type="number"
               label="Metal Weight (g)"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={
                 repairData.metal === "Non Metal" ? "" : repairData.metalWeight
               }
@@ -182,6 +191,15 @@ const RepairWork: React.FC = () => {
               fullWidth
               type="number"
               label="Customer Pay"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={repairData.customerPay}
               onChange={(e) => handleChange("customerPay", e.target.value)}
               required
@@ -192,6 +210,15 @@ const RepairWork: React.FC = () => {
               fullWidth
               type="number"
               label="Worker Pay"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={repairData.workerPay}
               onChange={(e) => handleChange("workerPay", e.target.value)}
               required

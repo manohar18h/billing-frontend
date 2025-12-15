@@ -82,6 +82,7 @@ const Orders: React.FC = () => {
     "Pressing Gundu Pulla",
     "Kammalu",
     "Stone Kammalu",
+    "Pogulu",
     "Mukku Pogu",
     "Sadha Mukku Pogu",
     "Earring",
@@ -1499,6 +1500,20 @@ const Orders: React.FC = () => {
                     .replace(/_/g, " ")
                     .replace(/\b\w/g, (c) => c.toUpperCase())}
                   type={typeof value === "number" ? "number" : "text"}
+                  onWheel={
+                    typeof value === "number"
+                      ? (e) => (e.target as HTMLInputElement).blur()
+                      : undefined
+                  }
+                  inputProps={{
+                    ...(typeof value === "number" && {
+                      onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }),
+                  }}
                   InputLabelProps={
                     key.includes("date") ? { shrink: true } : undefined
                   }
@@ -1952,6 +1967,22 @@ const Orders: React.FC = () => {
                       {...thickTextFieldProps}
                       label="Exchange Metal Price"
                       type="number"
+                      onWheel={
+                        typeof value === "number"
+                          ? (e) => (e.target as HTMLInputElement).blur()
+                          : undefined
+                      }
+                      inputProps={{
+                        ...(typeof value === "number" && {
+                          onKeyDown: (
+                            e: React.KeyboardEvent<HTMLInputElement>
+                          ) => {
+                            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                              e.preventDefault();
+                            }
+                          },
+                        }),
+                      }}
                       value={
                         exchange.exchange_metal_price === 0
                           ? ""
@@ -1980,6 +2011,22 @@ const Orders: React.FC = () => {
                         .replace(/_/g, " ")
                         .replace(/\b\w/g, (c) => c.toUpperCase())}
                       type={typeof value === "number" ? "number" : "text"}
+                      onWheel={
+                        typeof value === "number"
+                          ? (e) => (e.target as HTMLInputElement).blur()
+                          : undefined
+                      }
+                      inputProps={{
+                        ...(typeof value === "number" && {
+                          onKeyDown: (
+                            e: React.KeyboardEvent<HTMLInputElement>
+                          ) => {
+                            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                              e.preventDefault();
+                            }
+                          },
+                        }),
+                      }}
                       InputLabelProps={
                         key.includes("date") ? { shrink: true } : undefined
                       }
@@ -2302,6 +2349,15 @@ const Orders: React.FC = () => {
               margin="dense"
               label="Amount"
               type="number"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               fullWidth
               value={payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
@@ -2406,6 +2462,15 @@ const Orders: React.FC = () => {
           <TextField
             label="Worker Pay Amount"
             type="number"
+            inputProps={{
+              step: "any",
+              onKeyDown: (e) => {
+                if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                }
+              },
+            }}
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
             fullWidth
             value={workerPayAmount}
             onChange={(e) => setWorkerPayAmount(e.target.value)}
@@ -2414,6 +2479,15 @@ const Orders: React.FC = () => {
           <TextField
             label="Worker Pay Wastage"
             type="number"
+            inputProps={{
+              step: "any",
+              onKeyDown: (e) => {
+                if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                }
+              },
+            }}
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
             fullWidth
             value={workerPayWastage}
             onChange={(e) => setWorkerPayWastage(e.target.value)}

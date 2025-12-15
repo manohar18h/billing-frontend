@@ -671,6 +671,15 @@ const BillLoanDetails: React.FC = () => {
               label="Amount"
               type="number"
               fullWidth
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
             />

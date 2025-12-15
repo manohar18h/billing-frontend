@@ -661,6 +661,15 @@ const BillDetails: React.FC = () => {
               <TextField
                 label="Amount"
                 type="number"
+                inputProps={{
+                  step: "any",
+                  onKeyDown: (e) => {
+                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                      e.preventDefault();
+                    }
+                  },
+                }}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
                 fullWidth
                 value={payAmount}
                 onChange={(e) => setPayAmount(e.target.value)}
@@ -755,6 +764,15 @@ const BillDetails: React.FC = () => {
           <TextField
             label="Worker Pay Amount"
             type="number"
+            inputProps={{
+              step: "any",
+              onKeyDown: (e) => {
+                if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                }
+              },
+            }}
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
             fullWidth
             value={workerPayAmount}
             onChange={(e) => setWorkerPayAmount(e.target.value)}
@@ -763,6 +781,15 @@ const BillDetails: React.FC = () => {
           <TextField
             label="Worker Pay Wastage"
             type="number"
+            inputProps={{
+              step: "any",
+              onKeyDown: (e) => {
+                if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                }
+              },
+            }}
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
             fullWidth
             value={workerPayWastage}
             onChange={(e) => setWorkerPayWastage(e.target.value)}

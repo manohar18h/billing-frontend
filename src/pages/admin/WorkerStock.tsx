@@ -186,6 +186,15 @@ const WorkerStock: React.FC = () => {
                 required
                 type="number"
                 label="Metal Weight (g)"
+                inputProps={{
+                  step: "any",
+                  onKeyDown: (e) => {
+                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                      e.preventDefault();
+                    }
+                  },
+                }}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
                 value={stockData.weight}
                 onChange={(e) => handleChange("weight", e.target.value)}
               />

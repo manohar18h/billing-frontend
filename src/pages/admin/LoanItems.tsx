@@ -773,6 +773,22 @@ const LoanItems: React.FC = () => {
                       .replace(/_/g, " ")
                       .replace(/\b\w/g, (c) => c.toUpperCase())}
                     type={typeof value === "number" ? "number" : "text"}
+                    onWheel={
+                      typeof value === "number"
+                        ? (e) => (e.target as HTMLInputElement).blur()
+                        : undefined
+                    }
+                    inputProps={{
+                      ...(typeof value === "number" && {
+                        onKeyDown: (
+                          e: React.KeyboardEvent<HTMLInputElement>
+                        ) => {
+                          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                            e.preventDefault();
+                          }
+                        },
+                      }),
+                    }}
                     InputLabelProps={
                       key.includes("date") ? { shrink: true } : undefined
                     }
@@ -1188,6 +1204,15 @@ const LoanItems: React.FC = () => {
               label="Amount"
               type="number"
               fullWidth
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
             />

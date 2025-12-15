@@ -175,6 +175,15 @@ const LotWork: React.FC = () => {
               fullWidth
               type="number"
               label="Item Weight (g)"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={lotData.weight}
               onChange={(e) => handleChange("weight", e.target.value)}
               required
@@ -187,6 +196,15 @@ const LotWork: React.FC = () => {
               fullWidth
               type="number"
               label="Pieces"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={lotData.pieces}
               onChange={(e) => handleChange("pieces", e.target.value)}
               required
@@ -198,6 +216,15 @@ const LotWork: React.FC = () => {
               fullWidth
               type="number"
               label="Wastage"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={lotData.wastage}
               onChange={(e) => handleChange("wastage", e.target.value)}
             />
@@ -208,6 +235,15 @@ const LotWork: React.FC = () => {
               fullWidth
               type="number"
               label="Amount"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={lotData.amount}
               onChange={(e) => handleChange("amount", e.target.value)}
             />

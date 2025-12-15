@@ -690,6 +690,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Metal Weight (g)"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={addWeight}
               onChange={(e) => setAddWeight(e.target.value)}
               required
@@ -763,6 +772,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Metal Weight (g)"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={sellWeight}
               onChange={(e) => setSellWeight(e.target.value)}
               required
@@ -774,6 +792,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Total Amount"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={sellTotalAmount}
               onChange={(e) => setsellTotalAmount(e.target.value)}
               required
@@ -786,6 +813,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Cash Amount"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={sellCashAmount}
               onChange={(e) => setSellCashAmount(e.target.value)}
             />
@@ -796,6 +832,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Phn Pay Amount"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={sellPhnPayAmount}
               onChange={(e) => setSellPhnPayAmount(e.target.value)}
             />
@@ -890,6 +935,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Metal Weight (g)"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={returnWeight}
               onChange={(e) => setReturnWeight(e.target.value)}
               required
@@ -901,6 +955,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Purity Metal Weight (g)"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={returnPurityWeight}
               onChange={(e) => setreturnPurityWeight(e.target.value)}
               required
@@ -912,6 +975,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Total Amount"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={returnTotalAmount}
               onChange={(e) => setReturnTotalAmount(e.target.value)}
             />
@@ -923,6 +995,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Cash Amount"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={returnCashAmount}
               onChange={(e) => setReturnCashAmount(e.target.value)}
               required
@@ -934,6 +1015,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Phn Pay Amount"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={returnPhnPayAmount}
               onChange={(e) => setReturnPhnPayAmount(e.target.value)}
               required
@@ -1064,6 +1154,15 @@ const ShowroomMetalStock: React.FC = () => {
               fullWidth
               type="number"
               label="Amount"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />

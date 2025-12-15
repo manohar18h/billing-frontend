@@ -879,9 +879,17 @@ const Products: React.FC = () => {
             <TextField
               label="Size"
               type="number"
-              inputProps={{ step: "any" }}
               value={q.size}
               onChange={onQChange("size")}
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               fullWidth
             />
           </Grid>
@@ -1223,9 +1231,17 @@ const Products: React.FC = () => {
                   <TextField
                     label="Size"
                     type="number"
-                    inputProps={{ step: "any" }}
                     value={product.size}
                     onChange={onProductChange("size")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                     error={!!errors.size}
                     helperText={errors.size || ""}
@@ -1237,9 +1253,17 @@ const Products: React.FC = () => {
                   <TextField
                     label="Metal Weight"
                     type="number"
-                    inputProps={{ step: "any" }}
                     value={product.metal_weight}
                     onChange={onProductChange("metal_weight")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                     error={!!errors.metal_weight}
                     helperText={errors.metal_weight || ""}
@@ -1251,9 +1275,17 @@ const Products: React.FC = () => {
                   <TextField
                     label="Wastage"
                     type="number"
-                    inputProps={{ step: "any" }}
                     value={product.wastage}
                     onChange={onProductChange("wastage")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1263,9 +1295,17 @@ const Products: React.FC = () => {
                   <TextField
                     label="Making Charges"
                     type="number"
-                    inputProps={{ step: "any" }}
                     value={product.making_charges}
                     onChange={onProductChange("making_charges")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1278,6 +1318,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("stone", "weight", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1289,6 +1338,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("stone", "rate", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1297,6 +1355,15 @@ const Products: React.FC = () => {
                     label="Stone Amount"
                     value={product.stone_amount}
                     InputProps={{ readOnly: true }}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1310,6 +1377,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("bits", "weight", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1321,6 +1397,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("bits", "rate", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1329,6 +1414,15 @@ const Products: React.FC = () => {
                     label="Bits Amount"
                     value={product.bits_amount}
                     InputProps={{ readOnly: true }}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1342,6 +1436,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("diamond", "weight", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1353,6 +1456,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("diamond", "rate", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1361,6 +1473,15 @@ const Products: React.FC = () => {
                     label="Diamond Amount"
                     value={product.diamond_amount}
                     InputProps={{ readOnly: true }}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1374,6 +1495,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("enamel", "weight", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1385,6 +1515,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("enamel", "rate", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1393,6 +1532,15 @@ const Products: React.FC = () => {
                     label="Enamel Amount"
                     value={product.enamel_amount}
                     InputProps={{ readOnly: true }}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1406,6 +1554,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("pearls", "weight", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1417,6 +1574,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("pearls", "rate", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1425,6 +1591,15 @@ const Products: React.FC = () => {
                     label="Pearls Amount"
                     value={product.pearls_amount}
                     InputProps={{ readOnly: true }}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1438,6 +1613,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("wax", "weight", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1449,6 +1633,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("wax", "rate", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1457,6 +1650,15 @@ const Products: React.FC = () => {
                     label="Wax Amount"
                     value={product.wax_amount}
                     InputProps={{ readOnly: true }}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1470,6 +1672,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("other", "weight", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1481,6 +1692,15 @@ const Products: React.FC = () => {
                     onChange={(e) =>
                       handleMaterialChange("other", "rate", e.target.value)
                     }
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1489,6 +1709,15 @@ const Products: React.FC = () => {
                     label="Other Amount"
                     value={product.other_amount}
                     InputProps={{ readOnly: true }}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1510,6 +1739,15 @@ const Products: React.FC = () => {
                     inputProps={{ step: "any" }}
                     value={product.stock}
                     onChange={onProductChange("stock")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1664,6 +1902,15 @@ const Products: React.FC = () => {
                     type="number"
                     value={spclWork.workerMetalWeight}
                     onChange={handleChange("workerMetalWeight")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1683,6 +1930,15 @@ const Products: React.FC = () => {
                     type="number"
                     value={spclWork.otherWeight}
                     onChange={handleChange("otherWeight")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1694,6 +1950,15 @@ const Products: React.FC = () => {
                     type="number"
                     value={spclWork.wastage}
                     onChange={handleChange("wastage")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1705,6 +1970,15 @@ const Products: React.FC = () => {
                     type="number"
                     value={spclWork.amount}
                     onChange={handleChange("amount")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>
@@ -1715,6 +1989,15 @@ const Products: React.FC = () => {
                     label="Item Link Code"
                     value={spclWork.itemLinkCode}
                     onChange={handleChange("itemLinkCode")}
+                    inputProps={{
+                      step: "any",
+                      onKeyDown: (e) => {
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                        }
+                      },
+                    }}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     fullWidth
                   />
                 </Grid>

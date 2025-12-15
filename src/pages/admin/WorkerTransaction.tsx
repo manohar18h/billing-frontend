@@ -150,6 +150,15 @@ const WorkerTransaction: React.FC = () => {
               fullWidth
               type="number"
               label="Enter Amount"
+              inputProps={{
+                step: "any",
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                  }
+                },
+              }}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               value={form.amount}
               onChange={(e) => handleChange("amount", e.target.value)}
               required
