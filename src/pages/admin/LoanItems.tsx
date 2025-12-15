@@ -121,6 +121,7 @@ const LoanItems: React.FC = () => {
     "Pressing Gundu Pulla",
     "Kammalu",
     "Stone Kammalu",
+    "Pogulu",
     "Mukku Pogu",
     "Sadha Mukku Pogu",
     "Earring",
