@@ -594,20 +594,23 @@ const Orders: React.FC = () => {
     setSlectOldItemId(null);
   };
 
-  const calculateTotals = (data: typeof order) => {
+  const calculateTotals = (data: typeof order, overrideMetalPrice?: number) => {
     let metalPrice = 0;
 
-    console.log("GoldPrice :", localStorage.getItem("Gold24Price"));
-    console.log("SilverPrice :", localStorage.getItem("Silver999Price"));
-
-    if (data.metal === "24 Gold") {
-      metalPrice = Number(localStorage.getItem("Gold24Price")) || 0;
-    } else if (data.metal === "22 Gold") {
-      metalPrice = Number(localStorage.getItem("Gold22Price")) || 0;
-    } else if (data.metal === "999 Silver") {
-      metalPrice = Number(localStorage.getItem("Silver999Price")) || 0;
-    } else if (data.metal === "995 Silver") {
-      metalPrice = Number(localStorage.getItem("Silver995Price")) || 0;
+    // ✅ If override price is provided (EDIT MODE), use it
+    if (overrideMetalPrice !== undefined) {
+      metalPrice = overrideMetalPrice;
+    } else {
+      // ❌ Normal flow → take latest price from localStorage
+      if (data.metal === "24 Gold") {
+        metalPrice = Number(localStorage.getItem("Gold24Price")) || 0;
+      } else if (data.metal === "22 Gold") {
+        metalPrice = Number(localStorage.getItem("Gold22Price")) || 0;
+      } else if (data.metal === "999 Silver") {
+        metalPrice = Number(localStorage.getItem("Silver999Price")) || 0;
+      } else if (data.metal === "995 Silver") {
+        metalPrice = Number(localStorage.getItem("Silver995Price")) || 0;
+      }
     }
 
     // Calculate wastage weight
@@ -628,6 +631,18 @@ const Orders: React.FC = () => {
       total_item_amount =
         (data.metal_weight * metalPrice) / 10 + data.making_charges;
     } else {
+      console.log("metal price : ", metalPrice);
+      console.log("metal weight : ", data.metal_weight);
+      console.log("metal wastage : ", wastageWeight);
+      console.log("metal making charges : ", data.making_charges);
+      console.log("stone charges : ", data.stone_amount);
+      console.log("wax_amount : ", data.wax_amount);
+      console.log("diamond_amount : ", data.diamond_amount);
+      console.log("bits_amount : ", data.bits_amount);
+      console.log("enamel_amount : ", data.enamel_amount);
+      console.log("pearls_amount : ", data.pearls_amount);
+      console.log("other_amount : ", data.other_amount);
+
       total_item_amount =
         ((data.metal_weight + wastageWeight) * metalPrice) / 10 +
         data.making_charges +
@@ -643,7 +658,9 @@ const Orders: React.FC = () => {
     // Remove decimals → integer only
     total_item_amount = Math.round(total_item_amount);
 
-    return { total_item_amount };
+    console.log("total_item_amount : ", Math.round(total_item_amount));
+
+    return { total_item_amount: Math.round(total_item_amount) };
   };
 
   const handleOrderDelete = async () => {
@@ -1107,7 +1124,11 @@ const Orders: React.FC = () => {
   };
 
   useEffect(() => {
-    const { total_item_amount } = calculateTotals(order);
+    const { total_item_amount } = calculateTotals(
+      order,
+      isEditing ? order.metalPrice : undefined
+    );
+
     setOrder((prev) => ({
       ...prev,
       total_item_amount,
@@ -1124,6 +1145,7 @@ const Orders: React.FC = () => {
     order.enamel_amount,
     order.pearls_amount,
     order.other_amount,
+    isEditing, // ✅ IMPORTANT
   ]);
 
   // 1️⃣ Set default price only when metal changes
@@ -1818,8 +1840,10 @@ const Orders: React.FC = () => {
                                   "",
                                 workStatus:
                                   ord.workStatus || ord.work_status || "",
-                                total_item_amount:
-                                  calculateTotals(ord).total_item_amount,
+                                total_item_amount: calculateTotals(
+                                  ord,
+                                  ord.metalPrice
+                                ).total_item_amount,
                               });
 
                               setIsEditing(true);
