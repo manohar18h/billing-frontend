@@ -143,7 +143,7 @@ const RepairWork: React.FC = () => {
               </MenuItem>
               <MenuItem value="Non Metal">Non Metal</MenuItem>
               <MenuItem value="22 Gold">22 Gold</MenuItem>
-              <MenuItem value="995 Silver">995 Silver</MenuItem>
+              <MenuItem value="999 Silver">999 Silver</MenuItem>
             </TextField>
           </Grid>
 
