@@ -158,6 +158,7 @@ const Orders: React.FC = () => {
     "Pusala Pattilu",
     "Jaler Pattilu",
     "S-Patagolsu",
+    "Nadumu Golusu",
     "Locket",
     "Bangle",
     "Baby Bangle",
