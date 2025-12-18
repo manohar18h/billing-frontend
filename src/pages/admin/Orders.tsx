@@ -663,6 +663,23 @@ const Orders: React.FC = () => {
     return { total_item_amount: Math.round(total_item_amount) };
   };
 
+  const getUpdatedMetalPrice = (metal: string, itemName: string) => {
+    let price = 0;
+
+    if (metal === "24 Gold")
+      price = Number(localStorage.getItem("Gold24Price")) || 0;
+    else if (metal === "22 Gold")
+      price = Number(localStorage.getItem("Gold22Price")) || 0;
+    else if (metal === "999 Silver")
+      price = Number(localStorage.getItem("Silver999Price")) || 0;
+    else if (metal === "995 Silver")
+      price = Number(localStorage.getItem("Silver995Price")) || 0;
+
+    if (metal === "24 Gold" && itemName === "Batuvu") price += 500;
+
+    return price;
+  };
+
   const handleOrderDelete = async () => {
     console.log("selectedId  :" + slectOrderId);
     if (slectOrderId === null) return;
@@ -1294,26 +1311,13 @@ const Orders: React.FC = () => {
                   value={order.metal}
                   onChange={(e) => {
                     const selectedMetal = e.target.value;
-
-                    let metalPrice = 0;
-                    if (selectedMetal === "24 Gold") {
-                      metalPrice =
-                        Number(localStorage.getItem("Gold24Price")) || 0;
-                    } else if (selectedMetal === "22 Gold") {
-                      metalPrice =
-                        Number(localStorage.getItem("Gold22Price")) || 0;
-                    } else if (selectedMetal === "999 Silver") {
-                      metalPrice =
-                        Number(localStorage.getItem("Silver999Price")) || 0;
-                    } else if (selectedMetal === "995 Silver") {
-                      metalPrice =
-                        Number(localStorage.getItem("Silver995Price")) || 0;
-                    }
-
                     setOrder({
                       ...order,
                       metal: selectedMetal,
-                      metalPrice: metalPrice,
+                      metalPrice: getUpdatedMetalPrice(
+                        selectedMetal,
+                        order.itemName
+                      ),
                     });
                   }}
                   disabled={isPrefilled && (key as string) !== "discount"} // ✅ add this
@@ -1480,12 +1484,18 @@ const Orders: React.FC = () => {
                   select
                   label="Item Name"
                   value={order.itemName}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const newItemName = e.target.value;
+
                     setOrder({
                       ...order,
-                      itemName: e.target.value,
-                    })
-                  }
+                      itemName: newItemName,
+                      metalPrice: getUpdatedMetalPrice(
+                        order.metal,
+                        newItemName
+                      ),
+                    });
+                  }}
                   disabled={isPrefilled && (key as string) !== "discount"} // ✅ add this
                   error={!!orderErrors.itemName}
                   helperText={orderErrors.itemName || ""}

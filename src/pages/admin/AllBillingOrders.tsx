@@ -93,10 +93,14 @@ const AllBillingOrders: React.FC = () => {
         });
         if (!alive) return;
         setRows(Array.isArray(data) ? data : []);
-      } catch (e) {
+      } catch (e: any) {
         if (!alive) return;
         console.error("Failed to fetch all bills:", e);
         setErr("Failed to load billing orders.");
+        console.error("Axios error:", e);
+        console.error("Code:", e.code);
+        console.error("Message:", e.message);
+        setErr(e.message);
       } finally {
         if (alive) setLoading(false);
       }
