@@ -102,6 +102,7 @@ const silverItems = [
   "Bongu Kadiyam",
   "R.D Kadam",
   "Ragi Kadiyam",
+  "Kadiyal Plain",
   "Bolgajal Kadiyal",
   "R.D Sadan Kadiyal",
   "Patilu",
