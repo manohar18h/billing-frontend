@@ -175,9 +175,13 @@ const Loan: React.FC = () => {
 
   const handleChange = (field: string, value: string | number) => {
     let newValue = value;
-    if (field === "name" && typeof value === "string") {
+    if (
+      (field === "name" || field === "village") &&
+      typeof value === "string"
+    ) {
       newValue = value
         .split(" ")
+        .filter((word) => word.length > 0)
         .map(
           (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         )
@@ -532,6 +536,7 @@ const Loan: React.FC = () => {
                     value={customer.village || ""}
                     onInputChange={(event, newInputValue) => {
                       setSearch(newInputValue); // only update search
+                      handleChange("village", newInputValue);
                     }}
                     onChange={(event, newValue) => {
                       handleChange("village", newValue || ""); // update customer only after selection

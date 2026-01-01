@@ -131,6 +131,7 @@ const LoanItems: React.FC = () => {
     "Sadha Vanku",
     "Stone Vanku",
     "Studs",
+    "Laxmi Devi Puste",
     "Andhra Puste",
     "Gante Puste",
     "Thirmandhar Puste",
@@ -161,6 +162,7 @@ const LoanItems: React.FC = () => {
     "Papidi Billa",
     "God Idol",
     "God Mokkulu",
+    "Gold Biscuit",
     "Other",
   ];
 
@@ -182,6 +184,7 @@ const LoanItems: React.FC = () => {
     "Small Ring",
     "Fancy Ring",
     "Kadiyam",
+    "Bedi",
     "Small Kadiyam",
     "Sadan Kadiyam",
     "Billa Kadiyam",
