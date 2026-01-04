@@ -37,27 +37,25 @@ type Billing = {
 
 function toDateOnlyYYYYMMDD(s: string | null): string | null {
   if (!s) return null;
-  const d1 = new Date(s);
-  if (!Number.isNaN(d1.getTime())) {
-    const y = d1.getFullYear();
-    const m = String(d1.getMonth() + 1).padStart(2, "0");
-    const d = String(d1.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }
-  const firstPart = s.split(",")[0]?.trim();
-  const parts = firstPart?.split("/") ?? [];
-  if (parts.length === 3) {
-    const m = Number(parts[0]);
-    const d = Number(parts[1]);
-    const y = Number(parts[2]);
-    const safe = new Date(y, m - 1, d);
-    if (!Number.isNaN(safe.getTime())) {
-      const mm = String(safe.getMonth() + 1).padStart(2, "0");
-      const dd = String(safe.getDate()).padStart(2, "0");
-      return `${y}-${mm}-${dd}`;
-    }
-  }
-  return null;
+
+  // Ignore time completely
+  const datePart = s.split(" ")[0]; // "03-01-2026"
+
+  const parts = datePart.split("-");
+  if (parts.length !== 3) return null;
+
+  const [dd, mm, yyyy] = parts;
+
+  return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+}
+
+function normalizeWorkStatus(
+  s: string | undefined | null
+): "done" | "pending" | "other" {
+  const v = (s ?? "").toLowerCase().trim();
+  if (v.includes("done")) return "done";
+  if (v.includes("pend")) return "pending";
+  return "other";
 }
 
 function normalizeStatus(
@@ -78,6 +76,9 @@ const AllBillingOrders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "delivered" | "pending"
   >("all");
+  const [workFilter, setWorkFilter] = useState<"all" | "done" | "pending">(
+    "all"
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -117,6 +118,9 @@ const AllBillingOrders: React.FC = () => {
       const norm = normalizeStatus(bill.deliveryStatus);
       if (statusFilter !== "all" && norm !== statusFilter) return false;
 
+      const workNorm = normalizeWorkStatus(bill.workStatus);
+      if (workFilter !== "all" && workNorm !== workFilter) return false;
+
       if (!f && !t) return true;
       const billDay = toDateOnlyYYYYMMDD(bill.billingDate);
       if (!billDay) return false;
@@ -126,12 +130,13 @@ const AllBillingOrders: React.FC = () => {
       if (!f && t) return billDay === t;
       return true;
     });
-  }, [rows, fromDate, toDate, statusFilter]);
+  }, [rows, fromDate, toDate, statusFilter, workFilter]);
 
   const clearFilters = () => {
     setFromDate("");
     setToDate("");
-    setStatusFilter("all"); // 👈 also reset status to ALL
+    setStatusFilter("all");
+    setWorkFilter("all");
   };
 
   const renderStatusChip = (raw: string) => {
@@ -210,10 +215,23 @@ const AllBillingOrders: React.FC = () => {
             InputLabelProps={{ shrink: true }}
             sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
           />
+          <TextField
+            select
+            label="Work Status"
+            size="small"
+            value={workFilter}
+            onChange={(e) => setWorkFilter(e.target.value as any)}
+            sx={{ width: 170, ml: { xs: 0, sm: 1 } }}
+            InputLabelProps={{ shrink: true }}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="done">Done</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+          </TextField>
 
           <TextField
             select
-            label="Status"
+            label="Delivery Status"
             size="small"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}

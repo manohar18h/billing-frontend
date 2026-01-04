@@ -104,6 +104,7 @@ const GenerateBill: React.FC = () => {
     billDueAmount: number;
     selectedOrderIds: string;
     billingDate: string;
+    orderDate: string;
     selectedOrders: Order[]; // keep string since it’s coming in this format
   }
 
@@ -242,6 +243,9 @@ We hope to serve you again soon!
     pearls: { weight: "P.W", amount: "P.A" },
     other: { weight: "O.W", amount: "O.A" },
   };
+
+  const isValidItemCode = (code?: string) =>
+    code && code.trim() !== "" && code.trim() !== "0";
 
   const activeWeightKeys = React.useMemo(() => {
     if (!bill || !bill.selectedOrders) return [];
@@ -479,6 +483,9 @@ We hope to serve you again soon!
             <p className=" text-[#1a1d23]">
               Phone: 9703738824 | www.hambirejewellery.com
             </p>
+            <p className=" text-[#1a1d23]">
+              Date: {new Date().toLocaleString()}
+            </p>
           </div>
           <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200 mr-10">
             <img
@@ -524,19 +531,17 @@ We hope to serve you again soon!
               </span>
             </p>
             <p>
-              <strong className="text-[#B45309]">DATE : </strong>{" "}
-              <span className="font-bold text-[#000000]">
-                {new Date().toLocaleString()}
-              </span>
+              <strong className="text-[#B45309]">Order DATE : </strong>{" "}
+              <span className="font-bold text-[#000000]">{bill.orderDate}</span>
             </p>
 
             {Array.isArray(bill.selectedOrders) &&
-              bill.selectedOrders.some(
-                (order) => order.itemCode?.trim() !== ""
+              bill.selectedOrders.some((order) =>
+                isValidItemCode(order.itemCode)
               ) && (
                 <div className="mt-1">
                   {bill.selectedOrders
-                    .filter((order) => order.itemCode?.trim() !== "")
+                    .filter((order) => isValidItemCode(order.itemCode))
                     .map((order: Order, index: number) => (
                       <p
                         key={index}

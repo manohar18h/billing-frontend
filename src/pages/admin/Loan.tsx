@@ -181,9 +181,10 @@ const Loan: React.FC = () => {
     ) {
       newValue = value
         .split(" ")
-        .filter((word) => word.length > 0)
-        .map(
-          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        .map((word) =>
+          word.length === 0
+            ? ""
+            : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         )
         .join(" ");
     }
