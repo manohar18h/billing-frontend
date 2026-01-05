@@ -34,6 +34,7 @@ const goldItems = [
   "Pressing Gundu Pulla",
   "Kammalu",
   "Stone Kammalu",
+  "Sherlu Kammalu",
   "Pogulu",
   "Mukku Pogu",
   "Sadha Mukku Pogu",
@@ -146,6 +147,7 @@ const silverItems = [
   "Plates & Bowls & Spoons",
   "Plates & Glass & Bowls",
   "Plates & Glass & Bowls & Spoons",
+  "Silver Biscuit",
   "Other",
 ];
 

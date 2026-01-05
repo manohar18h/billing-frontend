@@ -68,7 +68,8 @@ const GenerateLoanBill: React.FC = () => {
     dueInterestAmount: number;
     selectedItemsIds: string;
     loanBillingDate: string;
-    selectedItems: LoanItem[]; // keep string since it’s coming in this format
+    selectedItems: LoanItem[];
+    loanDate: string;
   }
 
   const [loanData, setLoanData] = useState<LoanBill | null>(null);
@@ -422,6 +423,9 @@ We hope to serve you again soon!
             <p className=" text-[#1a1d23]">
               Phone: 9703738824 | www.hambirejewellery.com
             </p>
+            <p className=" text-[#1a1d23]">
+              Date: {new Date().toLocaleDateString("en-GB")}
+            </p>
           </div>
           <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200 mr-10">
             <img
@@ -461,19 +465,18 @@ We hope to serve you again soon!
           </div>
           <div className="text-right text-[#000000]">
             <p>
-              <strong className="text-[#B45309]">INVOICE : </strong>
+              <strong className="text-[#B45309]">Bill No : </strong>
               <span className="text-[#034c33] font-bold">
                 {" "}
                 {loanData.loanBillNumber}
               </span>
             </p>
             <p>
-              <strong className="text-[#B45309]">DATE : </strong>{" "}
+              <strong className="text-[#B45309]">Loan DATE : </strong>{" "}
               <span className="font-bold text-[#000000]">
-                {new Date().toLocaleString()}
+                {loanData.loanDate}
               </span>
             </p>
-
             <p>
               <strong className="text-[#B45309]">Aadhar Card : </strong>
               <span className="text-[#000000] font-semibold">

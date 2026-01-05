@@ -82,6 +82,7 @@ const Orders: React.FC = () => {
     "Pressing Gundu Pulla",
     "Kammalu",
     "Stone Kammalu",
+    "Sherlu Kammalu",
     "Pogulu",
     "Mukku Pogu",
     "Sadha Mukku Pogu",

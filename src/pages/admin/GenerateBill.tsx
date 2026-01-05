@@ -484,7 +484,7 @@ We hope to serve you again soon!
               Phone: 9703738824 | www.hambirejewellery.com
             </p>
             <p className=" text-[#1a1d23]">
-              Date: {new Date().toLocaleString()}
+              Date: {new Date().toLocaleDateString("en-GB")}
             </p>
           </div>
           <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200 mr-10">
@@ -524,7 +524,7 @@ We hope to serve you again soon!
           </div>
           <div className="text-right text-[#000000]">
             <p>
-              <strong className="text-[#B45309]">INVOICE : </strong>
+              <strong className="text-[#B45309]">Bill No : </strong>
               <span className="text-[#034c33] font-bold">
                 {" "}
                 {bill.billNumber}
