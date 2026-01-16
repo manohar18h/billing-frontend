@@ -153,6 +153,8 @@ const LoanItems: React.FC = () => {
     "Necklace",
     "Chain",
     "Gundla Mala",
+    "Gundlu Yannalu",
+    "Design Gundlu",
     "Champaswaralu",
     "Long Haram",
     "Short Haram",
@@ -163,7 +165,8 @@ const LoanItems: React.FC = () => {
     "Papidi Billa",
     "God Idol",
     "God Mokkulu",
-    "Gold Biscuit",
+    "Gold 24 Biscuit",
+    "Gold 22 Biscuit",
     "Other",
   ];
 
@@ -234,9 +237,9 @@ const LoanItems: React.FC = () => {
     "Plates & Bowls & Spoons",
     "Plates & Glass & Bowls",
     "Plates & Glass & Bowls & Spoons",
+    "Silver Biscuit",
     "Other",
   ];
-
   const getItemOptions = () => {
     if (
       item.metal === "24 Gold" ||

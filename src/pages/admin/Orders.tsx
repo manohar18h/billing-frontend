@@ -114,6 +114,8 @@ const Orders: React.FC = () => {
     "Necklace",
     "Chain",
     "Gundla Mala",
+    "Gundlu Yannalu",
+    "Design Gundlu",
     "Champaswaralu",
     "Long Haram",
     "Short Haram",
@@ -124,7 +126,8 @@ const Orders: React.FC = () => {
     "Papidi Billa",
     "God Idol",
     "God Mokkulu",
-    "Gold Biscuit",
+    "Gold 24 Biscuit",
+    "Gold 22 Biscuit",
     "Other",
   ];
 
@@ -195,6 +198,7 @@ const Orders: React.FC = () => {
     "Plates & Bowls & Spoons",
     "Plates & Glass & Bowls",
     "Plates & Glass & Bowls & Spoons",
+    "Silver Biscuit",
     "Other",
   ];
   const bottomOrderRef = useRef<HTMLDivElement | null>(null);

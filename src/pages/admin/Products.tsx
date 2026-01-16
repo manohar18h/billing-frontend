@@ -66,6 +66,8 @@ const goldItems = [
   "Necklace",
   "Chain",
   "Gundla Mala",
+  "Gundlu Yannalu",
+  "Design Gundlu",
   "Champaswaralu",
   "Long Haram",
   "Short Haram",
@@ -76,7 +78,8 @@ const goldItems = [
   "Papidi Billa",
   "God Idol",
   "God Mokkulu",
-  "Gold Biscuit",
+  "Gold 24 Biscuit",
+  "Gold 22 Biscuit",
   "Other",
 ];
 
