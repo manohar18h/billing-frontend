@@ -120,7 +120,7 @@ const BillDetails: React.FC = () => {
       sessionStorage.setItem("customer", JSON.stringify(customerData));
       sessionStorage.setItem(
         "orders",
-        JSON.stringify(customerData.selectedOrders || [])
+        JSON.stringify(customerData.selectedOrders || []),
       );
     } catch (err) {
       console.error("Error fetching bill details:", err);
@@ -213,7 +213,7 @@ const BillDetails: React.FC = () => {
       const response = await api.put(
         `/admin/cancelOrder/${slectOrderId}`,
         {}, // no body
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.status === 200) {
@@ -313,7 +313,7 @@ const BillDetails: React.FC = () => {
                   sessionStorage.removeItem("ordersState");
                   sessionStorage.setItem(
                     "ordersState",
-                    JSON.stringify({ orders, customerId })
+                    JSON.stringify({ orders, customerId }),
                   );
                   sessionStorage.setItem("billingFrom", "BillDetails");
                   console.log("Ids :" + orders.map((order) => order.orderId));
@@ -470,10 +470,10 @@ const BillDetails: React.FC = () => {
                             order.deliveryStatus === "Delivered"
                               ? "#2e7d32" // green
                               : order.deliveryStatus === "Pending"
-                              ? "#ed6c02" // orange/yellow
-                              : order.deliveryStatus === "Canceled"
-                              ? "#d32f2f" // red
-                              : "inherit",
+                                ? "#ed6c02" // orange/yellow
+                                : order.deliveryStatus === "Canceled"
+                                  ? "#d32f2f" // red
+                                  : "inherit",
                           fontWeight: "bold",
                         }}
                       >
@@ -694,7 +694,7 @@ const BillDetails: React.FC = () => {
                 await api.post(
                   `/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
                   {},
-                  { headers: { Authorization: `Bearer ${token}` } }
+                  { headers: { Authorization: `Bearer ${token}` } },
                 );
 
                 const updatedOrders = orders.map((o) => {
@@ -806,7 +806,7 @@ const BillDetails: React.FC = () => {
                 (!workerPayAmount && !workerPayWastage) // both empty
               ) {
                 alert(
-                  "Please fill all required fields (enter either amount or wastage)"
+                  "Please fill all required fields (enter either amount or wastage)",
                 );
                 return;
               }
@@ -826,11 +826,11 @@ const BillDetails: React.FC = () => {
                   requestBody,
                   {
                     headers: { Authorization: `Bearer ${token}` },
-                  }
+                  },
                 );
 
                 const worker = workerList.find(
-                  (w) => w.workerId === selectedWorkerId
+                  (w) => w.workerId === selectedWorkerId,
                 );
                 const updatedOrders = orders.map((o) =>
                   o.orderId === assignOrderId
@@ -840,7 +840,7 @@ const BillDetails: React.FC = () => {
                           fullName: worker?.fullName || "Assigned",
                         },
                       }
-                    : o
+                    : o,
                 );
                 setOrders(updatedOrders);
                 setAssignDialogOpen(false);

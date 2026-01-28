@@ -96,11 +96,11 @@ const BillData: React.FC = () => {
   // ✅ Aggregate values
   const totalOrders = billingData.reduce(
     (sum, bill) => sum + bill.numberOfOrders,
-    0
+    0,
   );
   const totalDueAmount = billingData.reduce(
     (sum, bill) => sum + bill.billDueAmount,
-    0
+    0,
   );
 
   // ✅ Add Order Handler (copied from CustomerDetails)
@@ -109,6 +109,7 @@ const BillData: React.FC = () => {
     const orders = billingData.flatMap((bill) => bill.selectedOrders); // collect all existing orders
 
     localStorage.removeItem("from");
+    localStorage.removeItem("editBillFromBillDetails");
     localStorage.setItem("CusDetailsCustomerId", String(customer?.customerId));
     sessionStorage.setItem("customer", JSON.stringify(customer));
     sessionStorage.setItem("orders", JSON.stringify(orders));
@@ -277,10 +278,10 @@ const BillData: React.FC = () => {
                         bill.deliveryStatus === "Pending"
                           ? "text-yellow-600"
                           : bill.deliveryStatus === "Delivered"
-                          ? "text-green-600"
-                          : bill.deliveryStatus === "Canceled"
-                          ? "text-red-600"
-                          : ""
+                            ? "text-green-600"
+                            : bill.deliveryStatus === "Canceled"
+                              ? "text-red-600"
+                              : ""
                       }`}
                     >
                       {bill.deliveryStatus}

@@ -61,6 +61,7 @@ const goldItems = [
   "Ladies Ring",
   "Men Ring",
   "Fancy Ring",
+  "Fancy Baby Ring",
   "Bracelet H.M",
   "Bracelet M.M",
   "Necklace",
@@ -100,6 +101,7 @@ const silverItems = [
   "Men Ring",
   "Small Ring",
   "Fancy Ring",
+  "Fancy Baby Ring",
   "Kadiyam",
   "Bedi",
   "Small Kadiyam",
@@ -401,7 +403,7 @@ const Products: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const result = res.data;
@@ -452,9 +454,9 @@ const Products: React.FC = () => {
 
       // ✅ axios auto-prepends VITE_API_URL
       const url = `/admin/getStockProduct/${encodeURIComponent(
-        q.metal.trim()
+        q.metal.trim(),
       )}/${encodeURIComponent(q.itemName.trim())}/${encodeURIComponent(
-        q.catalogue.trim()
+        q.catalogue.trim(),
       )}/${encodeURIComponent(q.design.trim())}/${q.size.trim()}/${min}/${max}`;
 
       const res = await api.get<StockProductResponse>(url, {
@@ -511,7 +513,7 @@ const Products: React.FC = () => {
         {
           params: { stock: newStock },
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        }
+        },
       );
 
       let newTotal = current + newStock;
@@ -522,7 +524,7 @@ const Products: React.FC = () => {
         newTotal = data;
       } else if (data && typeof data === "object") {
         newTotal = Number(
-          data.stock ?? data.newStock ?? data.count ?? newTotal
+          data.stock ?? data.newStock ?? data.count ?? newTotal,
         );
       }
 
@@ -531,9 +533,9 @@ const Products: React.FC = () => {
           ? prev.map((p) =>
               p.stockProductId === row.stockProductId
                 ? { ...p, stock: newTotal }
-                : p
+                : p,
             )
-          : prev
+          : prev,
       );
 
       setEditingId(null);
@@ -557,7 +559,7 @@ const Products: React.FC = () => {
 
   // Table B (shown only after a successful submit)
   const [bottomResults, setBottomResults] = useState<StockProduct[] | null>(
-    null
+    null,
   );
 
   const validateProduct = (): boolean => {
@@ -639,7 +641,7 @@ const Products: React.FC = () => {
           headers: {
             Authorization: token ? `Bearer ${token}` : "",
           },
-        }
+        },
       );
       const data = res.data;
       setBottomResults(Array.isArray(data) ? data : [data]);
@@ -696,7 +698,7 @@ const Products: React.FC = () => {
       | "wax"
       | "other",
     field: "weight" | "rate",
-    value: string
+    value: string,
   ) => {
     setProduct((prev) => {
       const next = { ...prev };
@@ -815,9 +817,9 @@ const Products: React.FC = () => {
               q.metal.toLowerCase() === "22 gold"
                 ? goldItems
                 : q.metal.toLowerCase() === "999 silver" ||
-                  q.metal.toLocaleLowerCase() === "995 silver"
-                ? silverItems
-                : []
+                    q.metal.toLocaleLowerCase() === "995 silver"
+                  ? silverItems
+                  : []
               ).map((it) => (
                 <MenuItem key={it} value={it}>
                   {it}
@@ -1159,9 +1161,9 @@ const Products: React.FC = () => {
                     product.metal.toLowerCase() === "22 gold"
                       ? goldItems
                       : product.metal.toLowerCase() === "999 silver" ||
-                        product.metal.toLowerCase() === "995 silver"
-                      ? silverItems
-                      : []
+                          product.metal.toLowerCase() === "995 silver"
+                        ? silverItems
+                        : []
                     ).map((it) => (
                       <MenuItem key={it} value={it}>
                         {it}

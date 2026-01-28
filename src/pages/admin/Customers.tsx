@@ -31,7 +31,7 @@ const SearchAddCustomer: React.FC = () => {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [villageCustomers, setVillageCustomers] = useState<VillageCustomer[]>(
-    []
+    [],
   );
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [deleteMessage, setDeleteMessage] = useState("");
@@ -84,7 +84,7 @@ const SearchAddCustomer: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       console.log("✅ API Response:", res.data);
       setResults(res.data || []);
@@ -118,7 +118,7 @@ const SearchAddCustomer: React.FC = () => {
       newValue = value
         .split(" ")
         .map(
-          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
         )
         .join(" ");
     }
@@ -163,7 +163,7 @@ const SearchAddCustomer: React.FC = () => {
           `/admin/customers/by-village?village=${trimmedQuery}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         setVillageCustomers(res.data as VillageCustomer[]);
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -178,7 +178,7 @@ const SearchAddCustomer: React.FC = () => {
           `/admin/deleteCustomerByPhone/${trimmedQuery}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         setVillageCustomers([]);
@@ -192,6 +192,9 @@ const SearchAddCustomer: React.FC = () => {
       }
     }
   };
+
+  const capitalizeFirst = (value: string) =>
+    value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
 
   const handleAddCustomer = async () => {
     try {
@@ -211,7 +214,7 @@ const SearchAddCustomer: React.FC = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
       }
 
@@ -224,7 +227,7 @@ const SearchAddCustomer: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const result = response.data;
@@ -430,15 +433,16 @@ const SearchAddCustomer: React.FC = () => {
                     loading={loading}
                     value={customer.village || ""}
                     onInputChange={(event, newInputValue) => {
-                      setSearch(newInputValue); // triggers API
-                      handleChange("village", newInputValue); // updates customer state
+                      const formatted = capitalizeFirst(newInputValue);
+                      setSearch(formatted);
+                      handleChange("village", formatted);
                     }}
                     onChange={(event, newValue) => {
-                      handleChange("village", newValue || "");
+                      handleChange("village", capitalizeFirst(newValue || ""));
                     }}
                     renderOption={(props, option) => (
                       <li {...props} key={option}>
-                        {option}
+                        {capitalizeFirst(option)}
                       </li>
                     )}
                     renderInput={(params) => (
@@ -477,8 +481,8 @@ const SearchAddCustomer: React.FC = () => {
                       key === "phoneNumber"
                         ? "Phone Number"
                         : key === "emailId"
-                        ? "Email ID"
-                        : key.charAt(0).toUpperCase() + key.slice(1)
+                          ? "Email ID"
+                          : key.charAt(0).toUpperCase() + key.slice(1)
                     }
                     type={key === "password" ? "password" : "text"}
                     value={customer[key]}

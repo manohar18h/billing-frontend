@@ -50,7 +50,7 @@ const LoanItems: React.FC = () => {
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const token = localStorage.getItem("token");
   const [editBillLoanDetails, setEditBillLoanDetails] = useState<string | null>(
-    null
+    null,
   );
 
   const loanCustomerId =
@@ -292,7 +292,7 @@ const LoanItems: React.FC = () => {
         item,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const updatedItems = [...itemsList, response.data];
 
@@ -305,7 +305,7 @@ const LoanItems: React.FC = () => {
         "itemsState",
         JSON.stringify({
           itemsList: updatedItems,
-        })
+        }),
       );
     } catch (error: any) {
       if (error.response && error.response.data) {
@@ -332,7 +332,7 @@ const LoanItems: React.FC = () => {
         item,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const updatedItem: any = updatedItemFromBackend; // 👈 cast
@@ -343,20 +343,20 @@ const LoanItems: React.FC = () => {
               ...updatedItem,
               due_interest_amount: updatedItem.due_interest_amount,
             }
-          : o
+          : o,
       );
 
       setItemsList(updatedItems);
       sessionStorage.setItem(
         "itemsState",
-        JSON.stringify({ itemsList: updatedItems })
+        JSON.stringify({ itemsList: updatedItems }),
       );
 
       handleClearitem();
       setIsEditing(false);
       setEditingItemId(null);
       alert(
-        "Loan Item updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill"
+        "Loan Item updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill",
       );
 
       console.log("billLoanNumber", billLoanNumber);
@@ -394,7 +394,7 @@ const LoanItems: React.FC = () => {
 
     sessionStorage.setItem(
       "itemsState",
-      JSON.stringify({ itemsList, loanCustomerId })
+      JSON.stringify({ itemsList, loanCustomerId }),
     );
 
     localStorage.setItem("checkEditLoanBill", "NoEdit");
@@ -430,13 +430,13 @@ const LoanItems: React.FC = () => {
         `/admin/getLoanItemByLoanId/${numericLoanId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const data = response.data;
 
       setEditBillLoanDetails(
-        localStorage.getItem("editBillFromBillLoanDetails")
+        localStorage.getItem("editBillFromBillLoanDetails"),
       );
 
       setItemsList([data]);
@@ -791,7 +791,7 @@ const LoanItems: React.FC = () => {
                     inputProps={{
                       ...(typeof value === "number" && {
                         onKeyDown: (
-                          e: React.KeyboardEvent<HTMLInputElement>
+                          e: React.KeyboardEvent<HTMLInputElement>,
                         ) => {
                           if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                             e.preventDefault();
@@ -1245,7 +1245,7 @@ const LoanItems: React.FC = () => {
                 await api.post(
                   `/admin/loanTransaction/${selectedItemId}/${payMethod}/${payType}/${payAmount}`,
                   {},
-                  { headers: { Authorization: `Bearer ${token}` } }
+                  { headers: { Authorization: `Bearer ${token}` } },
                 );
 
                 const updatedItems = itemsList.map((o) => {
@@ -1263,7 +1263,7 @@ const LoanItems: React.FC = () => {
                     newPaidInterestAmount += paid;
                     newExistInterestDue = Math.max(
                       newExistInterestDue - paid,
-                      0
+                      0,
                     );
                   } else if (payType === "Paying Principle") {
                     newExistDue = Math.max(newExistDue - paid, 0);
@@ -1291,13 +1291,13 @@ const LoanItems: React.FC = () => {
 
                 setItemsList(updatedItems);
                 const checkPayEdit = localStorage.getItem(
-                  "editBillFromBillLoanDetails"
+                  "editBillFromBillLoanDetails",
                 );
                 sessionStorage.setItem(
                   "intemsState",
                   JSON.stringify({
                     itemsList: updatedItems,
-                  })
+                  }),
                 );
                 setPayDialogOpen(false);
               } catch (err) {

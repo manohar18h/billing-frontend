@@ -109,6 +109,7 @@ const Orders: React.FC = () => {
     "Ladies Ring",
     "Men Ring",
     "Fancy Ring",
+    "Fancy Baby Ring",
     "Bracelet H.M",
     "Bracelet M.M",
     "Necklace",
@@ -148,6 +149,7 @@ const Orders: React.FC = () => {
     "Men Ring",
     "Small Ring",
     "Fancy Ring",
+    "Fancy Baby Ring",
     "Kadiyam",
     "Bedi",
     "Small Kadiyam",
@@ -259,7 +261,7 @@ const Orders: React.FC = () => {
 
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [editingExchangeId, setEditingExchangeId] = useState<number | null>(
-    null
+    null,
   );
 
   const [order, setOrder] = useState({
@@ -408,7 +410,7 @@ const Orders: React.FC = () => {
         `/admin/getOrderByOrdId/${numericOrderId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const data = response.data;
@@ -444,12 +446,14 @@ const Orders: React.FC = () => {
 
       localStorage.setItem("AllowEdit", "AllowEdit");
 
+      const editBill = localStorage.getItem("editBillFromBillDetails");
+
       sessionStorage.setItem(
         "ordersState",
         JSON.stringify({
           ordersList: updatedOrders,
           exchangeList,
-        })
+        }),
       );
     } catch (error: any) {
       if (error.response && error.response.data) {
@@ -487,7 +491,7 @@ const Orders: React.FC = () => {
       const response = await api.post(
         `/admin/addOldExItem/${orderId}`,
         exchange,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       const newExchangeList = [...exchangeList, response.data];
@@ -514,7 +518,7 @@ const Orders: React.FC = () => {
         JSON.stringify({
           ordersList: updatedOrders,
           exchangeList: newExchangeList,
-        })
+        }),
       );
 
       setExchangeErrors({});
@@ -533,7 +537,7 @@ const Orders: React.FC = () => {
     // Save current state
     sessionStorage.setItem(
       "ordersState",
-      JSON.stringify({ ordersList, exchangeList })
+      JSON.stringify({ ordersList, exchangeList }),
     );
 
     navigate(`/admin/order-details/${orderId}`, {
@@ -706,7 +710,7 @@ const Orders: React.FC = () => {
         if (message === "Yes, It's Deleted") {
           // Remove deleted item from the state
           setOrdersList((prev) =>
-            prev.filter((item) => item.orderId !== slectOrderId)
+            prev.filter((item) => item.orderId !== slectOrderId),
           );
         }
 
@@ -730,13 +734,13 @@ const Orders: React.FC = () => {
         `/admin/deleteOldExItem/${slectOldItemId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (response.status === 200) {
         console.log(response.data); // "Yes Its Deleted"
         setExchangeList((prev) =>
-          prev.filter((item) => item.oldItemId !== slectOldItemId)
+          prev.filter((item) => item.oldItemId !== slectOldItemId),
         );
         const exchangeItemAmount = localStorage.getItem("exchangeItemAmount");
         const orderId = localStorage.getItem("exchangeOrderId");
@@ -745,11 +749,11 @@ const Orders: React.FC = () => {
         console.log("orderId :", orderId);
 
         const updatedDueAmount = Number(
-          localStorage.getItem("updatedDueAmount")
+          localStorage.getItem("updatedDueAmount"),
         );
 
         const newExchangeAmount = Number(
-          localStorage.getItem("newExchangeAmount")
+          localStorage.getItem("newExchangeAmount"),
         );
 
         console.log("updatedDueAmount", updatedDueAmount);
@@ -785,7 +789,7 @@ const Orders: React.FC = () => {
     // Save new data
     sessionStorage.setItem(
       "ordersState",
-      JSON.stringify({ ordersList, exchangeList, customerId })
+      JSON.stringify({ ordersList, exchangeList, customerId }),
     );
 
     // Mark this as a NEW bill (not editing)
@@ -815,12 +819,12 @@ const Orders: React.FC = () => {
         exchange,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       // Update table in UI without reload
       const updatedExchange = exchangeList.map((o) =>
-        o.oldItemId === editingExchangeId ? { ...o, ...exchange } : o
+        o.oldItemId === editingExchangeId ? { ...o, ...exchange } : o,
       );
 
       setExchangeList(updatedExchange);
@@ -830,12 +834,12 @@ const Orders: React.FC = () => {
         `/admin/getOrderByOrdId/${orderId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       // find the exchange just updated
       const newExchange = updatedExchange.find(
-        (ex) => ex.oldItemId === editingExchangeId
+        (ex) => ex.oldItemId === editingExchangeId,
       );
 
       let recalculatedDue = updatedOrderFromBackend.dueAmount;
@@ -855,11 +859,11 @@ const Orders: React.FC = () => {
       localStorage.setItem("updatedDueAmount", recalculatedDue.toString());
       localStorage.setItem(
         "newExchangeAmount",
-        newExchange.exchange_item_amount.toString()
+        newExchange.exchange_item_amount.toString(),
       );
 
       const updatedOrders = ordersList.map((order) =>
-        order.orderId === orderId ? { ...order, ...orderWithDue } : order
+        order.orderId === orderId ? { ...order, ...orderWithDue } : order,
       );
 
       setOrdersList(updatedOrders);
@@ -869,7 +873,7 @@ const Orders: React.FC = () => {
         JSON.stringify({
           ordersList: updatedOrders,
           exchangeList: updatedExchange,
-        })
+        }),
       );
 
       setShowExchangeForm(false);
@@ -906,7 +910,7 @@ const Orders: React.FC = () => {
         order,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const updatedOrder: any = updatedOrderFromBackend; // 👈 cast
@@ -914,13 +918,13 @@ const Orders: React.FC = () => {
       const updatedOrders = ordersList.map((o) =>
         o.orderId === editingOrderId
           ? { ...updatedOrder, dueAmount: updatedOrder.dueAmount }
-          : o
+          : o,
       );
 
       setOrdersList(updatedOrders);
       sessionStorage.setItem(
         "ordersState",
-        JSON.stringify({ ordersList: updatedOrders, exchangeList })
+        JSON.stringify({ ordersList: updatedOrders, exchangeList }),
       );
 
       handleClearOrder();
@@ -929,7 +933,7 @@ const Orders: React.FC = () => {
 
       setEditingOrderId(null);
       alert(
-        "Order updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill"
+        "Order updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill",
       );
       localStorage.setItem("billNumber", billNumber);
 
@@ -960,7 +964,7 @@ const Orders: React.FC = () => {
         `/admin/getByBarcode?barcodeValue=${searchQuery}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const data = response.data;
@@ -1066,6 +1070,9 @@ const Orders: React.FC = () => {
     }
   };
 
+  const isEditBillFromDetails =
+    localStorage.getItem("editBillFromBillDetails") === "editBill";
+
   const [formData, setFormData] = useState({
     metal_weight: "",
     stone_weight: "",
@@ -1153,7 +1160,7 @@ const Orders: React.FC = () => {
   useEffect(() => {
     const { total_item_amount } = calculateTotals(
       order,
-      isEditing ? order.metalPrice : undefined
+      isEditing ? order.metalPrice : undefined,
     );
 
     setOrder((prev) => ({
@@ -1205,7 +1212,7 @@ const Orders: React.FC = () => {
     setExchange((prev) => ({
       ...prev,
       exchange_item_amount: Math.round(
-        (prev.exchange_metal_price * prev.exchange_purity_weight) / 10
+        (prev.exchange_metal_price * prev.exchange_purity_weight) / 10,
       ),
     }));
   }, [exchange.exchange_metal_price, exchange.exchange_purity_weight]);
@@ -1326,7 +1333,7 @@ const Orders: React.FC = () => {
                       metal: selectedMetal,
                       metalPrice: getUpdatedMetalPrice(
                         selectedMetal,
-                        order.itemName
+                        order.itemName,
                       ),
                     });
                   }}
@@ -1502,7 +1509,7 @@ const Orders: React.FC = () => {
                       itemName: newItemName,
                       metalPrice: getUpdatedMetalPrice(
                         order.metal,
-                        newItemName
+                        newItemName,
                       ),
                     });
                   }}
@@ -1623,7 +1630,10 @@ const Orders: React.FC = () => {
           </Button>
           <Button
             variant="contained"
+            disabled={isEditBillFromDetails && !isEditing}
             onClick={() => {
+              if (isEditBillFromDetails && !isEditing) return;
+
               window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
 
               if (isEditing) {
@@ -1631,7 +1641,6 @@ const Orders: React.FC = () => {
               } else {
                 handleOrderSubmit();
               }
-              // 👇 scroll down after action
             }}
           >
             {isEditing ? "Update" : "Submit"}
@@ -1862,7 +1871,7 @@ const Orders: React.FC = () => {
                                   ord.workStatus || ord.work_status || "",
                                 total_item_amount: calculateTotals(
                                   ord,
-                                  ord.metalPrice
+                                  ord.metalPrice,
                                 ).total_item_amount,
                               });
 
@@ -2019,7 +2028,7 @@ const Orders: React.FC = () => {
                       inputProps={{
                         ...(typeof value === "number" && {
                           onKeyDown: (
-                            e: React.KeyboardEvent<HTMLInputElement>
+                            e: React.KeyboardEvent<HTMLInputElement>,
                           ) => {
                             if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                               e.preventDefault();
@@ -2038,7 +2047,7 @@ const Orders: React.FC = () => {
                           ...prev,
                           exchange_metal_price: newPrice,
                           exchange_item_amount: Math.round(
-                            (newPrice * prev.exchange_purity_weight) / 10
+                            (newPrice * prev.exchange_purity_weight) / 10,
                           ),
                         }));
                       }}
@@ -2063,7 +2072,7 @@ const Orders: React.FC = () => {
                       inputProps={{
                         ...(typeof value === "number" && {
                           onKeyDown: (
-                            e: React.KeyboardEvent<HTMLInputElement>
+                            e: React.KeyboardEvent<HTMLInputElement>,
                           ) => {
                             if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                               e.preventDefault();
@@ -2086,15 +2095,15 @@ const Orders: React.FC = () => {
                               ? 0
                               : Number(e.target.value)
                             : key === "exchange_metal_name"
-                            ? e.target.value
-                                .split(" ")
-                                .map(
-                                  (word) =>
-                                    word.charAt(0).toUpperCase() +
-                                    word.slice(1).toLowerCase()
-                                )
-                                .join(" ")
-                            : e.target.value;
+                              ? e.target.value
+                                  .split(" ")
+                                  .map(
+                                    (word) =>
+                                      word.charAt(0).toUpperCase() +
+                                      word.slice(1).toLowerCase(),
+                                  )
+                                  .join(" ")
+                              : e.target.value;
 
                         setExchange((prev) => ({
                           ...prev,
@@ -2105,7 +2114,7 @@ const Orders: React.FC = () => {
                               ? Math.round(
                                   (prev.exchange_metal_price *
                                     Number(e.target.value || 0)) /
-                                    10
+                                    10,
                                 )
                               : prev.exchange_item_amount,
                         }));
@@ -2424,7 +2433,7 @@ const Orders: React.FC = () => {
                 await api.post(
                   `/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
                   {},
-                  { headers: { Authorization: `Bearer ${token}` } }
+                  { headers: { Authorization: `Bearer ${token}` } },
                 );
 
                 const updatedOrders = ordersList.map((o) => {
@@ -2455,7 +2464,7 @@ const Orders: React.FC = () => {
 
                 setOrdersList(updatedOrders);
                 const checkPayEdit = localStorage.getItem(
-                  "editBillFromBillDetails"
+                  "editBillFromBillDetails",
                 );
 
                 if (checkPayEdit === "editBill") {
@@ -2466,7 +2475,7 @@ const Orders: React.FC = () => {
                   JSON.stringify({
                     ordersList: updatedOrders,
                     exchangeList,
-                  })
+                  }),
                 );
 
                 setPayDialogOpen(false);
@@ -2549,7 +2558,7 @@ const Orders: React.FC = () => {
                 (!workerPayAmount && !workerPayWastage) // both empty
               ) {
                 alert(
-                  "Please fill all required fields (enter either amount or wastage)"
+                  "Please fill all required fields (enter either amount or wastage)",
                 );
                 return;
               }
@@ -2569,12 +2578,12 @@ const Orders: React.FC = () => {
                   requestBody,
                   {
                     headers: { Authorization: `Bearer ${token}` },
-                  }
+                  },
                 );
 
                 // ✅ 2. Find the selected worker name from workerList
                 const selectedWorker = workerList.find(
-                  (w) => w.workerId === selectedWorkerId
+                  (w) => w.workerId === selectedWorkerId,
                 );
 
                 // ✅ 3. Update the ordersList state manually to show the name
@@ -2586,7 +2595,7 @@ const Orders: React.FC = () => {
                           fullName: selectedWorker?.fullName || "Assigned",
                         },
                       }
-                    : order
+                    : order,
                 );
 
                 setOrdersList(updatedOrders);
@@ -2594,7 +2603,7 @@ const Orders: React.FC = () => {
                 // ✅ 4. Persist updated state
                 sessionStorage.setItem(
                   "ordersState",
-                  JSON.stringify({ ordersList: updatedOrders, exchangeList })
+                  JSON.stringify({ ordersList: updatedOrders, exchangeList }),
                 );
 
                 // ✅ 5. Close dialog
