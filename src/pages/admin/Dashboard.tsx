@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import api from "@/services/api"; // make sure this import path is correct
 import { MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import "../../App.css";
 
 import {
   DropdownMenu,
@@ -49,6 +50,7 @@ type Billing = {
   billDueAmount: number;
   selectedOrderIds: string;
   billingDate: string | null;
+  checked: boolean;
 };
 
 interface LoanBill {
@@ -70,10 +72,11 @@ interface LoanBill {
   dueInterestAmount: number;
   selectedItemsIds: string;
   loanBillingDate: string;
+  checked: boolean;
 }
 
 function normalizeStatus(
-  s: string | undefined | null
+  s: string | undefined | null,
 ): "delivered" | "pending" | "other" {
   const v = (s ?? "").toLowerCase().trim();
   if (v.includes("deliver")) return "delivered";
@@ -118,7 +121,7 @@ interface BusinessGrowthResponse {
 function useOrdersMetric(
   endpoint: string,
   filter: string,
-  token: string | null
+  token: string | null,
 ) {
   const [data, setData] = useState<OrdersMetric | null>(null);
 
@@ -138,7 +141,7 @@ function useOrdersMetric(
 function useRevenueMetric(
   endpoint: string,
   filter: string,
-  token: string | null
+  token: string | null,
 ) {
   const [data, setData] = useState<RevenueMetric | null>(null);
 
@@ -214,7 +217,7 @@ const MetalPricesCard: React.FC = () => {
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       )
       .then((res) => {
         const { gold24Rate, gold22Rate, silver999Rate, silver995Rate } =
@@ -242,7 +245,7 @@ const MetalPricesCard: React.FC = () => {
           gold24Rate,
           gold22Rate,
           silver999Rate,
-          silver995Rate
+          silver995Rate,
         );
       })
       .catch((err) => console.error("Error updating rates:", err));
@@ -784,7 +787,7 @@ const StatisticCard: React.FC = () => {
           const orderObj = orders.find((o: any) => o.month === monthIndex);
           const cancelObj = canceled.find((c: any) => c.month === monthIndex);
           const revenueObj = revenue.find(
-            (r: any) => r.monthName?.toUpperCase() === m
+            (r: any) => r.monthName?.toUpperCase() === m,
           );
 
           return {
@@ -1013,25 +1016,61 @@ const LatestOrders: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const fetchBillingRows = async () => {
+    try {
+      const token = localStorage.getItem("token") ?? "";
+      const { data } = await api.get<Billing[]>(`/admin/today-bills`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      setRows(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Failed to fetch Todays bills:", e);
+    }
+  };
+
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const token = localStorage.getItem("token") ?? "";
-        const { data } = await api.get<Billing[]>(`/admin/today-bills`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (!alive) return;
-        setRows(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (!alive) return;
-        console.error("Failed to fetch Todays bills:", e);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
+    fetchBillingRows();
   }, []);
+
+  const handleCheckboxChange = async (billId: number, checked: boolean) => {
+    // optimistic update
+    setRows((prev) =>
+      prev.map((row) =>
+        Number(row.billId) === Number(billId) ? { ...row, checked } : row,
+      ),
+    );
+
+    console.log("API Base URL:", api.defaults.baseURL);
+    console.log(
+      "PATCH URL:",
+      `/admin/billing/${billId}/checkbox?checked=${checked}`,
+    );
+
+    try {
+      const token = localStorage.getItem("token") ?? "";
+
+      await api.patch(
+        `/admin/billing/${billId}/checkbox?checked=${checked}`,
+        null,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+      fetchBillingRows();
+    } catch (err) {
+      console.error("Checkbox update failed", err);
+
+      // rollback
+      setRows((prev) =>
+        prev.map((row) =>
+          Number(row.billId) === Number(billId)
+            ? { ...row, checked: !checked }
+            : row,
+        ),
+      );
+    }
+  };
 
   const renderStatusChip = (raw: string) => {
     const n = normalizeStatus(raw);
@@ -1070,6 +1109,9 @@ const LatestOrders: React.FC = () => {
           <thead className="bg-gray-200">
             <tr>
               <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">Check</div>
+              </th>
+              <th className="border px-3 py-2 text-center">
                 <div className="flex justify-center items-center ">
                   Bill Number
                 </div>
@@ -1095,58 +1137,80 @@ const LatestOrders: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {rows.map((r, i) => (
-              <tr key={i} className="bg-white">
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center text-[#4911a9] font-semibold">
-                    {r.billNumber}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center text-[#b6276f] font-semibold">
-                    {r.name}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center  text-[#e38111]  font-semibold">
-                    {r.billTotalAmount}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center text-[#e60b0b] font-semibold">
-                    {r.billDueAmount}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center font-semibold">
-                    {renderStatusChip(r.workStatus)}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center font-semibold">
-                    {renderStatusChip(r.deliveryStatus)}
-                  </div>
-                </td>
+            {rows.map((r) => {
+              const isDelivered =
+                normalizeStatus(r.deliveryStatus) === "delivered";
 
-                <td>
-                  <div className="flex justify-center items-center">
-                    <IconButton
-                      size="medium"
-                      color="primary"
-                      sx={{
-                        "&:hover": { backgroundColor: "#E0E0E0" },
-                      }}
-                      onClick={() => {
-                        localStorage.setItem("billNumber", r.billNumber);
-                        navigate("/admin/bill-details");
-                      }}
-                    >
-                      <VisibilityIcon fontSize="medium" />
-                    </IconButton>
-                  </div>
-                </td>
-              </tr>
-            ))}
+              return (
+                <tr key={r.billId} className="bg-white">
+                  {/* CHECKBOX */}
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(r.checked)}
+                        disabled={isDelivered}
+                        onChange={(e) =>
+                          handleCheckboxChange(
+                            Number(r.billId),
+                            e.target.checked,
+                          )
+                        }
+                        className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+                      />
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center text-[#4911a9] font-semibold">
+                      {r.billNumber}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center text-[#b6276f] font-semibold">
+                      {r.name}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center  text-[#e38111]  font-semibold">
+                      {r.billTotalAmount}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center text-[#e60b0b] font-semibold">
+                      {r.billDueAmount}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center font-semibold">
+                      {renderStatusChip(r.workStatus)}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center font-semibold">
+                      {renderStatusChip(r.deliveryStatus)}
+                    </div>
+                  </td>
+
+                  <td>
+                    <div className="flex justify-center items-center">
+                      <IconButton
+                        size="medium"
+                        color="primary"
+                        sx={{
+                          "&:hover": { backgroundColor: "#E0E0E0" },
+                        }}
+                        onClick={() => {
+                          localStorage.setItem("billNumber", r.billNumber);
+                          navigate("/admin/bill-details");
+                        }}
+                      >
+                        <VisibilityIcon fontSize="medium" />
+                      </IconButton>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -1159,25 +1223,60 @@ const LatestLoanOrders: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const fetchLoanBillingRows = async () => {
+    try {
+      const token = localStorage.getItem("token") ?? "";
+      const { data } = await api.get<LoanBill[]>(`/admin/today-loan-bills`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      setRows(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Failed to fetch Todays Loan bills:", e);
+    }
+  };
+
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const token = localStorage.getItem("token") ?? "";
-        const { data } = await api.get<LoanBill[]>(`/admin/today-loan-bills`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (!alive) return;
-        setRows(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (!alive) return;
-        console.error("Failed to fetch Todays Loan bills:", e);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
+    fetchLoanBillingRows();
   }, []);
+
+  const handleLoanCheckboxChange = async (
+    loanBillId: number,
+    checked: boolean,
+  ) => {
+    // optimistic update
+    setRows((prev) =>
+      prev.map((row) =>
+        Number(row.loanBillId) === Number(loanBillId)
+          ? { ...row, checked }
+          : row,
+      ),
+    );
+
+    try {
+      const token = localStorage.getItem("token") ?? "";
+
+      await api.patch(
+        `/admin/loanBilling/${loanBillId}/checkbox?checked=${checked}`,
+        null,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+      fetchLoanBillingRows();
+    } catch (err) {
+      console.error("Checkbox update failed", err);
+
+      // rollback
+      setRows((prev) =>
+        prev.map((row) =>
+          Number(row.loanBillId) === Number(loanBillId)
+            ? { ...row, checked: !checked }
+            : row,
+        ),
+      );
+    }
+  };
 
   const renderStatusChip = (raw: string) => {
     const n = normalizeStatus(raw);
@@ -1216,6 +1315,9 @@ const LatestLoanOrders: React.FC = () => {
           <thead className="bg-gray-200">
             <tr>
               <th className="border px-3 py-2 text-center">
+                <div className="flex justify-center items-center">Check</div>
+              </th>
+              <th className="border px-3 py-2 text-center">
                 <div className="flex justify-center items-center ">
                   Loan Bill Number
                 </div>
@@ -1248,65 +1350,90 @@ const LatestLoanOrders: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {rows.map((r, i) => (
-              <tr key={i} className="bg-white">
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center text-[#4911a9] font-semibold">
-                    {r.loanBillNumber}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center text-[#b6276f] font-semibold">
-                    {r.name}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center  text-[#e38111]  font-semibold">
-                    {r.totalAmount}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center text-[#e60b0b] font-semibold">
-                    {r.paidInterestAmount}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center font-semibold">
-                    {renderStatusChip(r.itemStatus)}
-                  </div>
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center font-semibold">
-                    {renderStatusChip(r.deliveryStatus)}
-                  </div>
-                </td>
+            {rows.map((r) => {
+              const isDelivered =
+                normalizeStatus(r.deliveryStatus) === "delivered";
 
-                <td>
-                  <div className="flex justify-center items-center">
-                    <IconButton
-                      size="medium"
-                      color="primary"
-                      sx={{
-                        "&:hover": { backgroundColor: "#E0E0E0" },
-                      }}
-                      onClick={() => {
-                        localStorage.removeItem("billLoanNumber");
-                        localStorage.removeItem("checkBackFrom");
+              return (
+                <tr key={r.loanBillId} className="bg-white">
+                  {/* CHECKBOX */}
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(r.checked)}
+                        disabled={isDelivered}
+                        onChange={(e) =>
+                          handleLoanCheckboxChange(
+                            Number(r.loanBillId),
+                            e.target.checked,
+                          )
+                        }
+                        className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+                      />
+                    </div>
+                  </td>
 
-                        localStorage.setItem(
-                          "billLoanNumber",
-                          r.loanBillNumber
-                        );
-                        localStorage.setItem("checkBackFrom", "DashBoard");
-                        navigate("/admin/bill-loan-details");
-                      }}
-                    >
-                      <VisibilityIcon fontSize="medium" />
-                    </IconButton>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  {/* {rows.map((r, i) => (
+              <tr key={i} className="bg-white"> */}
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center text-[#4911a9] font-semibold">
+                      {r.loanBillNumber}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center text-[#b6276f] font-semibold">
+                      {r.name}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center  text-[#e38111]  font-semibold">
+                      {r.totalAmount}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center text-[#e60b0b] font-semibold">
+                      {r.paidInterestAmount}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center font-semibold">
+                      {renderStatusChip(r.itemStatus)}
+                    </div>
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center font-semibold">
+                      {renderStatusChip(r.deliveryStatus)}
+                    </div>
+                  </td>
+
+                  <td>
+                    <div className="flex justify-center items-center">
+                      <IconButton
+                        size="medium"
+                        color="primary"
+                        sx={{
+                          "&:hover": { backgroundColor: "#E0E0E0" },
+                        }}
+                        onClick={() => {
+                          localStorage.removeItem("billLoanNumber");
+                          localStorage.removeItem("checkBackFrom");
+
+                          localStorage.setItem(
+                            "billLoanNumber",
+                            r.loanBillNumber,
+                          );
+                          localStorage.setItem("checkBackFrom", "DashBoard");
+                          navigate("/admin/bill-loan-details");
+                        }}
+                      >
+                        <VisibilityIcon fontSize="medium" />
+                      </IconButton>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -1317,7 +1444,7 @@ const LatestLoanOrders: React.FC = () => {
 /* ---------- Business Growth: static country list + bars ---------- */
 const BusinessGrowth: React.FC = () => {
   const [villages, setVillages] = useState<{ name: string; value: number }[]>(
-    []
+    [],
   );
   const [loading, setLoading] = useState(true);
 
@@ -1333,7 +1460,7 @@ const BusinessGrowth: React.FC = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         // ✅ 3️⃣ Convert object into array
@@ -1341,7 +1468,7 @@ const BusinessGrowth: React.FC = () => {
           ([name, value]) => ({
             name,
             value,
-          })
+          }),
         );
 
         setVillages(transformedData);

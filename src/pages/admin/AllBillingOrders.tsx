@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import api from "@/services/api";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import "../../App.css";
 
 type Billing = {
   billId: number;
@@ -33,6 +34,7 @@ type Billing = {
   billDueAmount: number;
   selectedOrderIds: string;
   billingDate: string | null;
+  checked: boolean;
 };
 
 function toDateOnlyYYYYMMDD(s: string | null): string | null {
@@ -50,7 +52,7 @@ function toDateOnlyYYYYMMDD(s: string | null): string | null {
 }
 
 function normalizeWorkStatus(
-  s: string | undefined | null
+  s: string | undefined | null,
 ): "done" | "pending" | "other" {
   const v = (s ?? "").toLowerCase().trim();
   if (v.includes("done")) return "done";
@@ -59,7 +61,7 @@ function normalizeWorkStatus(
 }
 
 function normalizeStatus(
-  s: string | undefined | null
+  s: string | undefined | null,
 ): "delivered" | "pending" | "other" {
   const v = (s ?? "").toLowerCase().trim();
   if (v.includes("deliver")) return "delivered";
@@ -77,39 +79,74 @@ const AllBillingOrders: React.FC = () => {
     "all" | "delivered" | "pending"
   >("all");
   const [workFilter, setWorkFilter] = useState<"all" | "done" | "pending">(
-    "all"
+    "all",
   );
   const navigate = useNavigate();
 
-  useEffect(() => {
-    let alive = true;
+  const fetchBillingRows = async () => {
     localStorage.removeItem("CheckBack");
-    (async () => {
-      setLoading(true);
-      setErr(null);
-      try {
-        const token = localStorage.getItem("token") ?? "";
-        const { data } = await api.get<Billing[]>(`/admin/getALlBills`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (!alive) return;
-        setRows(Array.isArray(data) ? data : []);
-      } catch (e: any) {
-        if (!alive) return;
-        console.error("Failed to fetch all bills:", e);
-        setErr("Failed to load billing orders.");
-        console.error("Axios error:", e);
-        console.error("Code:", e.code);
-        console.error("Message:", e.message);
-        setErr(e.message);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
+    setLoading(true);
+    setErr(null);
+
+    try {
+      const token = localStorage.getItem("token") ?? "";
+      const { data } = await api.get<Billing[]>(`/admin/getALlBills`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      console.log(data);
+
+      setRows(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Failed to fetch Todays bills:", e);
+      setErr("Failed to load billing orders.");
+    } finally {
+      setLoading(false); // ✅ IMPORTANT
+    }
+  };
+
+  useEffect(() => {
+    fetchBillingRows();
   }, []);
+
+  const handleCheckboxChange = async (billId: number, checked: boolean) => {
+    // optimistic update
+    setRows((prev) =>
+      prev.map((row) =>
+        Number(row.billId) === Number(billId) ? { ...row, checked } : row,
+      ),
+    );
+
+    console.log("API Base URL:", api.defaults.baseURL);
+    console.log(
+      "PATCH URL:",
+      `/admin/billing/${billId}/checkbox?checked=${checked}`,
+    );
+
+    try {
+      const token = localStorage.getItem("token") ?? "";
+
+      await api.patch(
+        `/admin/billing/${billId}/checkbox?checked=${checked}`,
+        null,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+      fetchBillingRows();
+    } catch (err) {
+      console.error("Checkbox update failed", err);
+
+      // rollback
+      setRows((prev) =>
+        prev.map((row) =>
+          Number(row.billId) === Number(billId)
+            ? { ...row, checked: !checked }
+            : row,
+        ),
+      );
+    }
+  };
 
   const filteredRows = useMemo(() => {
     const f = fromDate.trim();
@@ -276,6 +313,11 @@ const AllBillingOrders: React.FC = () => {
                   <tr>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
+                        Check
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
                         Billing Date
                       </div>
                     </th>
@@ -322,80 +364,106 @@ const AllBillingOrders: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRows.map((bill) => (
-                    <tr key={bill.billId} className="bg-white/90">
-                      <td className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          {bill.billingDate ?? "N/A"}
-                        </div>
-                      </td>
+                  {filteredRows.map((bill) => {
+                    const isDelivered =
+                      normalizeStatus(bill.deliveryStatus) === "delivered";
 
-                      <td className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          {bill.billNumber}{" "}
-                        </div>
-                      </td>
-                      <td className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          {bill.name}{" "}
-                        </div>
-                      </td>
-                      <td className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          {renderStatusChip(bill.workStatus)}
-                        </div>
-                      </td>
-                      <td className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          {renderStatusChip(bill.deliveryStatus)}
-                        </div>
-                      </td>
+                    return (
+                      <tr key={bill.billId} className="bg-white/90">
+                        {/* ✅ CHECKBOX COLUMN */}
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(bill.checked)}
+                              disabled={isDelivered}
+                              onChange={(e) =>
+                                handleCheckboxChange(
+                                  Number(bill.billId),
+                                  e.target.checked,
+                                )
+                              }
+                              className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+                            />
+                          </div>
+                        </td>
 
-                      <td className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          {bill.numberOfOrders ?? 0}
-                        </div>
-                      </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.billingDate ?? "N/A"}
+                          </div>
+                        </td>
 
-                      <td className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          {bill.billTotalAmount != null
-                            ? bill.billTotalAmount.toFixed(2)
-                            : "-"}
-                        </div>
-                      </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.billNumber}{" "}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.name}{" "}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {renderStatusChip(bill.workStatus)}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {renderStatusChip(bill.deliveryStatus)}
+                          </div>
+                        </td>
 
-                      <td className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          {bill.billDueAmount != null
-                            ? bill.billDueAmount.toFixed(2)
-                            : "-"}
-                        </div>
-                      </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.numberOfOrders ?? 0}
+                          </div>
+                        </td>
 
-                      <td className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          <IconButton
-                            size="medium"
-                            color="primary"
-                            sx={{
-                              "&:hover": { backgroundColor: "#E0E0E0" },
-                            }}
-                            onClick={() => {
-                              localStorage.setItem(
-                                "billNumber",
-                                bill.billNumber
-                              );
-                              localStorage.setItem("CheckBack", "AllBillBack");
-                              navigate("/admin/bill-details");
-                            }}
-                          >
-                            <VisibilityIcon fontSize="medium" />
-                          </IconButton>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.billTotalAmount != null
+                              ? bill.billTotalAmount.toFixed(2)
+                              : "-"}
+                          </div>
+                        </td>
+
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.billDueAmount != null
+                              ? bill.billDueAmount.toFixed(2)
+                              : "-"}
+                          </div>
+                        </td>
+
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            <IconButton
+                              size="medium"
+                              color="primary"
+                              sx={{
+                                "&:hover": { backgroundColor: "#E0E0E0" },
+                              }}
+                              onClick={() => {
+                                localStorage.setItem(
+                                  "billNumber",
+                                  bill.billNumber,
+                                );
+                                localStorage.setItem(
+                                  "CheckBack",
+                                  "AllBillBack",
+                                );
+                                navigate("/admin/bill-details");
+                              }}
+                            >
+                              <VisibilityIcon fontSize="medium" />
+                            </IconButton>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </Box>

@@ -41,6 +41,7 @@ export interface LoanCustomer {
   dueInterestAmount: number;
   selectedItemsIds: number[];
   loanBillingDate: string;
+  checked: boolean;
 }
 
 function toDateOnlyYYYYMMDD(s: string | null): string | null {
@@ -69,7 +70,7 @@ function toDateOnlyYYYYMMDD(s: string | null): string | null {
 }
 
 function normalizeStatus(
-  s: string | undefined | null
+  s: string | undefined | null,
 ): "delivered" | "pending" | "other" {
   const v = (s ?? "").toLowerCase().trim();
   if (v.includes("deliver")) return "delivered";
@@ -143,7 +144,7 @@ const Loan: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       console.log("✅ API Response:", res.data);
       setResults(res.data || []);
@@ -184,7 +185,7 @@ const Loan: React.FC = () => {
         .map((word) =>
           word.length === 0
             ? ""
-            : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
         )
         .join(" ");
     }
@@ -237,7 +238,7 @@ const Loan: React.FC = () => {
           `/admin/deleteLoanCustomerByPhone/${trimmedQuery}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         toast.success(res.data);
@@ -270,7 +271,7 @@ const Loan: React.FC = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
       }
 
@@ -283,7 +284,7 @@ const Loan: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const result = response.data;
@@ -354,6 +355,41 @@ const Loan: React.FC = () => {
       setErr("Failed to load billing orders.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCheckboxChange = async (loanBillId: number, checked: boolean) => {
+    // optimistic update
+    setRows((prev) =>
+      prev.map((row) =>
+        Number(row.loanBillId) === Number(loanBillId)
+          ? { ...row, checked }
+          : row,
+      ),
+    );
+
+    try {
+      const token = localStorage.getItem("token") ?? "";
+
+      await api.patch(
+        `/admin/loanBilling/${loanBillId}/checkbox?checked=${checked}`,
+        null,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+      loadAllLoanCustomers();
+    } catch (err) {
+      console.error("Checkbox update failed", err);
+
+      // rollback
+      setRows((prev) =>
+        prev.map((row) =>
+          Number(row.loanBillId) === Number(loanBillId)
+            ? { ...row, checked: !checked }
+            : row,
+        ),
+      );
     }
   };
 
@@ -600,10 +636,10 @@ const Loan: React.FC = () => {
                       key === "phoneNumber"
                         ? "Phone Number"
                         : key === "emailId"
-                        ? "Email ID"
-                        : key === "aadharCard"
-                        ? "Aadhar Card"
-                        : key.charAt(0).toUpperCase() + key.slice(1)
+                          ? "Email ID"
+                          : key === "aadharCard"
+                            ? "Aadhar Card"
+                            : key.charAt(0).toUpperCase() + key.slice(1)
                     }
                     value={customer[key]}
                     onChange={(e) => handleChange(key, e.target.value)}
@@ -797,6 +833,11 @@ const Loan: React.FC = () => {
                     <tr>
                       <th className="border px-3 py-2 text-center">
                         <div className="flex justify-center items-center">
+                          Check
+                        </div>
+                      </th>
+                      <th className="border px-3 py-2 text-center">
+                        <div className="flex justify-center items-center">
                           Billing Date
                         </div>
                       </th>
@@ -848,89 +889,110 @@ const Loan: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredRows.map((bill) => (
-                      <tr key={bill.loanBillId} className="bg-white/90">
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {bill.loanBillingDate ?? "N/A"}
-                          </div>
-                        </td>
+                    {filteredRows.map((bill) => {
+                      const isDelivered =
+                        normalizeStatus(bill.deliveryStatus) === "delivered";
+                      return (
+                        <tr key={bill.loanBillId} className="bg-white/90">
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(bill.checked)}
+                                disabled={isDelivered}
+                                onChange={(e) =>
+                                  handleCheckboxChange(
+                                    Number(bill.loanBillId),
+                                    e.target.checked,
+                                  )
+                                }
+                                className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+                              />
+                            </div>
+                          </td>
 
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {bill.loanBillNumber}{" "}
-                          </div>
-                        </td>
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {bill.name}{" "}
-                          </div>
-                        </td>
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {bill.village}{" "}
-                          </div>
-                        </td>
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              {bill.loanBillingDate ?? "N/A"}
+                            </div>
+                          </td>
 
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {renderStatusChip(bill.itemStatus)}
-                          </div>
-                        </td>
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {renderStatusChip(bill.deliveryStatus)}
-                          </div>
-                        </td>
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              {bill.loanBillNumber}{" "}
+                            </div>
+                          </td>
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              {bill.name}{" "}
+                            </div>
+                          </td>
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              {bill.village}{" "}
+                            </div>
+                          </td>
 
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {bill.numberOfItems ?? 0}
-                          </div>
-                        </td>
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              {renderStatusChip(bill.itemStatus)}
+                            </div>
+                          </td>
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              {renderStatusChip(bill.deliveryStatus)}
+                            </div>
+                          </td>
 
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {bill.totalAmount != null
-                              ? bill.totalAmount.toFixed(2)
-                              : "-"}
-                          </div>
-                        </td>
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              {bill.numberOfItems ?? 0}
+                            </div>
+                          </td>
 
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {bill.dueAmount != null
-                              ? bill.dueAmount.toFixed(2)
-                              : "-"}
-                          </div>
-                        </td>
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              {bill.totalAmount != null
+                                ? bill.totalAmount.toFixed(2)
+                                : "-"}
+                            </div>
+                          </td>
 
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            <IconButton
-                              size="medium"
-                              color="primary"
-                              sx={{
-                                "&:hover": { backgroundColor: "#E0E0E0" },
-                              }}
-                              onClick={() => {
-                                localStorage.removeItem("billLoanNumber");
-                                localStorage.removeItem("checkBackFrom");
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              {bill.dueAmount != null
+                                ? bill.dueAmount.toFixed(2)
+                                : "-"}
+                            </div>
+                          </td>
 
-                                localStorage.setItem(
-                                  "billLoanNumber",
-                                  bill.loanBillNumber
-                                );
-                                localStorage.setItem("checkBackFrom", "Loan");
-                                navigate("/admin/bill-loan-details");
-                              }}
-                            >
-                              <VisibilityIcon fontSize="medium" />
-                            </IconButton>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          <td className="border px-3 py-2 text-center">
+                            <div className="flex justify-center items-center">
+                              <IconButton
+                                size="medium"
+                                color="primary"
+                                sx={{
+                                  "&:hover": { backgroundColor: "#E0E0E0" },
+                                }}
+                                onClick={() => {
+                                  localStorage.removeItem("billLoanNumber");
+                                  localStorage.removeItem("checkBackFrom");
+
+                                  localStorage.setItem(
+                                    "billLoanNumber",
+                                    bill.loanBillNumber,
+                                  );
+                                  localStorage.setItem("checkBackFrom", "Loan");
+                                  navigate("/admin/bill-loan-details");
+                                }}
+                              >
+                                <VisibilityIcon fontSize="medium" />
+                              </IconButton>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </Box>

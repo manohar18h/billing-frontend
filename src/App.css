@@ -1,8 +1,8 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 
 .logo {
@@ -16,6 +16,45 @@
 }
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+.jewel-checkbox {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  border: 2px solid #d4af37 !important;
+  background: white !important;
+  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease;
+}
+
+.jewel-checkbox:checked {
+  background: radial-gradient(circle, #f5d76e, #d4af37) !important;
+  border-color: #b8962e !important;
+}
+
+.jewel-checkbox:checked::after {
+  content: "✓";
+  color: #5c3a00;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.jewel-checkbox:hover {
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
+}
+
+.jewel-checkbox:disabled {
+  cursor: not-allowed;
+  background: radial-gradient(circle, #a7a5a5, #494949) !important;
+  border-color: #b8962e !important;
+  opacity: 0.35;
+  box-shadow: none;
 }
 
 @keyframes logo-spin {

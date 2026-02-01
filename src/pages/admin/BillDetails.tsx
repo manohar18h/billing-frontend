@@ -38,6 +38,7 @@ interface selectedOrders {
   deliveryStatus: string;
   dueAmount: number;
   workerPay?: { fullName: string };
+  workAssigned?: { workerName: string };
 }
 
 export interface Customer {
@@ -256,6 +257,38 @@ const BillDetails: React.FC = () => {
     });
   };
 
+  const [assignWorkDialogOpen, setAssignWorkDialogOpen] = useState(false);
+  const [workerNameInput, setWorkerNameInput] = useState("");
+
+  const handleSaveWorkerName = async () => {
+    try {
+      if (!assignOrderId) return;
+
+      console.log("assignOrderId", { assignOrderId });
+      console.log("workerNameInput", workerNameInput.trim().toString);
+      console.log("token", token);
+
+      await api.post(
+        `/admin/order/${assignOrderId}/workAssigned`,
+        { workerName: workerNameInput.trim() },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      await fetchCustomerDetails(); // refresh table
+
+      setAssignWorkDialogOpen(false); // ✅ correct state
+      setWorkerNameInput("");
+      setAssignOrderId(null);
+    } catch (err) {
+      console.log("Worker assign failed", err);
+    }
+  };
+
   const asNumber = (v: string | number | null | undefined): number =>
     v == null || v === "" ? 0 : Number(v);
 
@@ -435,9 +468,9 @@ const BillDetails: React.FC = () => {
                     <th className="border px-3 py-2">Status</th>
                     <th className="border px-3 py-2">Total</th>
                     <th className="border px-3 py-2">Paid</th>
-
                     <th className="border px-3 py-2">Due</th>
                     <th className="border px-3 py-2">Worker</th>
+                    <th className="border px-3 py-2">Wrk.A</th>
                     <th className="border px-3 py-2">Pay</th>
                     <th className="border px-3 py-2">View</th>
                     <th className="border px-3 py-2">Edit</th>
@@ -531,6 +564,55 @@ const BillDetails: React.FC = () => {
                         )}
                       </TableCell>
 
+                      <TableCell className="border px-3 py-2">
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          {/* Show name if exists else show "-" */}
+                          <span
+                            style={{
+                              cursor: "pointer",
+                              fontWeight: 600,
+                              color: order.workAssigned?.workerName
+                                ? "#222"
+                                : "#999",
+                            }}
+                            onClick={() => {
+                              setAssignOrderId(order.orderId);
+                              setWorkerNameInput(
+                                order.workAssigned?.workerName || "",
+                              );
+                              setAssignWorkDialogOpen(true);
+                            }}
+                          >
+                            {order.workAssigned?.workerName || "Add"}
+                          </span>
+
+                          {/* Always show icon */}
+                          <IconButton
+                            size="small"
+                            sx={{
+                              color: "#9C27B0",
+                              "&:hover": { backgroundColor: "#E0E0E0" },
+                              borderRadius: "50%",
+                            }}
+                            onClick={() => {
+                              setAssignOrderId(order.orderId);
+                              setWorkerNameInput(
+                                order.workAssigned?.workerName || "",
+                              );
+                              setAssignWorkDialogOpen(true);
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </div>
+                      </TableCell>
+
                       <TableCell className={`border px-3 py-2 `}>
                         {asNumber(order.dueAmount) !== 0 ? (
                           <IconButton
@@ -600,6 +682,7 @@ const BillDetails: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ))}
+
                   <Dialog open={orderOpen} onClose={handleOrderClose}>
                     <DialogTitle>Confirm Cancelation</DialogTitle>
                     <DialogContent>
@@ -851,6 +934,36 @@ const BillDetails: React.FC = () => {
             }}
           >
             Assign
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={assignWorkDialogOpen}
+        onClose={() => setAssignWorkDialogOpen(false)}
+      >
+        <DialogTitle>
+          {workerNameInput ? "Update Worker Name" : "Assign Worker Name"}
+        </DialogTitle>
+
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Worker Name"
+            value={workerNameInput}
+            onChange={(e) => setWorkerNameInput(e.target.value)}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setAssignWorkDialogOpen(false)}>Cancel</Button>
+
+          <Button
+            variant="contained"
+            onClick={handleSaveWorkerName}
+            disabled={!workerNameInput.trim()}
+          >
+            Save
           </Button>
         </DialogActions>
       </Dialog>
