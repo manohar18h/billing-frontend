@@ -117,11 +117,7 @@ const AllBillingOrders: React.FC = () => {
       ),
     );
 
-    console.log("API Base URL:", api.defaults.baseURL);
-    console.log(
-      "PATCH URL:",
-      `/admin/billing/${billId}/checkbox?checked=${checked}`,
-    );
+  
 
     try {
       const token = localStorage.getItem("token") ?? "";
