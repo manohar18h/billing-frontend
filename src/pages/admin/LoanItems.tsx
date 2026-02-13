@@ -206,6 +206,8 @@ const LoanItems: React.FC = () => {
     "Jaler Pattilu",
     "S-Patagolsu",
     "Nadumu Golusu",
+    "Chekkudu Gutti - HM",
+    "Chekkudu Gutti - MM",
     "Locket",
     "Bangle",
     "Baby Bangle",
