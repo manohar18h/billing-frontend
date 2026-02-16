@@ -57,7 +57,7 @@ type BarcodeProduct = {
   stockBox: string;
   itemCode: string;
   gross_weight: number;
-  barcodeValue: string;
+  barcodeValue?: string;
 };
 
 type AppWorker = {
