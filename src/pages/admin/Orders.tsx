@@ -57,6 +57,7 @@ type BarcodeProduct = {
   stockBox: string;
   itemCode: string;
   gross_weight: number;
+  barcodeValue: string;
 };
 
 type AppWorker = {
@@ -297,6 +298,7 @@ const Orders: React.FC = () => {
     deliveryStatus: "",
     workStatus: "",
     total_item_amount: 0,
+    barcodeValue: "",
   });
 
   const [orderErrors, setOrderErrors] = useState<{ [key: string]: string }>({});
@@ -1051,6 +1053,7 @@ const Orders: React.FC = () => {
         stockBox: data.stockBox ?? prev.stockBox,
         itemCode: data.itemCode ?? prev.itemCode,
         gross_weight: data.gross_weight ?? prev.gross_weight,
+        barcodeValue: data.barcodeValue ?? prev.barcodeValue,
 
         // ✅ newly added
 
@@ -1865,6 +1868,7 @@ const Orders: React.FC = () => {
                                 stockBox: ord.stockBox || 0,
                                 itemCode: ord.itemCode || 0,
                                 discount: ord.discount || 0,
+                                barcodeValue: ord.barcodeValue || 0,
                                 deliveryStatus:
                                   ord.deliveryStatus ||
                                   ord.delivery_status ||
