@@ -253,6 +253,7 @@ const Orders: React.FC = () => {
       discount: 0.0,
       deliveryStatus: "",
       workStatus: "",
+      barcodeValue: "",
       total_item_amount: 0,
     });
     setOrderErrors({});
