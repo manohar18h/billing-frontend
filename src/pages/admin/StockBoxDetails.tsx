@@ -8,6 +8,8 @@ type StockBoxDataEntry = {
   methodType: string;
   metalWeight: number;
   date: string;
+  methodType2?: string;
+  sellingDate?: string;
 };
 
 type StockDataBox = {
@@ -61,6 +63,8 @@ const StockBoxDetails: React.FC = () => {
                 <th className="border px-3 py-2 text-left">Method</th>
                 <th className="border px-3 py-2 text-left">Metal Weight</th>
                 <th className="border px-3 py-2 text-left">Date</th>
+                <th className="border px-3 py-2 text-left">Method2</th>
+                <th className="border px-3 py-2 text-left">Selling Date</th>
               </tr>
             </thead>
             <tbody>
@@ -73,14 +77,16 @@ const StockBoxDetails: React.FC = () => {
                       entry.methodType === "ADDED"
                         ? "text-green-600"
                         : entry.methodType === "SELL"
-                        ? "text-red-600"
-                        : "text-gray-800"
+                          ? "text-red-600"
+                          : "text-gray-800"
                     }`}
                   >
                     {entry.methodType}
                   </td>
                   <td className="border px-3 py-2">{entry.metalWeight}</td>
                   <td className="border px-3 py-2">{entry.date}</td>
+                  <td className="border px-3 py-2">{entry.methodType2}</td>
+                  <td className="border px-3 py-2">{entry.sellingDate}</td>
                 </tr>
               ))}
             </tbody>

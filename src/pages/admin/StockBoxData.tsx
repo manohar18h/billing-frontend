@@ -17,7 +17,9 @@ type StockBoxDataEntry = {
   pieces: number;
   methodType: string;
   metalWeight: number;
+  methodType2?: string;
   date: string;
+  sellingDate?: string;
 };
 
 type StockDataBox = {
@@ -46,7 +48,7 @@ const StockBoxData: React.FC = () => {
           `/admin/getALlStockBox`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          }
+          },
         );
         if (!alive) return;
         setRows(Array.isArray(data) ? data : []);
@@ -67,7 +69,7 @@ const StockBoxData: React.FC = () => {
   const filteredRows = useMemo(() => {
     if (!search.trim()) return rows;
     return rows.filter((box) =>
-      box.stockBoxName.toLowerCase().includes(search.toLowerCase())
+      box.stockBoxName.toLowerCase().includes(search.toLowerCase()),
     );
   }, [rows, search]);
 
@@ -172,10 +174,10 @@ const StockBoxData: React.FC = () => {
                           onClick={() => {
                             localStorage.setItem(
                               "selectedStockBox",
-                              JSON.stringify(box)
+                              JSON.stringify(box),
                             );
                             navigate(
-                              `/admin/StockBoxDetails/${box.stockBoxId}`
+                              `/admin/StockBoxDetails/${box.stockBoxId}`,
                             );
                           }}
                         >
