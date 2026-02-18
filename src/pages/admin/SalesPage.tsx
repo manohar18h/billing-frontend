@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   TextField,
   Box,
@@ -86,6 +86,7 @@ const SalesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [search, setSearch] = useState<string>(""); // 👈 search state
 
   useEffect(() => {
     let alive = true;
@@ -97,7 +98,7 @@ const SalesPage: React.FC = () => {
           `/sales/getALlStockBox`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          }
+          },
         );
         if (!alive) return;
         setRows(Array.isArray(data) ? data : []);
@@ -159,7 +160,7 @@ const SalesPage: React.FC = () => {
     try {
       const response = await api.get<BarcodeProduct>(
         `/sales/getDataByBarcode?barcodeValue=${searchQuery}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       const data = response.data;
@@ -185,6 +186,14 @@ const SalesPage: React.FC = () => {
       alert("Barcode not found or error occurred");
     }
   };
+
+  // 👇 Filter rows by stockBoxName
+  const filteredRows = useMemo(() => {
+    if (!search.trim()) return rows;
+    return rows.filter((box) =>
+      box.stockBoxName.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [rows, search]);
 
   return (
     <div className="p-6 bg-white text-black">
@@ -486,8 +495,8 @@ const SalesPage: React.FC = () => {
                 {order.metal.includes("Gold")
                   ? "Gold"
                   : order.metal.includes("Silver")
-                  ? "Silver"
-                  : ""}
+                    ? "Silver"
+                    : ""}
                 ({(metalPrice / 10).toFixed(2)}/gm)
               </span>
               <span>
@@ -632,14 +641,16 @@ const SalesPage: React.FC = () => {
           </div>
         )}
       </Box>
-      <div className="text-center mt-6 print:hidden">
-        <button
-          onClick={() => window.print()}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4"
-        >
-          🖨️ Print Estimation
-        </button>
-      </div>
+      {showEstimation && (
+        <div className="text-center mt-6 print:hidden">
+          <button
+            onClick={() => window.print()}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4"
+          >
+            🖨️ Print Estimation
+          </button>
+        </div>
+      )}
 
       <div className="mt-10 p-3 flex flex-col items-center justify-center">
         <Paper
@@ -664,6 +675,18 @@ const SalesPage: React.FC = () => {
             All Stock Box Data
           </Typography>
 
+          {/* 🔍 Search Bar */}
+          <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+            <TextField
+              label="Search by Stock Box Name"
+              variant="outlined"
+              size="small"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ width: 250 }}
+            />
+          </Box>
+
           {loading ? (
             <div className="flex items-center gap-3 py-6">
               <CircularProgress size={22} />
@@ -671,6 +694,8 @@ const SalesPage: React.FC = () => {
             </div>
           ) : err ? (
             <p className="text-red-600 py-4">{err}</p>
+          ) : filteredRows.length === 0 ? (
+            <p className="py-4">No stock boxes found.</p>
           ) : (
             <div className="mt-4">
               <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
@@ -689,7 +714,7 @@ const SalesPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((box) => (
+                  {filteredRows.map((box) => (
                     <tr key={box.stockBoxId} className="bg-white/90">
                       <td className="border px-3 py-2">{box.stockBoxName}</td>
                       <td className="border px-3 py-2">
@@ -705,10 +730,10 @@ const SalesPage: React.FC = () => {
                           onClick={() => {
                             localStorage.setItem(
                               "selectedStockBox",
-                              JSON.stringify(box)
+                              JSON.stringify(box),
                             );
                             navigate(
-                              `/admin/salesStockBoxDetails/${box.stockBoxId}`
+                              `/admin/salesStockBoxDetails/${box.stockBoxId}`,
                             );
                           }}
                         >
