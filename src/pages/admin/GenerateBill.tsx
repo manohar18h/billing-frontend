@@ -176,7 +176,7 @@ We hope to serve you again soon!
       window.open(url, "_blank");
 
       alert(
-        "Message copied to clipboard ✅ \nWhatsApp Web opened. You can paste and send manually."
+        "Message copied to clipboard ✅ \nWhatsApp Web opened. You can paste and send manually.",
       );
     });
   };
@@ -201,7 +201,7 @@ We hope to serve you again soon!
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
-            }
+            },
           );
 
           setBill(res.data);
@@ -217,7 +217,7 @@ We hope to serve you again soon!
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
-            }
+            },
           );
           setBill(response.data);
           SetMsgTitle(`Your order placed Successfully`);
@@ -258,14 +258,14 @@ We hope to serve you again soon!
         return bill.selectedOrders.some(
           (item) =>
             (item[`${key}_weight`] as number) > 0 ||
-            (item[`${key}_amount`] as number) > 0
+            (item[`${key}_amount`] as number) > 0,
         );
       }
       // normal logic for others
       return bill.selectedOrders.some(
         (item) =>
           (item[`${key}_weight`] as number) > 0 ||
-          (item[`${key}_amount`] as number) > 0
+          (item[`${key}_amount`] as number) > 0,
       );
     });
   }, [bill]);
@@ -537,7 +537,7 @@ We hope to serve you again soon!
 
             {Array.isArray(bill.selectedOrders) &&
               bill.selectedOrders.some((order) =>
-                isValidItemCode(order.itemCode)
+                isValidItemCode(order.itemCode),
               ) && (
                 <div className="mt-1">
                   {bill.selectedOrders
@@ -589,7 +589,7 @@ We hope to serve you again soon!
 
                     {key === "other" &&
                       bill.selectedOrders.some(
-                        (item) => item.other_weight && item.other_weight > 0
+                        (item) => item.other_weight && item.other_weight > 0,
                       ) && (
                         <th className="border px-2 py-1 capitalize">
                           {shortLabels[key]?.weight || "O.Wt"}
@@ -637,12 +637,12 @@ We hope to serve you again soon!
                     {item.metal === "22 Gold"
                       ? "22k-916"
                       : item.metal === "24 Gold"
-                      ? "24k"
-                      : item.metal === "995 Silver"
-                      ? "995"
-                      : item.metal === "999 Silver"
-                      ? "Kamal"
-                      : item.metal}
+                        ? "24k"
+                        : item.metal === "995 Silver"
+                          ? "995"
+                          : item.metal === "999 Silver"
+                            ? "Kamal"
+                            : item.metal}
                   </td>
                   <td className="border px-2 py-1 text-[#004848] font-bold text-center align-middle text-[13px]">
                     {item.metalPrice}
@@ -663,7 +663,7 @@ We hope to serve you again soon!
                         <td className="border px-2 py-1 text-[#1f1f1f] font-bold text-center align-middle">
                           {getNumericField(
                             item,
-                            `${key}_weight` as keyof Order
+                            `${key}_weight` as keyof Order,
                           ) ?? "-"}
                         </td>
                       )}
@@ -676,7 +676,7 @@ We hope to serve you again soon!
                         <td className="border px-2 py-1 text-[#1f1f1f]  font-bold text-center align-middle">
                           {getNumericField(
                             item,
-                            `${key}_amount` as keyof Order
+                            `${key}_amount` as keyof Order,
                           ) ?? "-"}
                         </td>
                       )}
@@ -715,12 +715,12 @@ We hope to serve you again soon!
                         {ex.exchange_metal === "22 Gold"
                           ? "22k"
                           : ex.exchange_metal === "24 Gold"
-                          ? "24k"
-                          : ex.exchange_metal === "995 Silver"
-                          ? "999 S"
-                          : ex.exchange_metal === "999 Silver"
-                          ? "999 K"
-                          : ex.exchange_metal}
+                            ? "24k"
+                            : ex.exchange_metal === "995 Silver"
+                              ? "999 S"
+                              : ex.exchange_metal === "999 Silver"
+                                ? "999 K"
+                                : ex.exchange_metal}
                       </td>
 
                       <td className="border px-2 py-1 text-[#004848] font-bold text-center align-middle text-[13px]">
@@ -773,7 +773,7 @@ We hope to serve you again soon!
                         ₹{ex.exchange_item_amount}
                       </td>
                     </tr>
-                  )) || []
+                  )) || [],
               )}
             </tbody>
           </table>
@@ -847,7 +847,7 @@ We hope to serve you again soon!
               మా వద్ద చేయించిన 91.6 గోల్డ్ ఆభరణాలు తిరిగి 90% ఇవ్వబడును.
             </h6>
             <h6 className="text-base">
-              మా వద్ద చెయించిన్న ☆ పట్టీలు 80% సోక్కం ఇవ్వబడును.
+              మా వద్ద చెయించిన్న ☆ HJ పట్టీలు 80% సోక్కం ఇవ్వబడును.
             </h6>
           </div>
           <h5 className="text-base mt-4 ml-14">
