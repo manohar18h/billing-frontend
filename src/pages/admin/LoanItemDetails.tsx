@@ -35,7 +35,7 @@ const LoanItemDetails: React.FC = () => {
     deliveryStatus: number;
     lastInterestUpdateDate: number;
 
-    enamel_weight: number;
+    itemStatus: string;
 
     loanTotalAmtHistories: LoanTotalAmtHistory[];
 
@@ -69,7 +69,7 @@ const LoanItemDetails: React.FC = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         setItem(response.data); // ✅ now TypeScript knows response.data is Order
@@ -92,7 +92,7 @@ const LoanItemDetails: React.FC = () => {
 
   const displayField = (
     label: string,
-    value: string | number | boolean | null | undefined
+    value: string | number | boolean | null | undefined,
   ) => (
     <div className="flex justify-between border-b py-1 text-sm">
       <span className="font-medium text-gray-600">{label}:</span>
@@ -166,6 +166,7 @@ const LoanItemDetails: React.FC = () => {
               ["Paid Interest Amount", item.paid_interest_amount],
               ["Due Interest Amount", item.due_interest_amount],
               ["Active Month Count", item.active_month_count],
+              ["Item Status", item.itemStatus || "Not Packed"],
               ["Delivery Status", item.deliveryStatus],
             ].map(([label, value]) => (
               <p key={label} className="mb-2 text-lg">

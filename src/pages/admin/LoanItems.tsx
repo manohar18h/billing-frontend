@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Checkbox, ListItemText } from "@mui/material";
+
 import {
   TextField,
   Button,
@@ -73,7 +75,7 @@ const LoanItems: React.FC = () => {
   const handleClearitem = () => {
     setItem({
       metal: "",
-      itemName: "",
+      itemName: [] as string[],
       gross_weight: 0.0,
       net_weight: 0.0,
       rate_of_interest: 0.0,
@@ -91,7 +93,7 @@ const LoanItems: React.FC = () => {
 
   const [item, setItem] = useState({
     metal: "",
-    itemName: "",
+    itemName: [] as string[],
     gross_weight: 0.0,
     net_weight: 0.0,
     rate_of_interest: 0.0,
@@ -151,6 +153,8 @@ const LoanItems: React.FC = () => {
     "Bracelet H.M",
     "Bracelet M.M",
     "Necklace",
+    "Nallapusalu Chain",
+    "7 piece Necklace",
     "Chain",
     "Gundla Mala",
     "Gundlu Yannalu",
@@ -286,21 +290,29 @@ const LoanItems: React.FC = () => {
   const handleItemSubmit = async () => {
     console.log("customerid  in order  :  " + loanCustomerId);
     console.log("Token id: " + token);
-    console.log("Request Body:", JSON.stringify(item, null, 2));
+
+    // ✅ Convert array → comma separated string
+    const payload = {
+      ...item,
+      itemName: item.itemName.join(", "),
+    };
+
+    console.log("Request Body:", JSON.stringify(payload, null, 2));
 
     try {
       const response = await api.post(
         `/admin/addLoanItem/${loanCustomerId}`,
-        item,
+        payload, // ✅ send converted payload
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
+
       const updatedItems = [...itemsList, response.data];
+      localStorage.setItem("AllowExEdit", "AllowExEdit");
 
-      setItemsList([...itemsList, response.data]);
+      setItemsList(updatedItems);
       setItemErrors({});
-
       handleClearitem();
 
       sessionStorage.setItem(
@@ -311,7 +323,7 @@ const LoanItems: React.FC = () => {
       );
     } catch (error: any) {
       if (error.response && error.response.data) {
-        setItemErrors(error.response.data); // assumes { field: "error message" }
+        setItemErrors(error.response.data);
       } else {
         alert("Failed to submit Item");
         console.error("Item submission failed:", error);
@@ -319,25 +331,41 @@ const LoanItems: React.FC = () => {
     }
   };
   useEffect(() => {
+    localStorage.removeItem("AllowExEdit");
+
     if (itemsList.length > 0) {
       bottomOrderRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [itemsList]);
+
   const handleUpdateItem = async () => {
     if (!editingItemId) return;
 
-    localStorage.removeItem("billLoanNumber");
+    console.log("Editing ID:", editingItemId);
+    console.log("Original Item State:", item);
+
+    // ✅ Convert array → string for backend
+    const payload = {
+      ...item,
+      itemName: Array.isArray(item.itemName)
+        ? item.itemName.join(", ")
+        : item.itemName,
+    };
+
+    console.log("Update Request Body:", JSON.stringify(payload, null, 2));
 
     try {
       const { data: updatedItemFromBackend } = await api.put(
         `/admin/updateItem/${editingItemId}`,
-        item,
+        payload, // ✅ send converted payload
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
 
-      const updatedItem: any = updatedItemFromBackend; // 👈 cast
+      console.log("Backend Response:", updatedItemFromBackend);
+
+      const updatedItem: any = updatedItemFromBackend;
 
       const updatedItems = itemsList.map((o) =>
         o.loanId === editingItemId
@@ -349,6 +377,7 @@ const LoanItems: React.FC = () => {
       );
 
       setItemsList(updatedItems);
+
       sessionStorage.setItem(
         "itemsState",
         JSON.stringify({ itemsList: updatedItems }),
@@ -357,17 +386,23 @@ const LoanItems: React.FC = () => {
       handleClearitem();
       setIsEditing(false);
       setEditingItemId(null);
+
       alert(
-        "Loan Item updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill",
+        "Loan Item updated successfully, Don't forget to Generate Updated Bill",
       );
 
-      console.log("billLoanNumber", billLoanNumber);
-      localStorage.setItem("billLoanNumber", billLoanNumber);
-      navigate(`/admin/bill-loan-details`, {
-        replace: true,
-      });
+      if (billLoanNumber) {
+        localStorage.setItem("billLoanNumber", billLoanNumber);
+
+        navigate(`/admin/bill-loan-details`, {
+          replace: true,
+        });
+      }
     } catch (error: any) {
+      console.error("Update Error:", error);
+
       if (error.response?.data) {
+        console.log("Backend Validation Errors:", error.response.data);
         setItemErrors(error.response.data);
       } else {
         alert("Failed to update order");
@@ -458,6 +493,7 @@ const LoanItems: React.FC = () => {
       setItemsList([]);
       sessionStorage.removeItem("itemsState");
     } else if (showItemsList && savedState) {
+      localStorage.removeItem("AllowExEdit");
       const { itemsList } = JSON.parse(savedState);
       setItemsList(itemsList || []);
     } else if (!showItemsList && savedState) {
@@ -744,37 +780,26 @@ const LoanItems: React.FC = () => {
                     select
                     label="Item Name"
                     value={item.itemName}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const value = e.target.value;
+
                       setItem({
                         ...item,
-                        itemName: e.target.value,
-                      })
-                    }
-                    error={!!itemErrors.itemName}
-                    helperText={itemErrors.itemName || ""}
+                        itemName:
+                          typeof value === "string" ? value.split(",") : value,
+                      });
+                    }}
+                    SelectProps={{
+                      multiple: true,
+                      renderValue: (selected) =>
+                        (selected as string[]).join(", "),
+                    }}
                     fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      style: { color: "#333" },
-                      shrink: true, // ✅ ensures label is always visible
-                    }}
-                    InputProps={{
-                      style: { fontWeight: 500 },
-                    }}
-                    sx={{
-                      minWidth: "200px",
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderWidth: "2px",
-                        borderColor: "gray",
-                      },
-                    }}
                   >
-                    <MenuItem value="">
-                      <em>Select Item</em>
-                    </MenuItem>
-                    {getItemOptions().map((item) => (
-                      <MenuItem key={item} value={item}>
-                        {item}
+                    {getItemOptions().map((name) => (
+                      <MenuItem key={name} value={name}>
+                        <Checkbox checked={item.itemName.indexOf(name) > -1} />
+                        <ListItemText primary={name} />
                       </MenuItem>
                     ))}
                   </TextField>
@@ -1031,7 +1056,11 @@ const LoanItems: React.FC = () => {
                             onClick={() => {
                               setItem({
                                 metal: itm.metal || "",
-                                itemName: itm.itemName || "",
+                                itemName: itm.itemName
+                                  ? itm.itemName
+                                      .split(",")
+                                      .map((name: string) => name.trim())
+                                  : [],
                                 gross_weight: itm.gross_weight || 0,
                                 net_weight: itm.net_weight || 0,
                                 rate_of_interest: itm.rate_of_interest || 0,

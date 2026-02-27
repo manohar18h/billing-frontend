@@ -65,6 +65,8 @@ const goldItems = [
   "Bracelet H.M",
   "Bracelet M.M",
   "Necklace",
+  "Nallapusalu Chain",
+  "7 piece Necklace",
   "Chain",
   "Gundla Mala",
   "Gundlu Yannalu",
@@ -635,6 +637,8 @@ const Products: React.FC = () => {
     try {
       setSubmitLoading(true);
       const token = localStorage.getItem("token") ?? "";
+
+      console.log("Request Body:", payload);
 
       const res = await api.post<StockProduct | StockProduct[]>(
         "/admin/addStockProduct",

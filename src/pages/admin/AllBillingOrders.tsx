@@ -117,8 +117,6 @@ const AllBillingOrders: React.FC = () => {
       ),
     );
 
-  
-
     try {
       const token = localStorage.getItem("token") ?? "";
 
@@ -361,8 +359,13 @@ const AllBillingOrders: React.FC = () => {
                 </thead>
                 <tbody>
                   {filteredRows.map((bill) => {
-                    const isDelivered =
-                      normalizeStatus(bill.deliveryStatus) === "delivered";
+                    const rawStatus = (bill.deliveryStatus ?? "")
+                      .toLowerCase()
+                      .trim();
+
+                    const isDisabled =
+                      rawStatus.includes("deliver") ||
+                      rawStatus.includes("cancel");
 
                     return (
                       <tr key={bill.billId} className="bg-white/90">
@@ -372,14 +375,14 @@ const AllBillingOrders: React.FC = () => {
                             <input
                               type="checkbox"
                               checked={Boolean(bill.checked)}
-                              disabled={isDelivered}
+                              disabled={isDisabled}
                               onChange={(e) =>
                                 handleCheckboxChange(
                                   Number(bill.billId),
                                   e.target.checked,
                                 )
                               }
-                              className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+                              className={`jewel-checkbox ${isDisabled ? "disabled" : ""}`}
                             />
                           </div>
                         </td>

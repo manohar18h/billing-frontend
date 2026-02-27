@@ -78,17 +78,25 @@ const StockBoxDetails: React.FC = () => {
                     className={`border px-3 py-2 font-semibold ${
                       entry.methodType === "ADDED"
                         ? "text-green-600"
-                        : entry.methodType === "SELL"
-                          ? "text-red-600"
-                          : "text-gray-800"
+                        : "text-gray-800"
                     }`}
                   >
                     {entry.methodType}
                   </td>
-                  <td className="border px-3 py-2">{entry.metalWeight}</td>
+                  <td className="border px-3 py-2 text-center align-middle">
+                    {entry.metalWeight}
+                  </td>{" "}
                   <td className="border px-3 py-2">{entry.date}</td>
                   <td className="border px-3 py-2">{entry.barcodeValue}</td>
-                  <td className="border px-3 py-2">{entry.methodType2}</td>
+                  <td
+                    className={`border px-3 py-2 font-semibold  text-center align-middle ${
+                      entry.methodType2 === "SELL"
+                        ? "text-red-600"
+                        : "text-gray-800"
+                    }`}
+                  >
+                    {entry.methodType2}
+                  </td>{" "}
                   <td className="border px-3 py-2">{entry.sellingDate}</td>
                 </tr>
               ))}

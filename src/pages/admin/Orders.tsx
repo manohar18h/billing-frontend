@@ -114,6 +114,8 @@ const Orders: React.FC = () => {
     "Bracelet H.M",
     "Bracelet M.M",
     "Necklace",
+    "Nallapusalu Chain",
+    "7 piece Necklace",
     "Chain",
     "Gundla Mala",
     "Gundlu Yannalu",
@@ -650,18 +652,6 @@ const Orders: React.FC = () => {
       total_item_amount =
         (data.metal_weight * metalPrice) / 10 + data.making_charges;
     } else {
-      console.log("metal price : ", metalPrice);
-      console.log("metal weight : ", data.metal_weight);
-      console.log("metal wastage : ", wastageWeight);
-      console.log("metal making charges : ", data.making_charges);
-      console.log("stone charges : ", data.stone_amount);
-      console.log("wax_amount : ", data.wax_amount);
-      console.log("diamond_amount : ", data.diamond_amount);
-      console.log("bits_amount : ", data.bits_amount);
-      console.log("enamel_amount : ", data.enamel_amount);
-      console.log("pearls_amount : ", data.pearls_amount);
-      console.log("other_amount : ", data.other_amount);
-
       total_item_amount =
         ((data.metal_weight + wastageWeight) * metalPrice) / 10 +
         data.making_charges +
