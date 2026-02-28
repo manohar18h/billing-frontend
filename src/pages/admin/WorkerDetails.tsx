@@ -57,7 +57,7 @@ function displayFromRaw(raw: unknown): string {
 function inRangeExact(
   rawDate: unknown,
   fromDate: string,
-  toDate: string
+  toDate: string,
 ): boolean {
   const day = normalizeYMD(rawDate);
   if (!day) return false;
@@ -81,7 +81,7 @@ const WorkerDetails: React.FC = () => {
   }, [refresh]);
 
   const worker: WorkerData | undefined = workers.find(
-    (w) => w.workerId === Number(workerId)
+    (w) => w.workerId === Number(workerId),
   );
 
   // Date filter state (YYYY-MM-DD)
@@ -100,60 +100,60 @@ const WorkerDetails: React.FC = () => {
     () =>
       fromDate || toDate
         ? (worker?.workerStocks ?? []).filter((s) =>
-            inRangeExact(s.todaysDate as any, fromDate, toDate)
+            inRangeExact(s.todaysDate as any, fromDate, toDate),
           )
-        : worker?.workerStocks ?? [],
-    [worker?.workerStocks, fromDate, toDate]
+        : (worker?.workerStocks ?? []),
+    [worker?.workerStocks, fromDate, toDate],
   );
 
   const filteredLots = useMemo(
     () =>
       fromDate || toDate
         ? (worker?.lotWorks ?? []).filter((l) =>
-            inRangeExact(l.deliveryDate as any, fromDate, toDate)
+            inRangeExact(l.deliveryDate as any, fromDate, toDate),
           )
-        : worker?.lotWorks ?? [],
-    [worker?.lotWorks, fromDate, toDate]
+        : (worker?.lotWorks ?? []),
+    [worker?.lotWorks, fromDate, toDate],
   );
 
   const filteredSpcl = useMemo(
     () =>
       fromDate || toDate
         ? (worker?.speclWorks ?? []).filter((l) =>
-            inRangeExact(l.deliveryDate as any, fromDate, toDate)
+            inRangeExact(l.deliveryDate as any, fromDate, toDate),
           )
-        : worker?.speclWorks ?? [],
-    [worker?.speclWorks, fromDate, toDate]
+        : (worker?.speclWorks ?? []),
+    [worker?.speclWorks, fromDate, toDate],
   );
 
   const filteredRepairs = useMemo(
     () =>
       fromDate || toDate
         ? (worker?.repairWorks ?? []).filter((r) =>
-            inRangeExact(r.deliveryDate as any, fromDate, toDate)
+            inRangeExact(r.deliveryDate as any, fromDate, toDate),
           )
-        : worker?.repairWorks ?? [],
-    [worker?.repairWorks, fromDate, toDate]
+        : (worker?.repairWorks ?? []),
+    [worker?.repairWorks, fromDate, toDate],
   );
 
   const filteredPays = useMemo(
     () =>
       fromDate || toDate
         ? (worker?.workerPays ?? []).filter((p) =>
-            inRangeExact(p.date as any, fromDate, toDate)
+            inRangeExact(p.date as any, fromDate, toDate),
           )
-        : worker?.workerPays ?? [],
-    [worker?.workerPays, fromDate, toDate]
+        : (worker?.workerPays ?? []),
+    [worker?.workerPays, fromDate, toDate],
   );
 
   const filteredTxs = useMemo(
     () =>
       fromDate || toDate
         ? (worker?.workerTransactionHistories ?? []).filter((t) =>
-            inRangeExact(t.paymentDate as any, fromDate, toDate)
+            inRangeExact(t.paymentDate as any, fromDate, toDate),
           )
-        : worker?.workerTransactionHistories ?? [],
-    [worker?.workerTransactionHistories, fromDate, toDate]
+        : (worker?.workerTransactionHistories ?? []),
+    [worker?.workerTransactionHistories, fromDate, toDate],
   );
 
   if (!worker)
@@ -244,9 +244,14 @@ const WorkerDetails: React.FC = () => {
                     "text-emerald-400 font-bold",
                   ],
                   [
-                    "Earned Wastage",
-                    `${worker.earnedWastage}`,
-                    "text-pink-300 font-semibold",
+                    "Received Amount",
+                    `₹${worker.receivedAmount}`,
+                    "text-emerald-300 font-bold",
+                  ],
+                  [
+                    "Pending Amount",
+                    `₹${worker.pendingAmount}`,
+                    "text-red-400 font-bold",
                   ],
                 ].map(([label, value, color], i) => (
                   <p key={i} className="flex justify-between">
@@ -260,13 +265,19 @@ const WorkerDetails: React.FC = () => {
               <div className="space-y-3 pl-4">
                 {[
                   [
-                    "Received Amount",
-                    `₹${worker.receivedAmount}`,
+                    "Earned Wastage",
+                    `${worker.earnedWastage}`,
+                    "text-pink-300 font-semibold",
+                  ],
+
+                  [
+                    "Received Wastage",
+                    `${worker.receivedWastage}`,
                     "text-emerald-300 font-bold",
                   ],
                   [
-                    "Pending Amount",
-                    `₹${worker.pendingAmount}`,
+                    "Pending Wastage",
+                    `${worker.pendingWastage}`,
                     "text-red-400 font-bold",
                   ],
                   [

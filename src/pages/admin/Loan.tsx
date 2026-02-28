@@ -44,6 +44,7 @@ export interface LoanCustomer {
   checked: boolean;
   itemNames: string[];
   itemWeight: number[];
+  orderDate: string | null;
 }
 
 type PageResponse<T> = {
@@ -894,7 +895,7 @@ const Loan: React.FC = () => {
                       </th>
                       <th className="border px-3 py-2 text-center">
                         <div className="flex justify-center items-center">
-                          Billing Date
+                          Date
                         </div>
                       </th>
                       <th className="border px-3 py-2 text-center">
@@ -984,8 +985,8 @@ const Loan: React.FC = () => {
                           </td>
                           <td className="border px-3 py-2 text-center">
                             <div className="flex justify-center items-center">
-                              {bill.loanBillingDate
-                                ? bill.loanBillingDate.split(" ")[0]
+                              {bill.orderDate
+                                ? bill.orderDate.split(" ")[0]
                                 : "N/A"}
                             </div>
                           </td>

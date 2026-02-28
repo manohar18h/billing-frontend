@@ -38,6 +38,7 @@ type Billing = {
   design: string[];
   billingDate: string | null;
   checked: boolean;
+  orderDate: string | null;
 };
 
 type PageResponse<T> = {
@@ -369,7 +370,7 @@ const AllBillingOrders: React.FC = () => {
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        Billing Date
+                        Loan bill Date
                       </div>
                     </th>
                     <th className="border px-3 py-2 text-center">
@@ -466,8 +467,8 @@ const AllBillingOrders: React.FC = () => {
 
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
-                            {bill.billingDate
-                              ? bill.billingDate.split(" ")[0]
+                            {bill.orderDate
+                              ? bill.orderDate.split(" ")[0]
                               : "N/A"}
                           </div>
                         </td>

@@ -6,9 +6,12 @@ export interface WorkerData {
   village: string;
 
   earnedAmount: number;
-  earnedWastage: number;
   receivedAmount: number;
   pendingAmount: number;
+
+  earnedWastage: number;
+  receivedWastage: number;
+  pendingWastage: number;
 
   total24GoldStock: number;
   total999SilverStock: number;
@@ -67,9 +70,10 @@ export interface WorkerData {
   }[];
 
   workerTransactionHistories: {
-    paidAmount: number;
+    paid?: number;
     paymentDate: string;
     reason?: string;
     wtid: number;
+    methodType?: string;
   }[];
 }
