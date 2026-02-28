@@ -33,8 +33,19 @@ type Billing = {
   billPaidAmount: number;
   billDueAmount: number;
   selectedOrderIds: string;
+  itemNames: string[];
+  itemWeight: number[];
+  design: string[];
   billingDate: string | null;
   checked: boolean;
+};
+
+type PageResponse<T> = {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
 };
 
 function toDateOnlyYYYYMMDD(s: string | null): string | null {
@@ -83,6 +94,9 @@ const AllBillingOrders: React.FC = () => {
   );
   const navigate = useNavigate();
 
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
   const fetchBillingRows = async () => {
     localStorage.removeItem("CheckBack");
     setLoading(true);
@@ -90,13 +104,15 @@ const AllBillingOrders: React.FC = () => {
 
     try {
       const token = localStorage.getItem("token") ?? "";
-      const { data } = await api.get<Billing[]>(`/admin/getALlBills`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const { data } = await api.get<PageResponse<Billing>>(
+        `/admin/getALlBills?page=${page}&size=50`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
 
-      console.log(data);
-
-      setRows(Array.isArray(data) ? data : []);
+      setRows(data.content);
+      setTotalPages(data.totalPages);
     } catch (e) {
       console.error("Failed to fetch Todays bills:", e);
       setErr("Failed to load billing orders.");
@@ -105,9 +121,11 @@ const AllBillingOrders: React.FC = () => {
     }
   };
 
+  const pageSize = 50;
+
   useEffect(() => {
     fetchBillingRows();
-  }, []);
+  }, [page]);
 
   const handleCheckboxChange = async (billId: number, checked: boolean) => {
     // optimistic update
@@ -285,6 +303,40 @@ const AllBillingOrders: React.FC = () => {
           </Button>
         </Box>
 
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            gap: 1, // smaller gap
+            mt: 2, // smaller margin
+          }}
+        >
+          <Button
+            size="small" // 👈 smaller button
+            variant="outlined"
+            disabled={page === 0}
+            onClick={() => setPage((prev) => prev - 1)}
+          >
+            ◀ Prev
+          </Button>
+
+          <Typography variant="body2">
+            {" "}
+            {/* 👈 smaller text */}
+            Page {page + 1} of {totalPages}
+          </Typography>
+
+          <Button
+            size="small" // 👈 smaller button
+            variant="outlined"
+            disabled={page + 1 >= totalPages}
+            onClick={() => setPage((prev) => prev + 1)}
+          >
+            Next ▶
+          </Button>
+        </Box>
+
         {loading ? (
           <div className="flex items-center gap-3 py-6">
             <CircularProgress size={22} />
@@ -307,6 +359,11 @@ const AllBillingOrders: React.FC = () => {
                   <tr>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
+                        S.No
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
                         Check
                       </div>
                     </th>
@@ -327,17 +384,27 @@ const AllBillingOrders: React.FC = () => {
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
+                        Item Name
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Weight
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Design
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
                         Work Status
                       </div>
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
                         Delivery Status
-                      </div>
-                    </th>
-                    <th className="border px-3 py-2 text-center">
-                      <div className="flex justify-center items-center">
-                        Orders
                       </div>
                     </th>
                     <th className="border px-3 py-2 text-center">
@@ -352,13 +419,13 @@ const AllBillingOrders: React.FC = () => {
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        Action
+                        View
                       </div>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRows.map((bill) => {
+                  {filteredRows.map((bill, index) => {
                     const rawStatus = (bill.deliveryStatus ?? "")
                       .toLowerCase()
                       .trim();
@@ -368,7 +435,17 @@ const AllBillingOrders: React.FC = () => {
                       rawStatus.includes("cancel");
 
                     return (
-                      <tr key={bill.billId} className="bg-white/90">
+                      <tr
+                        key={bill.billId}
+                        className={
+                          index % 2 === 0 ? "bg-white" : "bg-[#f0f0f0]"
+                        }
+                      >
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {page * pageSize + index + 1}
+                          </div>
+                        </td>
                         {/* ✅ CHECKBOX COLUMN */}
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
@@ -389,7 +466,9 @@ const AllBillingOrders: React.FC = () => {
 
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
-                            {bill.billingDate ?? "N/A"}
+                            {bill.billingDate
+                              ? bill.billingDate.split(" ")[0]
+                              : "N/A"}
                           </div>
                         </td>
 
@@ -405,6 +484,21 @@ const AllBillingOrders: React.FC = () => {
                         </td>
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
+                            {bill.itemNames?.join(", ") || "-"}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.itemWeight?.join(", ") || "-"}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
+                            {bill.design?.join(", ") || "-"}
+                          </div>
+                        </td>
+                        <td className="border px-3 py-2 text-center">
+                          <div className="flex justify-center items-center">
                             {renderStatusChip(bill.workStatus)}
                           </div>
                         </td>
@@ -413,13 +507,6 @@ const AllBillingOrders: React.FC = () => {
                             {renderStatusChip(bill.deliveryStatus)}
                           </div>
                         </td>
-
-                        <td className="border px-3 py-2 text-center">
-                          <div className="flex justify-center items-center">
-                            {bill.numberOfOrders ?? 0}
-                          </div>
-                        </td>
-
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
                             {bill.billTotalAmount != null
@@ -465,6 +552,39 @@ const AllBillingOrders: React.FC = () => {
                   })}
                 </tbody>
               </table>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                gap: 1, // smaller gap
+                mt: 2, // smaller margin
+              }}
+            >
+              <Button
+                size="small" // 👈 smaller button
+                variant="outlined"
+                disabled={page === 0}
+                onClick={() => setPage((prev) => prev - 1)}
+              >
+                ◀ Prev
+              </Button>
+
+              <Typography variant="body2">
+                {" "}
+                {/* 👈 smaller text */}
+                Page {page + 1} of {totalPages}
+              </Typography>
+
+              <Button
+                size="small" // 👈 smaller button
+                variant="outlined"
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                Next ▶
+              </Button>
             </Box>
           </div>
         )}
