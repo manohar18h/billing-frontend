@@ -57,7 +57,7 @@ function displayFromRaw(raw: unknown): string {
 function inRangeExact(
   rawDate: unknown,
   fromDate: string,
-  toDate: string
+  toDate: string,
 ): boolean {
   const day = normalizeYMD(rawDate);
   if (!day) return false;
@@ -92,50 +92,50 @@ const WorkerProfile: React.FC = () => {
     () =>
       fromDate || toDate
         ? (worker?.workerStocks ?? []).filter((s) =>
-            inRangeExact(s.todaysDate as any, fromDate, toDate)
+            inRangeExact(s.todaysDate as any, fromDate, toDate),
           )
-        : worker?.workerStocks ?? [],
-    [worker?.workerStocks, fromDate, toDate]
+        : (worker?.workerStocks ?? []),
+    [worker?.workerStocks, fromDate, toDate],
   );
 
   const filteredLots = useMemo(
     () =>
       fromDate || toDate
         ? (worker?.lotWorks ?? []).filter((l) =>
-            inRangeExact(l.deliveryDate as any, fromDate, toDate)
+            inRangeExact(l.deliveryDate as any, fromDate, toDate),
           )
-        : worker?.lotWorks ?? [],
-    [worker?.lotWorks, fromDate, toDate]
+        : (worker?.lotWorks ?? []),
+    [worker?.lotWorks, fromDate, toDate],
   );
 
   const filteredRepairs = useMemo(
     () =>
       fromDate || toDate
         ? (worker?.repairWorks ?? []).filter((r) =>
-            inRangeExact(r.deliveryDate as any, fromDate, toDate)
+            inRangeExact(r.deliveryDate as any, fromDate, toDate),
           )
-        : worker?.repairWorks ?? [],
-    [worker?.repairWorks, fromDate, toDate]
+        : (worker?.repairWorks ?? []),
+    [worker?.repairWorks, fromDate, toDate],
   );
 
   const filteredPays = useMemo(
     () =>
       fromDate || toDate
         ? (worker?.workerPays ?? []).filter((p) =>
-            inRangeExact(p.date as any, fromDate, toDate)
+            inRangeExact(p.date as any, fromDate, toDate),
           )
-        : worker?.workerPays ?? [],
-    [worker?.workerPays, fromDate, toDate]
+        : (worker?.workerPays ?? []),
+    [worker?.workerPays, fromDate, toDate],
   );
 
   const filteredTxs = useMemo(
     () =>
       fromDate || toDate
         ? (worker?.workerTransactionHistories ?? []).filter((t) =>
-            inRangeExact(t.paymentDate as any, fromDate, toDate)
+            inRangeExact(t.paymentDate as any, fromDate, toDate),
           )
-        : worker?.workerTransactionHistories ?? [],
-    [worker?.workerTransactionHistories, fromDate, toDate]
+        : (worker?.workerTransactionHistories ?? []),
+    [worker?.workerTransactionHistories, fromDate, toDate],
   );
 
   useEffect(() => {
@@ -152,7 +152,7 @@ const WorkerProfile: React.FC = () => {
           "https://api.hambirejewellery.com/worker/profile",
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         setWorker(response.data);
@@ -374,11 +374,11 @@ const WorkerProfile: React.FC = () => {
                           const dd = String(d.getDate()).padStart(2, "0");
                           const yy = String(d.getFullYear() % 100).padStart(
                             2,
-                            "0"
+                            "0",
                           );
                           return `${mm}/${dd}/${yy}`;
                         })()
-                      : "-"
+                      : "-",
                   )}
                 </div>
               </div>
@@ -431,11 +431,11 @@ const WorkerProfile: React.FC = () => {
                           const dd = String(d.getDate()).padStart(2, "0");
                           const yy = String(d.getFullYear() % 100).padStart(
                             2,
-                            "0"
+                            "0",
                           );
                           return `${mm}/${dd}/${yy}`;
                         })()
-                      : "-"
+                      : "-",
                   )}
                   {line("Wastage", `${l.wastage} %`)}
                   {line("Amount", `₹${l.amount}`)}
@@ -491,11 +491,11 @@ const WorkerProfile: React.FC = () => {
                           const dd = String(d.getDate()).padStart(2, "0");
                           const yy = String(d.getFullYear() % 100).padStart(
                             2,
-                            "0"
+                            "0",
                           );
                           return `${mm}/${dd}/${yy}`;
                         })()
-                      : "-"
+                      : "-",
                   )}
                 </div>
               </div>
@@ -548,11 +548,11 @@ const WorkerProfile: React.FC = () => {
                           const dd = String(d.getDate()).padStart(2, "0");
                           const yy = String(d.getFullYear() % 100).padStart(
                             2,
-                            "0"
+                            "0",
                           );
                           return `${mm}/${dd}/${yy}`;
                         })()
-                      : "-"
+                      : "-",
                   )}
                   {line("Pay", `₹${p.workPay}`)}
                   {line("Wastage", p.wastage)}
@@ -590,7 +590,7 @@ const WorkerProfile: React.FC = () => {
             <ul className="mb-8 pl-5 list-disc">
               {visibleTxs.map((t) => (
                 <li key={t.wtid}>
-                  ₹{t.paidAmount} on {displayFromRaw(t.paymentDate)},{" "}
+                  ₹{t.paid} on {displayFromRaw(t.paymentDate)},{" "}
                   {t.reason ?? "-"}
                 </li>
               ))}
