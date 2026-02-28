@@ -370,7 +370,7 @@ const AllBillingOrders: React.FC = () => {
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        Loan bill Date
+                        Date
                       </div>
                     </th>
                     <th className="border px-3 py-2 text-center">
