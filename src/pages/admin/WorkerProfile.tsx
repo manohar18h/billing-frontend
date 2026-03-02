@@ -250,9 +250,14 @@ const WorkerProfile: React.FC = () => {
                     "text-emerald-400 font-bold",
                   ],
                   [
-                    "Earned Wastage",
-                    `${worker.earnedWastage}%`,
-                    "text-pink-300 font-semibold",
+                    "Received Amount",
+                    `₹${worker.receivedAmount}`,
+                    "text-emerald-300 font-bold",
+                  ],
+                  [
+                    "Pending Amount",
+                    `₹${worker.pendingAmount}`,
+                    "text-red-400 font-bold",
                   ],
                 ].map(([label, value, color], i) => (
                   <p key={i} className="flex justify-between">
@@ -266,13 +271,18 @@ const WorkerProfile: React.FC = () => {
               <div className="space-y-2 sm:pl-4">
                 {[
                   [
-                    "Received Amount",
-                    `₹${worker.receivedAmount}`,
+                    "Earned Wastage",
+                    `${worker.earnedWastage}%`,
+                    "text-pink-300 font-semibold",
+                  ],
+                  [
+                    "Received Wastage",
+                    `₹${worker.receivedWastage}`,
                     "text-emerald-300 font-bold",
                   ],
                   [
-                    "Pending Amount",
-                    `₹${worker.pendingAmount}`,
+                    "Pending Wastage",
+                    `₹${worker.pendingWastage}`,
                     "text-red-400 font-bold",
                   ],
                   [

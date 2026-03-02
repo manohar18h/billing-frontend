@@ -33,6 +33,7 @@ const goldItems = [
   "Pressing One Stone Pulla",
   "Pressing Gundu Pulla",
   "Kammalu",
+  "Chand Bali Kammalu",
   "Stone Kammalu",
   "Sherlu Kammalu",
   "Pogulu",
