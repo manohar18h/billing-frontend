@@ -272,7 +272,7 @@ const WorkerProfile: React.FC = () => {
                 {[
                   [
                     "Earned Wastage",
-                    `${worker.earnedWastage}%`,
+                    `${worker.earnedWastage}`,
                     "text-pink-300 font-semibold",
                   ],
                   [

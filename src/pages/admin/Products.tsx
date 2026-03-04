@@ -2072,24 +2072,25 @@ const Products: React.FC = () => {
               const handlePrint = () => {
                 const printContents = `
 <div style="
-  width: 101.6mm;
-  height: 11.9mm;
+  width: 82.0mm;
+  height: 12.0mm;
   display: flex;
-  margin-left: 12mm;
   justify-content: flex-start;
-  align-items: stretch;
+  align-items: center;
   background-color: #fff;
-  padding: 0mm, 2mm;
+  padding: 0.5mm, 1mm;
   box-sizing: border-box;
   overflow: hidden;
+  padding-left:2mm;
+  padding-top:2mm;
   transform: translateY(-1mm); /* Push up slightly */
 ">
   <!-- QR Section -->
-  <div style="display:flex;align-items:stretch;justify-content:center;margin:0;padding:0;height:100%;">
+  <div style="display:flex;align-items:center;justify-content:flex-start;margin:0;padding:0;height:100%;">
     ${
       r.barcodeImageBase64
         ? `<img src="data:image/png;base64,${r.barcodeImageBase64}" 
-                 style="height:100%;width:20mm;object-fit:contain;margin:0;padding:0;display:block;" 
+                 style="height:11mm;width:20mm;object-fit:contain;margin:0;padding:0;display:block;" 
                  alt="QR" />`
         : `<div style="font-size:2mm;">No QR</div>`
     }
@@ -2101,14 +2102,15 @@ const Products: React.FC = () => {
     flex-direction:column;
     justify-content:center;
     align-items:flex-start;
-    font-size:2mm;
+    font-size:2.2mm;
     line-height:1.3;
-    padding-left:8mm;
+    padding-top:1mm;
+    padding-left:5mm;
     height:100%;
   ">
     <div style="font-weight:bold;">${r.barcodeValue ?? "-"}</div>
     <div>G.W: ${r.gross_weight ?? "-"}g</div>
-    <div>N.W: ${r.metal_weight ?? "-"}g</div>
+    <div>Size: ${r.size ?? "-"}in</div>
   </div>
 </div>`;
 
@@ -2120,7 +2122,7 @@ const Products: React.FC = () => {
     <title>Print Label</title>
     <style>
       @page {
-        size: 101.6mm 11.9mm;
+        size: 82.0mm 12.0mm;
         margin: 0;
       }
       html, body {
