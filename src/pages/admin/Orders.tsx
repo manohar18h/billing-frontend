@@ -619,20 +619,10 @@ const Orders: React.FC = () => {
   const calculateTotals = (data: typeof order, overrideMetalPrice?: number) => {
     let metalPrice = 0;
 
-    // ✅ If override price is provided (EDIT MODE), use it
     if (overrideMetalPrice !== undefined) {
       metalPrice = overrideMetalPrice;
     } else {
-      // ❌ Normal flow → take latest price from localStorage
-      if (data.metal === "24 Gold") {
-        metalPrice = Number(localStorage.getItem("Gold24Price")) || 0;
-      } else if (data.metal === "22 Gold") {
-        metalPrice = Number(localStorage.getItem("Gold22Price")) || 0;
-      } else if (data.metal === "999 Silver") {
-        metalPrice = Number(localStorage.getItem("Silver999Price")) || 0;
-      } else if (data.metal === "995 Silver") {
-        metalPrice = Number(localStorage.getItem("Silver995Price")) || 0;
-      }
+      metalPrice = getUpdatedMetalPrice(data.metal, data.itemName);
     }
 
     // Calculate wastage weight
