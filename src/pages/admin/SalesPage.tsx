@@ -710,7 +710,7 @@ const SalesPage: React.FC = () => {
                     <th className="border px-3 py-2 text-left">
                       Total Stock Box Weight
                     </th>
-                    <th className="border px-3 py-2 text-center">Action</th>
+                    <th className="border px-3 py-2 text-center">View</th>
                   </tr>
                 </thead>
                 <tbody>

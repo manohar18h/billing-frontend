@@ -136,9 +136,7 @@ const StockBoxData: React.FC = () => {
                   </th>
 
                   <th className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      Action
-                    </div>
+                    <div className="flex justify-center items-center">View</div>
                   </th>
                 </tr>
               </thead>

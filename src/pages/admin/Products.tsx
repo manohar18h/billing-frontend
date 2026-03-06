@@ -1023,7 +1023,7 @@ const Products: React.FC = () => {
                 <TableCell>Size</TableCell>
                 <TableCell>Weight</TableCell>
                 <TableCell>Stock</TableCell>
-                <TableCell>Action</TableCell>
+                <TableCell>View</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

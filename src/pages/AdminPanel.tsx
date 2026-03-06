@@ -43,7 +43,6 @@ import LoanItemDetails from "./admin/LoanItemDetails";
 import GenerateLoanBill from "./admin/GenerateLoanBill";
 import BillLoanDetails from "./admin/BillLoanDetails";
 import BillLoanData from "./admin/BillLoanData";
-import BullionX from "./admin/BullionX";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
@@ -54,7 +53,6 @@ const menuItems = [
   { icon: BoxIcon, label: "Stock Box", path: "/admin/stockBox" },
   { icon: ReceiptText, label: "Billing", path: "/admin/billing-orders" },
   { icon: BadgeIndianRupee, label: "Loan", path: "/admin/Loan" },
-  { icon: ChartNoAxesCombined, label: "BullionX", path: "/admin/bullion-x" },
 ];
 
 type SidebarProps = {
@@ -130,7 +128,7 @@ bg-gradient-to-b from-black via-gray-900 to-amber-700
               className={classNames(
                 "sidebar-item flex flex-col items-center justify-center w-14 h-16 select-none",
                 "transition-colors",
-                isActive ? "text-[rgb(136,71,255)]" : "text-white"
+                isActive ? "text-[rgb(136,71,255)]" : "text-white",
               )}
               title={item.label}
               onFocus={() => requestAnimationFrame(computeHighlight)}
@@ -183,7 +181,7 @@ function AdminPanelContent() {
 
   // Determine which menu to highlight
   let activeIndex = menuItems.findIndex((item) =>
-    location.pathname.startsWith(item.path)
+    location.pathname.startsWith(item.path),
   );
 
   // Force Customers icon active on hidden sub-pages
@@ -258,7 +256,6 @@ function AdminPanelContent() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="customers" element={<Customers />} />
             <Route path="orders" element={<Orders />} />
-            <Route path="bullion-x" element={<BullionX />} />
             <Route path="generate-bill" element={<GenerateBill />} />
             <Route path="generate-loan-bill" element={<GenerateLoanBill />} />
             <Route path="bill-details" element={<BillDetails />} />
