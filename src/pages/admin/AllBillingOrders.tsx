@@ -223,6 +223,36 @@ const AllBillingOrders: React.FC = () => {
     );
   };
 
+  const renderWorkStatusChip = (raw: string) => {
+    const n = normalizeWorkStatus(raw);
+
+    if (n === "done")
+      return (
+        <Chip
+          label="Done"
+          size="small"
+          sx={{ bgcolor: "#d9f7d9", color: "#1b5e20", fontWeight: 600 }}
+        />
+      );
+
+    if (n === "pending")
+      return (
+        <Chip
+          label="Pending"
+          size="small"
+          sx={{ bgcolor: "#fff3e0", color: "#e65100", fontWeight: 600 }}
+        />
+      );
+
+    return (
+      <Chip
+        label={raw || "-"}
+        size="small"
+        sx={{ bgcolor: "#eeeeee", color: "#424242" }}
+      />
+    );
+  };
+
   return (
     <div className="mt-10 p-3 flex flex-col items-center justify-center">
       <Paper
@@ -505,7 +535,7 @@ const AllBillingOrders: React.FC = () => {
                         </td>
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
-                            {renderStatusChip(bill.workStatus)}
+                            {renderWorkStatusChip(bill.workStatus)}{" "}
                           </div>
                         </td>
                         <td className="border px-3 py-2 text-center">

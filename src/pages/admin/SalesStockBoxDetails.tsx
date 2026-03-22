@@ -8,6 +8,9 @@ type StockBoxDataEntry = {
   methodType: string;
   metalWeight: number;
   date: string;
+  methodType2?: string;
+  sellingDate?: string;
+  barcodeValue?: string;
 };
 
 type StockDataBox = {
@@ -38,6 +41,13 @@ const SalesStockBoxDetails: React.FC = () => {
     );
   }
 
+  const formatDMY = (date?: string) => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
       <div className="w-full max-w-5xl bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-8 relative">
@@ -61,6 +71,9 @@ const SalesStockBoxDetails: React.FC = () => {
                 <th className="border px-3 py-2 text-left">Method</th>
                 <th className="border px-3 py-2 text-left">Metal Weight</th>
                 <th className="border px-3 py-2 text-left">Date</th>
+                <th className="border px-3 py-2 text-left">Barcode</th>
+                <th className="border px-3 py-2 text-left">Method2</th>
+                <th className="border px-3 py-2 text-left">Selling Date</th>
               </tr>
             </thead>
             <tbody>
@@ -73,14 +86,29 @@ const SalesStockBoxDetails: React.FC = () => {
                       entry.methodType === "ADDED"
                         ? "text-green-600"
                         : entry.methodType === "SELL"
-                        ? "text-red-600"
-                        : "text-gray-800"
+                          ? "text-red-600"
+                          : "text-gray-800"
                     }`}
                   >
                     {entry.methodType}
                   </td>
-                  <td className="border px-3 py-2">{entry.metalWeight}</td>
-                  <td className="border px-3 py-2">{entry.date}</td>
+                  <td className="border px-3 py-2 text-center align-middle">
+                    {entry.metalWeight}
+                  </td>
+                  <td className="border px-3 py-2">{formatDMY(entry.date)}</td>
+                  <td className="border px-3 py-2">{entry.barcodeValue}</td>
+                  <td
+                    className={`border px-3 py-2 font-semibold text-center align-middle ${
+                      entry.methodType2 === "SELL"
+                        ? "text-red-600"
+                        : "text-gray-800"
+                    }`}
+                  >
+                    {entry.methodType2}
+                  </td>
+                  <td className="border px-3 py-2">
+                    {formatDMY(entry.sellingDate)}
+                  </td>
                 </tr>
               ))}
             </tbody>
