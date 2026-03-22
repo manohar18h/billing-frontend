@@ -50,7 +50,7 @@ function displayFromRaw(raw: unknown): string {
   const ymd = normalizeYMD(raw);
   if (!ymd) return "-";
   const [y, m, d] = ymd.split("-");
-  return `${m}/${d}/${y}`;
+  return `${d}/${Number(m)}/${y}`;
 }
 
 /** Generic inRange (keeps your prior exact-match behavior for single date) */

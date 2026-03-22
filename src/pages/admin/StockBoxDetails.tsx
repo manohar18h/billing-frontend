@@ -40,6 +40,11 @@ const StockBoxDetails: React.FC = () => {
       </div>
     );
   }
+  const formatDMY = (date?: string) => {
+    if (!date) return ""; // 👈 empty instead of N/A
+    const d = new Date(date);
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
@@ -65,8 +70,8 @@ const StockBoxDetails: React.FC = () => {
                 <th className="border px-3 py-2 text-left">Metal Weight</th>
                 <th className="border px-3 py-2 text-left">Date</th>
                 <th className="border px-3 py-2 text-left">Barcode</th>
-                <th className="border px-3 py-2 text-left">Selling Date</th>
                 <th className="border px-3 py-2 text-left">Method2</th>
+                <th className="border px-3 py-2 text-left">Selling Date</th>
               </tr>
             </thead>
             <tbody>
@@ -86,7 +91,7 @@ const StockBoxDetails: React.FC = () => {
                   <td className="border px-3 py-2 text-center align-middle">
                     {entry.metalWeight}
                   </td>{" "}
-                  <td className="border px-3 py-2">{entry.date}</td>
+                  <td className="border px-3 py-2">{formatDMY(entry.date)}</td>
                   <td className="border px-3 py-2">{entry.barcodeValue}</td>
                   <td
                     className={`border px-3 py-2 font-semibold  text-center align-middle ${
@@ -97,7 +102,9 @@ const StockBoxDetails: React.FC = () => {
                   >
                     {entry.methodType2}
                   </td>{" "}
-                  <td className="border px-3 py-2">{entry.sellingDate}</td>
+                  <td className="border px-3 py-2">
+                    {formatDMY(entry.sellingDate)}
+                  </td>
                 </tr>
               ))}
             </tbody>

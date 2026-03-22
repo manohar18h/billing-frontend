@@ -50,7 +50,7 @@ function displayFromRaw(raw: unknown): string {
   const ymd = normalizeYMD(raw);
   if (!ymd) return "-";
   const [y, m, d] = ymd.split("-");
-  return `${m}/${d}/${y}`;
+  return `${d}/${Number(m)}/${y}`;
 }
 
 /** Generic inRange (keeps your prior exact-match behavior for single date) */
@@ -375,21 +375,7 @@ const WorkerProfile: React.FC = () => {
                   {line("Weight", `${s.metalWeight} g`)}
                 </div>
                 <div className="pl-4">
-                  {line(
-                    "Date",
-                    s.todaysDate
-                      ? (() => {
-                          const d = new Date(s.todaysDate);
-                          const mm = String(d.getMonth() + 1).padStart(2, "0");
-                          const dd = String(d.getDate()).padStart(2, "0");
-                          const yy = String(d.getFullYear() % 100).padStart(
-                            2,
-                            "0",
-                          );
-                          return `${mm}/${dd}/${yy}`;
-                        })()
-                      : "-",
-                  )}
+                  {line("Date", displayFromRaw(s.todaysDate))}
                 </div>
               </div>
             ))}
@@ -432,21 +418,7 @@ const WorkerProfile: React.FC = () => {
                   {line("Pieces", l.pieces)}
                 </div>
                 <div className="pl-4">
-                  {line(
-                    "Date",
-                    l.deliveryDate
-                      ? (() => {
-                          const d = new Date(l.deliveryDate);
-                          const mm = String(d.getMonth() + 1).padStart(2, "0");
-                          const dd = String(d.getDate()).padStart(2, "0");
-                          const yy = String(d.getFullYear() % 100).padStart(
-                            2,
-                            "0",
-                          );
-                          return `${mm}/${dd}/${yy}`;
-                        })()
-                      : "-",
-                  )}
+                  {line("Date", displayFromRaw(l.deliveryDate))}
                   {line("Wastage", `${l.wastage} %`)}
                   {line("Amount", `₹${l.amount}`)}
                 </div>
@@ -492,21 +464,7 @@ const WorkerProfile: React.FC = () => {
                 </div>
                 <div className="pl-4">
                   {line("Work Pay", `₹${r.workerPay}`)}
-                  {line(
-                    "Date",
-                    r.deliveryDate
-                      ? (() => {
-                          const d = new Date(r.deliveryDate);
-                          const mm = String(d.getMonth() + 1).padStart(2, "0");
-                          const dd = String(d.getDate()).padStart(2, "0");
-                          const yy = String(d.getFullYear() % 100).padStart(
-                            2,
-                            "0",
-                          );
-                          return `${mm}/${dd}/${yy}`;
-                        })()
-                      : "-",
-                  )}
+                  {line("Date", displayFromRaw(r.deliveryDate))}
                 </div>
               </div>
             ))}
@@ -549,21 +507,7 @@ const WorkerProfile: React.FC = () => {
                   {line("Weight", `${p.metal_weight} g`)}
                 </div>
                 <div className="pl-4">
-                  {line(
-                    "Date",
-                    p.date
-                      ? (() => {
-                          const d = new Date(p.date);
-                          const mm = String(d.getMonth() + 1).padStart(2, "0");
-                          const dd = String(d.getDate()).padStart(2, "0");
-                          const yy = String(d.getFullYear() % 100).padStart(
-                            2,
-                            "0",
-                          );
-                          return `${mm}/${dd}/${yy}`;
-                        })()
-                      : "-",
-                  )}
+                  {line("Date", displayFromRaw(p.date))}
                   {line("Pay", `₹${p.workPay}`)}
                   {line("Wastage", p.wastage)}
                 </div>

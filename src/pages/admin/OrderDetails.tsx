@@ -83,6 +83,7 @@ const OrderDetails: React.FC = () => {
     paidAmount: number | null;
     dueAmount: number;
     receivedAmount: number;
+    deliveryDate: string;
     deliveryStatus: string;
     workStatus: string;
 
@@ -121,7 +122,7 @@ const OrderDetails: React.FC = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         setOrder(response.data); // ✅ now TypeScript knows response.data is Order
@@ -144,7 +145,7 @@ const OrderDetails: React.FC = () => {
 
   const displayField = (
     label: string,
-    value: string | number | boolean | null | undefined
+    value: string | number | boolean | null | undefined,
   ) => (
     <div className="flex justify-between border-b py-1 text-sm">
       <span className="font-medium text-gray-600">{label}:</span>
@@ -198,7 +199,10 @@ const OrderDetails: React.FC = () => {
         <div className="grid grid-cols-2 gap-8 mb-10">
           <div className="pr-6 border-r border-purple-300/40">
             {[
-              ["Order Date", new Date(order.orderDate).toLocaleString()],
+              [
+                "Order Date",
+                new Date(order.orderDate).toLocaleDateString("en-GB"),
+              ],
               ["Item Name", order.itemName],
               ["Catalogue", order.catalogue],
               ["Design", order.design],
@@ -214,6 +218,8 @@ const OrderDetails: React.FC = () => {
               ["Wax Amount", order.wax_amount],
               ["Diamond Weight", order.diamond_weight],
               ["Diamond Amount", order.diamond_amount],
+              ["Bits Weight", order.bits_weight],
+              ["Bits Amount", order.bits_amount],
             ].map(([label, value]) => (
               <p key={label} className="mb-2 text-lg">
                 <span className="text-purple-300 font-semibold">{label}:</span>{" "}
@@ -226,8 +232,6 @@ const OrderDetails: React.FC = () => {
 
           <div className="pl-6">
             {[
-              ["Bits Weight", order.bits_weight],
-              ["Bits Amount", order.bits_amount],
               ["Enamel Weight", order.enamel_weight],
               ["Enamel Amount", order.enamel_amount],
               ["Pearls Weight", order.pearls_weight],
@@ -242,6 +246,12 @@ const OrderDetails: React.FC = () => {
               ["Paid Amount", order.paidAmount],
               ["Due Amount", order.dueAmount],
               ["Received Amount", order.receivedAmount],
+              [
+                "Delivery Date",
+                order.deliveryDate
+                  ? new Date(order.deliveryDate).toLocaleDateString("en-GB")
+                  : "",
+              ],
               ["Delivery Status", order.deliveryStatus],
               ["Work Status", order.workStatus],
             ].map(([label, value]) => (
@@ -372,7 +382,8 @@ const OrderDetails: React.FC = () => {
                   ₹{tx.paidAmount} -{}
                   <span className="text-red-300">
                     {tx.paymentMethod}
-                  </span> on {new Date(tx.paymentDate).toLocaleString()} -{" "}
+                  </span> on{" "}
+                  {new Date(tx.paymentDate).toLocaleDateString("en-GB")} -{" "}
                   <span className="text-yellow-300">{tx.paymentType}</span>
                 </li>
               ))}

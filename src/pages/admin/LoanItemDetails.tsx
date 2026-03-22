@@ -142,7 +142,10 @@ const LoanItemDetails: React.FC = () => {
         <div className="grid grid-cols-2 gap-8 mb-10">
           <div className="pr-6 border-r border-purple-300/40">
             {[
-              ["Loan Date", new Date(item.loanDate).toLocaleString()],
+              [
+                "Loan Date",
+                new Date(item.loanDate).toLocaleDateString("en-GB"),
+              ],
               ["Item Name", item.itemName],
               ["Metal", item.metal],
               ["Gross Weight", item.gross_weight],
@@ -191,7 +194,8 @@ const LoanItemDetails: React.FC = () => {
                   ₹{tx.amount} -{}
                   <span className="text-red-300">
                     {tx.paymentMethod}
-                  </span> on {new Date(tx.paymentDate).toLocaleString()} -{" "}
+                  </span> on{" "}
+                  {new Date(tx.paymentDate).toLocaleDateString("en-GB")} -{" "}
                   <span className="text-yellow-300">{tx.paymentType}</span>
                 </li>
               ))}

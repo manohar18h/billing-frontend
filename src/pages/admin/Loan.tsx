@@ -80,6 +80,13 @@ function toDateOnlyYYYYMMDD(s: string | null): string | null {
   return null;
 }
 
+function formatDateDMY(s: string | null): string {
+  if (!s) return "N/A";
+
+  const d = new Date(s);
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+}
+
 function normalizeStatus(
   s: string | undefined | null,
 ): "delivered" | "pending" | "other" {
@@ -985,9 +992,7 @@ const Loan: React.FC = () => {
                           </td>
                           <td className="border px-3 py-2 text-center">
                             <div className="flex justify-center items-center">
-                              {bill.orderDate
-                                ? bill.orderDate.split(" ")[0]
-                                : "N/A"}
+                              {formatDateDMY(bill.orderDate)}
                             </div>
                           </td>
 

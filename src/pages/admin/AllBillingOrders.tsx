@@ -35,6 +35,7 @@ type Billing = {
   selectedOrderIds: string;
   itemNames: string[];
   itemWeight: number[];
+  deliveryDate: string[];
   design: string[];
   billingDate: string | null;
   checked: boolean;
@@ -61,6 +62,12 @@ function toDateOnlyYYYYMMDD(s: string | null): string | null {
   const [dd, mm, yyyy] = parts;
 
   return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+}
+function formatDateDMY(s: string | null): string {
+  if (!s) return "N/A";
+
+  const d = new Date(s);
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }
 
 function normalizeWorkStatus(
@@ -415,7 +422,7 @@ const AllBillingOrders: React.FC = () => {
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        Due Amount
+                        Delivery Date
                       </div>
                     </th>
                     <th className="border px-3 py-2 text-center">
@@ -467,9 +474,7 @@ const AllBillingOrders: React.FC = () => {
 
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
-                            {bill.orderDate
-                              ? bill.orderDate.split(" ")[0]
-                              : "N/A"}
+                            {formatDateDMY(bill.orderDate)}
                           </div>
                         </td>
 
@@ -518,9 +523,11 @@ const AllBillingOrders: React.FC = () => {
 
                         <td className="border px-3 py-2 text-center">
                           <div className="flex justify-center items-center">
-                            {bill.billDueAmount != null
-                              ? bill.billDueAmount.toFixed(2)
-                              : "-"}
+                            {bill.deliveryDate?.length
+                              ? bill.deliveryDate
+                                  .map((d) => formatDateDMY(d))
+                                  .join(", ")
+                              : "N/A"}{" "}
                           </div>
                         </td>
 

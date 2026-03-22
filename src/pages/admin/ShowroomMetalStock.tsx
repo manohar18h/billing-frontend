@@ -127,11 +127,18 @@ function normalizeYMD(raw: unknown): string | null {
   return null;
 }
 
+function displayFromRaw(raw: unknown): string {
+  const ymd = normalizeYMD(raw);
+  if (!ymd) return "";
+  const [y, m, d] = ymd.split("-");
+  return `${Number(d)}/${Number(m)}/${y}`;
+}
+
 /** Exact-day and/or inclusive range logic used for both tables. */
 function inRangeExact(
   rawDate: unknown,
   fromDate: string,
-  toDate: string
+  toDate: string,
 ): boolean {
   const day = normalizeYMD(rawDate);
   if (!day) return false;
@@ -238,7 +245,7 @@ const ShowroomMetalStock: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const activeItems = (res.data || []).filter(
-        (item) => item.active === true
+        (item) => item.active === true,
       );
 
       setOldReturnData(activeItems);
@@ -275,7 +282,7 @@ const ShowroomMetalStock: React.FC = () => {
             "/admin/history/showroom",
             {
               headers: { Authorization: `Bearer ${token}` },
-            }
+            },
           );
           return res2;
         });
@@ -289,7 +296,7 @@ const ShowroomMetalStock: React.FC = () => {
   const handleWalletSubmit = async () => {
     if (!walletType || !amount || !personName || !paymentType) {
       alert(
-        "Please select Wallet Type and enter Amount and Person and Payment Type"
+        "Please select Wallet Type and enter Amount and Person and Payment Type",
       );
       return;
     }
@@ -300,7 +307,7 @@ const ShowroomMetalStock: React.FC = () => {
       await api.post(
         `/admin/addWallet?walletType=${walletType}&personName=${personName}&desc=${description}&paymentType=${paymentType}&amount=${amount}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       alert("Submitted successfully!");
 
@@ -340,7 +347,7 @@ const ShowroomMetalStock: React.FC = () => {
       await api.post(
         `/admin/sellingMetal?sellingMetal=${sellMetal}&sellingMetalWeight=${sellWeight}&sellingMetalTotalAmount=${totalAmount}&sellingMetalPhnPayAmount=${cashPay}&sellingMetalCashAmount=${phnPay}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       alert("Submitted successfully!");
 
@@ -395,7 +402,7 @@ const ShowroomMetalStock: React.FC = () => {
         `onlyExchange_metal_name=${encodeURIComponent(returnMetalName)}&` +
         `onlyExchange_metal_weight=${encodeURIComponent(returnWeight)}&` +
         `onlyExchange_metal_purity_weight=${encodeURIComponent(
-          returnPurityWeight
+          returnPurityWeight,
         )}&` +
         `onlyExchange_total_amount=${encodeURIComponent(returnTotalAmt)}&` +
         `onlyExchange_item_cash_amount=${encodeURIComponent(returnCashPay)}&` +
@@ -406,7 +413,7 @@ const ShowroomMetalStock: React.FC = () => {
       await api.post(
         fullUrl,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       alert("Submitted successfully!");
 
@@ -439,7 +446,7 @@ const ShowroomMetalStock: React.FC = () => {
       await api.post(
         `/admin/add?metal=${addMetal}&weight=${addWeight}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       alert("Stock added successfully!");
 
@@ -459,9 +466,9 @@ const ShowroomMetalStock: React.FC = () => {
   const filteredWorkerResults = useMemo(
     () =>
       (workerResults || []).filter((w) =>
-        inRangeExact(w.date, fromDate, toDate)
+        inRangeExact(w.date, fromDate, toDate),
       ),
-    [workerResults, fromDate, toDate]
+    [workerResults, fromDate, toDate],
   );
 
   const filteredHistoryResults = useMemo(
@@ -469,27 +476,27 @@ const ShowroomMetalStock: React.FC = () => {
       (historyResults || [])
         .filter((h) => inRangeExact(h.date, fromDate, toDate))
         .sort((a, b) => b.metalStockHisId - a.metalStockHisId),
-    [historyResults, fromDate, toDate]
+    [historyResults, fromDate, toDate],
   );
 
   const filteredSellingResult = useMemo(
     () =>
       (sellingData || []).filter((h) => inRangeExact(h.date, fromDate, toDate)),
-    [sellingData, fromDate, toDate]
+    [sellingData, fromDate, toDate],
   );
 
   const filteredWalletResult = useMemo(
     () =>
       (walletData || []).filter((h) => inRangeExact(h.date, fromDate, toDate)),
-    [walletData, fromDate, toDate]
+    [walletData, fromDate, toDate],
   );
 
   const filteredOldReturnData = useMemo(
     () =>
       (oldReturnData || []).filter((h) =>
-        inRangeExact(h.date, fromDate, toDate)
+        inRangeExact(h.date, fromDate, toDate),
       ),
-    [oldReturnData, fromDate, toDate]
+    [oldReturnData, fromDate, toDate],
   );
 
   const clearDates = () => {
@@ -920,7 +927,8 @@ const ShowroomMetalStock: React.FC = () => {
                   .split(" ")
                   .map(
                     (word) =>
-                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                      word.charAt(0).toUpperCase() +
+                      word.slice(1).toLowerCase(),
                   )
                   .join(" ");
 
@@ -1100,7 +1108,8 @@ const ShowroomMetalStock: React.FC = () => {
                   .split(" ")
                   .map(
                     (word) =>
-                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                      word.charAt(0).toUpperCase() +
+                      word.slice(1).toLowerCase(),
                   )
                   .join(" ");
 
@@ -1356,7 +1365,7 @@ const ShowroomMetalStock: React.FC = () => {
                     sx={{ fontSize: "0.95rem" }}
                   >
                     <div className="flex justify-center items-center">
-                      {p.date}
+                      {displayFromRaw(p.date)}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1450,7 +1459,7 @@ const ShowroomMetalStock: React.FC = () => {
                     sx={{ fontSize: "0.95rem" }}
                   >
                     <div className="flex justify-center items-center">
-                      {r.date}
+                      {displayFromRaw(r.date)}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1594,7 +1603,7 @@ const ShowroomMetalStock: React.FC = () => {
                     sx={{ fontSize: "0.95rem" }}
                   >
                     <div className="flex justify-center items-center">
-                      {r.date}
+                      {displayFromRaw(r.date)}{" "}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1797,7 +1806,7 @@ const ShowroomMetalStock: React.FC = () => {
                     sx={{ fontSize: "0.95rem" }}
                   >
                     <div className="flex justify-center items-center">
-                      {r.date}
+                      {displayFromRaw(r.date)}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1940,7 +1949,7 @@ const ShowroomMetalStock: React.FC = () => {
                     sx={{ fontSize: "0.95rem" }}
                   >
                     <div className="flex justify-center items-center">
-                      {r.date}
+                      {displayFromRaw(r.date)}
                     </div>
                   </TableCell>
                 </TableRow>
