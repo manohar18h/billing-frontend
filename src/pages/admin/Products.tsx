@@ -92,6 +92,7 @@ const silverItems = [
   "Pilenlu",
   "Batuvu",
   "Mettelu",
+  "Chuttu Mettelu",
   "Spring Mettelu",
   "Jali Mettelu",
   "Bracelet H.M",
