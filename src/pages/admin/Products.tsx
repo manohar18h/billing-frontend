@@ -919,23 +919,22 @@ const Products: React.FC = () => {
     printWindow.document.write(buildSmallLabelHtml(r));
     printWindow.document.close();
   };
-
   const handleScanEpc = async () => {
     try {
       setScanLoading(true);
 
-      const res = await fetch("http://localhost:5090/read-epc");
+      const res = await fetch("https://127.0.0.1:5091/read-epc");
       const data = await res.json();
 
       if (!data.success) {
-        alert(data.message || "Failed to scan EPC");
+        alert("Failed to scan EPC");
         return;
       }
 
-      setEpcValue(data.epc ?? "");
+      setEpcValue(data.epc);
     } catch (err) {
-      console.error("Scan EPC failed:", err);
-      alert("Failed to connect to local C# RFID service.");
+      console.error(err);
+      alert("RFID app not running. Please open RfidLocalBridge.exe");
     } finally {
       setScanLoading(false);
     }
