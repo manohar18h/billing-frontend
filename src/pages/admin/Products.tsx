@@ -779,8 +779,8 @@ const Products: React.FC = () => {
 
     try {
       const qrDataUrl = await QRCode.toDataURL(row.barcodeValue, {
-        width: 180,
-        margin: 1,
+        width: 90,
+        margin: 0,
       });
       setLabelImageSrc(qrDataUrl);
     } catch (err) {
@@ -825,7 +825,6 @@ const Products: React.FC = () => {
       setBarcodeSearchLoading(false);
     }
   };
-
   const buildSmallLabelHtml = (r: StockProduct) => {
     const barcodeValue = r.barcodeValue ?? "-";
     const grossWeight = normalizeWeight(r.gross_weight);
@@ -837,72 +836,105 @@ const Products: React.FC = () => {
       <title>Print RFID Label</title>
       <style>
         @page {
-          size: 25mm 26mm;
+          size: 68mm 26mm;
           margin: 0;
         }
+
         html, body {
           margin: 0;
           padding: 0;
-          width: 25mm;
+          width: 68mm;
           height: 26mm;
           overflow: hidden;
           background: #ffffff;
           font-family: Arial, sans-serif;
         }
-        .label {
-          width: 25mm;
+
+        .page {
+          position: relative;
+          width: 68mm;
           height: 26mm;
+          background: #fff;
+        }
+
+        /* left closing-tag print area */
+        .print-zone {
+          position: absolute;
+          top: 2.2mm;
+          left: 1.5mm;
+          width: 22mm;
+          height: 21mm;
           box-sizing: border-box;
-          padding: 1.2mm 1.2mm 1mm 1.2mm;
+          overflow: hidden;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: flex-start;
-          background: #fff;
         }
-        .img-wrap {
+
+        .top-half {
           width: 100%;
-          height: 12mm;
+          height: 9.5mm;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-top: 0.4mm;
+          box-sizing: border-box;
         }
-        .img-wrap img {
-          max-width: 11mm;
-          max-height: 11mm;
+
+        .top-half img {
+          max-width: 8.5mm;
+          max-height: 8.5mm;
+           margin-top: 1.8mm;
           object-fit: contain;
           display: block;
         }
+
+        .bottom-half {
+          width: 100%;
+          height: 10.5mm;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: flex-start;
+          padding-top: 6mm;
+           padding-left: 2mm; 
+          box-sizing: border-box;
+        }
+
         .text1 {
           width: 100%;
-          margin-top: 1.1mm;
-          font-size: 5pt;
-          line-height: 1.05;
+          margin-top: 0.8mm;
+          font-size: 4.8pt;
+          line-height: 1.0;
           font-weight: bold;
-          text-align: center;
+           text-align: left; 
           word-break: break-all;
         }
+
         .text2 {
           width: 100%;
-          margin-top: 0.6mm;
-          font-size: 5pt;
-          line-height: 1.05;
+          margin-top: 1.2mm;
+          font-size: 4.8pt;
+          line-height: 1.0;
           text-align: center;
         }
       </style>
     </head>
     <body onload="window.print(); window.close();">
-      <div class="label">
-        <div class="img-wrap">
-          ${
-            imageSrc
-              ? `<img src="${imageSrc}" alt="qr" />`
-              : `<div style="font-size:5pt;">No QR</div>`
-          }
+      <div class="page">
+        <div class="print-zone">
+          <div class="top-half">
+            ${
+              imageSrc
+                ? `<img src="${imageSrc}" alt="qr" />`
+                : `<div style="font-size:4pt;">No QR</div>`
+            }
+          </div>
+          <div class="bottom-half">
+            <div class="text1">${barcodeValue}</div>
+            <div class="text2">GW: ${grossWeight}g</div>
+          </div>
         </div>
-        <div class="text1">${barcodeValue}</div>
-        <div class="text2">GW: ${grossWeight}g</div>
       </div>
     </body>
   </html>`;
@@ -981,9 +1013,16 @@ const Products: React.FC = () => {
             )
           : prev,
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error("Save EPC failed:", err);
-      alert("Failed to save EPC.");
+      console.error("Response data:", err?.response?.data);
+      console.error("Status:", err?.response?.status);
+
+      alert(
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          `Failed to save EPC. Status: ${err?.response?.status || "unknown"}`,
+      );
     } finally {
       setSaveEpcLoading(false);
     }
