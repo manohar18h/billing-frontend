@@ -11,6 +11,7 @@ type StockBoxDataEntry = {
   methodType2?: string;
   sellingDate?: string;
   barcodeValue?: string;
+  epcNumber?: string;
 };
 
 type StockDataBox = {
@@ -72,6 +73,7 @@ const StockBoxDetails: React.FC = () => {
                 <th className="border px-3 py-2 text-left">Barcode</th>
                 <th className="border px-3 py-2 text-left">Method2</th>
                 <th className="border px-3 py-2 text-left">Selling Date</th>
+                <th className="border px-3 py-2 text-left">EPC</th>
               </tr>
             </thead>
             <tbody>
@@ -105,6 +107,7 @@ const StockBoxDetails: React.FC = () => {
                   <td className="border px-3 py-2">
                     {formatDMY(entry.sellingDate)}
                   </td>
+                  <td className="border px-3 py-2">{entry.epcNumber}</td>
                 </tr>
               ))}
             </tbody>
