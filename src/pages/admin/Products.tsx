@@ -955,7 +955,7 @@ const Products: React.FC = () => {
     try {
       setScanLoading(true);
 
-      const res = await fetch("https://127.0.0.1:5091/read-epc");
+      const res = await fetch("https://127.0.0.1:5090/read-epc");
       const data = await res.json();
 
       if (!data.success) {
