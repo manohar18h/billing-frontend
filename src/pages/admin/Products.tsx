@@ -743,8 +743,6 @@ const Products: React.FC = () => {
       const rate = toNum(next[`${material}_rate` as keyof ProductForm]);
       const amount = calculateAmount(weight, rate);
 
-      next[`${material}_amount` as keyof ProductForm] = String(amount);
-
       // recalc gross weight
       next.gross_weight = String(calcGrossWeight(next));
 
@@ -1660,7 +1658,7 @@ const Products: React.FC = () => {
                   <TextField
                     label="Stone Amount"
                     value={product.stone_amount}
-                    InputProps={{ readOnly: true }}
+                    onChange={onProductChange("stone_amount")}
                     inputProps={{
                       step: "any",
                       onKeyDown: (e) => {
@@ -1719,7 +1717,7 @@ const Products: React.FC = () => {
                   <TextField
                     label="Bits Amount"
                     value={product.bits_amount}
-                    InputProps={{ readOnly: true }}
+                    onChange={onProductChange("bits_amount")}
                     inputProps={{
                       step: "any",
                       onKeyDown: (e) => {
@@ -1778,7 +1776,7 @@ const Products: React.FC = () => {
                   <TextField
                     label="Diamond Amount"
                     value={product.diamond_amount}
-                    InputProps={{ readOnly: true }}
+                    onChange={onProductChange("diamond_amount")}
                     inputProps={{
                       step: "any",
                       onKeyDown: (e) => {
@@ -1837,7 +1835,7 @@ const Products: React.FC = () => {
                   <TextField
                     label="Enamel Amount"
                     value={product.enamel_amount}
-                    InputProps={{ readOnly: true }}
+                    onChange={onProductChange("enamel_amount")}
                     inputProps={{
                       step: "any",
                       onKeyDown: (e) => {
@@ -1896,7 +1894,7 @@ const Products: React.FC = () => {
                   <TextField
                     label="Pearls Amount"
                     value={product.pearls_amount}
-                    InputProps={{ readOnly: true }}
+                    onChange={onProductChange("pearls_amount")}
                     inputProps={{
                       step: "any",
                       onKeyDown: (e) => {
@@ -1955,7 +1953,7 @@ const Products: React.FC = () => {
                   <TextField
                     label="Wax Amount"
                     value={product.wax_amount}
-                    InputProps={{ readOnly: true }}
+                    onChange={onProductChange("wax_amount")}
                     inputProps={{
                       step: "any",
                       onKeyDown: (e) => {
@@ -2014,7 +2012,7 @@ const Products: React.FC = () => {
                   <TextField
                     label="Other Amount"
                     value={product.other_amount}
-                    InputProps={{ readOnly: true }}
+                    onChange={onProductChange("other_amount")}
                     inputProps={{
                       step: "any",
                       onKeyDown: (e) => {
@@ -2453,6 +2451,9 @@ const Products: React.FC = () => {
                     </Typography>
                     <Typography variant="body2">
                       <strong>EPC:</strong> {r.epcNumber || "-"}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Link Code:</strong> {r.itemCode || "-"}
                     </Typography>
                   </Box>
 
