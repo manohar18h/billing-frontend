@@ -989,120 +989,57 @@ const Orders: React.FC = () => {
         getMetalPrice = Number(localStorage.getItem("Silver995Price")) || 0;
       }
 
-      // ✅ calculate total item amount
-      const metalWeight = data.metal_weight || 0;
-      const wastage = data.wastage || 0;
-      const makingCharges = data.making_charges || 0;
+      setOrder((prev) => {
+        const updatedOrder = {
+          ...prev,
 
-      const stoneAmount = data.stone_amount || 0;
-      const waxAmount = data.wax_amount || 0;
-      const diamondAmount = data.diamond_amount || 0;
-      const bitsAmount = data.bits_amount || 0;
-      const enamelAmount = data.enamel_amount || 0;
-      const pearlsAmount = data.pearls_amount || 0;
-      const otherAmount = data.other_amount || 0;
+          // keep old values while editing
+          metal: isEditing ? prev.metal : (data.metal ?? ""),
+          metalPrice: isEditing ? prev.metalPrice : getMetalPrice,
+          itemName: isEditing ? prev.itemName : (data.itemName ?? ""),
 
-      let total_item_amount = 0;
+          // update remaining values from barcode
+          catalogue: data.catalogue ?? "",
+          design: data.design ?? "",
+          size: String(data.size ?? ""),
+          metal_weight: data.metal_weight ?? 0,
+          wastage: data.wastage ?? 0,
+          making_charges: data.making_charges ?? 0,
+          stone_weight: data.stone_weight ?? 0,
+          stone_amount: data.stone_amount ?? 0,
+          wax_weight: data.wax_weight ?? 0,
+          wax_amount: data.wax_amount ?? 0,
+          diamond_weight: data.diamond_weight ?? 0,
+          diamond_amount: data.diamond_amount ?? 0,
+          bits_weight: data.bits_weight ?? 0,
+          bits_amount: data.bits_amount ?? 0,
+          enamel_weight: data.enamel_weight ?? 0,
+          enamel_amount: data.enamel_amount ?? 0,
+          pearls_weight: data.pearls_weight ?? 0,
+          pearls_amount: data.pearls_amount ?? 0,
+          other_weight: data.other_weight ?? 0,
+          other_amount: data.other_amount ?? 0,
+          stockBox: data.stockBox ?? "",
+          itemCode: data.itemCode ?? "",
+          gross_weight: data.gross_weight ?? 0,
+          barcodeValue: data.barcodeValue ?? "",
 
-      if (
-        wastage ||
-        stoneAmount ||
-        waxAmount ||
-        diamondAmount ||
-        bitsAmount ||
-        enamelAmount ||
-        pearlsAmount ||
-        otherAmount
-      ) {
-        total_item_amount =
-          (metalWeight + (wastage / 100) * metalWeight) * getMetalPrice +
-          makingCharges +
-          (stoneAmount +
-            waxAmount +
-            diamondAmount +
-            bitsAmount +
-            enamelAmount +
-            pearlsAmount +
-            otherAmount);
-      } else {
-        total_item_amount = metalWeight * getMetalPrice + makingCharges;
-      }
+          // keep already selected edit values
+          discount: prev.discount,
+          deliveryStatus: prev.deliveryStatus,
+          deliveryDate: prev.deliveryDate,
+          workStatus: prev.workStatus,
+        };
 
-      // ✅ now update state with metal_price and total_item_amount too
-      // setOrder((prev) => ({
-      //   ...prev,
-      //   metal: data.metal ?? prev.metal,
-      //   metalPrice: getMetalPrice,
-      //   itemName: data.itemName ?? prev.itemName,
-      //   catalogue: data.catalogue ?? prev.catalogue,
-      //   design: data.design ?? prev.design,
-      //   size: String(data.size ?? prev.size),
-      //   metal_weight: data.metal_weight ?? prev.metal_weight,
-      //   wastage: data.wastage ?? prev.wastage,
-      //   making_charges: data.making_charges ?? prev.making_charges,
-      //   stone_weight: data.stone_weight ?? prev.stone_weight,
-      //   stone_amount: data.stone_amount ?? prev.stone_amount,
-      //   wax_weight: data.wax_weight ?? prev.wax_weight,
-      //   wax_amount: data.wax_amount ?? prev.wax_amount,
-      //   diamond_weight: data.diamond_weight ?? prev.diamond_weight,
-      //   diamond_amount: data.diamond_amount ?? prev.diamond_amount,
-      //   bits_weight: data.bits_weight ?? prev.bits_weight,
-      //   bits_amount: data.bits_amount ?? prev.bits_amount,
-      //   enamel_weight: data.enamel_weight ?? prev.enamel_weight,
-      //   enamel_amount: data.enamel_amount ?? prev.enamel_amount,
-      //   pearls_weight: data.pearls_weight ?? prev.pearls_weight,
-      //   pearls_amount: data.pearls_amount ?? prev.pearls_amount,
-      //   other_weight: data.other_weight ?? prev.other_weight,
-      //   other_amount: data.other_amount ?? prev.other_amount,
-      //   stockBox: data.stockBox ?? prev.stockBox,
-      //   itemCode: data.itemCode ?? prev.itemCode,
-      //   gross_weight: data.gross_weight ?? prev.gross_weight,
-      //   barcodeValue: data.barcodeValue ?? prev.barcodeValue,
+        const { total_item_amount } = calculateTotals(
+          updatedOrder,
+          isEditing ? Number(prev.metalPrice) : getMetalPrice,
+        );
 
-      //   // ✅ newly added
-
-      //   total_item_amount: total_item_amount,
-      // }));
-
-      const orderData = {
-        metal: data.metal ?? "",
-        metalPrice: getMetalPrice,
-        itemName: data.itemName ?? "",
-        catalogue: data.catalogue ?? "",
-        design: data.design ?? "",
-        size: String(data.size ?? ""),
-        metal_weight: data.metal_weight ?? 0,
-        wastage: data.wastage ?? 0,
-        making_charges: data.making_charges ?? 0,
-        stone_weight: data.stone_weight ?? 0,
-        stone_amount: data.stone_amount ?? 0,
-        wax_weight: data.wax_weight ?? 0,
-        wax_amount: data.wax_amount ?? 0,
-        diamond_weight: data.diamond_weight ?? 0,
-        diamond_amount: data.diamond_amount ?? 0,
-        bits_weight: data.bits_weight ?? 0,
-        bits_amount: data.bits_amount ?? 0,
-        enamel_weight: data.enamel_weight ?? 0,
-        enamel_amount: data.enamel_amount ?? 0,
-        pearls_weight: data.pearls_weight ?? 0,
-        pearls_amount: data.pearls_amount ?? 0,
-        other_weight: data.other_weight ?? 0,
-        other_amount: data.other_amount ?? 0,
-        stockBox: data.stockBox ?? "",
-        itemCode: data.itemCode ?? "",
-        gross_weight: data.gross_weight ?? 0,
-        barcodeValue: data.barcodeValue ?? "",
-        discount: 0,
-        deliveryStatus: "",
-        deliveryDate: "",
-        workStatus: "",
-        total_item_amount: 0,
-      };
-
-      const { total_item_amount: calculatedTotal } = calculateTotals(orderData);
-      setOrder({
-        ...orderData,
-        total_item_amount: calculatedTotal,
+        return {
+          ...updatedOrder,
+          total_item_amount,
+        };
       });
 
       setIsPrefilled(true);
@@ -1110,10 +1047,9 @@ const Orders: React.FC = () => {
     } catch (error: any) {
       console.error("Failed to fetch barcode data:", error);
 
-      // Check if backend returned a response with error message
       if (error.response && error.response.data && error.response.data.error) {
         const backendError = error.response.data.error;
-        alert(backendError); // or show in a UI component instead of alert
+        alert(backendError);
       } else {
         alert("Barcode not found or error occurred");
       }
