@@ -24,7 +24,6 @@ import api from "@/services/api"; // ← import your api.ts
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import { Box } from "@mui/system";
 
 interface selectedOrders {
@@ -71,10 +70,6 @@ const BillDetails: React.FC = () => {
   const [orders, setOrders] = useState<selectedOrders[]>([]);
   const [workerList, setWorkerList] = useState<Worker[]>([]);
 
-  const [payDialogOpen, setPayDialogOpen] = useState(false);
-  const [payAmount, setPayAmount] = useState("");
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
   const [workerPayAmount, setWorkerPayAmount] = useState("");
@@ -83,7 +78,6 @@ const BillDetails: React.FC = () => {
   const [assignOrderId, setAssignOrderId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [, setEditingOrderId] = useState<number | null>(null);
-  const [payMethod, setPayMethod] = useState("");
 
   const token = localStorage.getItem("token");
   const billNumber = localStorage.getItem("billNumber");
@@ -265,7 +259,7 @@ const BillDetails: React.FC = () => {
       if (!assignOrderId) return;
 
       console.log("assignOrderId", { assignOrderId });
-      console.log("workerNameInput", workerNameInput.trim().toString);
+      console.log("workerNameInput", workerNameInput.trim().toString());
       console.log("token", token);
 
       await api.post(
@@ -288,14 +282,6 @@ const BillDetails: React.FC = () => {
       console.log("Worker assign failed", err);
     }
   };
-
-  const asNumber = (v: string | number | null | undefined): number =>
-    v == null || v === "" ? 0 : Number(v);
-
-  const formatMoney = (v: string | number | null | undefined): string =>
-    asNumber(v).toLocaleString("en-IN", {
-      maximumFractionDigits: 0, // no decimals
-    });
 
   if (!customer) return null;
 
@@ -396,10 +382,11 @@ const BillDetails: React.FC = () => {
                   {customer.phoneNumber}
                 </span>
               </p>
+
               <p className="flex justify-between">
-                <span className="text-gray-300 font-medium">Email:</span>
-                <span className="text-orange-300 font-semibold">
-                  {customer.emailId || "—"}
+                <span className="text-gray-300 font-medium">Total Amount:</span>
+                <span className="text-green-400 font-semibold">
+                  {customer.billTotalAmount}
                 </span>
               </p>
             </div>
@@ -407,9 +394,9 @@ const BillDetails: React.FC = () => {
             {/* Right column */}
             <div className="space-y-4 pl-4">
               <p className="flex justify-between">
-                <span className="text-gray-300 font-medium">Total Amount:</span>
+                <span className="text-gray-300 font-medium">Discount:</span>
                 <span className="text-green-400 font-semibold">
-                  {customer.billTotalAmount}
+                  {customer.billDiscountAmount}
                 </span>
               </p>
 
@@ -460,21 +447,66 @@ const BillDetails: React.FC = () => {
               <Table sx={{ minWidth: 800 /* ensure table doesn’t collapse */ }}>
                 <thead className="bg-gray-200">
                   <tr>
-                    <th className="border px-3 py-2">Order ID</th>
-                    <th className="border px-3 py-2">Date</th>
-                    <th className="border px-3 py-2">Item</th>
-                    <th className="border px-3 py-2">Metal</th>
-                    <th className="border px-3 py-2">Weight</th>
-                    <th className="border px-3 py-2">Status</th>
-                    <th className="border px-3 py-2">Total</th>
-                    <th className="border px-3 py-2">Paid</th>
-                    <th className="border px-3 py-2">Due</th>
-                    <th className="border px-3 py-2">Worker</th>
-                    <th className="border px-3 py-2">Wrk.A</th>
-                    <th className="border px-3 py-2">Pay</th>
-                    <th className="border px-3 py-2">View</th>
-                    <th className="border px-3 py-2">Edit</th>
-                    <th className="border px-3 py-2">Cancel</th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Order ID
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Date
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Item
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Metal
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Weight
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Status
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Total
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Worker
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Wrk.A
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        View
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Edit
+                      </div>
+                    </th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Cancel
+                      </div>
+                    </th>
                   </tr>
                 </thead>
 
@@ -520,24 +552,6 @@ const BillDetails: React.FC = () => {
                         }}
                       >
                         {order.total_item_amount.toFixed(2)}
-                      </TableCell>
-
-                      <TableCell
-                        className={`border px-3 py-2 `}
-                        sx={{
-                          color: "#15803d",
-                        }}
-                      >
-                        {order.paidAmount}
-                      </TableCell>
-                      <TableCell
-                        className={`border px-3 py-2 ${
-                          order.dueAmount !== 0
-                            ? "text-red-600 font-semibold"
-                            : ""
-                        }`}
-                      >
-                        {formatMoney(order.dueAmount)}
                       </TableCell>
 
                       <TableCell className={`border px-3 py-2 `}>
@@ -614,26 +628,6 @@ const BillDetails: React.FC = () => {
                       </TableCell>
 
                       <TableCell className={`border px-3 py-2 `}>
-                        {asNumber(order.dueAmount) !== 0 ? (
-                          <IconButton
-                            size="medium"
-                            sx={{
-                              color: "#4CAF50", // solid green background
-                              "&:hover": { backgroundColor: "#E0E0E0" },
-                            }}
-                            onClick={() => {
-                              setSelectedOrderId(order.orderId);
-                              setPayAmount("");
-                              setPayDialogOpen(true);
-                            }}
-                          >
-                            <CurrencyRupeeIcon fontSize="medium" />
-                          </IconButton>
-                        ) : (
-                          "-"
-                        )}
-                      </TableCell>
-                      <TableCell className={`border px-3 py-2 `}>
                         <IconButton
                           size="medium"
                           color="primary"
@@ -689,7 +683,7 @@ const BillDetails: React.FC = () => {
                       <DialogContentText>
                         Are you sure you want to Cancel this order item with ID:
                         {slectOrderId}
-                        <strong>{selectedOrderId}</strong>?
+                        <strong>{slectOrderId}</strong>?
                       </DialogContentText>
                     </DialogContent>
                     <DialogActions>
@@ -711,117 +705,6 @@ const BillDetails: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Pay Dialog */}
-      <Dialog open={payDialogOpen} onClose={() => setPayDialogOpen(false)}>
-        <DialogTitle>Enter Payment Amount</DialogTitle>
-        <DialogContent
-          sx={{
-            px: 4,
-            py: 3,
-          }}
-        >
-          <Grid container spacing={3} direction="column">
-            {/* Payment Type */}
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                select
-                label="Payment Type"
-                value={payMethod}
-                onChange={(e) => setPayMethod(e.target.value)}
-                fullWidth
-              >
-                <MenuItem value="">
-                  <em>Select Payment Method</em>
-                </MenuItem>
-                <MenuItem value="Phone Pay">Phone Pay</MenuItem>
-                <MenuItem value="Cash">Cash</MenuItem>
-              </TextField>
-            </Grid>
-
-            {/* Amount */}
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                label="Amount"
-                type="number"
-                inputProps={{
-                  step: "any",
-                  onKeyDown: (e) => {
-                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                      e.preventDefault();
-                    }
-                  },
-                }}
-                onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                fullWidth
-                value={payAmount}
-                onChange={(e) => setPayAmount(e.target.value)}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setPayDialogOpen(false)}>Cancel</Button>
-
-          <Button
-            onClick={async () => {
-              if (!selectedOrderId || !payAmount) return;
-
-              console.log("selectedOrderId :", selectedOrderId);
-              console.log("payMethod :", payMethod);
-              console.log("payAmount :", payAmount);
-              console.log("token :", token);
-
-              try {
-                await api.post(
-                  `/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
-                  {},
-                  { headers: { Authorization: `Bearer ${token}` } },
-                );
-
-                const updatedOrders = orders.map((o) => {
-                  if (o.orderId === selectedOrderId) {
-                    const existingDue = Number(o.dueAmount);
-                    const paid = Number(payAmount);
-
-                    let newDue;
-                    if (existingDue < 0) {
-                      // Negative = advance → paying back increases due towards 0
-                      newDue = existingDue + paid;
-                    } else {
-                      // Positive = customer owes → normal subtraction
-                      newDue = existingDue - paid;
-                    }
-
-                    // Fix floating point rounding (-0.0001 → 0)
-                    if (Math.abs(newDue) < 0.01) newDue = 0;
-
-                    return {
-                      ...o,
-                      paidAmount: Number(o.paidAmount) + paid,
-                      dueAmount: newDue,
-                    };
-                  }
-                  return o;
-                });
-                fetchCustomerDetails();
-
-                setOrders(updatedOrders);
-
-                setPayDialogOpen(false);
-              } catch (err) {
-                console.error("Payment failed:", err);
-                alert("Payment failed");
-              }
-            }}
-            color="primary"
-            variant="contained"
-          >
-            Pay Now
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Assign Worker Dialog */}
       <Dialog
@@ -900,9 +783,10 @@ const BillDetails: React.FC = () => {
                   workerId: selectedWorkerId,
                 };
 
-                requestBody.workPay = Number(workerPayAmount);
-
-                requestBody.wastage = Number(workerPayWastage);
+                if (workerPayAmount)
+                  requestBody.workPay = Number(workerPayAmount);
+                if (workerPayWastage)
+                  requestBody.wastage = Number(workerPayWastage);
 
                 const res = await api.post(
                   `/admin/addWorkerPay/${assignOrderId}`,

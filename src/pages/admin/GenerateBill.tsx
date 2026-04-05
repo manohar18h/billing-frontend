@@ -15,6 +15,11 @@ const GenerateBill: React.FC = () => {
   const [msgTitle, SetMsgTitle] = useState("");
   const openWhatsAppModal = () => setShowWhatsAppModal(true);
 
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [payMethod, setPayMethod] = useState("Phone Pay");
+  const [payAmount, setPayAmount] = useState("");
+  const [payLoading, setPayLoading] = useState(false);
+
   // Transaction model
   interface Transaction {
     transactionId: number;
@@ -108,16 +113,6 @@ const GenerateBill: React.FC = () => {
     selectedOrders: Order[]; // keep string since it’s coming in this format
   }
 
-  interface Bill {
-    name: string;
-    phoneNumber: string;
-    billNumber: string;
-    billingDate: string;
-    billTotalAmount: number;
-    billPaidAmount: number;
-    billDueAmount: number;
-  }
-
   const [bill, setBill] = useState<Bill | null>(null);
 
   const dynamicWeightKeys = [
@@ -179,6 +174,52 @@ We hope to serve you again soon!
         "Message copied to clipboard ✅ \nWhatsApp Web opened. You can paste and send manually.",
       );
     });
+  };
+
+  const refreshBill = async () => {
+    if (!bill?.billNumber) return;
+
+    try {
+      const res = await api.get<Bill>(
+        `/admin/getDataByBillNumber/${bill.billNumber}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      setBill(res.data);
+    } catch (error) {
+      console.error("Failed to refresh bill:", error);
+    }
+  };
+
+  const handlePaySubmit = async () => {
+    if (!bill?.billId) return;
+
+    if (!payAmount || Number(payAmount) <= 0) {
+      alert("Please enter valid amount");
+      return;
+    }
+
+    try {
+      setPayLoading(true);
+
+      await api.post(`/admin/payCustomer/${bill.billId}/${payMethod}`, null, {
+        params: { amount: Number(payAmount) },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      await refreshBill();
+
+      setPayDialogOpen(false);
+      setPayAmount("");
+      setPayMethod("Phone Pay");
+    } catch (error: any) {
+      console.error("Payment failed:", error);
+      alert(error?.response?.data || "Payment failed");
+    } finally {
+      setPayLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -610,11 +651,12 @@ We hope to serve you again soon!
                 <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
                   MC
                 </th>
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  Paid
-                </th>
+
                 <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
                   Total
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Status
                 </th>
               </tr>
             </thead>
@@ -688,11 +730,11 @@ We hope to serve you again soon!
                   <td className="border px-2 py-1 text-[#965205] font-bold text-center align-middle text-[13px]">
                     {item.making_charges}
                   </td>
-                  <td className="border px-2 py-1 text-[#005a21] font-bold text-center align-middle text-[13px]">
-                    ₹{item.paidAmount}
-                  </td>
                   <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
                     ₹{item.total_item_amount}
+                  </td>
+                  <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
+                    {item.deliveryStatus}
                   </td>
                 </tr>
               ))}
@@ -708,7 +750,7 @@ We hope to serve you again soon!
                       }}
                     >
                       <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle text-[14px]">
-                        {ex.exchange_metal_name + "  ( Ex )"}
+                        {ex.exchange_metal_name}
                       </td>
 
                       <td className="border px-2 py-1 text-[#af0058]  font-bold text-center align-middle text-[11px]">
@@ -766,11 +808,11 @@ We hope to serve you again soon!
                       <td className="border px-2 py-1 text-center align-middle">
                         -
                       </td>
-                      <td className="border px-2 py-1 text-center align-middle">
-                        -
-                      </td>
                       <td className="border px-2 py-1  text-[#00479f] font-bold text-center align-middle text-[13px]">
                         ₹{ex.exchange_item_amount}
+                      </td>
+                      <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
+                        {"Exchange"}
                       </td>
                     </tr>
                   )) || [],
@@ -856,6 +898,58 @@ We hope to serve you again soon!
         </div>
       </div>
 
+      <div className="max-w-[800px] mx-auto mt-6 print:hidden">
+        <div className="rounded-2xl border border-orange-300 bg-orange-50 p-5 shadow-sm">
+          <h3 className="text-lg font-bold text-[#7c2d12] mb-4">
+            Payment Summary
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div className="bg-white rounded-xl p-3 border">
+              <div className="text-gray-600">Total Amount</div>
+              <div className="font-bold text-base">₹{bill.billTotalAmount}</div>
+            </div>
+
+            <div className="bg-white rounded-xl p-3 border">
+              <div className="text-gray-600">Exchange Amount</div>
+              <div className="font-bold text-base">₹{bill.exchangeAmount}</div>
+            </div>
+
+            <div className="bg-white rounded-xl p-3 border">
+              <div className="text-gray-600">Total Paid</div>
+              <div className="font-bold text-base text-green-700">
+                ₹{bill.billPaidAmount}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-3 border">
+              <div className="text-gray-600">Total Received</div>
+              <div className="font-bold text-base text-purple-700">
+                ₹{bill.billResAmount}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-3 border sm:col-span-2">
+              <div className="text-gray-600">Total Due</div>
+              <div className="font-bold text-base text-red-600">
+                ₹{bill.billDueAmount}
+              </div>
+            </div>
+          </div>
+
+          {bill.billDueAmount !== 0 && (
+            <div className="mt-4 text-right">
+              <button
+                onClick={() => setPayDialogOpen(true)}
+                className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700"
+              >
+                Pay
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Print Button (Hidden during print) */}
       <div className="text-center mt-6 print:hidden">
         <button
@@ -894,6 +988,55 @@ We hope to serve you again soon!
                 onClick={() => setShowWhatsAppModal(false)}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {payDialogOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 print:hidden">
+          <div className="bg-white rounded-xl shadow-xl w-[90%] max-w-md p-6">
+            <h2 className="text-lg font-bold mb-4">Make Payment</h2>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Payment Type
+              </label>
+              <select
+                value={payMethod}
+                onChange={(e) => setPayMethod(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2"
+              >
+                <option value="Phone Pay">Phone Pay</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Amount</label>
+              <input
+                type="number"
+                value={payAmount}
+                onChange={(e) => setPayAmount(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Enter amount"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setPayDialogOpen(false)}
+                className="bg-gray-300 px-4 py-2 rounded-lg"
+                disabled={payLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePaySubmit}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                disabled={payLoading}
+              >
+                {payLoading ? "Saving..." : "Pay"}
               </button>
             </div>
           </div>

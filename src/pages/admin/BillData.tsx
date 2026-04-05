@@ -32,8 +32,10 @@ interface Billing {
   exchangeAmount: number;
   billPaidAmount: number;
   billDueAmount: number;
+  billResAmount: number;
   selectedOrderIds: string;
   billingDate: string | null;
+  itemNames: string[];
   selectedOrders: SelectedOrder[];
 }
 
@@ -236,14 +238,53 @@ const BillData: React.FC = () => {
             <table className="w-full border-collapse border border-gray-300 minWidth: 800 ">
               <thead className="bg-gray-200">
                 <tr>
-                  <th className="border px-3 py-2">Billing Date</th>
-                  <th className="border px-3 py-2">Bill Number</th>
-                  <th className="border px-3 py-2">Total Amount</th>
-                  <th className="border px-3 py-2">Exchange</th>
-                  <th className="border px-3 py-2">Paid</th>
-                  <th className="border px-3 py-2">Due</th>
-                  <th className="border px-3 py-2">Delivery Status</th>
-                  <th className="border px-3 py-2">View</th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">Date</div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Bill No
+                    </div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Items
+                    </div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Total
+                    </div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Discount
+                    </div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Exchange
+                    </div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">Paid</div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Recived
+                    </div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">Due</div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">
+                      Status
+                    </div>
+                  </th>
+                  <th className="border px-3 py-2 text-center">
+                    <div className="flex justify-center items-center">View</div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -255,14 +296,25 @@ const BillData: React.FC = () => {
                         : "N/A"}
                     </td>
                     <td className="border px-3 py-2">{bill.billNumber}</td>
+                    <td className="border px-3 py-2 text-center">
+                      {bill.selectedOrders?.map((order, index) => (
+                        <div key={index}>{order.itemName}</div>
+                      ))}
+                    </td>
                     <td className="border px-3 py-2 text-yellow-600 font-semibold">
                       {bill.billTotalAmount.toFixed(2)}
                     </td>
                     <td className="border px-3 py-2">
+                      {bill.billDiscountAmount.toFixed(2)}
+                    </td>
+                    <td className="border px-3 py-2  text-blue-600 font-semibold">
                       {bill.exchangeAmount.toFixed(2)}
                     </td>
                     <td className="border px-3 py-2 text-green-600 font-semibold">
                       {bill.billPaidAmount.toFixed(2)}
+                    </td>
+                    <td className="border px-3 py-2 text-[#8B4513] font-semibold">
+                      {bill.billResAmount.toFixed(2)}
                     </td>
                     <td
                       className={`border px-3 py-2 ${
@@ -273,6 +325,7 @@ const BillData: React.FC = () => {
                     >
                       {bill.billDueAmount.toFixed(2)}
                     </td>
+
                     <td
                       className={`border px-3 py-2 font-semibold ${
                         bill.deliveryStatus === "Pending"

@@ -86,6 +86,7 @@ const OrderDetails: React.FC = () => {
     deliveryDate: string;
     deliveryStatus: string;
     workStatus: string;
+    itemCode: string;
 
     workerPay: WorkerPay;
 
@@ -93,6 +94,23 @@ const OrderDetails: React.FC = () => {
     oldItems: OldItem[];
 
     version: number;
+  }
+
+  interface SpclWork {
+    speclWorkId: number;
+    worker?: {
+      workerId: number;
+      fullName: string;
+    } | null;
+    itemName: string;
+    metal: string;
+    workerMetalWeight: number | null;
+    otherMetalName: string | null;
+    otherWeight: number | null;
+    amount: number | null;
+    wastage: number | null;
+    itemLinkCode: string;
+    deliveryDate: string | null;
   }
 
   const location = useLocation();
@@ -106,8 +124,48 @@ const OrderDetails: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [spclWorks, setSpclWorks] = useState<SpclWork[]>([]);
+  const [spclLoading, setSpclLoading] = useState(false);
+
   // Assuming you already have an Order interface
   // interface Order { ... }
+
+  useEffect(() => {
+    const fetchSpclWork = async () => {
+      if (
+        !order?.itemCode ||
+        order.itemCode.trim() === "" ||
+        order.itemCode === "0"
+      ) {
+        setSpclWorks([]);
+        return;
+      }
+
+      try {
+        setSpclLoading(true);
+
+        const token = localStorage.getItem("token");
+
+        const response = await api.get<SpclWork[]>(
+          `/admin/spcl-work/${order.itemCode}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        setSpclWorks(response.data || []);
+      } catch (err) {
+        console.error("Error fetching spcl work:", err);
+        setSpclWorks([]);
+      } finally {
+        setSpclLoading(false);
+      }
+    };
+
+    fetchSpclWork();
+  }, [order?.itemCode]);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -243,9 +301,7 @@ const OrderDetails: React.FC = () => {
               ["Total Item Amount", order.total_item_amount],
               ["Discount", order.discount],
               ["Old Exchange Item Price", order.oldExItemPrice],
-              ["Paid Amount", order.paidAmount],
-              ["Due Amount", order.dueAmount],
-              ["Received Amount", order.receivedAmount],
+              ["Item Link Worker Code", order.itemCode],
               [
                 "Delivery Date",
                 order.deliveryDate
@@ -388,6 +444,92 @@ const OrderDetails: React.FC = () => {
                 </li>
               ))}
             </ul>
+          </>
+        )}
+        {(spclLoading || spclWorks.length > 0) && (
+          <>
+            <h2 className="text-2xl font-bold text-purple-300 mb-4">
+              Spcl Work
+            </h2>
+
+            {spclLoading ? (
+              <p className="text-emerald-300 mb-8">Loading spcl work...</p>
+            ) : (
+              spclWorks.map((work, index) => (
+                <div
+                  key={work.speclWorkId ?? index}
+                  className="grid grid-cols-2 gap-6 mb-10"
+                >
+                  <div className="pr-6 border-r border-purple-300/40">
+                    <p>
+                      <span className="text-purple-200">Worker Name:</span>{" "}
+                      <span className="text-emerald-300">
+                        {work.worker?.fullName || "—"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-purple-200">Metal:</span>{" "}
+                      <span className="text-emerald-300">
+                        {work.metal || "—"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-purple-200">
+                        Worker Metal Weight:
+                      </span>{" "}
+                      <span className="text-emerald-300">
+                        {work.workerMetalWeight ?? "—"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-purple-200">Other Metal Name:</span>{" "}
+                      <span className="text-emerald-300">
+                        {work.otherMetalName || "—"}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="pl-6">
+                    <p>
+                      <span className="text-pink-200">Other Weight:</span>{" "}
+                      <span className="text-yellow-300">
+                        {work.otherWeight ?? "—"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-pink-200">Amount:</span>{" "}
+                      <span className="text-yellow-300">
+                        {work.amount ?? "—"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-pink-200">Wastage:</span>{" "}
+                      <span className="text-yellow-300">
+                        {work.wastage ?? "—"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-pink-200">Item Link Code:</span>{" "}
+                      <span className="text-yellow-300">
+                        {work.itemLinkCode || "—"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-pink-200">
+                        Worker Delivery Date:
+                      </span>{" "}
+                      <span className="text-yellow-300">
+                        {work.deliveryDate
+                          ? new Date(work.deliveryDate).toLocaleDateString(
+                              "en-GB",
+                            )
+                          : "—"}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </>
         )}
       </div>

@@ -2008,6 +2008,7 @@ const Products: React.FC = () => {
                     fullWidth
                   />
                 </Grid>
+
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <TextField
                     label="Other Amount"

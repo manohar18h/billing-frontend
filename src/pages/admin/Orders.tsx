@@ -28,7 +28,6 @@ import api from "@/services/api";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import { Box } from "@mui/system";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -348,11 +347,6 @@ const Orders: React.FC = () => {
     exchange_item_amount: 0,
   });
 
-  const [payDialogOpen, setPayDialogOpen] = useState(false);
-  const [payAmount, setPayAmount] = useState("");
-  const [payMethod, setPayMethod] = useState("");
-
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [workerList, setWorkerList] = useState<AppWorker[]>([]);
 
   const [ordersList, setOrdersList] = useState<any[]>([]);
@@ -495,17 +489,10 @@ const Orders: React.FC = () => {
   }, [ordersList]);
   const handleExchangeSubmit = async () => {
     try {
-      localStorage.removeItem("exchangeItemAmount");
-      localStorage.removeItem("exchangeOrderId");
-      localStorage.removeItem("updatedDueAmount");
-      localStorage.removeItem("newExchangeAmount");
-
-      const exchangeItemAmount = exchange.exchange_item_amount;
       const orderId = ordersList[ordersList.length - 1]?.orderId;
 
       if (!orderId) return alert("Submit order first");
 
-      localStorage.setItem("exchangeItemAmount", exchangeItemAmount.toString());
       localStorage.setItem("exchangeOrderId", orderId.toString());
 
       console.log("requestBody :", exchange);
@@ -521,16 +508,6 @@ const Orders: React.FC = () => {
       const newExchangeList = [...exchangeList, response.data];
       setExchangeList(newExchangeList);
 
-      const updatedOrders = ordersList.map((o) => {
-        if (o.orderId === orderId) {
-          const newDue = Number(o.dueAmount) - Number(exchangeItemAmount); // allow negative
-          return { ...o, dueAmount: newDue };
-        }
-        return o;
-      });
-
-      setOrdersList(updatedOrders);
-
       handleClearExchange();
 
       setShowExchangeForm(false);
@@ -540,7 +517,7 @@ const Orders: React.FC = () => {
       sessionStorage.setItem(
         "ordersState",
         JSON.stringify({
-          ordersList: updatedOrders,
+          ordersList,
           exchangeList: newExchangeList,
         }),
       );
@@ -744,38 +721,6 @@ const Orders: React.FC = () => {
         setExchangeList((prev) =>
           prev.filter((item) => item.oldItemId !== slectOldItemId),
         );
-        const exchangeItemAmount = localStorage.getItem("exchangeItemAmount");
-        const orderId = localStorage.getItem("exchangeOrderId");
-
-        console.log("exchangeItemAmount :", exchangeItemAmount);
-        console.log("orderId :", orderId);
-
-        const updatedDueAmount = Number(
-          localStorage.getItem("updatedDueAmount"),
-        );
-
-        const newExchangeAmount = Number(
-          localStorage.getItem("newExchangeAmount"),
-        );
-
-        console.log("updatedDueAmount", updatedDueAmount);
-        console.log("newExchangeAmount 606", newExchangeAmount);
-
-        const updatedOrders = ordersList.map((o) => {
-          if (o.orderId === Number(orderId)) {
-            console.log("Check 605 DueAmount", Number(o.dueAmount));
-            if (updatedDueAmount > 0) {
-              const newDue = updatedDueAmount + Number(newExchangeAmount);
-              return { ...o, dueAmount: newDue };
-            } else {
-              const newDue = Number(o.dueAmount) + Number(exchangeItemAmount);
-              return { ...o, dueAmount: newDue };
-            }
-          }
-          return o;
-        });
-
-        setOrdersList(updatedOrders);
       }
     } catch (error) {
       console.error("Delete failed:", error);
@@ -809,7 +754,6 @@ const Orders: React.FC = () => {
   };
 
   const handleUpdateExchange = async () => {
-    localStorage.removeItem("updatedDueAmount");
     localStorage.removeItem("newExchangeAmount");
     if (!editingExchangeId) return;
 
@@ -831,41 +775,8 @@ const Orders: React.FC = () => {
 
       setExchangeList(updatedExchange);
 
-      // 🔹 Get updated order from backend again (since dueAmount changes after exchange)
-      const { data: updatedOrderFromBackend } = await api.get<Order>(
-        `/admin/getOrderByOrdId/${orderId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      // find the exchange just updated
-      const newExchange = updatedExchange.find(
-        (ex) => ex.oldItemId === editingExchangeId,
-      );
-
-      let recalculatedDue = updatedOrderFromBackend.dueAmount;
-
-      if (exchange && newExchange) {
-        recalculatedDue =
-          updatedOrderFromBackend.dueAmount +
-          (exchange.exchange_item_amount || 0) -
-          (newExchange.exchange_item_amount || 0);
-      }
-
-      const orderWithDue = {
-        ...updatedOrderFromBackend,
-        dueAmount: recalculatedDue,
-      };
-
-      localStorage.setItem("updatedDueAmount", recalculatedDue.toString());
-      localStorage.setItem(
-        "newExchangeAmount",
-        newExchange.exchange_item_amount.toString(),
-      );
-
       const updatedOrders = ordersList.map((order) =>
-        order.orderId === orderId ? { ...order, ...orderWithDue } : order,
+        order.orderId === orderId ? { ...order } : order,
       );
 
       setOrdersList(updatedOrders);
@@ -924,9 +835,7 @@ const Orders: React.FC = () => {
       const updatedOrder: any = updatedOrderFromBackend; // 👈 cast
 
       const updatedOrders = ordersList.map((o) =>
-        o.orderId === editingOrderId
-          ? { ...updatedOrder, dueAmount: updatedOrder.dueAmount }
-          : o,
+        o.orderId === editingOrderId ? { ...updatedOrder } : o,
       );
 
       setOrdersList(updatedOrders);
@@ -1686,10 +1595,7 @@ const Orders: React.FC = () => {
                   <th className="border px-3 py-2">Metal</th>
                   <th className="border px-3 py-2">Weight</th>
                   <th className="border px-3 py-2">Total</th>
-                  <th className="border px-3 py-2 ">Paid</th>
-                  <th className="border px-3 py-2">Due</th>
                   <th className="border px-3 py-2">Worker</th>
-                  <th className="border px-3 py-2">Pay</th>
                   <th className="border px-3 py-2">View</th>
                   <th className="border px-3 py-2">Edit</th>
                   <th className="border px-3 py-2">Delete</th>
@@ -1749,25 +1655,6 @@ const Orders: React.FC = () => {
                       sx={{ fontSize: "0.95rem" }}
                     >
                       <div className="flex justify-center items-center">
-                        {ord.paidAmount}
-                      </div>
-                    </TableCell>
-
-                    <TableCell
-                      className={`border px-3 py-2  text-center ${
-                        ord.dueAmount !== 0 ? "text-red-600 font-semibold" : ""
-                      }`}
-                    >
-                      <div className="flex justify-center items-center">
-                        {formatMoney(ord.dueAmount)}
-                      </div>
-                    </TableCell>
-
-                    <TableCell
-                      className="border px-3 py-2 text-center"
-                      sx={{ fontSize: "0.95rem" }}
-                    >
-                      <div className="flex justify-center items-center">
                         {ord.workerPay ? (
                           ord.workerPay.fullName
                         ) : (
@@ -1788,32 +1675,6 @@ const Orders: React.FC = () => {
                           >
                             <PersonAddIcon fontSize="medium" />
                           </IconButton>
-                        )}
-                      </div>
-                    </TableCell>
-
-                    <TableCell
-                      className="border px-3 py-2 text-center"
-                      sx={{ fontSize: "0.95rem" }}
-                    >
-                      <div className="flex justify-center items-center">
-                        {asNumber(ord.dueAmount) !== 0 ? (
-                          <IconButton
-                            size="medium"
-                            sx={{
-                              color: "#4CAF50", // solid green background
-                              "&:hover": { backgroundColor: "#E0E0E0" },
-                            }}
-                            onClick={() => {
-                              setSelectedOrderId(ord.orderId);
-                              setPayAmount("");
-                              setPayDialogOpen(true);
-                            }}
-                          >
-                            <CurrencyRupeeIcon fontSize="medium" />
-                          </IconButton>
-                        ) : (
-                          "-"
                         )}
                       </div>
                     </TableCell>
@@ -1938,8 +1799,7 @@ const Orders: React.FC = () => {
                   <DialogContent>
                     <DialogContentText>
                       Are you sure you want to delete this order item with ID:
-                      {slectOrderId}
-                      <strong>{selectedOrderId}</strong>?
+                      <strong>{slectOrderId}</strong>?
                     </DialogContentText>
                   </DialogContent>
                   <DialogActions>
@@ -2382,137 +2242,6 @@ const Orders: React.FC = () => {
         </style>
       </Box>
 
-      <Dialog open={payDialogOpen} onClose={() => setPayDialogOpen(false)}>
-        <DialogTitle>Enter Payment Amount</DialogTitle>
-        <DialogContent>
-          <Box
-            display="flex"
-            flexDirection="column"
-            gap={3} // ✅ space between inputs
-          >
-            <TextField
-              select
-              label="Payment Type"
-              value={payMethod}
-              onChange={(e) => setPayMethod(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                style: { color: "#333" },
-                shrink: true, // ✅ ensures label is always visible
-              }}
-              InputProps={{
-                style: { fontWeight: 500 },
-              }}
-              sx={{
-                minWidth: "200px",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderWidth: "2px",
-                  borderColor: "gray",
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>Select Payment Method</em>
-              </MenuItem>
-              <MenuItem value="Phone Pay">Phone Pay</MenuItem>
-              <MenuItem value="Cash">Cash</MenuItem>
-            </TextField>
-
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Amount"
-              type="number"
-              inputProps={{
-                step: "any",
-                onKeyDown: (e) => {
-                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                    e.preventDefault();
-                  }
-                },
-              }}
-              onWheel={(e) => (e.target as HTMLInputElement).blur()}
-              fullWidth
-              value={payAmount}
-              onChange={(e) => setPayAmount(e.target.value)}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPayDialogOpen(false)} color="secondary">
-            Cancel
-          </Button>
-          <Button
-            onClick={async () => {
-              if (!selectedOrderId || !payAmount) return;
-
-              console.log("pay orderId :", selectedOrderId);
-              console.log("paymethod :", payMethod);
-              console.log("pay amount :", payAmount);
-
-              try {
-                await api.post(
-                  `/admin/payCustomer/${selectedOrderId}/${payMethod}?amount=${payAmount}`,
-                  {},
-                  { headers: { Authorization: `Bearer ${token}` } },
-                );
-
-                const updatedOrders = ordersList.map((o) => {
-                  if (o.orderId === selectedOrderId) {
-                    const existingDue = Number(o.dueAmount);
-                    const paid = Number(payAmount);
-
-                    let newDue;
-                    if (existingDue < 0) {
-                      // Negative = advance → paying back increases due towards 0
-                      newDue = existingDue + paid;
-                    } else {
-                      // Positive = customer owes → normal subtraction
-                      newDue = existingDue - paid;
-                    }
-
-                    // Fix floating point rounding (-0.0001 → 0)
-                    if (Math.abs(newDue) < 0.01) newDue = 0;
-
-                    return {
-                      ...o,
-                      paidAmount: Number(o.paidAmount) + paid,
-                      dueAmount: newDue,
-                    };
-                  }
-                  return o;
-                });
-
-                setOrdersList(updatedOrders);
-                const checkPayEdit = localStorage.getItem(
-                  "editBillFromBillDetails",
-                );
-
-                if (checkPayEdit === "editBill") {
-                  setIsBillEditing(true);
-                }
-                sessionStorage.setItem(
-                  "ordersState",
-                  JSON.stringify({
-                    ordersList: updatedOrders,
-                    exchangeList,
-                  }),
-                );
-
-                setPayDialogOpen(false);
-              } catch (err) {
-                console.error("Payment failed:", err);
-                alert("Payment failed");
-              }
-            }}
-            color="primary"
-            variant="contained"
-          >
-            Pay Now
-          </Button>
-        </DialogActions>
-      </Dialog>
       <Dialog
         open={assignDialogOpen}
         onClose={() => setAssignDialogOpen(false)}
