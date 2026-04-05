@@ -701,21 +701,34 @@ const SalesPage: React.FC = () => {
               <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
                 <thead className="bg-gray-200">
                   <tr>
-                    <th className="border px-3 py-2 text-left">
-                      Stock Box Name
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Stock Box Name
+                      </div>
                     </th>
-                    <th className="border px-3 py-2 text-left">
-                      Total Stock Box Count
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Total Stock Box Count
+                      </div>
                     </th>
-                    <th className="border px-3 py-2 text-left">
-                      Total Stock Box Weight
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Total Stock Box Weight
+                      </div>
                     </th>
-                    <th className="border px-3 py-2 text-center">View</th>
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        View
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRows.map((box) => (
-                    <tr key={box.stockBoxId} className="bg-white/90">
+                    <tr
+                      key={box.stockBoxId}
+                      className="bg-white/90 text-center"
+                    >
                       <td className="border px-3 py-2">{box.stockBoxName}</td>
                       <td className="border px-3 py-2">
                         {box.totalStockBoxCount}

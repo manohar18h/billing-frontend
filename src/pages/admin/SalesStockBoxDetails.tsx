@@ -11,6 +11,7 @@ type StockBoxDataEntry = {
   methodType2?: string;
   sellingDate?: string;
   barcodeValue?: string;
+  epcNumber?: string;
 };
 
 type StockDataBox = {
@@ -66,21 +67,52 @@ const SalesStockBoxDetails: React.FC = () => {
           <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
             <thead className="bg-gray-200">
               <tr>
-                <th className="border px-3 py-2 text-left">ID</th>
-                <th className="border px-3 py-2 text-left">Pieces</th>
-                <th className="border px-3 py-2 text-left">Method</th>
-                <th className="border px-3 py-2 text-left">Metal Weight</th>
-                <th className="border px-3 py-2 text-left">Date</th>
-                <th className="border px-3 py-2 text-left">Barcode</th>
-                <th className="border px-3 py-2 text-left">Method2</th>
-                <th className="border px-3 py-2 text-left">Selling Date</th>
+                <th className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center">ID</div>
+                </th>
+                <th className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center">Pieces</div>
+                </th>
+                <th className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center">Method</div>
+                </th>
+                <th className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center">
+                    Metal Weight
+                  </div>
+                </th>
+                <th className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center">Date</div>
+                </th>
+                <th className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center">
+                    Barcode
+                  </div>
+                </th>
+                <th className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center">
+                    Method2
+                  </div>
+                </th>
+                <th className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center">
+                    Selling Date
+                  </div>
+                </th>
+                <th className="border px-3 py-2 text-center">
+                  <div className="flex justify-center items-center">EPC</div>
+                </th>
               </tr>
             </thead>
             <tbody>
               {stockBox.stockBoxData.map((entry) => (
                 <tr key={entry.stockBoxDataId} className="bg-white/90">
-                  <td className="border px-3 py-2">{entry.stockBoxDataId}</td>
-                  <td className="border px-3 py-2">{entry.pieces}</td>
+                  <td className="border px-3 py-2 text-center">
+                    {entry.stockBoxDataId}
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    {entry.pieces}
+                  </td>
                   <td
                     className={`border px-3 py-2 font-semibold ${
                       entry.methodType === "ADDED"
@@ -109,6 +141,7 @@ const SalesStockBoxDetails: React.FC = () => {
                   <td className="border px-3 py-2">
                     {formatDMY(entry.sellingDate)}
                   </td>
+                  <td className="border px-3 py-2">{entry.epcNumber}</td>
                 </tr>
               ))}
             </tbody>

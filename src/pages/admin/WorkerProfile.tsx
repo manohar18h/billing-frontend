@@ -86,7 +86,7 @@ const WorkerProfile: React.FC = () => {
   const [showRepairs, setShowRepairs] = useState(false);
   const [showPays, setShowPays] = useState(false);
   const [showTxs, setShowTxs] = useState(false);
-
+  const [showSpclWork, setShowSpclWork] = useState(false);
   // Filtered views
   const filteredStocks = useMemo(
     () =>
@@ -136,6 +136,16 @@ const WorkerProfile: React.FC = () => {
           )
         : (worker?.workerTransactionHistories ?? []),
     [worker?.workerTransactionHistories, fromDate, toDate],
+  );
+
+  const filteredSpcl = useMemo(
+    () =>
+      fromDate || toDate
+        ? (worker?.speclWorks ?? []).filter((l) =>
+            inRangeExact(l.deliveryDate as any, fromDate, toDate),
+          )
+        : (worker?.speclWorks ?? []),
+    [worker?.speclWorks, fromDate, toDate],
   );
 
   useEffect(() => {
@@ -210,6 +220,10 @@ const WorkerProfile: React.FC = () => {
   const visibleRepairs = showRepairs
     ? filteredRepairs
     : filteredRepairs.slice(0, 4);
+
+  const visibleSpclWork = showSpclWork
+    ? filteredSpcl
+    : filteredSpcl.slice(0, 4);
 
   const visiblePays = showPays ? filteredPays : filteredPays.slice(0, 4);
 
@@ -529,6 +543,52 @@ const WorkerProfile: React.FC = () => {
                 }}
               >
                 {showPays ? "View Less" : "View More"}
+              </Typography>
+            )}
+          </>
+        )}
+
+        {filteredSpcl?.length > 0 && (
+          <>
+            <h2 className="text-xl font-semibold text-purple-600 dark:text-purple-300 mb-2">
+              Spcl Works
+            </h2>
+
+            {visibleSpclWork.map((s, i) => (
+              <div
+                key={i}
+                className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
+              >
+                <div className="pr-4">
+                  {line("Metal", s.metal)}
+                  {line("Item", s.itemName)}
+                  {line("Weight", `${s.workerMetalWeight} g`)}
+                  {line("Other Metal", s.otherMetalName)}
+                  {line("Other Weight", `${s.otherWeight} g`)}
+                </div>
+                <div className="pl-4">
+                  {line("Amount", `₹${s.amount}`)}
+                  {line("Wastage", s.wastage)}
+                  {line("Date", displayFromRaw(s.deliveryDate))}
+                  {line("Item Link Code", s.itemLinkCode)}
+                </div>
+              </div>
+            ))}
+
+            {filteredSpcl.length > 4 && (
+              <Typography
+                onClick={() => setShowSpclWork((prev) => !prev)}
+                sx={{
+                  cursor: "pointer",
+                  textAlign: "center",
+                  mt: 2,
+                  color: "#8847FF",
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  "&:hover": { color: "#6b21a8" },
+                }}
+              >
+                {showSpclWork ? "View Less" : "View More"}
               </Typography>
             )}
           </>
