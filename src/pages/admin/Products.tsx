@@ -17,6 +17,7 @@ import {
 import api from "@/services/api";
 import QRCode from "qrcode";
 import { useWorkers } from "@/contexts/WorkersContext";
+import { size } from "lodash";
 
 const goldItems = [
   "Batuvu",
@@ -764,26 +765,26 @@ const Products: React.FC = () => {
     );
   };
 
-  const prepareLabelImage = async (row: StockProduct | null) => {
+  const prepareLabelImage = async (
+    row: StockProduct | null,
+  ): Promise<string> => {
     if (!row?.barcodeValue) {
-      setLabelImageSrc("");
-      return;
+      return "";
     }
 
     if (row.barcodeImageBase64 && row.barcodeImageBase64.trim() !== "") {
-      setLabelImageSrc(`data:image/png;base64,${row.barcodeImageBase64}`);
-      return;
+      return `data:image/png;base64,${row.barcodeImageBase64}`;
     }
 
     try {
       const qrDataUrl = await QRCode.toDataURL(row.barcodeValue, {
-        width: 90,
+        width: 140,
         margin: 0,
       });
-      setLabelImageSrc(qrDataUrl);
+      return qrDataUrl;
     } catch (err) {
       console.error("QR generation failed:", err);
-      setLabelImageSrc("");
+      return "";
     }
   };
 
@@ -823,10 +824,11 @@ const Products: React.FC = () => {
       setBarcodeSearchLoading(false);
     }
   };
-  const buildSmallLabelHtml = (r: StockProduct) => {
+
+  const buildSmallLabelHtml = (r: StockProduct, imageSrc: string) => {
     const barcodeValue = r.barcodeValue ?? "-";
     const grossWeight = normalizeWeight(r.gross_weight);
-    const imageSrc = labelImageSrc || "";
+    const sizeValue = r.size ?? "-";
 
     return `
   <html>
@@ -834,15 +836,15 @@ const Products: React.FC = () => {
       <title>Print RFID Label</title>
       <style>
         @page {
-          size: 68mm 26mm;
+          size: 100mm 30mm;
           margin: 0;
         }
 
         html, body {
           margin: 0;
           padding: 0;
-          width: 68mm;
-          height: 26mm;
+          width: 100mm;
+          height: 30mm;
           overflow: hidden;
           background: #ffffff;
           font-family: Arial, sans-serif;
@@ -850,95 +852,127 @@ const Products: React.FC = () => {
 
         .page {
           position: relative;
-          width: 68mm;
-          height: 26mm;
+          width: 100mm;
+          height: 30mm;
           background: #fff;
         }
 
-        /* left closing-tag print area */
+        /* full left tag area */
         .print-zone {
-          position: absolute;
-          top: 2.2mm;
-          left: 1.5mm;
-          width: 22mm;
-          height: 21mm;
-          box-sizing: border-box;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: flex-start;
-        }
+  position: absolute;
+  top: 16mm;
+  left: 3.6mm;
+  width: 21mm;
+  height: 19mm;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
 
-        .top-half {
-          width: 100%;
-          height: 9.5mm;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-sizing: border-box;
-        }
+.top-half {
+  width: 100%;
+  height: 7mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
 
-        .top-half img {
-          max-width: 8.5mm;
-          max-height: 8.5mm;
-           margin-top: 1.8mm;
-          object-fit: contain;
-          display: block;
-        }
+.top-half img {
+  width: 10mm;
+  height: 10mm;
+  object-fit: contain;
+  display: block;
+}
 
-        .bottom-half {
-          width: 100%;
-          height: 10.5mm;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          justify-content: flex-start;
-          padding-top: 6mm;
-           padding-left: 2mm; 
-          box-sizing: border-box;
-        }
+.bottom-half {
+  width: 100%;
+  height: 12mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  padding-top: 3.6mm;
+}
 
-        .text1 {
-          width: 100%;
-          margin-top: 0.8mm;
-          font-size: 4.8pt;
-          line-height: 1.0;
-          font-weight: bold;
-           text-align: left; 
-          word-break: break-all;
-        }
+.text1 {
+  width: 100%;
+  font-size: 4pt;
+  line-height: 1;
+  font-weight: bold;
+  text-align: center;
+  word-break: break-all;
+}
 
-        .text2 {
-          width: 100%;
-          margin-top: 1.2mm;
-          font-size: 4.8pt;
-          line-height: 1.0;
-          text-align: center;
-        }
+.text2 {
+  width: 100%;
+  margin-top: 0.2mm;
+  font-size: 4pt;
+  line-height: 1;
+  text-align: center;
+}
+
+.text3 {
+  width: 100%;
+  margin-top: 0.2mm;
+  font-size: 4pt;
+  line-height: 1;
+  text-align: center;
+}
+        
       </style>
     </head>
-    <body onload="window.print(); window.close();">
+    <body>
       <div class="page">
         <div class="print-zone">
           <div class="top-half">
-            ${
-              imageSrc
-                ? `<img src="${imageSrc}" alt="qr" />`
-                : `<div style="font-size:4pt;">No QR</div>`
-            }
+            ${imageSrc ? `<img id="qrImg" src="${imageSrc}" alt="qr" />` : ""}
           </div>
+
           <div class="bottom-half">
             <div class="text1">${barcodeValue}</div>
             <div class="text2">GW: ${grossWeight}g</div>
+              <div class="text3">Size: ${sizeValue} inch</div>
+
           </div>
         </div>
       </div>
+
+      <script>
+        function doPrint() {
+          setTimeout(() => {
+            window.print();
+            window.close();
+          }, 500);
+        }
+
+        const qrImg = document.getElementById("qrImg");
+
+        if (qrImg) {
+          if (qrImg.complete) {
+            doPrint();
+          } else {
+            qrImg.onload = doPrint;
+            qrImg.onerror = doPrint;
+          }
+        } else {
+          doPrint();
+        }
+      </script>
     </body>
   </html>`;
   };
 
-  const handlePrintSmallLabel = (r: StockProduct) => {
+  const handlePrintSmallLabel = async (r: StockProduct) => {
+    const imageSrc = await prepareLabelImage(r);
+
+    console.log("PRINT imageSrc:", imageSrc);
+    console.log("PRINT barcode:", r.barcodeValue);
+
     const printWindow = window.open("", "", "width=420,height=420");
     if (!printWindow) {
       alert("Unable to open print window.");
@@ -946,7 +980,7 @@ const Products: React.FC = () => {
     }
 
     printWindow.document.open();
-    printWindow.document.write(buildSmallLabelHtml(r));
+    printWindow.document.write(buildSmallLabelHtml(r, imageSrc));
     printWindow.document.close();
   };
   const handleScanEpc = async () => {
@@ -2650,8 +2684,8 @@ const Products: React.FC = () => {
                     src={labelImageSrc}
                     alt="qr"
                     style={{
-                      maxWidth: "11mm",
-                      maxHeight: "11mm",
+                      maxWidth: "12mm",
+                      maxHeight: "12mm",
                       objectFit: "contain",
                       display: "block",
                     }}
