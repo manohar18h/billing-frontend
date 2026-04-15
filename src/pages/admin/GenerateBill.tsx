@@ -20,6 +20,10 @@ const GenerateBill: React.FC = () => {
   const [payAmount, setPayAmount] = useState("");
   const [payLoading, setPayLoading] = useState(false);
 
+  const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState("");
+  const [discountLoading, setDiscountLoading] = useState(false);
+
   // Transaction model
   interface Transaction {
     transactionId: number;
@@ -190,6 +194,39 @@ We hope to serve you again soon!
       setBill(res.data);
     } catch (error) {
       console.error("Failed to refresh bill:", error);
+    }
+  };
+
+  const handleDiscountSubmit = async () => {
+    if (!bill?.billId) return;
+
+    if (!discountAmount || Number(discountAmount) <= 0) {
+      alert("Please enter valid discount amount");
+      return;
+    }
+
+    try {
+      setDiscountLoading(true);
+
+      await api.post(`/admin/applyBillDiscount/${bill.billId}`, null, {
+        params: { discountAmount: Number(discountAmount) },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      await refreshBill();
+
+      setDiscountDialogOpen(false);
+      setDiscountAmount("");
+    } catch (error: any) {
+      console.error("Discount update failed:", error);
+      alert(
+        error?.response?.data?.message ||
+          error?.response?.data ||
+          error?.message ||
+          "Discount update failed",
+      );
+    } finally {
+      setDiscountLoading(false);
     }
   };
 
@@ -929,6 +966,15 @@ We hope to serve you again soon!
               </div>
             </div>
 
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setDiscountDialogOpen(true)}
+                className="bg-orange-600 text-white px-5 py-2 rounded-lg hover:bg-orange-700"
+              >
+                Add Discount
+              </button>
+            </div>
+
             <div className="bg-white rounded-xl p-3 border sm:col-span-2">
               <div className="text-gray-600">Total Due</div>
               <div className="font-bold text-base text-red-600">
@@ -1037,6 +1083,43 @@ We hope to serve you again soon!
                 disabled={payLoading}
               >
                 {payLoading ? "Saving..." : "Pay"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {discountDialogOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 print:hidden">
+          <div className="bg-white rounded-xl shadow-xl w-[90%] max-w-md p-6">
+            <h2 className="text-lg font-bold mb-4">Add Extra Discount</h2>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Discount Amount
+              </label>
+              <input
+                type="number"
+                value={discountAmount}
+                onChange={(e) => setDiscountAmount(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Enter discount amount"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDiscountDialogOpen(false)}
+                className="bg-gray-300 px-4 py-2 rounded-lg"
+                disabled={discountLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDiscountSubmit}
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+                disabled={discountLoading}
+              >
+                {discountLoading ? "Saving..." : "Apply Discount"}
               </button>
             </div>
           </div>

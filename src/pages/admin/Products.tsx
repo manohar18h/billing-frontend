@@ -828,7 +828,6 @@ const Products: React.FC = () => {
   const buildSmallLabelHtml = (r: StockProduct, imageSrc: string) => {
     const barcodeValue = r.barcodeValue ?? "-";
     const grossWeight = normalizeWeight(r.gross_weight);
-    const sizeValue = r.size ?? "-";
 
     return `
   <html>
@@ -911,18 +910,12 @@ const Products: React.FC = () => {
 .text2 {
   width: 100%;
   margin-top: 0.2mm;
-  font-size: 4pt;
+  font-size: 4.5pt;
   line-height: 1;
   text-align: center;
 }
 
-.text3 {
-  width: 100%;
-  margin-top: 0.2mm;
-  font-size: 4pt;
-  line-height: 1;
-  text-align: center;
-}
+
         
       </style>
     </head>
@@ -936,7 +929,6 @@ const Products: React.FC = () => {
           <div class="bottom-half">
             <div class="text1">${barcodeValue}</div>
             <div class="text2">GW: ${grossWeight}g</div>
-              <div class="text3">Size: ${sizeValue} inch</div>
 
           </div>
         </div>
