@@ -115,7 +115,9 @@ interface RevenueStat {
 }
 
 interface BusinessGrowthResponse {
-  [key: string]: number;
+  village: string;
+  totalCustomers: number;
+  percentage: number;
 }
 
 function useOrdersMetric(
@@ -732,7 +734,7 @@ const TargetCard: React.FC<{ token?: string | null }> = ({ token }) => {
 /* ---------- Statistic: SVG line chart with static data ---------- */
 const StatisticCard: React.FC = () => {
   const token = localStorage.getItem("token");
-  const [year, setYear] = useState<number>(2025);
+  const [year, setYear] = useState<number>(2026);
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -1443,18 +1445,16 @@ const LatestLoanOrders: React.FC = () => {
 
 /* ---------- Business Growth: static country list + bars ---------- */
 const BusinessGrowth: React.FC = () => {
-  const [villages, setVillages] = useState<{ name: string; value: number }[]>(
-    [],
-  );
+  const [villages, setVillages] = useState<BusinessGrowthResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchBusinessGrowth = async () => {
       try {
         const token = localStorage.getItem("token");
 
-        // ✅ 2️⃣ Use generic typing for the Axios GET call
-        const response = await api.get<BusinessGrowthResponse>(
+        const response = await api.get<BusinessGrowthResponse[]>(
           "/admin/village-percentage",
           {
             headers: {
@@ -1463,15 +1463,7 @@ const BusinessGrowth: React.FC = () => {
           },
         );
 
-        // ✅ 3️⃣ Convert object into array
-        const transformedData = Object.entries(response.data).map(
-          ([name, value]) => ({
-            name,
-            value,
-          }),
-        );
-
-        setVillages(transformedData);
+        setVillages(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching business growth data:", error);
       } finally {
@@ -1482,31 +1474,72 @@ const BusinessGrowth: React.FC = () => {
     fetchBusinessGrowth();
   }, []);
 
+  const filteredVillages = villages.filter((item) =>
+    item.village.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-      <div className="font-semibold text-gray-800 mb-3">Business Growth</div>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="font-semibold text-gray-800">Business Growth</div>
+          <div className="text-xs text-gray-500">
+            Village wise customer percentage
+          </div>
+        </div>
+
+        <div className="rounded-full bg-violet-100 text-violet-700 px-3 py-1 text-xs font-bold">
+          {villages.length} Villages
+        </div>
+      </div>
+
+      <input
+        type="text"
+        placeholder="Search village..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="mb-4 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+      />
 
       {loading ? (
         <div className="text-sm text-gray-500">Loading...</div>
       ) : (
-        <div className="space-y-3">
-          {villages.length > 0 ? (
-            villages.map((c) => (
-              <div key={c.name}>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-700">{c.name}</span>
-                  <span className="font-semibold">{c.value.toFixed(2)}%</span>
+        <div className="max-h-[560px] overflow-y-auto pr-2 space-y-3">
+          {filteredVillages.length > 0 ? (
+            filteredVillages.map((item) => (
+              <div
+                key={item.village}
+                className="rounded-xl border border-gray-100 bg-gray-50 p-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-800">
+                      {item.village}
+                    </div>
+
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      Customers:{" "}
+                      <span className="font-bold text-violet-700">
+                        {item.totalCustomers}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-bold">
+                    {item.percentage.toFixed(2)}%
+                  </div>
                 </div>
-                <div className="mt-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+
+                <div className="mt-3 h-2 rounded-full bg-white overflow-hidden">
                   <div
                     className="h-full rounded-full bg-violet-500 transition-all duration-500"
-                    style={{ width: `${c.value}%` }}
+                    style={{ width: `${Math.min(item.percentage, 100)}%` }}
                   />
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-sm text-gray-500">No data available</div>
+            <div className="text-sm text-gray-500">No village found</div>
           )}
         </div>
       )}

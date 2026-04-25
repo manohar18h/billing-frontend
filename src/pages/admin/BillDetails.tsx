@@ -6,6 +6,7 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  TableHead,
   Button,
   Dialog,
   DialogTitle,
@@ -19,7 +20,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import Grid from "@mui/material/Grid";
 import api from "@/services/api"; // ← import your api.ts
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -39,8 +39,17 @@ interface selectedOrders {
   workerPay?: { fullName: string };
   workAssigned?: { workerName: string };
 }
-
+interface TransactionHistory {
+  transactionId: number;
+  paymentMethod: string;
+  paymentType: string;
+  paidAmount: number;
+  paymentDate: string;
+  orderId: number | null;
+  billId: number;
+}
 export interface Customer {
+  billId: number;
   customerId: number;
   billNumber: string;
   name: string;
@@ -82,6 +91,36 @@ const BillDetails: React.FC = () => {
   const token = localStorage.getItem("token");
   const billNumber = localStorage.getItem("billNumber");
   console.log("billNumber   ::        " + billNumber);
+
+  const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
+  const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
+  const [transactionLoading, setTransactionLoading] = useState(false);
+
+  const handleViewTransactions = async () => {
+    if (!customer?.billId) {
+      alert("Bill ID not found");
+      return;
+    }
+
+    setTransactionDialogOpen(true);
+    setTransactionLoading(true);
+
+    try {
+      const res = await api.get<TransactionHistory[]>(
+        `/admin/transactionHistoryCustomer/${customer.billId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      setTransactions(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error("Transaction history fetch failed:", error);
+      alert("Failed to fetch transaction history");
+    } finally {
+      setTransactionLoading(false);
+    }
+  };
 
   const fetchCustomerDetails = async () => {
     localStorage.removeItem("checkEditBill");
@@ -435,9 +474,30 @@ const BillDetails: React.FC = () => {
       <div className="mt-10 p-3 flex flex-col items-center justify-center">
         {orders.length > 0 && (
           <div className="p-6 rounded-3xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]">
-            <h3 className=" text-3xl font-bold mb-10 text-blue-600">
-              Billing History
-            </h3>
+            <div className="flex items-center justify-between mb-10">
+              <h3 className="text-3xl font-bold text-blue-600">
+                Billing History
+              </h3>
+
+              <Button
+                variant="contained"
+                onClick={handleViewTransactions}
+                sx={{
+                  background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+                  borderRadius: "999px",
+                  textTransform: "none",
+                  fontWeight: "700",
+                  px: 3,
+                  py: 1,
+                  boxShadow: "0 8px 18px rgba(124,58,237,0.35)",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #6d28d9, #db2777)",
+                  },
+                }}
+              >
+                View Transactions
+              </Button>
+            </div>
             <Box
               sx={{
                 width: "100%",
@@ -849,6 +909,62 @@ const BillDetails: React.FC = () => {
           >
             Save
           </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={transactionDialogOpen}
+        onClose={() => setTransactionDialogOpen(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle sx={{ fontWeight: "bold", color: "#6d28d9" }}>
+          Billing Transaction History
+        </DialogTitle>
+
+        <DialogContent>
+          {transactionLoading ? (
+            <div className="text-gray-500 p-4">Loading transactions...</div>
+          ) : transactions.length > 0 ? (
+            <Table>
+              <TableHead className="bg-purple-100">
+                <TableRow>
+                  <TableCell>
+                    <strong>ID</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Method</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Type</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Amount</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Date</strong>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {transactions.map((tx) => (
+                  <TableRow key={tx.transactionId}>
+                    <TableCell>{tx.transactionId}</TableCell>
+                    <TableCell>{tx.paymentMethod}</TableCell>
+                    <TableCell>{tx.paymentType}</TableCell>
+                    <TableCell>₹{tx.paidAmount}</TableCell>
+                    <TableCell>{tx.paymentDate}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-gray-500 p-4">No transactions found</div>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setTransactionDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </div>

@@ -35,6 +35,7 @@ const SearchAddCustomer: React.FC = () => {
   );
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [deleteMessage, setDeleteMessage] = useState("");
+  const [customerNameSearch, setCustomerNameSearch] = useState("");
 
   localStorage.removeItem("editBillFromBillDetails");
 
@@ -264,6 +265,10 @@ const SearchAddCustomer: React.FC = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  const filteredVillageCustomers = villageCustomers.filter((customer) =>
+    customer.name.toLowerCase().includes(customerNameSearch.toLowerCase()),
+  );
 
   return (
     <div>
@@ -536,25 +541,56 @@ const SearchAddCustomer: React.FC = () => {
               Customers in Village
             </Typography>
 
-            <table className="w-full mt-4 border border-gray-300 rounded-lg overflow-hidden">
-              <thead className="bg-purple-200">
-                <tr>
-                  <th className="p-3 text-left font-bold">Name</th>
-                  <th className="p-3 text-left font-bold">Phone Number</th>
-                </tr>
-              </thead>
-              <tbody>
-                {villageCustomers.map((c: any, index) => (
-                  <tr
-                    key={index}
-                    className="border-b hover:bg-purple-50 transition-all"
-                  >
-                    <td className="p-3">{c.name}</td>
-                    <td className="p-3">{c.phoneNumber}</td>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Search customer name..."
+              value={customerNameSearch}
+              onChange={(e) => setCustomerNameSearch(e.target.value)}
+              sx={{ mt: 2, mb: 2 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+                style: {
+                  borderRadius: "18px",
+                  backgroundColor: "#fff",
+                },
+              }}
+            />
+
+            <div className="max-h-[640px] overflow-y-auto border border-gray-300 rounded-lg">
+              <table className="w-full border-collapse">
+                <thead className="bg-purple-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="p-3 text-left font-bold">Name</th>
+                    <th className="p-3 text-left font-bold">Phone Number</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {filteredVillageCustomers.length > 0 ? (
+                    filteredVillageCustomers.map((c: any, index) => (
+                      <tr
+                        key={index}
+                        className="border-b hover:bg-purple-50 transition-all"
+                      >
+                        <td className="p-3">{c.name}</td>
+                        <td className="p-3">{c.phoneNumber}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={2} className="p-4 text-center text-gray-500">
+                        No customer found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </Paper>
         )}
       </div>

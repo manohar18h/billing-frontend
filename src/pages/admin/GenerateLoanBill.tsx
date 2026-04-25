@@ -134,7 +134,7 @@ We hope to serve you again soon!
       window.open(url, "_blank");
 
       alert(
-        "Message copied to clipboard ✅ \nWhatsApp Web opened. You can paste and send manually."
+        "Message copied to clipboard ✅ \nWhatsApp Web opened. You can paste and send manually.",
       );
     });
   };
@@ -153,7 +153,7 @@ We hope to serve you again soon!
         `/admin/signatures/${loanData.loanBillNumber}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (res.status === 200 && res.data.length > 0) {
@@ -179,7 +179,7 @@ We hope to serve you again soon!
         if (checkEdit === "YesEdit") {
           console.log(
             "Updating existing Loan bill with billNumber:",
-            billLoanNumber
+            billLoanNumber,
           );
 
           const res = await api.put<LoanBill>(
@@ -190,7 +190,7 @@ We hope to serve you again soon!
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
-            }
+            },
           );
 
           setLoanData(res.data);
@@ -206,7 +206,7 @@ We hope to serve you again soon!
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
-            }
+            },
           );
           setLoanData(response.data);
           SetMsgTitle(`Your Item Updated Successfully`);
@@ -346,7 +346,7 @@ We hope to serve you again soon!
 
  .invoice-table th:nth-child(2),
 .invoice-table td:nth-child(2) {
-  width: 7%; 
+  width: 10%; 
 }
   .invoice-table th:nth-child(3),
 .invoice-table td:nth-child(3) {
@@ -456,12 +456,12 @@ We hope to serve you again soon!
                 {loanData.phoneNumber}
               </span>
             </p>
-            <p>
+            {/* <p>
               <strong className="text-[#B45309]">Email : </strong>
               <span className="text-[#000000] font-semibold ">
                 {loanData.emailId}
               </span>
-            </p>
+            </p> */}
           </div>
           <div className="text-right text-[#000000]">
             <p>
@@ -499,9 +499,7 @@ We hope to serve you again soon!
                 <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
                   G.Wt
                 </th>
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  RI
-                </th>
+
                 <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
                   Total
                 </th>
@@ -516,6 +514,9 @@ We hope to serve you again soon!
                 </th>
                 <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
                   I.D
+                </th>
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  Status
                 </th>
               </tr>
             </thead>
@@ -538,18 +539,15 @@ We hope to serve you again soon!
                     {item.metal === "22 Gold"
                       ? "22k"
                       : item.metal === "24 Gold"
-                      ? "24k"
-                      : item.metal === "995 Silver"
-                      ? "Silver"
-                      : item.metal === "999 Silver"
-                      ? "999 K"
-                      : item.metal}
+                        ? "24k"
+                        : item.metal === "995 Silver"
+                          ? "Silver"
+                          : item.metal === "999 Silver"
+                            ? "999 K"
+                            : item.metal}
                   </td>
                   <td className="border px-2 py-1 text-[#734d06] font-bold text-center align-middle text-[13px]">
                     {item.gross_weight}
-                  </td>
-                  <td className="border px-2 py-1 text-[#074949] font-bold text-center align-middle text-[13px]">
-                    {item.rate_of_interest}
                   </td>
                   <td className="border px-2 py-1 text-[#073d6a] font-bold text-center align-middle text-[13px]">
                     {item.total_amount}
@@ -565,6 +563,9 @@ We hope to serve you again soon!
                   </td>
                   <td className="border px-2 py-1 text-[#082f5f] font-bold text-center align-middle text-[13px]">
                     {item.due_interest_amount}
+                  </td>
+                  <td className="border px-2 py-1 text-[#082f5f] font-bold text-center align-middle text-[13px]">
+                    {item.deliveryStatus}
                   </td>
                 </tr>
               ))}
@@ -609,18 +610,19 @@ We hope to serve you again soon!
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 text-black  font-bold text-[15px]">
+                  <td className="px-3 py-2 text-black font-bold text-[15px]">
                     Total Paid :
                   </td>
-                  <td className="text-right px-3 py-2 font-bold  text-[#0b4e06] text-[15px]">
+                  <td className="text-right px-3 py-2 font-bold text-[#0b4e06] text-[15px]">
                     ₹{loanData.paidAmount}
                   </td>
                 </tr>
-                <tr>
-                  <td className="px-3 py-2 text-black  font-bold text-[15px]">
-                    Total Due :
+
+                <tr className="border-t border-[#D97706]">
+                  <td className="px-3 pt-8 pb-2 text-black font-bold text-[15px]">
+                    Total Due:
                   </td>
-                  <td className="text-right px-3 py-2 font-bold  text-[#EC4899] text-[15px]">
+                  <td className="text-right font-bold text-[#EC4899] px-3 pt-5 pb-2 text-[15px]">
                     ₹{loanData.dueAmount}
                   </td>
                 </tr>
@@ -631,10 +633,18 @@ We hope to serve you again soon!
         <div className="mt-6 text-xs text-gray-900 text-[16px] ml-10">
           <div className="p-5 text-center inline-block border-b border-gray-500 pb-1 ">
             <h6 className="text-base">
-              మా వద్ద చేయించిన 91.6 గోల్డ్ ఆభరణాలు తిరిగి 90% ఇవ్వబడును.
+              మా వద్ద చేయించిన{" "}
+              <span className="font-bold text-[#045a1b]">91.6 హాల్‌మార్క్</span>{" "}
+              గోల్డ్ ఆభరణాలు తిరిగి{" "}
+              <span className="font-bold text-[#045a1b]"> 90% </span> సోక్కం
+              ఇవ్వబడును.
             </h6>
             <h6 className="text-base">
-              మా వద్ద చెయించిన్న ☆ పట్టీలు 80% సోక్కం ఇవ్వబడును.
+              మా వద్ద చెయించిన్న{" "}
+              <span className="font-bold text-[#045a1b]">☆</span> మరియు{" "}
+              <span className="font-bold text-[#045a1b]">HJ</span> పట్టీలు{" "}
+              తిరిగి <span className="font-bold text-[#045a1b]">80%</span>{" "}
+              సోక్కం ఇవ్వబడును.
             </h6>
           </div>
           <h5 className="text-base mt-4 text-center">
@@ -754,7 +764,7 @@ We hope to serve you again soon!
                 { signature: signatureBase64 },
                 {
                   headers: { Authorization: `Bearer ${token}` },
-                }
+                },
               );
 
               alert("Signature saved!");

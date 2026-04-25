@@ -828,135 +828,163 @@ const Products: React.FC = () => {
   const buildSmallLabelHtml = (r: StockProduct, imageSrc: string) => {
     const barcodeValue = r.barcodeValue ?? "-";
     const grossWeight = normalizeWeight(r.gross_weight);
+    const sizeValue = r.size ?? "-";
 
     return `
-  <html>
-    <head>
-      <title>Print RFID Label</title>
-      <style>
-        @page {
-          size: 100mm 30mm;
-          margin: 0;
-        }
+<html>
+<head>
+  <title>Print RFID Label</title>
+  <style>
+    @page {
+      size: 100mm 36mm;
+      margin: 0;
+    }
 
-        html, body {
-          margin: 0;
-          padding: 0;
-          width: 100mm;
-          height: 30mm;
-          overflow: hidden;
-          background: #ffffff;
-          font-family: Arial, sans-serif;
-        }
+    * {
+      box-sizing: border-box;
+    }
 
-        .page {
-          position: relative;
-          width: 100mm;
-          height: 30mm;
-          background: #fff;
-        }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100mm !important;
+      height: 36mm !important;
+      min-width: 100mm !important;
+      max-width: 100mm !important;
+      min-height: 36mm !important;
+      max-height: 36mm !important;
+      overflow: hidden !important;
+      background: #fff;
+      font-family: Arial, sans-serif;
+    }
 
-        /* full left tag area */
-        .print-zone {
-  position: absolute;
-  top: 16mm;
-  left: 3.6mm;
-  width: 21mm;
-  height: 19mm;
-  box-sizing: border-box;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-}
+    body {
+      position: relative;
+    }
 
-.top-half {
-  width: 100%;
-  height: 7mm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
+    .page {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100mm;
+      height: 36mm;
+      overflow: hidden;
+      background: #fff;
+      page-break-after: avoid;
+      page-break-before: avoid;
+      break-after: avoid;
+      break-before: avoid;
+    }
 
-.top-half img {
-  width: 10mm;
-  height: 10mm;
-  object-fit: contain;
-  display: block;
-}
+    .print-zone {
+      position: absolute;
+      left: 4.8mm;
+      top: 1mm;
+      width: 20mm;
+      height: 20mm;
+      overflow: hidden;
+    }
 
-.bottom-half {
-  width: 100%;
-  height: 12mm;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  box-sizing: border-box;
-  padding-top: 3.6mm;
-}
+    .top-half {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 20mm;
+      height: 9.5mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
 
-.text1 {
-  width: 100%;
-  font-size: 4pt;
-  line-height: 1;
-  font-weight: bold;
-  text-align: center;
-  word-break: break-all;
-}
+    .top-half img {
+      width: 8.8mm;
+      height: 8.8mm;
+      object-fit: contain;
+      display: block;
+    }
 
-.text2 {
-  width: 100%;
-  margin-top: 0.2mm;
-  font-size: 4.5pt;
-  line-height: 1;
-  text-align: center;
-}
+    .bottom-half {
+      position: absolute;
+      left: 0;
+      top: 13mm;
+      width: 20mm;
+      height: 10mm;
+      padding-top: 0.7mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow: hidden;
+    }
 
+    .text1 {
+      width: 100%;
+      font-size: 4.7pt;
+      line-height: 1;
+      font-weight: bold;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+    }
 
-        
-      </style>
-    </head>
-    <body>
-      <div class="page">
-        <div class="print-zone">
-          <div class="top-half">
-            ${imageSrc ? `<img id="qrImg" src="${imageSrc}" alt="qr" />` : ""}
-          </div>
+    .text2 {
+      width: 100%;
+      margin-top: 0.3mm;
+      font-size: 4.7pt;
+      line-height: 1;
+      text-align: center;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+    }
 
-          <div class="bottom-half">
-            <div class="text1">${barcodeValue}</div>
-            <div class="text2">GW: ${grossWeight}g</div>
+    @media print {
+      html, body, .page {
+        width: 100mm !important;
+        height: 36mm !important;
+        overflow: hidden !important;
+      }
+    }
+  </style>
+</head>
 
-          </div>
-        </div>
+<body>
+  <div class="page">
+    <div class="print-zone">
+      <div class="top-half">
+        ${imageSrc ? `<img id="qrImg" src="${imageSrc}" alt="qr" />` : ""}
       </div>
 
-      <script>
-        function doPrint() {
-          setTimeout(() => {
-            window.print();
-            window.close();
-          }, 500);
-        }
+      <div class="bottom-half">
+        <div class="text1">${barcodeValue}</div>
+        <div class="text2">GW: ${grossWeight}g</div>
+        <div class="text2">Size: ${sizeValue} inch</div>
+      </div>
+    </div>
+  </div>
 
-        const qrImg = document.getElementById("qrImg");
+  <script>
+    function doPrint() {
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => window.close(), 700);
+      }, 700);
+    }
 
-        if (qrImg) {
-          if (qrImg.complete) {
-            doPrint();
-          } else {
-            qrImg.onload = doPrint;
-            qrImg.onerror = doPrint;
-          }
-        } else {
-          doPrint();
-        }
-      </script>
-    </body>
-  </html>`;
+    const qrImg = document.getElementById("qrImg");
+    if (qrImg) {
+      if (qrImg.complete) doPrint();
+      else {
+        qrImg.onload = doPrint;
+        qrImg.onerror = doPrint;
+      }
+    } else {
+      doPrint();
+    }
+  </script>
+</body>
+</html>`;
   };
 
   const handlePrintSmallLabel = async (r: StockProduct) => {

@@ -478,7 +478,7 @@ We hope to serve you again soon!
 
 .invoice-table th:nth-child(2),
 .invoice-table td:nth-child(2) {
-  width: 6%; 
+  width: 10%; 
 }
 .invoice-table th:nth-child(3),
 .invoice-table td:nth-child(3) {
@@ -593,12 +593,12 @@ We hope to serve you again soon!
                 {bill.phoneNumber}
               </span>
             </p>
-            <p>
+            {/* <p>
               <strong className="text-[#B45309]">Email : </strong>
               <span className="text-[#000000] font-semibold  ">
                 {bill.emailId}
               </span>
-            </p>
+            </p> */}
           </div>
           <div className="text-right text-[#000000]">
             <p>
@@ -712,15 +712,15 @@ We hope to serve you again soon!
                   <td className="border px-2 py-1 text-[#361d1d] font-bold  text-center align-middle text-[14px]">
                     {item.itemName}
                   </td>
-                  <td className="border px-2 py-1 text-[#af0058] font-bold  text-center align-middle text-[11px]">
+                  <td className="border px-2 py-1 text-[#af0058] font-bold  text-center align-middle text-[13px]">
                     {item.metal === "22 Gold"
                       ? "22k-916"
                       : item.metal === "24 Gold"
                         ? "24k"
                         : item.metal === "995 Silver"
-                          ? "995"
+                          ? "Swastik 999"
                           : item.metal === "999 Silver"
-                            ? "Kamal"
+                            ? "Kamal 999"
                             : item.metal}
                   </td>
                   <td className="border px-2 py-1 text-[#004848] font-bold text-center align-middle text-[13px]">
@@ -908,7 +908,7 @@ We hope to serve you again soon!
                 )}
                 <tr className="border-t border-[#D97706] mt-5">
                   <td className="px-3 py-2 text-black  font-bold mt-5 text-[15px]">
-                    Due:
+                    Total Due:
                   </td>
                   <td className="text-right font-bold text-[#ff0000] px-3 py-2 text-[15px]">
                     ₹{bill.billDueAmount}
@@ -923,10 +923,18 @@ We hope to serve you again soon!
         <div className="mt-6 text-xs text-gray-900 text-[16px] ml-10">
           <div className="p-5 text-center inline-block border-b border-gray-500 pb-1 ">
             <h6 className="text-base">
-              మా వద్ద చేయించిన 91.6 గోల్డ్ ఆభరణాలు తిరిగి 90% ఇవ్వబడును.
+              మా వద్ద చేయించిన{" "}
+              <span className="font-bold text-[#045a1b]">91.6 హాల్‌మార్క్</span>{" "}
+              గోల్డ్ ఆభరణాలు తిరిగి{" "}
+              <span className="font-bold text-[#045a1b]"> 90% </span> సోక్కం
+              ఇవ్వబడును.
             </h6>
             <h6 className="text-base">
-              మా వద్ద చెయించిన్న ☆ HJ పట్టీలు 80% సోక్కం ఇవ్వబడును.
+              మా వద్ద చెయించిన్న{" "}
+              <span className="font-bold text-[#045a1b]">☆</span> మరియు{" "}
+              <span className="font-bold text-[#045a1b]">HJ</span> పట్టీలు{" "}
+              తిరిగి <span className="font-bold text-[#045a1b]">80%</span>{" "}
+              సోక్కం ఇవ్వబడును.
             </h6>
           </div>
           <h5 className="text-base mt-4 ml-14">

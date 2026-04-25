@@ -64,7 +64,7 @@ const LotWork: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const result = res.data;
