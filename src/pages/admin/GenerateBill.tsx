@@ -1,6 +1,6 @@
 // @charset "UTF-8";
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "@/services/api";
 import hjlogoo from "../../assets/hjlogoo.png";
 
@@ -23,6 +23,7 @@ const GenerateBill: React.FC = () => {
   const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("");
   const [discountLoading, setDiscountLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Transaction model
   interface Transaction {
@@ -311,6 +312,36 @@ We hope to serve you again soon!
   function getNumericField(item: Order, field: keyof Order): number | null {
     return (item[field] as number | null) ?? null;
   }
+
+  const handleEditBillOrders = () => {
+    if (!bill) return;
+
+    localStorage.setItem("checkEditBill", "YesEdit");
+    localStorage.setItem("billNumber", bill.billNumber);
+    localStorage.setItem("editBillFromBillDetails", "editBill");
+
+    sessionStorage.setItem(
+      "ordersState",
+      JSON.stringify({
+        ordersList: bill.selectedOrders || [],
+        exchangeList:
+          bill.selectedOrders?.flatMap((order) => order.oldItems || []) || [],
+        customerId: bill.customerId,
+        billNumber: bill.billNumber,
+      }),
+    );
+
+    navigate("/admin/orders", {
+      state: {
+        showOrdersList: true,
+        fromBillEdit: true,
+        fromBillDetails: true,
+        customerId: bill.customerId,
+        billNumber: bill.billNumber,
+        selectedOrders: bill.selectedOrders?.map((o) => o.orderId) || [],
+      },
+    });
+  };
 
   const shortLabels: Record<string, { weight: string; amount: string }> = {
     stone: { weight: "S.W", amount: "S.A" },
@@ -974,12 +1005,19 @@ We hope to serve you again soon!
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="flex justify-end gap-3 mt-4 print:hidden">
               <button
                 onClick={() => setDiscountDialogOpen(true)}
-                className="bg-orange-600 text-white px-5 py-2 rounded-lg hover:bg-orange-700"
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
               >
                 Add Discount
+              </button>
+
+              <button
+                onClick={handleEditBillOrders}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Edit
               </button>
             </div>
 

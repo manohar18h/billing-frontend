@@ -266,6 +266,9 @@ const Orders: React.FC = () => {
     });
     setOrderErrors({});
     setIsPrefilled(false);
+    setIsEditing(false);
+    setEditingOrderId(null);
+    setIsPrefilled(false);
   };
 
   const [isEditing, setIsEditing] = useState(false);
@@ -324,7 +327,10 @@ const Orders: React.FC = () => {
   const fromCustomerDetails = location.state?.fromCustomerDetails || false;
   const from = location.state?.from || localStorage.getItem("from");
   const [isPrefilled, setIsPrefilled] = useState(false);
-
+  const isFromBillEdit =
+    location.state?.fromBillEdit ||
+    localStorage.getItem("checkEditBill") === "YesEdit" ||
+    localStorage.getItem("editBillFromBillDetails") === "editBill";
   const customerId =
     location.state?.customerId ||
     localStorage.getItem("CusDetailsCustomerId") ||
@@ -364,7 +370,9 @@ const Orders: React.FC = () => {
     location.state?.billNumber || localStorage.getItem("billNumber");
 
   useEffect(() => {
-    localStorage.removeItem("checkEditBill");
+    if (!isFromBillEdit) {
+      localStorage.removeItem("checkEditBill");
+    }
 
     api
       .get<AppWorker[]>(`/admin/getAllWorkers`, {
@@ -458,6 +466,7 @@ const Orders: React.FC = () => {
       const updatedOrders = [...ordersList, response.data];
 
       setOrdersList([...ordersList, response.data]);
+      markBillAsChanged();
       setOrderErrors({});
 
       handleClearOrder();
@@ -507,6 +516,7 @@ const Orders: React.FC = () => {
 
       const newExchangeList = [...exchangeList, response.data];
       setExchangeList(newExchangeList);
+      markBillAsChanged();
 
       handleClearExchange();
 
@@ -688,8 +698,19 @@ const Orders: React.FC = () => {
 
         if (message === "Yes, It's Deleted") {
           // Remove deleted item from the state
-          setOrdersList((prev) =>
-            prev.filter((item) => item.orderId !== slectOrderId),
+          const updatedOrders = ordersList.filter(
+            (item) => item.orderId !== slectOrderId,
+          );
+
+          setOrdersList(updatedOrders);
+          markBillAsChanged();
+
+          sessionStorage.setItem(
+            "ordersState",
+            JSON.stringify({
+              ordersList: updatedOrders,
+              exchangeList,
+            }),
           );
         }
 
@@ -718,8 +739,19 @@ const Orders: React.FC = () => {
 
       if (response.status === 200) {
         console.log(response.data); // "Yes Its Deleted"
-        setExchangeList((prev) =>
-          prev.filter((item) => item.oldItemId !== slectOldItemId),
+        const updatedExchangeList = exchangeList.filter(
+          (item) => item.oldItemId !== slectOldItemId,
+        );
+
+        setExchangeList(updatedExchangeList);
+        markBillAsChanged();
+
+        sessionStorage.setItem(
+          "ordersState",
+          JSON.stringify({
+            ordersList,
+            exchangeList: updatedExchangeList,
+          }),
         );
       }
     } catch (error) {
@@ -728,23 +760,32 @@ const Orders: React.FC = () => {
       handleOldItemClose();
     }
   };
+  const markBillAsChanged = () => {
+    if (isFromBillEdit) {
+      setIsBillEditing(true);
+      localStorage.setItem("checkEditBill", "YesEdit");
+      localStorage.setItem("billNumber", billNumber || "");
+      localStorage.setItem("editBillFromBillDetails", "editBill");
+    }
+  };
 
   const handleBillGenerate = () => {
     sessionStorage.removeItem("ordersState");
-    localStorage.removeItem("checkEditBill");
 
-    // Save new data
     sessionStorage.setItem(
       "ordersState",
       JSON.stringify({ ordersList, exchangeList, customerId }),
     );
 
-    // Mark this as a NEW bill (not editing)
-    localStorage.setItem("checkEditBill", "NoEdit");
+    if (isFromBillEdit) {
+      localStorage.setItem("checkEditBill", "YesEdit");
+    } else {
+      localStorage.setItem("checkEditBill", "NoEdit");
+    }
 
-    // Navigate to generate bill
     navigate("/admin/generate-bill", {
       state: {
+        fromBillEdit: isFromBillEdit,
         fromBillDetails: location.state?.fromBillDetails || false,
         selectedOrders: ordersList.map((order) => order.orderId),
         billNumber:
@@ -793,18 +834,9 @@ const Orders: React.FC = () => {
       setIsEditing(false);
       setIsBillEditing(true);
       setEditingExchangeId(null);
-
-      alert("Exchange Data updated successfully");
-
-      localStorage.setItem("billNumber", billNumber);
-      const checkEditExAllow = localStorage.getItem("AllowExEdit");
+      markBillAsChanged();
       handleClearExchange();
-
-      if (checkEditExAllow !== "AllowExEdit") {
-        navigate(`/admin/bill-details`, {
-          replace: true,
-        });
-      }
+      alert("Exchange Data updated successfully");
     } catch (error: any) {
       if (error.response?.data) {
         setExchangeErrors(error.response.data);
@@ -847,20 +879,11 @@ const Orders: React.FC = () => {
       handleClearOrder();
       setIsEditing(false);
       setIsBillEditing(true);
-
       setEditingOrderId(null);
+      markBillAsChanged();
       alert(
         "Order updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill",
       );
-      localStorage.setItem("billNumber", billNumber);
-
-      const checkEditAllow = localStorage.getItem("AllowEdit");
-
-      if (checkEditAllow !== "AllowEdit") {
-        navigate(`/admin/bill-details`, {
-          replace: true,
-        });
-      }
     } catch (error: any) {
       if (error.response?.data) {
         setOrderErrors(error.response.data);
@@ -1079,6 +1102,7 @@ const Orders: React.FC = () => {
 
   // 1️⃣ Set default price only when metal changes
   useEffect(() => {
+    if (editingExchangeId) return;
     let price = 0;
 
     if (exchange.exchange_metal === "Gold") {
@@ -1555,10 +1579,8 @@ const Orders: React.FC = () => {
           </Button>
           <Button
             variant="contained"
-            disabled={isEditBillFromDetails && !isEditing}
+            disabled={false}
             onClick={() => {
-              if (isEditBillFromDetails && !isEditing) return;
-
               window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
 
               if (isEditing) {
@@ -2224,7 +2246,10 @@ const Orders: React.FC = () => {
               borderRadius: "8px",
             }}
           >
-            Bill Generate
+            {location.state?.fromBillEdit ||
+            localStorage.getItem("checkEditBill") === "YesEdit"
+              ? "Update Generate Bill"
+              : "Bill Generate"}
           </Button>
         )}
 
@@ -2241,6 +2266,26 @@ const Orders: React.FC = () => {
     `}
         </style>
       </Box>
+
+      {isFromBillEdit && (
+        <Box display="flex" justifyContent="center" mt={4} mb={4}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleBillGenerate}
+            sx={{
+              px: 5,
+              py: 1.5,
+              borderRadius: "12px",
+              fontWeight: "bold",
+              fontSize: "16px",
+              textTransform: "none",
+            }}
+          >
+            Update Bill
+          </Button>
+        </Box>
+      )}
 
       <Dialog
         open={assignDialogOpen}

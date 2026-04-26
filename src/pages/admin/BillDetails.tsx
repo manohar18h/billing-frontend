@@ -269,26 +269,26 @@ const BillDetails: React.FC = () => {
     }
   };
 
-  const handleEditOrder = (orderId: number) => {
-    localStorage.removeItem("editBillFromBillDetails");
-    if (!orderId) {
-      console.error("❌ editingOrderId is missing before navigation");
-      return;
-    }
+  // const handleEditOrder = (orderId: number) => {
+  //   localStorage.removeItem("editBillFromBillDetails");
+  //   if (!orderId) {
+  //     console.error("❌ editingOrderId is missing before navigation");
+  //     return;
+  //   }
 
-    console.log("✅ Navigating to Orders page with orderId:", orderId);
+  //   console.log("✅ Navigating to Orders page with orderId:", orderId);
 
-    localStorage.setItem("editBillFromBillDetails", "editBill");
+  //   localStorage.setItem("editBillFromBillDetails", "editBill");
 
-    navigate(`/admin/orders/`, {
-      replace: true,
-      state: {
-        fromBillDetails: true,
-        customerId: customer?.customerId,
-        orderId: orderId, // pass orderId directly
-      },
-    });
-  };
+  //   navigate(`/admin/orders/`, {
+  //     replace: true,
+  //     state: {
+  //       fromBillDetails: true,
+  //       customerId: customer?.customerId,
+  //       orderId: orderId, // pass orderId directly
+  //     },
+  //   });
+  // };
 
   const [assignWorkDialogOpen, setAssignWorkDialogOpen] = useState(false);
   const [workerNameInput, setWorkerNameInput] = useState("");
@@ -388,7 +388,7 @@ const BillDetails: React.FC = () => {
                   });
                 }}
               >
-                Generate Bill
+                View Bill
               </Button>
             </div>
           </div>
@@ -519,24 +519,21 @@ const BillDetails: React.FC = () => {
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        Item
-                      </div>
-                    </th>
-                    <th className="border px-3 py-2 text-center">
-                      <div className="flex justify-center items-center">
                         Metal
                       </div>
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
+                        Item
+                      </div>
+                    </th>
+
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
                         Weight
                       </div>
                     </th>
-                    <th className="border px-3 py-2 text-center">
-                      <div className="flex justify-center items-center">
-                        Status
-                      </div>
-                    </th>
+
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
                         Total
@@ -557,14 +554,19 @@ const BillDetails: React.FC = () => {
                         View
                       </div>
                     </th>
-                    <th className="border px-3 py-2 text-center">
+                    {/* <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
                         Edit
+                      </div>
+                    </th> */}
+                    <th className="border px-3 py-2 text-center">
+                      <div className="flex justify-center items-center">
+                        Cancel
                       </div>
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        Cancel
+                        Status
                       </div>
                     </th>
                   </tr>
@@ -580,31 +582,15 @@ const BillDetails: React.FC = () => {
                         {formatDate(order.orderDate)}
                       </TableCell>
                       <TableCell className={`border px-3 py-2 `}>
-                        {order.itemName}
-                      </TableCell>
-                      <TableCell className={`border px-3 py-2 `}>
                         {order.metal}
                       </TableCell>
                       <TableCell className={`border px-3 py-2 `}>
-                        {order.metal_weight}
-                      </TableCell>
-                      <TableCell
-                        className={`border px-3 py-2 `}
-                        sx={{
-                          color:
-                            order.deliveryStatus === "Delivered"
-                              ? "#2e7d32" // green
-                              : order.deliveryStatus === "Pending"
-                                ? "#ed6c02" // orange/yellow
-                                : order.deliveryStatus === "Canceled"
-                                  ? "#d32f2f" // red
-                                  : "inherit",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {order.deliveryStatus}
+                        {order.itemName}
                       </TableCell>
 
+                      <TableCell className={`border px-3 py-2 `}>
+                        {order.metal_weight}
+                      </TableCell>
                       <TableCell
                         className={`border px-3 py-2 `}
                         sx={{
@@ -699,7 +685,7 @@ const BillDetails: React.FC = () => {
                           <VisibilityIcon fontSize="medium" />
                         </IconButton>
                       </TableCell>
-                      <TableCell className={`border px-3 py-2 `}>
+                      {/* <TableCell className={`border px-3 py-2 `}>
                         {order.deliveryStatus === "Canceled" ? (
                           <>-</>
                         ) : (
@@ -717,7 +703,7 @@ const BillDetails: React.FC = () => {
                             <EditIcon />
                           </IconButton>
                         )}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell className={`border px-3 py-2 `}>
                         {order.deliveryStatus === "Canceled" ? (
                           <CheckCircleIcon color="success" />
@@ -733,6 +719,22 @@ const BillDetails: React.FC = () => {
                             <DeleteIcon />
                           </IconButton>
                         )}
+                      </TableCell>
+                      <TableCell
+                        className={`border px-3 py-2 `}
+                        sx={{
+                          color:
+                            order.deliveryStatus === "Delivered"
+                              ? "#2e7d32" // green
+                              : order.deliveryStatus === "Pending"
+                                ? "#ed6c02" // orange/yellow
+                                : order.deliveryStatus === "Canceled"
+                                  ? "#d32f2f" // red
+                                  : "inherit",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {order.deliveryStatus}
                       </TableCell>
                     </TableRow>
                   ))}

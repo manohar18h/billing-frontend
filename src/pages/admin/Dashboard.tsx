@@ -74,6 +74,11 @@ interface LoanBill {
   loanBillingDate: string;
   checked: boolean;
 }
+interface VillageStatsResponse {
+  totalCustomers: number;
+  totalVillages: number;
+  villagePercentageList: BusinessGrowthResponse[];
+}
 
 function normalizeStatus(
   s: string | undefined | null,
@@ -1446,6 +1451,8 @@ const LatestLoanOrders: React.FC = () => {
 /* ---------- Business Growth: static country list + bars ---------- */
 const BusinessGrowth: React.FC = () => {
   const [villages, setVillages] = useState<BusinessGrowthResponse[]>([]);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [totalVillages, setTotalVillages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -1454,7 +1461,7 @@ const BusinessGrowth: React.FC = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const response = await api.get<BusinessGrowthResponse[]>(
+        const response = await api.get<VillageStatsResponse>(
           "/admin/village-percentage",
           {
             headers: {
@@ -1463,7 +1470,9 @@ const BusinessGrowth: React.FC = () => {
           },
         );
 
-        setVillages(Array.isArray(response.data) ? response.data : []);
+        setVillages(response.data.villagePercentageList);
+        setTotalCustomers(response.data.totalCustomers);
+        setTotalVillages(response.data.totalVillages);
       } catch (error) {
         console.error("Error fetching business growth data:", error);
       } finally {
@@ -1488,8 +1497,14 @@ const BusinessGrowth: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-full bg-violet-100 text-violet-700 px-3 py-1 text-xs font-bold">
-          {villages.length} Villages
+        <div className="flex flex-col items-end">
+          <div className="rounded-full bg-violet-100 text-violet-700 px-3 py-1 text-xs font-bold">
+            {totalVillages} Villages
+          </div>
+
+          <div className=" mt-1 text-xs text-blue-600 font-bold">
+            {totalCustomers} Customers
+          </div>
         </div>
       </div>
 
