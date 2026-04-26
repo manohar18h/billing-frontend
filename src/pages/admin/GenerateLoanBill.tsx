@@ -499,7 +499,9 @@ We hope to serve you again soon!
                 <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
                   G.Wt
                 </th>
-
+                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
+                  N.Wt
+                </th>
                 <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
                   Total
                 </th>
@@ -548,6 +550,9 @@ We hope to serve you again soon!
                   </td>
                   <td className="border px-2 py-1 text-[#734d06] font-bold text-center align-middle text-[13px]">
                     {item.gross_weight}
+                  </td>
+                  <td className="border px-2 py-1 text-[#734d06] font-bold text-center align-middle text-[13px]">
+                    {item.net_weight}
                   </td>
                   <td className="border px-2 py-1 text-[#073d6a] font-bold text-center align-middle text-[13px]">
                     {item.total_amount}
