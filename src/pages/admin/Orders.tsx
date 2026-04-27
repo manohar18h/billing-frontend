@@ -777,10 +777,20 @@ const Orders: React.FC = () => {
       JSON.stringify({ ordersList, exchangeList, customerId }),
     );
 
+    const finalBillNumber =
+      location.state?.billNumber || localStorage.getItem("billNumber") || "";
+
+    if (isFromBillEdit && !finalBillNumber) {
+      alert("Bill number missing. Cannot update existing bill.");
+      return;
+    }
+
     if (isFromBillEdit) {
       localStorage.setItem("checkEditBill", "YesEdit");
+      localStorage.setItem("billNumber", finalBillNumber);
     } else {
       localStorage.setItem("checkEditBill", "NoEdit");
+      localStorage.removeItem("billNumber");
     }
 
     navigate("/admin/generate-bill", {
@@ -788,8 +798,7 @@ const Orders: React.FC = () => {
         fromBillEdit: isFromBillEdit,
         fromBillDetails: location.state?.fromBillDetails || false,
         selectedOrders: ordersList.map((order) => order.orderId),
-        billNumber:
-          location.state?.billNumber || localStorage.getItem("billNumber"),
+        billNumber: finalBillNumber,
       },
     });
   };

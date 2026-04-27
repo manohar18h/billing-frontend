@@ -268,13 +268,12 @@ We hope to serve you again soon!
 
       try {
         console.log("checkEditBill : ", checkEdit);
-
-        if (checkEdit === "YesEdit") {
+        if (checkEdit === "YesEdit" && billNumber) {
           console.log("Updating existing bill with billNumber:", billNumber);
 
           const res = await api.put<Bill>(
             `/admin/bill-updateData/${billNumber}`,
-            { orderId: selectedOrders }, // send array of orderIds
+            { orderId: selectedOrders },
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -285,7 +284,7 @@ We hope to serve you again soon!
 
           setBill(res.data);
           SetMsgTitle(`Your order updated Successfully`);
-        } else if (checkEdit === "NoEdit") {
+        } else {
           console.log("Creating new bill...");
 
           const response = await api.post<Bill>(
@@ -298,6 +297,7 @@ We hope to serve you again soon!
               },
             },
           );
+
           setBill(response.data);
           SetMsgTitle(`Your order placed Successfully`);
         }
