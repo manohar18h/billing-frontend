@@ -780,12 +780,10 @@ const Orders: React.FC = () => {
     const finalBillNumber =
       location.state?.billNumber || localStorage.getItem("billNumber") || "";
 
-    if (isFromBillEdit && !finalBillNumber) {
-      alert("Bill number missing. Cannot update existing bill.");
-      return;
-    }
+    const shouldUpdateExistingBill =
+      isFromBillEdit && finalBillNumber.trim() !== "";
 
-    if (isFromBillEdit) {
+    if (shouldUpdateExistingBill) {
       localStorage.setItem("checkEditBill", "YesEdit");
       localStorage.setItem("billNumber", finalBillNumber);
     } else {
