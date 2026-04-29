@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Box,
   Paper,
@@ -366,7 +366,6 @@ const Products: React.FC = () => {
   const [labelImageSrc, setLabelImageSrc] = useState("");
   // controls visibility of the Products form
   const [showProductForm, setShowProductForm] = useState(false);
-
   const onQChange =
     (k: keyof ProductQuery) => (e: React.ChangeEvent<HTMLInputElement>) =>
       setQ((p) => ({ ...p, [k]: e.target.value }));
@@ -374,6 +373,7 @@ const Products: React.FC = () => {
   const addProductStock = async () => {
     setShowProductForm(true);
   };
+  const printingRef = useRef(false);
 
   const [spclWork, setSpclWork] = useState<SpeclWorkRequest>({
     itemName: "",
@@ -829,180 +829,117 @@ const Products: React.FC = () => {
     const barcodeValue = r.barcodeValue ?? "-";
     const grossWeight = normalizeWeight(r.gross_weight);
     const sizeValue = r.size ?? "-";
-
     return `
 <html>
 <head>
-  <title>Print RFID Label</title>
   <style>
     @page {
-      size: 100mm 36mm;
+      size: 68mm 26mm;
       margin: 0;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
     html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      width: 100mm !important;
-      height: 36mm !important;
-      min-width: 100mm !important;
-      max-width: 100mm !important;
-      min-height: 36mm !important;
-      max-height: 36mm !important;
-      overflow: hidden !important;
-      background: #fff;
-      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      width: 68mm;
+      height: 26mm;
+      overflow: hidden;
     }
+      body {
+  page-break-after: avoid;
+  page-break-before: avoid;
+}
+
+* {
+  page-break-inside: avoid !important;
+}
 
     body {
-      position: relative;
-    }
-
-    .page {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100mm;
-      height: 36mm;
-      overflow: hidden;
-      background: #fff;
-      page-break-after: avoid;
-      page-break-before: avoid;
-      break-after: avoid;
-      break-before: avoid;
-    }
-
-    .print-zone {
-      position: absolute;
-      left: 4.8mm;
-      top: 1mm;
-      width: 20mm;
-      height: 20mm;
-      overflow: hidden;
-    }
-
-    .top-half {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 20mm;
-      height: 9.5mm;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .top-half img {
-      width: 8.8mm;
-      height: 8.8mm;
-      object-fit: contain;
-      display: block;
-    }
-
-    .bottom-half {
-      position: absolute;
-      left: 0;
-      top: 13mm;
-      width: 20mm;
-      height: 10mm;
-      padding-top: 0.7mm;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
       justify-content: flex-start;
-      overflow: hidden;
     }
 
-    .text1 {
-      width: 100%;
-      font-size: 4.7pt;
-      line-height: 1;
-      font-weight: bold;
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
+    .label {
+      width: 23mm;
+      height: 27mm;
+      margin-top: 8mm;
+      margin-left: 2mm;
+  overflow: hidden;
+
+        page-break-after: avoid !important;
+
     }
 
-    .text2 {
-      width: 100%;
-      margin-top: 0.3mm;
-      font-size: 4.7pt;
-      line-height: 1;
-      text-align: center;
-      font-weight: bold;
-      white-space: nowrap;
-      overflow: hidden;
+    .qr {
+      width: 8mm;
+      height: 8mm;
+      display: block;
+      margin: 0 auto;
     }
 
-    @media print {
-      html, body, .page {
-        width: 100mm !important;
-        height: 36mm !important;
-        overflow: hidden !important;
-      }
-    }
+ .text, .gw, .size {
+  font-family: "Arial Black", Arial, sans-serif;
+  font-size: 4.6pt;
+  font-weight: 900;
+  margin-left: 1mm;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.text {
+  margin-top: 4mm;
+}
+
+.gw {
+  margin-top: 0.5mm;
+}
+
+.size {
+  margin-top: 0.5mm;
+}
   </style>
 </head>
 
 <body>
-  <div class="page">
-    <div class="print-zone">
-      <div class="top-half">
-        ${imageSrc ? `<img id="qrImg" src="${imageSrc}" alt="qr" />` : ""}
-      </div>
-
-      <div class="bottom-half">
-        <div class="text1">${barcodeValue}</div>
-        <div class="text2">GW: ${grossWeight}g</div>
-        <div class="text2">Size: ${sizeValue} inch</div>
-      </div>
-    </div>
+  <div class="label">
+    ${imageSrc ? `<img class="qr" src="${imageSrc}" />` : ""}
+    <div class="text">${barcodeValue}</div>
+    <div class="gw">GW: ${grossWeight}g</div>
+    <div class="size">SZ: ${sizeValue}</div>
   </div>
-
-  <script>
-    function doPrint() {
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => window.close(), 700);
-      }, 700);
-    }
-
-    const qrImg = document.getElementById("qrImg");
-    if (qrImg) {
-      if (qrImg.complete) doPrint();
-      else {
-        qrImg.onload = doPrint;
-        qrImg.onerror = doPrint;
-      }
-    } else {
-      doPrint();
-    }
-  </script>
 </body>
 </html>`;
   };
 
   const handlePrintSmallLabel = async (r: StockProduct) => {
-    const imageSrc = await prepareLabelImage(r);
+    if (printingRef.current) return;
+    printingRef.current = true;
 
-    console.log("PRINT imageSrc:", imageSrc);
-    console.log("PRINT barcode:", r.barcodeValue);
+    try {
+      const imageSrc = await prepareLabelImage(r);
 
-    const printWindow = window.open("", "", "width=420,height=420");
-    if (!printWindow) {
-      alert("Unable to open print window.");
-      return;
+      const printWindow = window.open("", "_blank", "width=420,height=420");
+      if (!printWindow) {
+        alert("Unable to open print window.");
+        printingRef.current = false;
+        return;
+      }
+
+      printWindow.document.open();
+      printWindow.document.write(buildSmallLabelHtml(r, imageSrc));
+      printWindow.document.close();
+
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 500);
+    } catch (err) {
+      console.error(err);
+      printingRef.current = false;
     }
-
-    printWindow.document.open();
-    printWindow.document.write(buildSmallLabelHtml(r, imageSrc));
-    printWindow.document.close();
   };
+
   const handleScanEpc = async () => {
     try {
       setScanLoading(true);
@@ -2526,6 +2463,7 @@ const Products: React.FC = () => {
 
                     <Button
                       variant="contained"
+                      disabled={isPrinting}
                       onClick={() => {
                         setSelectedLabelRow(r);
                         setEpcValue(r.epcNumber ?? "");
@@ -2537,7 +2475,7 @@ const Products: React.FC = () => {
                         "&:hover": { backgroundColor: "#6f33db" },
                       }}
                     >
-                      Print
+                      {isPrinting ? "Printing..." : "Print"}
                     </Button>
                   </Box>
                 </Paper>

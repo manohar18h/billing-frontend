@@ -114,7 +114,7 @@ const BillLoanDetails: React.FC = () => {
         `/admin/getDataByLoanBillNumber/${billLoanNumber}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const data = res.data as LoanBillResponse;
@@ -160,7 +160,7 @@ const BillLoanDetails: React.FC = () => {
       sessionStorage.setItem("loanCustomer", JSON.stringify(loanBill));
       sessionStorage.setItem(
         "items",
-        JSON.stringify(loanBill.selectedItems || [])
+        JSON.stringify(loanBill.selectedItems || []),
       );
     } catch (err) {
       console.error("Error fetching bill details:", err);
@@ -221,7 +221,7 @@ const BillLoanDetails: React.FC = () => {
     localStorage.setItem("billLoanNumber", billLoanNumber ?? "");
     localStorage.setItem(
       "loanCustomerId",
-      (loanCustomer?.customerLoanId ?? "").toString()
+      (loanCustomer?.customerLoanId ?? "").toString(),
     );
     navigate("/admin/loanItems", {
       replace: true,
@@ -294,7 +294,7 @@ const BillLoanDetails: React.FC = () => {
                   sessionStorage.removeItem("itemsState");
                   sessionStorage.setItem(
                     "itemsState",
-                    JSON.stringify({ items, loanCustomerId })
+                    JSON.stringify({ items, loanCustomerId }),
                   );
                   sessionStorage.setItem("billingLoanFrom", "BillLoanDetails");
                   console.log("Ids :" + items.map((item) => item.loanId));
@@ -497,10 +497,10 @@ const BillLoanDetails: React.FC = () => {
                             item.deliveryStatus === "Delivered"
                               ? "#2e7d32" // green
                               : item.deliveryStatus === "Pending"
-                              ? "#ed6c02" // orange/yellow
-                              : item.deliveryStatus === "Canceled"
-                              ? "#d32f2f" // red
-                              : "inherit",
+                                ? "#ed6c02" // orange/yellow
+                                : item.deliveryStatus === "Canceled"
+                                  ? "#d32f2f" // red
+                                  : "inherit",
                           fontWeight: "bold",
                         }}
                       >
@@ -699,10 +699,13 @@ const BillLoanDetails: React.FC = () => {
               console.log("payAmount:", payAmount);
 
               try {
+                const url = `/admin/loanTransaction/${selectedItemId}/${payMethod}/${payType}/${payAmount}`;
+
+                console.log("🔥 API URL:", url);
                 await api.post(
-                  `/admin/loanTransaction/${selectedItemId}/${payMethod}/${payType}/${payAmount}`,
+                  url,
                   {},
-                  { headers: { Authorization: `Bearer ${token}` } }
+                  { headers: { Authorization: `Bearer ${token}` } },
                 );
 
                 const updatedItems = items.map((o) => {
@@ -720,7 +723,7 @@ const BillLoanDetails: React.FC = () => {
                     newPaidInterestAmount += paid;
                     newExistInterestDue = Math.max(
                       newExistInterestDue - paid,
-                      0
+                      0,
                     );
                   } else if (payType === "Paying Principle") {
                     newExistDue = Math.max(newExistDue - paid, 0);
@@ -752,7 +755,7 @@ const BillLoanDetails: React.FC = () => {
                   "intemsState",
                   JSON.stringify({
                     itemsList: updatedItems,
-                  })
+                  }),
                 );
                 setPayDialogOpen(false);
               } catch (err) {
@@ -827,7 +830,7 @@ const BillLoanDetails: React.FC = () => {
                 { signature: signatureBase64 },
                 {
                   headers: { Authorization: `Bearer ${token}` },
-                }
+                },
               );
 
               alert("Signature saved!");
