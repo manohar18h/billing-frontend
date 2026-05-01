@@ -11,7 +11,7 @@ import {
   Gem,
   ReceiptText,
   BadgeIndianRupee,
-  ChartNoAxesCombined,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import hjlogoo from "../assets/hjlogoo.png";
@@ -43,7 +43,7 @@ import LoanItemDetails from "./admin/LoanItemDetails";
 import GenerateLoanBill from "./admin/GenerateLoanBill";
 import BillLoanDetails from "./admin/BillLoanDetails";
 import BillLoanData from "./admin/BillLoanData";
-
+import SalesPage from "./admin/SalesPage";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/Dashboard" },
   { icon: Users, label: "Customers", path: "/admin/Customers" },
@@ -53,6 +53,7 @@ const menuItems = [
   { icon: BoxIcon, label: "Stock Box", path: "/admin/stockBox" },
   { icon: ReceiptText, label: "Billing", path: "/admin/billing-orders" },
   { icon: BadgeIndianRupee, label: "Loan", path: "/admin/Loan" },
+  { icon: ShoppingCart, label: "Cart", path: "/admin/sale" },
 ];
 
 type SidebarProps = {
@@ -286,12 +287,14 @@ function AdminPanelContent() {
               path="showroom-metal-stock"
               element={<ShowroomMetalStock />}
             />
+            <Route path="sale" element={<SalesPage />} />
             <Route
               path="worker-details/:workerId"
               element={<WorkerDetails />}
             />
             <Route path="*" element={<p>Select a menu option</p>} />
           </Routes>
+          
         </div>
       </main>
     </div>

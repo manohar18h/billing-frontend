@@ -81,7 +81,12 @@ const SalesPage: React.FC = () => {
   const [showEstimation, setShowEstimation] = useState(false);
 
   const token = localStorage.getItem("token");
-
+const role = localStorage.getItem("role");
+const basePath = role === "ADMIN" ? "/admin" : "/sales";
+  const barcodeApi =
+  role === "ADMIN"
+    ? `${basePath}/getByBarcode`
+    : `${basePath}/getDataByBarcode`;
   const [rows, setRows] = useState<StockDataBox[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -94,8 +99,7 @@ const SalesPage: React.FC = () => {
       setLoading(true);
       setErr(null);
       try {
-        const { data } = await api.get<StockDataBox[]>(
-          `/sales/getALlStockBox`,
+        const { data } = await api.get<StockDataBox[]>(`${basePath}/getALlStockBox`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           },
@@ -121,7 +125,7 @@ const SalesPage: React.FC = () => {
   useEffect(() => {
     const fetchRates = async () => {
       try {
-        const response = await api.get<MetalRates>("/sales/getRates", {
+        const response = await api.get<MetalRates>(`${basePath}/getRates`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setRates(response.data);
@@ -158,10 +162,10 @@ const SalesPage: React.FC = () => {
     }
 
     try {
-      const response = await api.get<BarcodeProduct>(
-        `/sales/getDataByBarcode?barcodeValue=${searchQuery}`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+     const response = await api.get<BarcodeProduct>(
+  `${barcodeApi}?barcodeValue=${searchQuery}`,
+  { headers: token ? { Authorization: `Bearer ${token}` } : undefined },
+);
 
       const data = response.data;
 
@@ -186,6 +190,8 @@ const SalesPage: React.FC = () => {
       alert("Barcode not found or error occurred");
     }
   };
+
+
 
   // 👇 Filter rows by stockBoxName
   const filteredRows = useMemo(() => {
