@@ -487,6 +487,31 @@ We hope to serve you again soon!
 
       <style>
         {`
+@media print {
+  body.print-tablet #print-section {
+    width: 148mm !important;
+    height: 210mm !important;
+    padding: 5mm !important;
+    margin: 0 auto !important;
+
+    transform: scale(1.35);
+    transform-origin: top left;
+  }
+
+  body.print-tablet {
+    zoom: 1 !important;
+  }
+
+  body.print-tablet @page {
+    size: A5 portrait;
+    margin: 0;
+  }
+}
+`}
+      </style>
+
+      <style>
+        {`
      .invoice-table {
   width: 100%;
   border-collapse: collapse;
@@ -1044,11 +1069,26 @@ We hope to serve you again soon!
 
       {/* Print Button (Hidden during print) */}
       <div className="text-center mt-6 print:hidden">
+        {/* Laptop Print (OLD WORKING) */}
         <button
-          onClick={() => window.print()}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4"
+          onClick={() => {
+            document.body.classList.remove("print-tablet");
+            window.print();
+          }}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-2"
         >
-          🖨️ Print Invoice
+          🖥️ Print Laptop
+        </button>
+
+        {/* Tablet Print */}
+        <button
+          onClick={() => {
+            document.body.classList.add("print-tablet");
+            setTimeout(() => window.print(), 100);
+          }}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mt-2 ml-2"
+        >
+          📱 Print Tablet
         </button>
       </div>
       <div className="text-center mt-4 print:hidden">
