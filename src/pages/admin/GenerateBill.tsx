@@ -19,7 +19,7 @@ const GenerateBill: React.FC = () => {
   const [payMethod, setPayMethod] = useState("Phone Pay");
   const [payAmount, setPayAmount] = useState("");
   const [payLoading, setPayLoading] = useState(false);
-
+  const [isPrinting, setIsPrinting] = useState(false);
   const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("");
   const [discountLoading, setDiscountLoading] = useState(false);

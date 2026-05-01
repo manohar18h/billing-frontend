@@ -17,7 +17,6 @@ import {
 import api from "@/services/api";
 import QRCode from "qrcode";
 import { useWorkers } from "@/contexts/WorkersContext";
-import { size } from "lodash";
 
 const goldItems = [
   "Batuvu",
@@ -359,6 +358,7 @@ const Products: React.FC = () => {
   const [labelFlowSource, setLabelFlowSource] = useState<
     "search" | "new" | null
   >(null);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const [epcValue, setEpcValue] = useState("");
   const [scanLoading, setScanLoading] = useState(false);
