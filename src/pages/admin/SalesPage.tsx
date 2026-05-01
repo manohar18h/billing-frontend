@@ -6,12 +6,15 @@ import {
   InputAdornment,
   Paper,
   Typography,
+  IconButton,
   Grid,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import api from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import CircularProgress from "@mui/material/CircularProgress";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
 
 type BarcodeProduct = {
   stockProductId: number;
@@ -743,10 +746,15 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
                         {box.totalStockBoxWeight}
                       </td>
                       <td className="border px-3 py-2 text-center">
-                        <Button
-                          size="small"
-                          variant="contained"
-                          onClick={() => {
+
+  <div className="flex justify-center items-center">
+                            <IconButton
+                              size="medium"
+                              color="primary"
+                              sx={{
+                                "&:hover": { backgroundColor: "#E0E0E0" },
+                              }}
+                               onClick={() => {
                             localStorage.setItem(
                               "selectedStockBox",
                               JSON.stringify(box),
@@ -755,9 +763,10 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
                               `/admin/salesStockBoxDetails/${box.stockBoxId}`,
                             );
                           }}
-                        >
-                          View More
-                        </Button>
+                            >
+                              <VisibilityIcon fontSize="medium" />
+                            </IconButton>
+                          </div>
                       </td>
                     </tr>
                   ))}

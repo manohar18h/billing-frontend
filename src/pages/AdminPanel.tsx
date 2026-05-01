@@ -35,8 +35,6 @@ import WorkerDetails from "./admin/WorkerDetails";
 import { WorkersProvider } from "@/contexts/WorkersContext";
 import BillData from "./admin/BillData";
 import ShowroomMetalStock from "./admin/ShowroomMetalStock";
-import StockBoxData from "./admin/StockBoxData";
-import StockBoxDetails from "./admin/StockBoxDetails";
 import Loan from "./admin/Loan";
 import LoanItems from "./admin/LoanItems";
 import LoanItemDetails from "./admin/LoanItemDetails";
@@ -50,10 +48,9 @@ const menuItems = [
   { icon: PersonStanding, label: "Workers", path: "/admin/workers" },
   { icon: PackagePlus, label: "Products", path: "/admin/products" },
   { icon: Gem, label: "Showroom", path: "/admin/showroom-metal-stock" },
-  { icon: BoxIcon, label: "Stock Box", path: "/admin/stockBox" },
   { icon: ReceiptText, label: "Billing", path: "/admin/billing-orders" },
   { icon: BadgeIndianRupee, label: "Loan", path: "/admin/Loan" },
-  { icon: ShoppingCart, label: "Cart", path: "/admin/sale" },
+  { icon: BoxIcon, label: "Stock Box", path: "/admin/sale" },
 ];
 
 type SidebarProps = {
@@ -269,16 +266,12 @@ function AdminPanelContent() {
               element={<LoanItemDetails />}
             />
 
-            <Route
-              path="StockBoxDetails/:stockBoxId"
-              element={<StockBoxDetails />}
-            />
+         
             <Route path="workers" element={<Workers />} />
             <Route path="products" element={<Products />} />
             <Route path="billing-orders" element={<AllBillingOrders />} />
             <Route path="Loan" element={<Loan />} />
             <Route path="loanItems" element={<LoanItems />} />
-            <Route path="stockBox" element={<StockBoxData />} />
             <Route path="worker-stock" element={<WorkerStock />} />
             <Route path="repair-work" element={<RepairWork />} />
             <Route path="lot-work" element={<LotWork />} />
