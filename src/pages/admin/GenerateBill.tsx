@@ -485,30 +485,47 @@ We hope to serve you again soon!
   `}
       </style>
 
-      <style>
-        {`
+   <style>
+  {`
 @media print {
-  body.print-tablet #print-section {
-    width: 148mm !important;
-    height: 210mm !important;
-    padding: 5mm !important;
-    margin: 0 auto !important;
-
-    transform: scale(1.35);
-    transform-origin: top left;
-  }
-
   body.print-tablet {
-    zoom: 1 !important;
+    zoom: 0.68 !important;
   }
 
-  body.print-tablet @page {
-    size: A5 portrait;
-    margin: 0;
+  body.print-tablet #print-section {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 4px !important;
+    transform: none !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  body.print-tablet #print-section .mt-20 {
+    margin-top: 0 !important;
+  }
+
+  body.print-tablet #print-section .mt-10 {
+    margin-top: 10px !important;
+  }
+
+  body.print-tablet #print-section .mt-6 {
+    margin-top: 6px !important;
+  }
+
+  body.print-tablet #print-section .p-5 {
+    padding: 4px !important;
+  }
+
+  body.print-tablet #print-section h6,
+  body.print-tablet #print-section h5 {
+    font-size: 12px !important;
+    line-height: 1.2 !important;
   }
 }
 `}
-      </style>
+</style>
 
       <style>
         {`
