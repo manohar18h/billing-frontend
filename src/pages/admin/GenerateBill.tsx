@@ -489,7 +489,7 @@ We hope to serve you again soon!
   {`
 @media print {
   body.print-tablet {
-    zoom: 0.90 !important;
+    zoom: 1 !important;
   }
 
   body.print-tablet #print-section {
