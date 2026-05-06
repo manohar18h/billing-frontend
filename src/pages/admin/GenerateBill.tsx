@@ -19,7 +19,6 @@ const GenerateBill: React.FC = () => {
   const [payMethod, setPayMethod] = useState("Phone Pay");
   const [payAmount, setPayAmount] = useState("");
   const [payLoading, setPayLoading] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
   const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("");
   const [discountLoading, setDiscountLoading] = useState(false);
@@ -356,6 +355,10 @@ We hope to serve you again soon!
   const isValidItemCode = (code?: string) =>
     code && code.trim() !== "" && code.trim() !== "0";
 
+  const showOtherWeightColumn =
+    bill?.selectedOrders?.some((item) => Number(item.other_weight || 0) > 0) ||
+    false;
+
   const activeWeightKeys = React.useMemo(() => {
     if (!bill || !bill.selectedOrders) return [];
 
@@ -381,7 +384,14 @@ We hope to serve you again soon!
 
   // 🔹 Open WhatsApp with message
 
-  const nonZeroColCount = activeWeightKeys.length * 2;
+  const dynamicColumnCount = activeWeightKeys.reduce((count, key) => {
+    if (key === "other") {
+      return count + (showOtherWeightColumn ? 2 : 1);
+    }
+    return count + 2;
+  }, 0);
+
+  const nonZeroColCount = dynamicColumnCount;
 
   if (!bill) return <p className="p-6">Loading Bill Summary...</p>;
 
@@ -485,47 +495,30 @@ We hope to serve you again soon!
   `}
       </style>
 
-   <style>
-  {`
+      <style>
+        {`
 @media print {
+  body.print-tablet #print-section {
+    width: 148mm !important;
+    height: 210mm !important;
+    padding: 5mm !important;
+    margin: 0 auto !important;
+
+    transform: scale(1.35);
+    transform-origin: top left;
+  }
+
   body.print-tablet {
     zoom: 1 !important;
   }
 
-  body.print-tablet #print-section {
-    width: 100% !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 4px !important;
-    transform: none !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  body.print-tablet #print-section .mt-20 {
-    margin-top: 0 !important;
-  }
-
-  body.print-tablet #print-section .mt-10 {
-    margin-top: 10px !important;
-  }
-
-  body.print-tablet #print-section .mt-6 {
-    margin-top: 6px !important;
-  }
-
-  body.print-tablet #print-section .p-5 {
-    padding: 4px !important;
-  }
-
-  body.print-tablet #print-section h6,
-  body.print-tablet #print-section h5 {
-    font-size: 12px !important;
-    line-height: 1.2 !important;
+  body.print-tablet @page {
+    size: A5 portrait;
+    margin: 0;
   }
 }
 `}
-</style>
+      </style>
 
       <style>
         {`
@@ -805,35 +798,30 @@ We hope to serve you again soon!
                   <td className="border px-2 py-1 text-[#00457d] font-bold text-center align-middle text-[13px]">
                     {item.metal_weight}
                   </td>
-                  {activeWeightKeys.map((key) => (
-                    <React.Fragment key={key}>
-                      {/* ✅ Skip showing weight cell if key === "other" and its value is 0 or null */}
-                      {!(
-                        key === "other" &&
-                        (!item.other_weight || item.other_weight === 0)
-                      ) && (
-                        <td className="border px-2 py-1 text-[#1f1f1f] font-bold text-center align-middle">
-                          {getNumericField(
-                            item,
-                            `${key}_weight` as keyof Order,
-                          ) ?? "-"}
-                        </td>
-                      )}
+                  {activeWeightKeys.map((key) => {
+                    const showWeightColumn =
+                      key !== "other" ||
+                      bill.selectedOrders.some(
+                        (order) => Number(order.other_weight || 0) > 0,
+                      );
 
-                      {/* ✅ Skip showing amount cell if both weight and amount are 0 or null */}
-                      {!(
-                        key === "other" &&
-                        (!item.other_amount || item.other_amount === 0)
-                      ) && (
-                        <td className="border px-2 py-1 text-[#1f1f1f]  font-bold text-center align-middle">
-                          {getNumericField(
-                            item,
-                            `${key}_amount` as keyof Order,
-                          ) ?? "-"}
+                    const weightValue = Number(item[`${key}_weight`] || 0);
+                    const amountValue = Number(item[`${key}_amount`] || 0);
+
+                    return (
+                      <React.Fragment key={key}>
+                        {showWeightColumn && (
+                          <td className="border px-2 py-1 text-[#1f1f1f] font-bold text-center align-middle">
+                            {weightValue > 0 ? weightValue : "-"}
+                          </td>
+                        )}
+
+                        <td className="border px-2 py-1 text-[#1f1f1f] font-bold text-center align-middle">
+                          {amountValue > 0 ? amountValue : "-"}
                         </td>
-                      )}
-                    </React.Fragment>
-                  ))}
+                      </React.Fragment>
+                    );
+                  })}
                   <td className="border px-2 py-1 text-[#51016c] font-bold text-center align-middle text-[13px]">
                     {item.wastage}%
                   </td>
@@ -888,30 +876,14 @@ We hope to serve you again soon!
                       </td>
 
                       {/* ✅ Dynamic dash cells based on parent order */}
-                      {(() => {
-                        const showOtherWeight =
-                          item.other_weight && item.other_weight > 0;
-                        const showOtherAmount =
-                          item.other_amount && item.other_amount > 0;
-
-                        let dashCount = 0;
-
-                        if (showOtherWeight && showOtherAmount) dashCount = 2;
-                        else if (!showOtherWeight && showOtherAmount)
-                          dashCount = 1;
-                        else dashCount = 0;
-
-                        return Array.from({
-                          length: nonZeroColCount - dashCount,
-                        }).map((_, i) => (
-                          <td
-                            key={`dash-${index}-${i}`}
-                            className="border px-2 py-1 text-center align-middle"
-                          >
-                            -
-                          </td>
-                        ));
-                      })()}
+                      {Array.from({ length: nonZeroColCount }).map((_, i) => (
+                        <td
+                          key={`dash-${index}-${i}`}
+                          className="border px-2 py-1 text-center align-middle"
+                        >
+                          -
+                        </td>
+                      ))}
                       <td className="border px-2 py-1 text-center align-middle">
                         -
                       </td>

@@ -872,8 +872,8 @@ const Products: React.FC = () => {
     }
 
     .qr {
-      width: 8mm;
-      height: 8mm;
+      width: 9mm;
+      height: 9mm;
       display: block;
       margin: 0 auto;
     }
