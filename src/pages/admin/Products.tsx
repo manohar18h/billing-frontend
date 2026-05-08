@@ -668,16 +668,44 @@ const Products: React.FC = () => {
         },
       );
       const data = res.data;
-      setBottomResults(Array.isArray(data) ? data : [data]);
-      const list = Array.isArray(data) ? data : [data];
-      setBottomResults(list);
+      const savedProduct = Array.isArray(data) ? data[0] : data;
 
-      // clear barcode-search flow states
-      setSelectedLabelRow(null);
+      // clear previous RFID search data first
       setBarcodeSearch("");
+      setSelectedLabelRow(null);
       setEpcValue("");
       setLabelImageSrc("");
       setLabelFlowSource(null);
+      setBottomResults(null);
+
+      const newBarcode = savedProduct.barcodeValue ?? "";
+
+      setBarcodeSearch(newBarcode);
+
+      if (newBarcode) {
+        try {
+          setBarcodeSearchLoading(true);
+
+          const token = localStorage.getItem("token") ?? "";
+
+          const barcodeRes = await api.get<StockProduct>(
+            `/admin/getByBarcode`,
+            {
+              params: { barcodeValue: newBarcode },
+              headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            },
+          );
+
+          setSelectedLabelRow(barcodeRes.data);
+          setEpcValue(barcodeRes.data.epcNumber ?? "");
+          setLabelFlowSource("search");
+        } catch (err) {
+          console.error("Auto barcode search failed:", err);
+        } finally {
+          setBarcodeSearchLoading(false);
+        }
+      }
+
       setProduct(initialProduct);
       setErrors({});
     } catch (err: unknown) {
@@ -914,12 +942,14 @@ const Products: React.FC = () => {
 
   const handlePrintSmallLabel = async (r: StockProduct) => {
     if (printingRef.current) return;
+
     printingRef.current = true;
 
     try {
       const imageSrc = await prepareLabelImage(r);
 
       const printWindow = window.open("", "_blank", "width=420,height=420");
+
       if (!printWindow) {
         alert("Unable to open print window.");
         printingRef.current = false;
@@ -933,6 +963,12 @@ const Products: React.FC = () => {
       setTimeout(() => {
         printWindow.focus();
         printWindow.print();
+
+        // ✅ IMPORTANT
+        setTimeout(() => {
+          printWindow.close();
+          printingRef.current = false;
+        }, 1000);
       }, 500);
     } catch (err) {
       console.error(err);
@@ -2322,236 +2358,6 @@ const Products: React.FC = () => {
         </div>
       )}
 
-      {bottomResults && (
-        <Paper
-          elevation={0}
-          sx={{
-            mt: 4,
-            p: 4,
-            borderRadius: 3,
-            backgroundColor: "background.paper",
-            border: "1px solid #d0b3ff",
-            boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
-          }}
-        >
-          <Typography variant="h6" fontWeight={600} mb={2}>
-            RFID Small Labels (Ready to Print)
-          </Typography>
-
-          <Box
-            display="flex"
-            flexWrap="wrap"
-            gap={3}
-            justifyContent="flex-start"
-            alignItems="stretch"
-          >
-            {bottomResults.map((r) => {
-              const isSelected =
-                selectedLabelRow?.stockProductId === r.stockProductId;
-
-              return (
-                <Paper
-                  key={r.stockProductId}
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    width: 270,
-                    borderRadius: 3,
-                    borderColor: isSelected ? "#8847FF" : "#e0d4ff",
-                    boxShadow: isSelected
-                      ? "0 10px 25px rgba(136,71,255,0.18)"
-                      : "0 6px 16px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: "25mm",
-                      height: "26mm",
-                      margin: "0 auto",
-                      border: "1px solid #ddd",
-                      background: "#fff",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "flex-start",
-                      p: "1.2mm",
-                      boxSizing: "border-box",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: "12mm",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        mt: "0.4mm",
-                      }}
-                    >
-                      {r.barcodeImageBase64 ? (
-                        <img
-                          src={`data:image/png;base64,${r.barcodeImageBase64}`}
-                          alt="barcode"
-                          style={{
-                            maxWidth: "20mm",
-                            maxHeight: "10mm",
-                            objectFit: "contain",
-                            display: "block",
-                          }}
-                        />
-                      ) : (
-                        <Typography sx={{ fontSize: "9px" }}>
-                          No Barcode
-                        </Typography>
-                      )}
-                    </Box>
-
-                    <Typography
-                      sx={{
-                        mt: "1.1mm",
-                        fontSize: "9px",
-                        fontWeight: 700,
-                        lineHeight: 1.05,
-                        textAlign: "center",
-                        wordBreak: "break-all",
-                        width: "100%",
-                      }}
-                    >
-                      {r.barcodeValue ?? "-"}
-                    </Typography>
-
-                    <Typography
-                      sx={{
-                        mt: "0.6mm",
-                        fontSize: "9px",
-                        lineHeight: 1.05,
-                        textAlign: "center",
-                        width: "100%",
-                      }}
-                    >
-                      GW: {normalizeWeight(r.gross_weight)}g
-                    </Typography>
-                  </Box>
-
-                  <Box mt={2}>
-                    <Typography variant="body2">
-                      <strong>Barcode:</strong> {r.barcodeValue ?? "-"}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Gross Weight:</strong>{" "}
-                      {normalizeWeight(r.gross_weight)}g
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>EPC:</strong> {r.epcNumber || "-"}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Link Code:</strong> {r.itemCode || "-"}
-                    </Typography>
-                  </Box>
-
-                  <Box mt={2} display="flex" gap={1} flexWrap="wrap">
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        setSelectedLabelRow(r);
-                        setBarcodeSearch(r.barcodeValue ?? "");
-                        setEpcValue(r.epcNumber ?? "");
-                      }}
-                    >
-                      Select
-                    </Button>
-
-                    <Button
-                      variant="contained"
-                      disabled={isPrinting}
-                      onClick={() => {
-                        setSelectedLabelRow(r);
-                        setEpcValue(r.epcNumber ?? "");
-                        setLabelFlowSource("new");
-                        handlePrintSmallLabel(r);
-                      }}
-                      sx={{
-                        backgroundColor: "#8847FF",
-                        "&:hover": { backgroundColor: "#6f33db" },
-                      }}
-                    >
-                      {isPrinting ? "Printing..." : "Print"}
-                    </Button>
-                  </Box>
-                </Paper>
-              );
-            })}
-            {selectedLabelRow && (
-              <Paper
-                elevation={0}
-                sx={{
-                  mt: 4,
-                  p: 3,
-                  borderRadius: 3,
-                  backgroundColor: "background.paper",
-                  border: "1px solid #d0b3ff",
-                  boxShadow: "0 10px 30px rgba(136,71,255,0.12)",
-                }}
-              >
-                <Typography variant="h6" fontWeight={600} mb={2}>
-                  EPC Mapping
-                </Typography>
-
-                <Box mb={2}>
-                  <Typography variant="body2">
-                    <strong>Selected Barcode:</strong>{" "}
-                    {selectedLabelRow.barcodeValue ?? "-"}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Gross Weight:</strong>{" "}
-                    {normalizeWeight(selectedLabelRow.gross_weight)}g
-                  </Typography>
-                </Box>
-
-                <Box display="flex" flexWrap="wrap" gap={2} alignItems="center">
-                  <TextField
-                    label="EPC Number"
-                    value={epcValue}
-                    onChange={(e) => setEpcValue(e.target.value)}
-                    size="small"
-                    sx={{ minWidth: 320 }}
-                  />
-
-                  <Button
-                    variant="contained"
-                    onClick={handleScanEpc}
-                    disabled={scanLoading}
-                    sx={{
-                      backgroundColor: "#8847FF",
-                      "&:hover": { backgroundColor: "#6f33db" },
-                    }}
-                  >
-                    {scanLoading ? "Scanning..." : "Scan EPC"}
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    onClick={handleSaveEpc}
-                    disabled={saveEpcLoading || !epcValue.trim()}
-                  >
-                    {saveEpcLoading ? "Saving..." : "Submit"}
-                  </Button>
-                </Box>
-
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  display="block"
-                  mt={2}
-                >
-                  Keep only one RFID label near the reader before clicking Scan
-                  EPC.
-                </Typography>
-              </Paper>
-            )}
-          </Box>
-        </Paper>
-      )}
       <Paper
         elevation={0}
         sx={{
