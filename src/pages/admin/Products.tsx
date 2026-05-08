@@ -862,8 +862,8 @@ const Products: React.FC = () => {
 
     .label {
       width: 23mm;
-      height: 27mm;
-      margin-top: 8mm;
+      height: 28mm;
+      margin-top: 7mm;
       margin-left: 2mm;
   overflow: hidden;
 
@@ -872,8 +872,8 @@ const Products: React.FC = () => {
     }
 
     .qr {
-      width: 9mm;
-      height: 9mm;
+      width: 8mm;
+      height: 8mm;
       display: block;
       margin: 0 auto;
     }
@@ -888,11 +888,11 @@ const Products: React.FC = () => {
 }
 
 .text {
-  margin-top: 4mm;
+  margin-top: 2mm;
 }
 
 .gw {
-  margin-top: 0.5mm;
+  margin-top: 1.5mm;
 }
 
 .size {
