@@ -16,6 +16,7 @@ import {
   DialogContentText,
   DialogTitle,
   MenuItem,
+  Autocomplete,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -110,6 +111,7 @@ const Orders: React.FC = () => {
     "Matilu Small",
     "Matilu Big",
     "Pusthela Thadu",
+    "Kadiyam",
     "Kadiyam",
     "Ladies Ring",
     "Men Ring",
@@ -1451,12 +1453,14 @@ const Orders: React.FC = () => {
                   <MenuItem value="Done">Done</MenuItem>
                 </TextField>
               ) : key === "itemName" ? (
-                <TextField
-                  select
-                  label="Item Name"
-                  value={order.itemName}
-                  onChange={(e) => {
-                    const newItemName = e.target.value;
+                <Autocomplete
+                  options={getItemOptions()}
+                  value={order.itemName || null}
+                  disabled={
+                    isEditing || (isPrefilled && (key as string) !== "discount")
+                  }
+                  onChange={(_, newValue) => {
+                    const newItemName = newValue || "";
 
                     setOrder({
                       ...order,
@@ -1466,38 +1470,34 @@ const Orders: React.FC = () => {
                         newItemName,
                       ),
                     });
+
+                    if (orderErrors.itemName) {
+                      setOrderErrors((prev) => ({ ...prev, itemName: "" }));
+                    }
                   }}
-                  disabled={
-                    isEditing || (isPrefilled && (key as string) !== "discount")
-                  }
-                  error={!!orderErrors.itemName}
-                  helperText={orderErrors.itemName || ""}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    style: { color: "#333" },
-                    shrink: true, // ✅ ensures label is always visible
-                  }}
-                  InputProps={{
-                    style: { fontWeight: 500 },
-                  }}
-                  sx={{
-                    minWidth: "200px",
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderWidth: "2px",
-                      borderColor: "gray",
-                    },
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>Select Item</em>
-                  </MenuItem>
-                  {getItemOptions().map((item) => (
-                    <MenuItem key={item} value={item}>
-                      {item}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Item Name"
+                      placeholder="Search item..."
+                      error={!!orderErrors.itemName}
+                      helperText={orderErrors.itemName || ""}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        style: { color: "#333" },
+                        shrink: true,
+                      }}
+                      sx={{
+                        minWidth: "200px",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderWidth: "2px",
+                          borderColor: "gray",
+                        },
+                      }}
+                    />
+                  )}
+                />
               ) : (
                 <TextField
                   {...thickTextFieldProps}

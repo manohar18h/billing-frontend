@@ -16,6 +16,7 @@ import {
   DialogContentText,
   DialogTitle,
   MenuItem,
+  Autocomplete,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -778,33 +779,53 @@ const LoanItems: React.FC = () => {
                     <MenuItem value="Cash">Cash</MenuItem>
                   </TextField>
                 ) : key === "itemName" ? (
-                  <TextField
-                    select
-                    label="Item Name"
+                  <Autocomplete
+                    multiple
+                    options={getItemOptions()}
                     value={item.itemName}
-                    onChange={(e) => {
-                      const value = e.target.value;
-
+                    disableCloseOnSelect
+                    onChange={(_, newValue) => {
                       setItem({
                         ...item,
-                        itemName:
-                          typeof value === "string" ? value.split(",") : value,
+                        itemName: newValue,
                       });
+
+                      if (itemErrors.itemName) {
+                        setItemErrors((prev) => ({
+                          ...prev,
+                          itemName: "",
+                        }));
+                      }
                     }}
-                    SelectProps={{
-                      multiple: true,
-                      renderValue: (selected) =>
-                        (selected as string[]).join(", "),
-                    }}
-                    fullWidth
-                  >
-                    {getItemOptions().map((name) => (
-                      <MenuItem key={name} value={name}>
-                        <Checkbox checked={item.itemName.indexOf(name) > -1} />
-                        <ListItemText primary={name} />
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                    renderOption={(props, option, { selected }) => (
+                      <li {...props}>
+                        <Checkbox checked={selected} />
+                        {option}
+                      </li>
+                    )}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Item Name"
+                        placeholder="Search item..."
+                        error={!!itemErrors.itemName}
+                        helperText={itemErrors.itemName || ""}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{
+                          style: { color: "#333" },
+                          shrink: true,
+                        }}
+                        sx={{
+                          minWidth: "200px",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderWidth: "2px",
+                            borderColor: "gray",
+                          },
+                        }}
+                      />
+                    )}
+                  />
                 ) : (
                   <TextField
                     {...thickTextFieldProps}

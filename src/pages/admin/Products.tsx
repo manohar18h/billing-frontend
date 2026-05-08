@@ -13,6 +13,7 @@ import {
   TableCell,
   TableBody,
   MenuItem,
+  Autocomplete,
 } from "@mui/material";
 import api from "@/services/api";
 import QRCode from "qrcode";
@@ -734,6 +735,24 @@ const Products: React.FC = () => {
   // --- State ---
   const [product, setProduct] = useState<ProductForm>(initialProduct);
 
+  const getProductItemOptions = () => {
+    if (
+      product.metal.toLowerCase() === "24 gold" ||
+      product.metal.toLowerCase() === "22 gold"
+    ) {
+      return goldItems;
+    }
+
+    if (
+      product.metal.toLowerCase() === "999 silver" ||
+      product.metal.toLowerCase() === "995 silver"
+    ) {
+      return silverItems;
+    }
+
+    return [];
+  };
+
   // --- Handler for normal product fields ---
   const onProductChange =
     (k: keyof ProductForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1452,43 +1471,38 @@ const Products: React.FC = () => {
                   </TextField>
                 </Grid>
 
-                {/* ItemName select (depends on metal) */}
+                {/* ItemName Auto Complete */}
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    select
-                    label="ItemName"
-                    value={product.itemName}
-                    onChange={onProductChange("itemName")}
-                    fullWidth
-                    sx={prettySelectSx}
-                    InputLabelProps={{ shrink: true }}
+                  <Autocomplete
+                    options={getProductItemOptions()}
+                    value={product.itemName || null}
                     disabled={!product.metal}
-                    SelectProps={{
-                      displayEmpty: true,
-                      renderValue: (val) =>
-                        val ? (
-                          (val as string)
-                        ) : (
-                          <span style={{ color: "#9aa0a6" }}>Select item</span>
-                        ),
+                    onChange={(_, newValue) => {
+                      setProduct((prev) => ({
+                        ...prev,
+                        itemName: newValue || "",
+                      }));
+
+                      if (errors.itemName) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          itemName: "",
+                        }));
+                      }
                     }}
-                  >
-                    <MenuItem value="">
-                      <em>Select Item</em>
-                    </MenuItem>
-                    {(product.metal.toLowerCase() === "24 gold" ||
-                    product.metal.toLowerCase() === "22 gold"
-                      ? goldItems
-                      : product.metal.toLowerCase() === "999 silver" ||
-                          product.metal.toLowerCase() === "995 silver"
-                        ? silverItems
-                        : []
-                    ).map((it) => (
-                      <MenuItem key={it} value={it}>
-                        {it}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="ItemName"
+                        placeholder="Search item..."
+                        fullWidth
+                        error={!!errors.itemName}
+                        helperText={errors.itemName || ""}
+                        InputLabelProps={{ shrink: true }}
+                        sx={prettySelectSx}
+                      />
+                    )}
+                  />
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -2204,26 +2218,30 @@ const Products: React.FC = () => {
                 </Grid>
 
                 {/* ItemName select (depends on metal) */}
+                {/* Worker Spcl Work ItemName Auto Complete */}
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    select
-                    label="Item Name"
-                    value={spclWork.itemName}
-                    onChange={handleSelect("itemName")}
+                  <Autocomplete
+                    options={
+                      spclWork.metal.includes("Gold") ? goldItems : silverItems
+                    }
+                    value={spclWork.itemName || null}
                     disabled={!spclWork.metal}
-                    fullWidth
-                  >
-                    <MenuItem value="">Select Item</MenuItem>
-
-                    {(spclWork.metal.includes("Gold")
-                      ? goldItems
-                      : silverItems
-                    ).map((it) => (
-                      <MenuItem key={it} value={it}>
-                        {it}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                    onChange={(_, newValue) => {
+                      setSpclWork((prev) => ({
+                        ...prev,
+                        itemName: newValue || "",
+                      }));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Item Name"
+                        placeholder="Search item..."
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    )}
+                  />
                 </Grid>
 
                 {/* Metal Weight */}
