@@ -70,6 +70,7 @@ interface OldReturnMetals {
   onlyExchange_item_cash_amount: string;
   onlyExchange_item_phnpay_amount: string;
   active: boolean;
+  type: string;
   date: string;
 }
 
@@ -1673,6 +1674,11 @@ const ShowroomMetalStock: React.FC = () => {
                 <TableCell
                   sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
                 >
+                  <div className="flex justify-center items-center">Type</div>
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#1C1C1C", fontWeight: 600, fontSize: "1rem" }}
+                >
                   <div className="flex justify-center items-center">Metal</div>
                 </TableCell>
 
@@ -1738,6 +1744,14 @@ const ShowroomMetalStock: React.FC = () => {
             <TableBody>
               {visibleOldReturnData.map((r) => (
                 <TableRow key={r.oldMetalReturnId}>
+                   <TableCell
+                    className="border px-3 py-2 text-center"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      {r.type}
+                    </div>
+                  </TableCell>
                   <TableCell
                     className="border px-3 py-2 text-center"
                     sx={{ fontSize: "0.95rem" }}
