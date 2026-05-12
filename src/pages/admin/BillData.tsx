@@ -1,10 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { IconButton, Button } from "@mui/material";
+import {
+  IconButton,
+  Button,
+  Autocomplete,
+  InputAdornment,
+} from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Box } from "@mui/system";
 import api from "@/services/api"; // ← import your api.ts
+import EditIcon from "@mui/icons-material/Edit";
+import SearchIcon from "@mui/icons-material/Search";
+import debounce from "lodash/debounce";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+} from "@mui/material";
+
 
 interface SelectedOrder {
   orderId: number;
@@ -43,9 +59,57 @@ const BillData: React.FC = () => {
   const [billingData, setBillingData] = useState<Billing[]>([]);
   const navigate = useNavigate();
 
+  const [openEdit, setOpenEdit] = useState(false);
+
+const [editName, setEditName] = useState("");
+const [editVillage, setEditVillage] = useState("");
+const [editPhone, setEditPhone] = useState("");
+const [editEmail, setEditEmail] = useState("");
+
+const [villageSearch, setVillageSearch] = useState("");
+const [villageResults, setVillageResults] = useState<string[]>([]);
+const [villageLoading, setVillageLoading] = useState(false);
+
   const handleBackClick = () => {
     navigate("/admin/customers");
   };
+
+  const fetchVillages = debounce(async (query: string) => {
+  if (query.trim().length < 3) {
+    setVillageResults([]);
+    return;
+  }
+
+  setVillageLoading(true);
+
+  try {
+    const res = await api.get<string[]>(
+      `/admin/searchVillage?query=${query}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    setVillageResults(res.data || []);
+  } catch (error) {
+    console.error("Error fetching villages:", error);
+  } finally {
+    setVillageLoading(false);
+  }
+}, 500);
+
+useEffect(() => {
+  if (villageSearch.trim().length >= 3) {
+    fetchVillages(villageSearch);
+  } else {
+    setVillageResults([]);
+  }
+
+  return () => fetchVillages.cancel();
+}, [villageSearch]);
+
 
   useEffect(() => {
     const phnNumber = localStorage.getItem("bill-phnNumber");
@@ -105,6 +169,7 @@ const BillData: React.FC = () => {
     0,
   );
 
+  
   // ✅ Add Order Handler (copied from CustomerDetails)
   const handleAddOrder = () => {
     const customer = billingData[0]; // same customer for all bills
@@ -122,6 +187,47 @@ const BillData: React.FC = () => {
       state: { fromCustomerDetails: true, customerId: customer?.customerId },
     });
   };
+
+  const handleOpenEdit = () => {
+  setEditName(customer.name || "");
+  setEditVillage(customer.village || "");
+  setEditPhone(customer.phoneNumber || "");
+  setEditEmail(customer.emailId || "");
+
+  setOpenEdit(true);
+};
+const handleUpdateCustomer = async () => {
+  try {
+    await api.put(
+      `/admin/customer/update/${customer.customerId}`,
+      {
+        name: editName,
+        village: editVillage,
+        phoneNumber: editPhone,
+        emailId: editEmail,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    // ✅ important: update old phone number storage
+    localStorage.setItem("bill-phnNumber", editPhone);
+
+    alert("Customer Updated Successfully");
+
+    setOpenEdit(false);
+
+    // ✅ now reload will search with new phone number
+    window.location.reload();
+
+  } catch (error) {
+    console.error(error);
+    alert("Update Failed");
+  }
+};
 
   return (
     <div>
@@ -150,7 +256,19 @@ const BillData: React.FC = () => {
             </h2>
 
             {/* ✅ Add Order Button (top right corner) */}
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-3">
+              <IconButton
+  onClick={handleOpenEdit}
+  sx={{
+    backgroundColor: "rgba(255,255,255,0.12)",
+    color: "#fbbf24",
+    "&:hover": {
+      backgroundColor: "rgba(255,255,255,0.25)",
+    },
+  }}
+>
+  <EditIcon />
+</IconButton>
               <Button
                 variant="contained"
                 sx={{
@@ -361,6 +479,111 @@ const BillData: React.FC = () => {
           </Box>
         </div>
       </div>
+      <Dialog
+  open={openEdit}
+  onClose={() => setOpenEdit(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>Edit Customer</DialogTitle>
+
+  <DialogContent>
+
+    <TextField
+  margin="dense"
+  label="Name"
+  fullWidth
+  value={editName}
+  onChange={(e) => {
+
+    const formatted = e.target.value
+      .split(" ")
+      .map(
+        (word) =>
+          word.charAt(0).toUpperCase() +
+          word.slice(1).toLowerCase()
+      )
+      .join(" ");
+
+    setEditName(formatted);
+  }}
+/>
+
+   <Autocomplete
+  freeSolo
+  disableClearable
+  options={villageResults || []}
+  loading={villageLoading}
+  value={editVillage || ""}
+  onInputChange={(event, newInputValue) => {
+    setEditVillage(newInputValue);
+    setVillageSearch(newInputValue);
+  }}
+  onChange={(event, newValue) => {
+    setEditVillage(newValue || "");
+  }}
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      margin="dense"
+      label="Village"
+      fullWidth
+      placeholder="Type 3 letters to search..."
+      InputProps={{
+        ...params.InputProps,
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon color="action" />
+          </InputAdornment>
+        ),
+        endAdornment: (
+          <>
+            {villageLoading ? (
+              <span className="text-gray-400 text-sm pr-2">
+                Loading...
+              </span>
+            ) : null}
+            {params.InputProps.endAdornment}
+          </>
+        ),
+      }}
+    />
+  )}
+/>
+
+    <TextField
+      margin="dense"
+      label="Phone Number"
+      fullWidth
+      value={editPhone}
+      onChange={(e) => setEditPhone(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Email"
+      fullWidth
+      value={editEmail}
+      onChange={(e) => setEditEmail(e.target.value)}
+    />
+
+  </DialogContent>
+
+  <DialogActions>
+
+    <Button onClick={() => setOpenEdit(false)}>
+      Cancel
+    </Button>
+
+    <Button
+      variant="contained"
+      onClick={handleUpdateCustomer}
+    >
+      Save
+    </Button>
+
+  </DialogActions>
+</Dialog>
     </div>
   );
 };
