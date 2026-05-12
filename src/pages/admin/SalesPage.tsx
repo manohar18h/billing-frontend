@@ -14,6 +14,8 @@ import api from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import CircularProgress from "@mui/material/CircularProgress";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 
 type BarcodeProduct = {
@@ -83,6 +85,8 @@ const SalesPage: React.FC = () => {
   const [rates, setRates] = useState<MetalRates | null>(null);
   const [showEstimation, setShowEstimation] = useState(false);
 
+
+
   const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 const basePath = role === "ADMIN" ? "/admin" : "/sales";
@@ -95,6 +99,15 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
   const [err, setErr] = useState<string | null>(null);
   const navigate = useNavigate();
   const [search, setSearch] = useState<string>(""); // 👈 search state
+
+
+    const isAdmin = role === "ADMIN";
+
+const [editBox, setEditBox] = useState<StockDataBox | null>(null);
+const [editCount, setEditCount] = useState("");
+const [editWeight, setEditWeight] = useState("");
+
+
 
   useEffect(() => {
     let alive = true;
@@ -193,6 +206,72 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
       alert("Barcode not found or error occurred");
     }
   };
+
+  const fetchStockBoxes = async () => {
+  setLoading(true);
+  setErr(null);
+
+  try {
+    const { data } = await api.get<StockDataBox[]>(`${basePath}/getALlStockBox`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+
+    setRows(Array.isArray(data) ? data : []);
+  } catch (e) {
+    console.error("Failed to fetch all StockBox Data:", e);
+    setErr("Failed to load all StockBox Data.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleOpenEdit = (box: StockDataBox) => {
+  setEditBox(box);
+  setEditCount(String(box.totalStockBoxCount ?? ""));
+  setEditWeight(String(box.totalStockBoxWeight ?? ""));
+};
+
+const handleUpdateStockBox = async () => {
+  if (!editBox) return;
+
+  await api.put(
+    `/admin/stock-box/update-count-weight/${editBox.stockBoxId}`,
+    {
+      totalStockBoxCount: Number(editCount),
+      totalStockBoxWeight: Number(editWeight),
+    },
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    }
+  );
+
+  setEditBox(null);
+  fetchStockBoxes();
+};
+
+const handleDeleteStockBox = async (box: StockDataBox) => {
+  const hasData = box.stockBoxData && box.stockBoxData.length > 0;
+
+  if (hasData) {
+    alert("Cannot delete. This stock box contains data.");
+    return;
+  }
+
+const confirmDelete = window.confirm(
+  `Are you sure want to delete?\n\n` +
+  `Stock Box Name: ${box.stockBoxName}\n` +
+  `Total Count: ${box.totalStockBoxCount}\n` +
+  `Total Weight: ${box.totalStockBoxWeight}`
+);
+
+if (!confirmDelete) return;
+
+  await api.delete(`/admin/stock-box/delete/${box.stockBoxId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+
+  fetchStockBoxes();
+};
 
 
 
@@ -727,7 +806,7 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
                     </th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
-                        View
+                        Actions
                       </div>
                     </th>
                   </tr>
@@ -745,29 +824,44 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
                       <td className="border px-3 py-2">
                         {box.totalStockBoxWeight}
                       </td>
-                      <td className="border px-3 py-2 text-center">
+                    <td className="border px-3 py-2 text-center">
+  <div className="flex justify-center items-center gap-2">
 
-  <div className="flex justify-center items-center">
-                            <IconButton
-                              size="medium"
-                              color="primary"
-                              sx={{
-                                "&:hover": { backgroundColor: "#E0E0E0" },
-                              }}
-                               onClick={() => {
-                            localStorage.setItem(
-                              "selectedStockBox",
-                              JSON.stringify(box),
-                            );
-                            navigate(
-                              `/admin/salesStockBoxDetails/${box.stockBoxId}`,
-                            );
-                          }}
-                            >
-                              <VisibilityIcon fontSize="medium" />
-                            </IconButton>
-                          </div>
-                      </td>
+    <IconButton
+      size="medium"
+      color="primary"
+      onClick={() => {
+        localStorage.setItem("selectedStockBox", JSON.stringify(box));
+        navigate(`/admin/salesStockBoxDetails/${box.stockBoxId}`);
+      }}
+    >
+      <VisibilityIcon fontSize="medium" />
+    </IconButton>
+
+    {isAdmin && (
+      <>
+        <IconButton
+          size="medium"
+          color="warning"
+          onClick={() => handleOpenEdit(box)}
+        >
+          <EditIcon fontSize="medium" />
+        </IconButton>
+
+        {(!box.stockBoxData || box.stockBoxData.length === 0) && (
+          <IconButton
+            size="medium"
+            color="error"
+            onClick={() => handleDeleteStockBox(box)}
+          >
+            <DeleteIcon fontSize="medium" />
+          </IconButton>
+        )}
+      </>
+    )}
+
+  </div>
+</td>
                     </tr>
                   ))}
                 </tbody>
@@ -776,8 +870,54 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
           )}
         </Paper>
       </div>
+
+{editBox && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl">
+      <h2 className="text-xl font-bold mb-4">Edit Stock Box</h2>
+
+      <p className="text-gray-700 font-semibold mb-4">
+  Stock Box Name: {editBox.stockBoxName}
+</p>
+
+      <TextField
+        label="Total Stock Box Count"
+        fullWidth
+        type="number"
+        value={editCount}
+        onChange={(e) => setEditCount(e.target.value)}
+        sx={{ mb: 2 }}
+      />
+
+      <TextField
+        label="Total Stock Box Weight"
+        fullWidth
+        type="number"
+        value={editWeight}
+        onChange={(e) => setEditWeight(e.target.value)}
+        sx={{ mb: 3 }}
+      />
+
+      <div className="flex justify-end gap-2">
+        <Button variant="outlined" onClick={() => setEditBox(null)}>
+          Cancel
+        </Button>
+
+        <Button variant="contained" onClick={handleUpdateStockBox}>
+          Save
+        </Button>
+      </div>
     </div>
+  </div>
+)}
+
+    </div>
+
+    
   );
+
+  
+
 };
 
 export default SalesPage;
