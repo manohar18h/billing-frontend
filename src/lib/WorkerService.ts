@@ -56,6 +56,7 @@ export interface Worker {
     orderId: number;
     metal: string;
     metal_weight: number;
+    wastage?: number;
   }[];
 
   speclWorks: {
