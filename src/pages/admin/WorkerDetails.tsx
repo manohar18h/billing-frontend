@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useWorkers } from "@/contexts/WorkersContext";
-import { WorkerData } from "@/lib/WorkerData";
 import { TextField, Button, Box, Typography,  Dialog, DialogTitle,
   DialogContent,
   DialogActions,
@@ -88,8 +87,8 @@ const WorkerDetails: React.FC = () => {
     refresh(); // pulls newest list on mount
   }, [refresh]);
 
-  const worker: WorkerData | undefined = workers.find(
-    (w) => w.workerId === Number(workerId),
+const worker = workers.find(
+      (w) => w.workerId === Number(workerId),
   );
 
   // Date filter state (YYYY-MM-DD)
