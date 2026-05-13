@@ -22,7 +22,7 @@ export interface WorkerData {
     metal: string;
     metalWeight: number;
     todaysDate: string;
-    wstockId: number;
+    stockId: number;
   }[];
 
   lotWorks: {
@@ -37,6 +37,7 @@ export interface WorkerData {
   }[];
 
   repairWorks: {
+    repairWorkId: number;
     metal: string;
     itemName: string;
     metalWeight: number;
