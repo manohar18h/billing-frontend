@@ -44,7 +44,7 @@ const WorkerStock: React.FC = () => {
     goldMetalWeight: number;
     silverMetalWeight: number;
     todaysDate: string;
-    wstockId: number;
+    stockId: number;
   }
 
   const handleSubmit = async () => {

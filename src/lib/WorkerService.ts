@@ -24,7 +24,7 @@ export interface Worker {
     metal: string;
     metalWeight: number;
     todaysDate: string;
-    wstockId: number;
+    stockId: number;
   }[];
 
   lotWorks: {

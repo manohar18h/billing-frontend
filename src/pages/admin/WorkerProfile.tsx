@@ -381,7 +381,7 @@ const WorkerProfile: React.FC = () => {
 
             {visibleWorkerStockResult.map((s) => (
               <div
-                key={s.wstockId}
+                key={s.stockId}
                 className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
               >
                 <div className="pr-4">
