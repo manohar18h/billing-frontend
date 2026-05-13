@@ -3,7 +3,15 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useWorkers } from "@/contexts/WorkersContext";
 import { WorkerData } from "@/lib/WorkerData";
-import { TextField, Button, Box, Typography } from "@mui/material";
+import { TextField, Button, Box, Typography,  Dialog, DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import IconButton from "@mui/material/IconButton";
+import api from "@/services/api";
+
 
 /** String-only normalizer: returns YYYY-MM-DD with NO timezone shifts */
 function normalizeYMD(raw: unknown): string | null {
@@ -93,7 +101,50 @@ const WorkerDetails: React.FC = () => {
   const [showSpclWork, setShowSpclWork] = useState(false);
   const [showRepairs, setShowRepairs] = useState(false);
   const [showPays, setShowPays] = useState(false);
+
+  const [openStockEdit, setOpenStockEdit] = useState(false);
+const [selectedStock, setSelectedStock] = useState<any>(null);
+const [editStockMetal, setEditStockMetal] = useState("");
+const [editStockWeight, setEditStockWeight] = useState("");
   const [showTxs, setShowTxs] = useState(false);
+
+  const [openLotEdit, setOpenLotEdit] = useState(false);
+const [selectedLot, setSelectedLot] = useState<any>(null);
+
+const [editLotMetal, setEditLotMetal] = useState("");
+const [editLotItemName, setEditLotItemName] = useState("");
+const [editLotWeight, setEditLotWeight] = useState("");
+const [editLotPieces, setEditLotPieces] = useState("");
+const [editLotWastage, setEditLotWastage] = useState("");
+const [editLotAmount, setEditLotAmount] = useState("");
+
+const [openRepairEdit, setOpenRepairEdit] = useState(false);
+const [selectedRepair, setSelectedRepair] = useState<any>(null);
+
+const [editRepairMetal, setEditRepairMetal] = useState("");
+const [editRepairItemName, setEditRepairItemName] = useState("");
+const [editRepairWeight, setEditRepairWeight] = useState("");
+const [editCustomerPay, setEditCustomerPay] = useState("");
+const [editWorkerPay, setEditWorkerPay] = useState("");
+
+
+const [openPayEdit, setOpenPayEdit] = useState(false);
+const [selectedPay, setSelectedPay] = useState<any>(null);
+
+const [editWorkPay, setEditWorkPay] = useState("");
+const [editPayWastage, setEditPayWastage] = useState("");
+
+const [openTxEdit, setOpenTxEdit] = useState(false);
+const [selectedTx, setSelectedTx] = useState<any>(null);
+
+const [editTxMethodType, setEditTxMethodType] = useState("");
+const [editTxPaid, setEditTxPaid] = useState("");
+const [editTxReason, setEditTxReason] = useState("");
+
+
+
+  const role = localStorage.getItem("role");
+const isAdmin = role === "ADMIN";
 
   // Filtered views
   const filteredStocks = useMemo(
@@ -201,6 +252,384 @@ const WorkerDetails: React.FC = () => {
 
   // Decide how many transactions to show
   const visibleTxs = showTxs ? filteredTxs : filteredTxs.slice(0, 4);
+
+
+  const updateApi = async (url: string, body: any) => {
+  try {
+    await api.put(url, body, {
+      headers: authHeaders,
+    });
+
+    alert("Updated Successfully");
+    refresh();
+  } catch (error) {
+    console.error(error);
+    alert("Update Failed");
+  }
+};
+
+const handleEditWorkerStock = (s: any) => {
+  setSelectedStock(s);
+  setEditStockMetal(s.metal || "");
+  setEditStockWeight(String(s.metalWeight || ""));
+  setOpenStockEdit(true);
+};
+const handleSaveWorkerStock = async () => {
+  if (!selectedStock) return;
+
+
+  console.log("workerId : ",   workerId);
+  console.log("stockId : ",   selectedStock.stockId);
+
+
+  const ok = window.confirm(
+    `Are you sure want to update Worker Stock?\n\n` +
+    `Old Metal: ${selectedStock.metal}\n` +
+    `Old Weight: ${selectedStock.metalWeight} g\n\n` +
+    `New Metal: ${editStockMetal}\n` +
+    `New Weight: ${editStockWeight} g`
+  );
+
+  if (!ok) return;
+
+  try {
+    await api.put(
+      `/admin/worker-stock/update/${selectedStock.stockId}`,
+      {
+        metal: editStockMetal,
+        metalWeight: Number(editStockWeight),
+           },
+      {
+        headers: authHeaders,
+      }
+    );
+
+    alert("Worker Stock Updated Successfully");
+    setOpenStockEdit(false);
+    setSelectedStock(null);
+    refresh();
+ } catch (error: any) {
+  console.error(error);
+
+  alert(
+    error?.response?.data?.message ||
+    error?.response?.data ||
+    error?.message ||
+    "Update Failed"
+  );
+}
+};
+
+const handleEditLotWork = (l: any) => {
+
+  setSelectedLot(l);
+
+  setEditLotMetal(l.metal || "");
+  setEditLotItemName(l.itemName || "");
+  setEditLotWeight(String(l.itemWeight || ""));
+  setEditLotPieces(String(l.pieces || ""));
+  setEditLotWastage(String(l.wastage || ""));
+  setEditLotAmount(String(l.amount || ""));
+
+  setOpenLotEdit(true);
+};
+
+const handleSaveLotWork = async () => {
+
+  if (!selectedLot) return;
+
+const ok = window.confirm(
+  `Are you sure want to update Lot Work?\n\n` +
+
+  `Item: ${selectedLot.itemName}\n` +
+
+  `Old Metal: ${selectedLot.metal}\n` +
+  `Old Weight: ${selectedLot.itemWeight} g\n` +
+  `Old Pieces: ${selectedLot.pieces}\n` +
+  `Old Wastage: ${selectedLot.wastage}\n` +
+  `Old Amount: ₹${selectedLot.amount}\n\n` +
+
+  `New Metal: ${editLotMetal}\n` +
+  `New Weight: ${editLotWeight} g\n` +
+  `New Pieces: ${editLotPieces}\n` +
+  `New Wastage: ${editLotWastage}\n` +
+  `New Amount: ₹${editLotAmount}`
+);
+
+  if (!ok) return;
+
+  try {
+
+    await api.put(
+      `/admin/lot-work/update/${selectedLot.lotId}`,
+      {
+        metal: editLotMetal,
+        itemName: editLotItemName,
+        itemWeight: Number(editLotWeight),
+        pieces: Number(editLotPieces),
+        wastage: Number(editLotWastage),
+        amount: Number(editLotAmount),
+      },
+      {
+        headers: authHeaders,
+      }
+    );
+
+    alert("Lot Work Updated Successfully");
+
+    setOpenLotEdit(false);
+    setSelectedLot(null);
+
+    refresh();
+
+  } catch (error: any) {
+
+    console.error(error);
+
+    alert(
+      error?.response?.data?.message ||
+      error?.response?.data ||
+      error?.message ||
+      "Update Failed"
+    );
+  }
+};
+
+const handleEditRepairWork = (r: any) => {
+
+  setSelectedRepair(r);
+
+  setEditRepairMetal(r.metal || "");
+  setEditRepairItemName(r.itemName || "");
+  setEditRepairWeight(String(r.metalWeight || ""));
+  setEditCustomerPay(String(r.customerPay || ""));
+  setEditWorkerPay(String(r.workerPay || ""));
+
+  setOpenRepairEdit(true);
+};
+
+const handleSaveRepairWork = async () => {
+
+  if (!selectedRepair) return;
+
+const ok = window.confirm(
+  `Are you sure want to update Repair Work?\n\n` +
+  `Item: ${selectedRepair.itemName}\n` +
+  `Old Metal: ${selectedRepair.metal}\n` +
+  `Old Weight: ${selectedRepair.metalWeight} g\n` +
+  `Old Customer Pay: ₹${selectedRepair.customerPay}\n` +
+  `Old Worker Pay: ₹${selectedRepair.workerPay}\n\n` +
+  `New Metal: ${editRepairMetal}\n` +
+  `New Weight: ${editRepairWeight} g\n` +
+  `New Customer Pay: ₹${editCustomerPay}\n` +
+  `New Worker Pay: ₹${editWorkerPay}`
+);
+
+  if (!ok) return;
+
+  try {
+
+    await api.put(
+      `/admin/repair-work/update/${selectedRepair.repairWorkId}`,
+      {
+        metal: editRepairMetal,
+        itemName: editRepairItemName,
+        metalWeight: Number(editRepairWeight),
+        customerPay: Number(editCustomerPay),
+        workerPay: Number(editWorkerPay),
+      },
+      {
+        headers: authHeaders,
+      }
+    );
+
+    alert("Repair Work Updated Successfully");
+
+    setOpenRepairEdit(false);
+    setSelectedRepair(null);
+
+    refresh();
+
+  } catch (error: any) {
+
+    console.error(error);
+
+    alert(
+      error?.response?.data?.message ||
+      error?.response?.data ||
+      error?.message ||
+      "Update Failed"
+    );
+  }
+};
+
+const handleEditWorkerPay = (p: any) => {
+  setSelectedPay(p);
+
+  setEditWorkPay(String(p.workPay || ""));
+  setEditPayWastage(String(p.wastage || ""));
+
+  setOpenPayEdit(true);
+};
+
+const handleSaveWorkerPay = async () => {
+  if (!selectedPay) return;
+
+  const ok = window.confirm(
+    `Are you sure want to update Work Payment?\n\n` +
+    `Order ID: ${selectedPay.orderId}\n` +
+    `Old Pay: ₹${selectedPay.workPay}\n` +
+    `Old Wastage: ${selectedPay.wastage}\n\n` +
+    `New Pay: ₹${editWorkPay}\n` +
+    `New Wastage: ${editPayWastage}`
+  );
+
+  if (!ok) return;
+
+  try {
+    await api.put(
+      `/admin/worker-pay/update/${selectedPay.wpid}`,
+      {
+        workPay: Number(editWorkPay),
+        wastage: Number(editPayWastage),
+      },
+      {
+        headers: authHeaders,
+      }
+    );
+
+    alert("Work Payment Updated Successfully");
+
+    setOpenPayEdit(false);
+    setSelectedPay(null);
+
+    refresh();
+  } catch (error: any) {
+    console.error(error);
+
+    alert(
+      error?.response?.data?.message ||
+      error?.response?.data ||
+      error?.message ||
+      "Update Failed"
+    );
+  }
+};
+
+const handleEditTransaction = (t: any) => {
+  setSelectedTx(t);
+
+  setEditTxMethodType(t.methodType || "");
+  setEditTxPaid(String(t.paid || ""));
+  setEditTxReason(t.reason || "");
+
+  setOpenTxEdit(true);
+};
+
+const handleSaveTransaction = async () => {
+  if (!selectedTx) return;
+
+  const ok = window.confirm(
+    `Are you sure want to update Transaction?\n\n` +
+    `Old Type: ${selectedTx.methodType}\n` +
+    `Old Paid: ₹${selectedTx.paid}\n` +
+    `Old Reason: ${selectedTx.reason}\n\n` +
+    `New Type: ${editTxMethodType}\n` +
+    `New Paid: ₹${editTxPaid}\n` +
+    `New Reason: ${editTxReason}`
+  );
+
+  if (!ok) return;
+
+  try {
+    await api.put(
+      `/admin/worker-transaction/update/${selectedTx.wtid}`,
+      {
+        methodType: editTxMethodType,
+        paid: Number(editTxPaid),
+        reason: editTxReason,
+      },
+      {
+        headers: authHeaders,
+      }
+    );
+
+    alert("Transaction Updated Successfully");
+
+    setOpenTxEdit(false);
+    setSelectedTx(null);
+
+    refresh();
+  } catch (error: any) {
+    console.error(error);
+
+    alert(
+      error?.response?.data?.message ||
+      error?.response?.data ||
+      error?.message ||
+      "Update Failed"
+    );
+  }
+};
+
+
+
+
+const authHeaders = {
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+};
+
+const deleteApi = async (url: string, message: string) => {
+  const ok = window.confirm(message);
+  if (!ok) return;
+
+  try {
+    await api.delete(url, {
+      headers: authHeaders,
+    });
+
+    alert("Deleted Successfully");
+    refresh();
+  } catch (error) {
+    console.error(error);
+    alert("Delete Failed");
+  }
+};
+
+const handleDeleteWorkerStock = (s: any) => {
+  deleteApi(
+    `/admin/worker-stock/delete/${s.stockId}`,
+    `Delete Worker Stock?\n\nMetal: ${s.metal}\nWeight: ${s.metalWeight} g`
+  );
+};
+
+const handleDeleteLotWork = (l: any) => {
+  deleteApi(
+    `/admin/lot-work/delete/${l.lotId}`,
+    `Delete Lot Work?\n\nItem: ${l.itemName}\nMetal: ${l.metal}\nWeight: ${l.itemWeight} g`
+  );
+};
+
+const handleDeleteRepairWork = (r: any) => {
+  deleteApi(
+    `/admin/repair-work/delete/${r.repairWorkId}`,
+    `Delete Repair Work?\n\nItem: ${r.itemName}\nMetal: ${r.metal}\nWeight: ${r.metalWeight} g`
+  );
+};
+
+const handleDeleteWorkerPay = (p: any) => {
+  deleteApi(
+    `/admin/worker-pay/delete/${p.wpid}`,
+    `Delete Work Payment?\n\nOrder ID: ${p.orderId}\nPay: ₹${p.workPay}\nWastage: ${p.wastage}`
+  );
+};
+
+const handleDeleteTransaction = (t: any) => {
+  deleteApi(
+    `/admin/worker-transaction/delete/${t.wtid}`,
+    `Delete Transaction?\n\nAmount: ₹${t.paid}\nReason: ${t.reason}`
+  );
+};
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
@@ -359,7 +788,7 @@ const WorkerDetails: React.FC = () => {
 
             {visibleWorkerStockResult.map((s) => (
               <div
-                key={s.wstockId}
+                key={s.stockId}
                 className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
               >
                 <div className="pr-4">
@@ -368,10 +797,76 @@ const WorkerDetails: React.FC = () => {
                 </div>
                 <div className="pl-4">
                   {line("Date", displayFromRaw(s.todaysDate))}
-                  {line("Stock ID", s.wstockId)}
+                  {line("Stock ID", s.stockId)}
                 </div>
+                {isAdmin && (
+  <div className="col-span-2 flex justify-end gap-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+
+    <IconButton
+      color="warning"
+      onClick={() => handleEditWorkerStock(s)}
+    >
+      <EditIcon />
+    </IconButton>
+
+    <IconButton
+      color="error"
+      onClick={() => handleDeleteWorkerStock(s)}
+    >
+      <DeleteIcon />
+    </IconButton>
+
+  </div>
+  
+)}
               </div>
             ))}
+
+            <Dialog
+  open={openStockEdit}
+  onClose={() => setOpenStockEdit(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>Edit Worker Stock</DialogTitle>
+
+  <DialogContent>
+    <TextField
+      select
+      margin="dense"
+      label="Metal"
+      fullWidth
+      value={editStockMetal}
+      onChange={(e) => setEditStockMetal(e.target.value)}
+    >
+      <MenuItem value="24 Gold">24 Gold</MenuItem>
+      <MenuItem value="999 Silver">999 Silver</MenuItem>
+      <MenuItem value="22 Gold">22 Gold</MenuItem>
+      <MenuItem value="995 Silver">995 Silver</MenuItem>
+    </TextField>
+
+    <TextField
+      margin="dense"
+      label="Metal Weight"
+      type="number"
+      fullWidth
+      value={editStockWeight}
+      onChange={(e) => setEditStockWeight(e.target.value)}
+    />
+  </DialogContent>
+
+  <DialogActions>
+    <Button onClick={() => setOpenStockEdit(false)}>
+      Cancel
+    </Button>
+
+    <Button variant="contained" onClick={handleSaveWorkerStock}>
+      Save
+    </Button>
+  </DialogActions>
+</Dialog>
+            
+            
 
             {/* Toggle Button */}
             {filteredStocks.length > 4 && (
@@ -416,8 +911,113 @@ const WorkerDetails: React.FC = () => {
                   {line("Amount", `₹${l.amount}`)}
                   {line("Lot ID", l.lotId)}
                 </div>
+                {isAdmin && (
+  <div className="col-span-2 flex justify-end gap-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+
+    <IconButton
+      color="warning"
+      onClick={() => handleEditLotWork(l)}
+    >
+      <EditIcon />
+    </IconButton>
+
+    <IconButton
+      color="error"
+      onClick={() => handleDeleteLotWork(l)}
+    >
+      <DeleteIcon />
+    </IconButton>
+
+  </div>
+)}
               </div>
             ))}
+
+            <Dialog
+  open={openLotEdit}
+  onClose={() => setOpenLotEdit(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>Edit Lot Work</DialogTitle>
+
+  <DialogContent>
+
+    <TextField
+      select
+      margin="dense"
+      label="Metal"
+      fullWidth
+      value={editLotMetal}
+      onChange={(e) => setEditLotMetal(e.target.value)}
+    >
+      <MenuItem value="24 Gold">24 Gold</MenuItem>
+      <MenuItem value="999 Silver">999 Silver</MenuItem>
+      <MenuItem value="22 Gold">22 Gold</MenuItem>
+      <MenuItem value="995 Silver">995 Silver</MenuItem>
+    </TextField>
+
+    <TextField
+      margin="dense"
+      label="Item Name"
+      fullWidth
+      value={editLotItemName}
+      onChange={(e) => setEditLotItemName(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Weight"
+      type="number"
+      fullWidth
+      value={editLotWeight}
+      onChange={(e) => setEditLotWeight(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Pieces"
+      type="number"
+      fullWidth
+      value={editLotPieces}
+      onChange={(e) => setEditLotPieces(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Wastage"
+      type="number"
+      fullWidth
+      value={editLotWastage}
+      onChange={(e) => setEditLotWastage(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Amount"
+      type="number"
+      fullWidth
+      value={editLotAmount}
+      onChange={(e) => setEditLotAmount(e.target.value)}
+    />
+
+  </DialogContent>
+
+  <DialogActions>
+
+    <Button onClick={() => setOpenLotEdit(false)}>
+      Cancel
+    </Button>
+
+    <Button
+      variant="contained"
+      onClick={handleSaveLotWork}
+    >
+      Save
+    </Button>
+
+  </DialogActions>
+</Dialog>
 
             {/* Toggle Button */}
             {filteredLots.length > 4 && (
@@ -508,8 +1108,104 @@ const WorkerDetails: React.FC = () => {
                   {line("Worker Pay", `₹${r.workerPay}`)}
                   {line("Date", displayFromRaw(r.deliveryDate))}
                 </div>
+                {isAdmin && (
+  <div className="col-span-2 flex justify-end gap-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+
+    <IconButton
+      color="warning"
+      onClick={() => handleEditRepairWork(r)}
+    >
+      <EditIcon />
+    </IconButton>
+
+    <IconButton
+      color="error"
+      onClick={() => handleDeleteRepairWork(r)}
+    >
+      <DeleteIcon />
+    </IconButton>
+
+  </div>
+)}
               </div>
             ))}
+
+            <Dialog
+  open={openRepairEdit}
+  onClose={() => setOpenRepairEdit(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>Edit Repair Work</DialogTitle>
+
+  <DialogContent>
+
+    <TextField
+      select
+      margin="dense"
+      label="Metal"
+      fullWidth
+      value={editRepairMetal}
+      onChange={(e) => setEditRepairMetal(e.target.value)}
+    >
+      <MenuItem value="24 Gold">24 Gold</MenuItem>
+      <MenuItem value="999 Silver">999 Silver</MenuItem>
+      <MenuItem value="22 Gold">22 Gold</MenuItem>
+      <MenuItem value="995 Silver">995 Silver</MenuItem>
+    </TextField>
+
+    <TextField
+      margin="dense"
+      label="Item Name"
+      fullWidth
+      value={editRepairItemName}
+      onChange={(e) => setEditRepairItemName(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Metal Weight"
+      type="number"
+      fullWidth
+      value={editRepairWeight}
+      onChange={(e) => setEditRepairWeight(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Customer Pay"
+      type="number"
+      fullWidth
+      value={editCustomerPay}
+      onChange={(e) => setEditCustomerPay(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Worker Pay"
+      type="number"
+      fullWidth
+      value={editWorkerPay}
+      onChange={(e) => setEditWorkerPay(e.target.value)}
+    />
+
+  </DialogContent>
+
+  <DialogActions>
+
+    <Button onClick={() => setOpenRepairEdit(false)}>
+      Cancel
+    </Button>
+
+    <Button
+      variant="contained"
+      onClick={handleSaveRepairWork}
+    >
+      Save
+    </Button>
+
+  </DialogActions>
+</Dialog>
 
             {/* Toggle Button */}
             {filteredRepairs.length > 4 && (
@@ -553,8 +1249,66 @@ const WorkerDetails: React.FC = () => {
                   {line("Pay", `₹${p.workPay}`)}
                   {line("Wastage", p.wastage)}
                 </div>
+                {isAdmin && (
+  <div className="col-span-2 flex justify-end gap-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+
+    <IconButton
+      color="warning"
+      onClick={() => handleEditWorkerPay(p)}
+    >
+      <EditIcon />
+    </IconButton>
+
+    <IconButton
+      color="error"
+      onClick={() => handleDeleteWorkerPay(p)}
+    >
+      <DeleteIcon />
+    </IconButton>
+
+  </div>
+)}
               </div>
             ))}
+
+            <Dialog
+  open={openPayEdit}
+  onClose={() => setOpenPayEdit(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>Edit Work Payment</DialogTitle>
+
+  <DialogContent>
+    <TextField
+      margin="dense"
+      label="Work Pay"
+      type="number"
+      fullWidth
+      value={editWorkPay}
+      onChange={(e) => setEditWorkPay(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Wastage"
+      type="number"
+      fullWidth
+      value={editPayWastage}
+      onChange={(e) => setEditPayWastage(e.target.value)}
+    />
+  </DialogContent>
+
+  <DialogActions>
+    <Button onClick={() => setOpenPayEdit(false)}>
+      Cancel
+    </Button>
+
+    <Button variant="contained" onClick={handleSaveWorkerPay}>
+      Save
+    </Button>
+  </DialogActions>
+</Dialog>
 
             {/* Toggle Button */}
             {filteredPays.length > 4 && (
@@ -585,12 +1339,88 @@ const WorkerDetails: React.FC = () => {
 
             <ul className="mb-8 pl-5 list-disc">
               {visibleTxs.map((t) => (
-                <li key={t.wtid}>
-                  ₹{t.paid} on {displayFromRaw(t.paymentDate)},{" "}
-                  {t.reason ?? "-"}
-                </li>
+           <li
+  key={t.wtid}
+  className="mb-3 rounded-lg border-2 border-gray-300 dark:border-gray-700 p-3 flex justify-between items-center"
+>
+  <div className="text-[18px] text-gray-800 dark:text-gray-200">
+    ₹{t.paid} on {displayFromRaw(t.paymentDate)}, {t.reason ?? "-"}
+  </div>
+
+  {isAdmin && (
+    <div className="flex items-center gap-2 border-l pl-4 border-gray-300 dark:border-gray-600">
+
+      <IconButton
+        color="warning"
+        onClick={() => handleEditTransaction(t)}
+      >
+        <EditIcon />
+      </IconButton>
+
+      <IconButton
+        color="error"
+        onClick={() => handleDeleteTransaction(t)}
+      >
+        <DeleteIcon />
+      </IconButton>
+
+    </div>
+  )}
+</li>
+                
               ))}
+              
             </ul>
+
+            <Dialog
+  open={openTxEdit}
+  onClose={() => setOpenTxEdit(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>Edit Transaction</DialogTitle>
+
+  <DialogContent>
+    <TextField
+      select
+      margin="dense"
+      label="Method Type"
+      fullWidth
+      value={editTxMethodType}
+      onChange={(e) => setEditTxMethodType(e.target.value)}
+    >
+      <MenuItem value="Amount">Amount</MenuItem>
+      <MenuItem value="Wastage">Wastage</MenuItem>
+    </TextField>
+
+    <TextField
+      margin="dense"
+      label="Paid"
+      type="number"
+      fullWidth
+      value={editTxPaid}
+      onChange={(e) => setEditTxPaid(e.target.value)}
+    />
+
+    <TextField
+      margin="dense"
+      label="Reason"
+      fullWidth
+      value={editTxReason}
+      onChange={(e) => setEditTxReason(e.target.value)}
+    />
+  </DialogContent>
+
+  <DialogActions>
+    <Button onClick={() => setOpenTxEdit(false)}>
+      Cancel
+    </Button>
+
+    <Button variant="contained" onClick={handleSaveTransaction}>
+      Save
+    </Button>
+  </DialogActions>
+</Dialog>
             {/* Toggle Button */}
             {filteredTxs.length > 4 && (
               <Typography
