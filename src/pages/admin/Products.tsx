@@ -1228,7 +1228,6 @@ const Products: React.FC = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               label="Size"
-              type="number"
               value={q.size}
               onChange={onQChange("size")}
               inputProps={{
@@ -1575,7 +1574,6 @@ const Products: React.FC = () => {
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <TextField
                     label="Size"
-                    type="number"
                     value={product.size}
                     onChange={onProductChange("size")}
                     inputProps={{
