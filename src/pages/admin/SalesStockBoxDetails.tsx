@@ -1,5 +1,5 @@
 // src/pages/admin/StockBoxDetails.tsx
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
@@ -37,6 +37,35 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
 
   const stored = localStorage.getItem("selectedStockBox");
   const stockBox: StockDataBox | null = stored ? JSON.parse(stored) : null;
+
+
+const secreat_code = "HambireJ@1977";
+
+const [passwordDialog, setPasswordDialog] = useState(false);
+const [passwordInput, setPasswordInput] = useState("");
+const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+
+
+const handleAskDeletePassword = (stockBoxDataId: number) => {
+  setPendingDeleteId(stockBoxDataId);
+  setPasswordInput("");
+  setPasswordDialog(true);
+};
+
+const verifyPasswordAndDelete = async () => {
+  if (passwordInput !== secreat_code) {
+    alert("Incorrect Password");
+    return;
+  }
+
+  if (pendingDeleteId === null) return;
+
+  setPasswordDialog(false);
+  await handleDeleteStockBoxData(pendingDeleteId);
+
+  setPendingDeleteId(null);
+  setPasswordInput("");
+};
 
   if (!stockBox) {
     return (
@@ -237,9 +266,7 @@ window.location.reload();
   {isAdmin && (
     <IconButton
       color="error"
-      onClick={() =>
-        handleDeleteStockBoxData(entry.stockBoxDataId)
-      }
+    onClick={() => handleAskDeletePassword(entry.stockBoxDataId)}
     >
       <DeleteIcon />
     </IconButton>
@@ -254,7 +281,45 @@ window.location.reload();
           <p>No stock box data available</p>
         )}
       </div>
+
+{passwordDialog && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl">
+      <h2 className="text-xl font-bold mb-4">Enter Admin Password</h2>
+
+      <input
+        type="password"
+        value={passwordInput}
+        onChange={(e) => setPasswordInput(e.target.value)}
+        placeholder="Enter password"
+        className="w-full border rounded-lg px-3 py-2 mb-4"
+      />
+
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => {
+            setPasswordDialog(false);
+            setPendingDeleteId(null);
+            setPasswordInput("");
+          }}
+          className="px-4 py-2 border rounded-lg"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={verifyPasswordAndDelete}
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg"
+        >
+          Verify
+        </button>
+      </div>
     </div>
+  </div>
+)}
+
+    </div>
+    
   );
 };
 

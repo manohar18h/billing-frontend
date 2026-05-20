@@ -106,8 +106,47 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
 const [editBox, setEditBox] = useState<StockDataBox | null>(null);
 const [editCount, setEditCount] = useState("");
 const [editWeight, setEditWeight] = useState("");
+const [editStockBoxName, setEditStockBoxName] = useState("");
 
 
+const Secreat_code = "HambireJ@1977";
+
+const [passwordDialog, setPasswordDialog] = useState(false);
+const [passwordInput, setPasswordInput] = useState("");
+const [pendingAction, setPendingAction] = useState<{
+  type: "edit" | "delete";
+  box: StockDataBox;
+} | null>(null);
+
+
+
+const handleProtectedAction = (
+  type: "edit" | "delete",
+  box: StockDataBox
+) => {
+  setPendingAction({ type, box });
+  setPasswordInput("");
+  setPasswordDialog(true);
+};
+
+const verifyPasswordAndProceed = async () => {
+  if (passwordInput !== Secreat_code) {
+    alert("Incorrect Password");
+    return;
+  }
+
+  if (!pendingAction) return;
+
+  if (pendingAction.type === "edit") {
+    handleOpenEdit(pendingAction.box);
+  } else if (pendingAction.type === "delete") {
+    await handleDeleteStockBox(pendingAction.box);
+  }
+
+  setPasswordDialog(false);
+  setPendingAction(null);
+  setPasswordInput("");
+};
 
   useEffect(() => {
     let alive = true;
@@ -227,6 +266,8 @@ const [editWeight, setEditWeight] = useState("");
 
 const handleOpenEdit = (box: StockDataBox) => {
   setEditBox(box);
+
+  setEditStockBoxName(box.stockBoxName ?? "");
   setEditCount(String(box.totalStockBoxCount ?? ""));
   setEditWeight(String(box.totalStockBoxWeight ?? ""));
 };
@@ -237,6 +278,7 @@ const handleUpdateStockBox = async () => {
   await api.put(
     `/admin/stock-box/update-count-weight/${editBox.stockBoxId}`,
     {
+        stockBoxName: editStockBoxName,
       totalStockBoxCount: Number(editCount),
       totalStockBoxWeight: Number(editWeight),
     },
@@ -843,7 +885,7 @@ if (!confirmDelete) return;
         <IconButton
           size="medium"
           color="warning"
-          onClick={() => handleOpenEdit(box)}
+          onClick={() => handleProtectedAction("edit", box)}
         >
           <EditIcon fontSize="medium" />
         </IconButton>
@@ -852,7 +894,7 @@ if (!confirmDelete) return;
           <IconButton
             size="medium"
             color="error"
-            onClick={() => handleDeleteStockBox(box)}
+            onClick={() => handleProtectedAction("delete", box)}
           >
             <DeleteIcon fontSize="medium" />
           </IconButton>
@@ -876,9 +918,13 @@ if (!confirmDelete) return;
     <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl">
       <h2 className="text-xl font-bold mb-4">Edit Stock Box</h2>
 
-      <p className="text-gray-700 font-semibold mb-4">
-  Stock Box Name: {editBox.stockBoxName}
-</p>
+    <TextField
+  label="Stock Box Name"
+  fullWidth
+  value={editStockBoxName}
+  onChange={(e) => setEditStockBoxName(e.target.value)}
+  sx={{ mb: 2 }}
+/>
 
       <TextField
         label="Total Stock Box Count"
@@ -905,6 +951,46 @@ if (!confirmDelete) return;
 
         <Button variant="contained" onClick={handleUpdateStockBox}>
           Save
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
+{passwordDialog && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl">
+      <h2 className="text-xl font-bold mb-4">
+        Enter Admin Password
+      </h2>
+
+      <TextField
+        label="Password"
+        type="password"
+        fullWidth
+        value={passwordInput}
+        onChange={(e) => setPasswordInput(e.target.value)}
+        sx={{ mb: 3 }}
+      />
+
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outlined"
+          onClick={() => {
+            setPasswordDialog(false);
+            setPendingAction(null);
+            setPasswordInput("");
+          }}
+        >
+          Cancel
+        </Button>
+
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={verifyPasswordAndProceed}
+        >
+          Verify
         </Button>
       </div>
     </div>

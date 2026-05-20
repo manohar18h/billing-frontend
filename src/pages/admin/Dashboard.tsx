@@ -53,6 +53,19 @@ type Billing = {
   checked: boolean;
 };
 
+type TodayOldExchangeData = {
+  oldMetalReturnId: number;
+  onlyExchangeMetal: string;
+  onlyExchange_metal_name: string;
+  onlyExchange_metal_weight: number;
+  onlyExchange_metal_purity_weight: number;
+  onlyExchange_total_amount: number;
+  onlyExchange_item_cash_amount: number;
+  onlyExchange_item_phnpay_amount: number;
+  type: string;
+  date: string;
+};
+
 interface LoanBill {
   loanBillId: number;
   loanBillNumber: string;
@@ -215,6 +228,8 @@ const MetalPricesCard: React.FC = () => {
     setS995Draft(silver995);
     setOpen(true);
   };
+
+  
   const save = () => {
     if (!token) return;
 
@@ -1447,6 +1462,105 @@ const LatestLoanOrders: React.FC = () => {
     </div>
   );
 };
+const TodayOldExchangeTable: React.FC = () => {
+  const [rows, setRows] = useState<TodayOldExchangeData[]>([]);
+
+  const fetchTodayOldExchangeData = async () => {
+    try {
+      const token = localStorage.getItem("token") ?? "";
+
+      const { data } = await api.get<TodayOldExchangeData[]>(
+        "/admin/today-old-return-metal-data",
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+
+      setRows(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to fetch today old exchange data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTodayOldExchangeData();
+  }, []);
+
+  return (
+    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
+      <div className="text-[#85400b] mb-3 font-bold text-lg">
+        Today's Old Return & Old Exchange
+      </div>
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border px-3 py-2 text-center">Type</th>
+              <th className="border px-3 py-2 text-center">ID</th>
+              <th className="border px-3 py-2 text-center">Order ID</th>
+              <th className="border px-3 py-2 text-center">Metal</th>
+              <th className="border px-3 py-2 text-center">Name</th>
+              <th className="border px-3 py-2 text-center">Gross Wt</th>
+              <th className="border px-3 py-2 text-center">Metal Wt</th>
+              <th className="border px-3 py-2 text-center">Purity Wt</th>
+              <th className="border px-3 py-2 text-center">Amount</th>
+           </tr>
+          </thead>
+
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={11} className="border px-3 py-4 text-center text-gray-500">
+                  No old return or old exchange data found today
+                </td>
+              </tr>
+            ) : (
+              rows.map((item) => (
+  <tr key={item.oldMetalReturnId} className="bg-white">
+    <td className="border px-3 py-2 text-center font-semibold text-purple-700">
+      {item.type === "Return" ? "Old Return" : "Old Exchange"}
+    </td>
+
+    <td className="border px-3 py-2 text-center">
+      {item.oldMetalReturnId}
+    </td>
+
+    <td className="border px-3 py-2 text-center">-</td>
+
+    <td className="border px-3 py-2 text-center">
+      {item.onlyExchangeMetal}
+    </td>
+
+    <td className="border px-3 py-2 text-center">
+      {item.onlyExchange_metal_name}
+    </td>
+
+    <td className="border px-3 py-2 text-center">
+      {item.onlyExchange_metal_weight}
+    </td>
+
+    <td className="border px-3 py-2 text-center">
+      {item.onlyExchange_metal_weight}
+    </td>
+
+    <td className="border px-3 py-2 text-center">
+      {item.onlyExchange_metal_purity_weight}
+    </td>
+
+    <td className="border px-3 py-2 text-center text-[#e38111] font-semibold">
+      ₹{item.onlyExchange_total_amount}
+    </td>
+  </tr>
+))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 
 /* ---------- Business Growth: static country list + bars ---------- */
 const BusinessGrowth: React.FC = () => {
@@ -1615,6 +1729,7 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-2 space-y-5">
           <LatestOrders />
           <LatestLoanOrders />
+          <TodayOldExchangeTable />
         </div>
 
         {/* RIGHT SIDE */}
