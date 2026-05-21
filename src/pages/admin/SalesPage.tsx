@@ -424,6 +424,30 @@ if (!confirmDelete) return;
   }
 `}
       </style>
+   {role === "SALES" && (
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    mb={4}
+  >
+    <Button
+      variant="contained"
+      color="primary"
+      size="large"
+      onClick={() => navigate("/admin/products")}
+      sx={{
+        borderRadius: "14px",
+        px: 5,
+        py: 1.5,
+        fontWeight: "bold",
+        fontSize: "16px",
+      }}
+    >
+      Open Products
+    </Button>
+  </Box>
+)}
 
       <Box>
         {/* 🔍 Search Bar */}

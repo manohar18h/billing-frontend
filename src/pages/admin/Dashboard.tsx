@@ -55,15 +55,13 @@ type Billing = {
 
 type TodayOldExchangeData = {
   oldMetalReturnId: number;
+  type: string;
+  billNumber: string | null;
   onlyExchangeMetal: string;
   onlyExchange_metal_name: string;
   onlyExchange_metal_weight: number;
   onlyExchange_metal_purity_weight: number;
   onlyExchange_total_amount: number;
-  onlyExchange_item_cash_amount: number;
-  onlyExchange_item_phnpay_amount: number;
-  type: string;
-  date: string;
 };
 
 interface LoanBill {
@@ -1475,7 +1473,7 @@ const TodayOldExchangeTable: React.FC = () => {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         },
       );
-
+console.log("Today old return data:", data);
       setRows(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch today old exchange data:", error);
@@ -1486,19 +1484,29 @@ const TodayOldExchangeTable: React.FC = () => {
     fetchTodayOldExchangeData();
   }, []);
 
+  const totalGrossWeight = rows.reduce(
+  (sum, item) => sum + (item.onlyExchange_metal_weight || 0),
+  0
+);
+
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-      <div className="text-[#85400b] mb-3 font-bold text-lg">
-        Today's Old Return & Old Exchange
-      </div>
+     <div className="flex items-center justify-between mb-3">
+  <div className="text-[#85400b] font-bold text-lg">
+    Today's Old Return & Old Exchange
+  </div>
+
+  <div className="bg-orange-100 text-[#85400b] px-4 py-2 rounded-xl font-bold text-sm">
+    Total Gross Wt : {totalGrossWeight.toFixed(3)}
+  </div>
+</div>
 
       <div className="mt-4 overflow-x-auto">
         <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
           <thead className="bg-gray-200">
             <tr>
               <th className="border px-3 py-2 text-center">Type</th>
-              <th className="border px-3 py-2 text-center">ID</th>
-              <th className="border px-3 py-2 text-center">Order ID</th>
+              <th className="border px-3 py-2 text-center">Bill No</th>
               <th className="border px-3 py-2 text-center">Metal</th>
               <th className="border px-3 py-2 text-center">Name</th>
               <th className="border px-3 py-2 text-center">Gross Wt</th>
@@ -1516,38 +1524,24 @@ const TodayOldExchangeTable: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              rows.map((item) => (
+    rows.map((item) => (
   <tr key={item.oldMetalReturnId} className="bg-white">
-    <td className="border px-3 py-2 text-center font-semibold text-purple-700">
-      {item.type === "Return" ? "Old Return" : "Old Exchange"}
+   <td className="border px-3 py-2 text-center font-semibold text-purple-700">
+  {item.type === "Return"
+    ? "Return Metal"
+    : item.type === "Exchange"
+      ? "Exchange Item"
+      : item.type}
+</td>
+    <td className="border px-3 py-2 text-center font-semibold text-blue-700">
+      {item.billNumber || "-"}
     </td>
 
-    <td className="border px-3 py-2 text-center">
-      {item.oldMetalReturnId}
-    </td>
-
-    <td className="border px-3 py-2 text-center">-</td>
-
-    <td className="border px-3 py-2 text-center">
-      {item.onlyExchangeMetal}
-    </td>
-
-    <td className="border px-3 py-2 text-center">
-      {item.onlyExchange_metal_name}
-    </td>
-
-    <td className="border px-3 py-2 text-center">
-      {item.onlyExchange_metal_weight}
-    </td>
-
-    <td className="border px-3 py-2 text-center">
-      {item.onlyExchange_metal_weight}
-    </td>
-
-    <td className="border px-3 py-2 text-center">
-      {item.onlyExchange_metal_purity_weight}
-    </td>
-
+    <td className="border px-3 py-2 text-center">{item.onlyExchangeMetal}</td>
+    <td className="border px-3 py-2 text-center">{item.onlyExchange_metal_name}</td>
+    <td className="border px-3 py-2 text-center">{item.onlyExchange_metal_weight}</td>
+    <td className="border px-3 py-2 text-center">{item.onlyExchange_metal_weight}</td>
+    <td className="border px-3 py-2 text-center">{item.onlyExchange_metal_purity_weight}</td>
     <td className="border px-3 py-2 text-center text-[#e38111] font-semibold">
       ₹{item.onlyExchange_total_amount}
     </td>

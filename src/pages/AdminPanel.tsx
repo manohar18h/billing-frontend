@@ -281,6 +281,7 @@ function AdminPanelContent() {
               element={<ShowroomMetalStock />}
             />
             <Route path="sale" element={<SalesPage />} />
+            <Route path="/sales/products" element={<Products />} />
             <Route
               path="worker-details/:workerId"
               element={<WorkerDetails />}
