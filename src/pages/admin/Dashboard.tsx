@@ -1484,20 +1484,29 @@ console.log("Today old return data:", data);
     fetchTodayOldExchangeData();
   }, []);
 
-  const totalGrossWeight = rows.reduce(
-  (sum, item) => sum + (item.onlyExchange_metal_weight || 0),
-  0
-);
+const totalGoldGrossWeight = rows
+  .filter((item) => item.onlyExchangeMetal?.toLowerCase() === "gold")
+  .reduce((sum, item) => sum + (item.onlyExchange_metal_weight || 0), 0);
+
+const totalSilverGrossWeight = rows
+  .filter((item) => item.onlyExchangeMetal?.toLowerCase() === "silver")
+  .reduce((sum, item) => sum + (item.onlyExchange_metal_weight || 0), 0);
 
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-     <div className="flex items-center justify-between mb-3">
+  <div className="flex items-center justify-between mb-3">
   <div className="text-[#85400b] font-bold text-lg">
     Today's Old Return & Old Exchange
   </div>
 
-  <div className="bg-orange-100 text-[#85400b] px-4 py-2 rounded-xl font-bold text-sm">
-    Total Gross Wt : {totalGrossWeight.toFixed(3)}
+  <div className="flex items-center gap-3">
+    <div className="bg-yellow-100 text-[#85400b] px-4 py-2 rounded-xl font-bold text-sm">
+      Total Gold Wt : {totalGoldGrossWeight.toFixed(3)}
+    </div>
+
+    <div className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold text-sm">
+      Total Silver Wt : {totalSilverGrossWeight.toFixed(3)}
+    </div>
   </div>
 </div>
 
