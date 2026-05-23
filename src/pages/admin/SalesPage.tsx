@@ -16,6 +16,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
 
 
 type BarcodeProduct = {
@@ -74,6 +75,8 @@ type StockDataBox = {
   stockBoxName: string;
   totalStockBoxCount: number;
   totalStockBoxWeight: number;
+  description?: string;
+  checked?: boolean;
   stockBoxData: StockBoxDataEntry[];
 };
 
@@ -100,7 +103,9 @@ const showStockBoxSection = !isSales || mode === "stockBox";
   const [rates, setRates] = useState<MetalRates | null>(null);
   const [showEstimation, setShowEstimation] = useState(false);
 
-
+const [descDialog, setDescDialog] = useState(false);
+const [descriptionInput, setDescriptionInput] = useState("");
+const [selectedDescBox, setSelectedDescBox] = useState<StockDataBox | null>(null);
 
 
   const [rows, setRows] = useState<StockDataBox[]>([]);
@@ -184,6 +189,53 @@ const verifyPasswordAndProceed = async () => {
       alive = false;
     };
   }, []);
+
+  const handleUpdateChecked = async (box: StockDataBox, checked: boolean) => {
+  await api.put(
+    `${basePath}/stock-box/update-checked/${box.stockBoxId}`,
+    { checked },
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    }
+  );
+
+  fetchStockBoxes();
+};
+
+const handleClearSelected = async () => {
+  const checkedRows = rows.filter((x) => x.checked === true);
+
+  await Promise.all(
+    checkedRows.map((box) =>
+      api.put(
+        `${basePath}/stock-box/update-checked/${box.stockBoxId}`,
+        { checked: false },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }
+      )
+    )
+  );
+
+  fetchStockBoxes();
+};
+
+const handleSaveDescription = async () => {
+  if (!selectedDescBox) return;
+
+  await api.put(
+    `${basePath}/stock-box/update-description/${selectedDescBox.stockBoxId}`,
+    { description: descriptionInput },
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    }
+  );
+
+  setDescDialog(false);
+  setSelectedDescBox(null);
+  setDescriptionInput("");
+  fetchStockBoxes();
+};
 
   // ⬇️ Fetch gold & silver rates on mount
   useEffect(() => {
@@ -478,18 +530,30 @@ if (!confirmDelete) return;
             placeholder="Enter Barcode..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon color="action" />
-                </InputAdornment>
-              ),
-              style: {
-                borderRadius: "25px",
-                backgroundColor: "#fff",
-                paddingLeft: 8,
-              },
-            }}
+           InputProps={{
+  startAdornment: (
+    <InputAdornment position="start">
+      <SearchIcon color="action" />
+    </InputAdornment>
+  ),
+
+  endAdornment: searchQuery ? (
+    <InputAdornment position="end">
+      <IconButton
+        size="small"
+        onClick={() => setSearchQuery("")}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    </InputAdornment>
+  ) : null,
+
+  style: {
+    borderRadius: "25px",
+    backgroundColor: "#fff",
+    paddingLeft: 8,
+  },
+}}
           />
           <Button
             variant="contained"
@@ -847,18 +911,61 @@ if (!confirmDelete) return;
     </Button>
   )}
 </Box>
+<Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    gap: 2,
+    mb: 3,
+    flexWrap: "wrap",
+  }}
+>
+ 
 
-          {/* 🔍 Search Bar */}
-          <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
-            <TextField
-              label="Search by Stock Box Name"
-              variant="outlined"
-              size="small"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              sx={{ width: 250 }}
-            />
-          </Box>
+  <TextField
+    placeholder="Search by Stock Box Name"
+    variant="outlined"
+    size="small"
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    sx={{
+      width: 320,
+      backgroundColor: "white",
+      borderRadius: "10px",
+    }}
+  InputProps={{
+  startAdornment: (
+    <InputAdornment position="start">
+      <SearchIcon color="action" />
+    </InputAdornment>
+  ),
+
+  endAdornment: search ? (
+    <InputAdornment position="end">
+      <IconButton
+        size="small"
+        onClick={() => setSearch("")}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    </InputAdornment>
+  ) : null,
+}}
+  />
+   <Button
+    variant="contained"
+    color="secondary"
+    onClick={handleClearSelected}
+    sx={{
+      height: "40px",
+      fontWeight: "bold",
+      borderRadius: "10px",
+      px: 3,
+    }}
+  >
+    CLEAR SELECTED
+  </Button>
+</Box>
 
           {loading ? (
             <div className="flex items-center gap-3 py-6">
@@ -874,6 +981,7 @@ if (!confirmDelete) return;
               <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
                 <thead className="bg-gray-200">
                   <tr>
+                    <th className="border px-3 py-2 text-center">Select</th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
                         Stock Box Name
@@ -889,6 +997,7 @@ if (!confirmDelete) return;
                         Total Stock Box Weight
                       </div>
                     </th>
+                    <th className="border px-3 py-2 text-center">Description</th>
                     <th className="border px-3 py-2 text-center">
                       <div className="flex justify-center items-center">
                         Actions
@@ -902,6 +1011,14 @@ if (!confirmDelete) return;
                       key={box.stockBoxId}
                       className="bg-white/90 text-center"
                     >
+                      <td className="border px-3 py-2 text-center">
+  <input
+    type="checkbox"
+    checked={box.checked === true}
+    onChange={(e) => handleUpdateChecked(box, e.target.checked)}
+    className="w-4 h-4"
+  />
+</td>
                       <td className="border px-3 py-2">{box.stockBoxName}</td>
                       <td className="border px-3 py-2">
                         {box.totalStockBoxCount}
@@ -909,6 +1026,23 @@ if (!confirmDelete) return;
                       <td className="border px-3 py-2">
                         {box.totalStockBoxWeight}
                       </td>
+                      <td className="border px-3 py-2 text-center">
+  <div className="flex justify-center items-center gap-2">
+    <span>{box.description || "Add"}</span>
+
+    <IconButton
+      size="small"
+      color="secondary"
+      onClick={() => {
+        setSelectedDescBox(box);
+        setDescriptionInput(box.description || "");
+        setDescDialog(true);
+      }}
+    >
+      <EditIcon fontSize="small" />
+    </IconButton>
+  </div>
+</td>
                     <td className="border px-3 py-2 text-center">
   <div className="flex justify-center items-center gap-2">
 
@@ -1041,6 +1175,52 @@ if (!confirmDelete) return;
           Verify
         </Button>
       </div>
+    </div>
+  </div>
+)}
+
+{descDialog && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl">
+      <h2 className="text-xl font-bold mb-4">Add Description</h2>
+
+      <TextField
+        label="Description"
+        fullWidth
+        value={descriptionInput}
+        onChange={(e) => setDescriptionInput(e.target.value)}
+        sx={{ mb: 3 }}
+      />
+
+     <div className="flex justify-end gap-2">
+  <Button
+    variant="text"
+    color="error"
+    onClick={() => {
+      setDescriptionInput("Add");
+    }}
+  >
+    CLEAR
+  </Button>
+
+  <Button
+    variant="text"
+    onClick={() => {
+      setDescDialog(false);
+      setSelectedDescBox(null);
+      setDescriptionInput("");
+    }}
+  >
+    CANCEL
+  </Button>
+
+  <Button
+    variant="contained"
+    onClick={handleSaveDescription}
+  >
+    SAVE
+  </Button>
+</div>
     </div>
   </div>
 )}
