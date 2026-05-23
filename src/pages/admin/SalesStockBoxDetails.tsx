@@ -112,12 +112,14 @@ const handleBulkDelete = async () => {
   if (!confirmDelete) return;
 
   try {
-    await api.delete(`${basePath}/stock-box-data/delete`, {
-      data: selectedIds,
-      headers: token
-        ? { Authorization: `Bearer ${token}` }
-        : undefined,
-    });
+   await api.request({
+  method: "DELETE",
+  url: `${basePath}/stock-box-data/delete`,
+  data: selectedIds,
+  headers: token
+    ? { Authorization: `Bearer ${token}` }
+    : undefined,
+});
 
     alert("Deleted Successfully");
 
