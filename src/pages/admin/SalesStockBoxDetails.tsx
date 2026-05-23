@@ -1,8 +1,6 @@
 // src/pages/admin/StockBoxDetails.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DeleteIcon from "@mui/icons-material/Delete";
-import IconButton from "@mui/material/IconButton";
 import api from "@/services/api";
 
 type StockBoxDataEntry = {
@@ -43,14 +41,12 @@ const secreat_code = "HambireJ@1977";
 
 const [passwordDialog, setPasswordDialog] = useState(false);
 const [passwordInput, setPasswordInput] = useState("");
-const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
 
-const handleAskDeletePassword = (stockBoxDataId: number) => {
-  setPendingDeleteId(stockBoxDataId);
-  setPasswordInput("");
-  setPasswordDialog(true);
-};
+
+
+
 
 const verifyPasswordAndDelete = async () => {
   if (passwordInput !== secreat_code) {
@@ -58,13 +54,10 @@ const verifyPasswordAndDelete = async () => {
     return;
   }
 
-  if (pendingDeleteId === null) return;
-
   setPasswordDialog(false);
-  await handleDeleteStockBoxData(pendingDeleteId);
-
-  setPendingDeleteId(null);
   setPasswordInput("");
+
+  await handleBulkDelete();
 };
 
   if (!stockBox) {
@@ -88,27 +81,48 @@ const verifyPasswordAndDelete = async () => {
     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
   };
 
-  const handleDeleteStockBoxData = async (
-  stockBoxDataId: number
-) => {
+ 
 
-const entry = stockBox.stockBoxData.find(
-  (x) => x.stockBoxDataId === stockBoxDataId
-);
+const handleCheckOne = (id: number) => {
+  setSelectedIds((prev) =>
+    prev.includes(id)
+      ? prev.filter((x) => x !== id)
+      : [...prev, id]
+  );
+};
 
-const confirmDelete = window.confirm(
-  `Are you sure want to delete?\n\n` +
-  `ID: ${entry?.stockBoxDataId}\n` +
-  `Metal Weight: ${entry?.metalWeight}\n` +
-  `Barcode Value: ${entry?.barcodeValue}`
-);
+const handleSelectAllSell = () => {
+  const sellIds = stockBox.stockBoxData
+    .filter((x) => x.methodType2?.toUpperCase() === "SELL")
+    .map((x) => x.stockBoxDataId);
+
+  setSelectedIds(sellIds);
+};
+
+const handleBulkDelete = async () => {
+  if (selectedIds.length === 0) {
+    alert("Please select at least one row");
+    return;
+  }
+
+  const confirmDelete = window.confirm(
+    `Are you sure want to delete ${selectedIds.length} selected rows?`
+  );
 
   if (!confirmDelete) return;
 
   try {
+    await api.delete(`${basePath}/stock-box-data/delete`, {
+      data: selectedIds,
+      headers: token
+        ? { Authorization: `Bearer ${token}` }
+        : undefined,
+    });
 
-    await api.delete(
-      `${basePath}/stock-box-data/delete/${stockBoxDataId}`,
+    alert("Deleted Successfully");
+
+    const updatedResponse = await api.get(
+      `${basePath}/stock-box/${stockBox.stockBoxId}`,
       {
         headers: token
           ? { Authorization: `Bearer ${token}` }
@@ -116,29 +130,15 @@ const confirmDelete = window.confirm(
       }
     );
 
-    alert("Deleted Successfully");
+    localStorage.setItem(
+      "selectedStockBox",
+      JSON.stringify(updatedResponse.data)
+    );
 
-    // remove deleted row locally
-    const updatedResponse = await api.get(
-  `${basePath}/stock-box/${stockBox.stockBoxId}`,
-  {
-    headers: token
-      ? { Authorization: `Bearer ${token}` }
-      : undefined,
-  }
-);
-
-localStorage.setItem(
-  "selectedStockBox",
-  JSON.stringify(updatedResponse.data)
-);
-
-window.location.reload();
-
+    setSelectedIds([]);
+    window.location.reload();
   } catch (error) {
-
     console.error(error);
-
     alert("Delete Failed");
   }
 };
@@ -175,10 +175,39 @@ window.location.reload();
   </div>
 </div>
 
+{isAdmin && (
+  <div className="flex gap-3 mb-4">
+    <button
+      onClick={handleSelectAllSell}
+      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+    >
+      Select All SELL
+    </button>
+
+   <button
+  onClick={() => {
+    if (selectedIds.length === 0) {
+      alert("Please select at least one row");
+      return;
+    }
+
+    setPasswordInput("");
+    setPasswordDialog(true);
+  }}
+  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+>
+  Delete Selected
+</button>
+  </div>
+)}
+
         {stockBox.stockBoxData && stockBox.stockBoxData.length > 0 ? (
           <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
             <thead className="bg-gray-200">
               <tr>
+  {isAdmin && (
+  <th className="border px-3 py-2 text-center">Select</th>
+)}
                 <th className="border px-3 py-2 text-center">
                   <div className="flex justify-center items-center">ID</div>
                 </th>
@@ -216,19 +245,22 @@ window.location.reload();
         EPC
       </div>
     </th>
-
-    {isAdmin && (
-      <th className="border px-3 py-2 text-center">
-        <div className="flex justify-center items-center">
-          Delete
-        </div>
-      </th>
-    )}
   </tr>
 </thead>
             <tbody>
               {stockBox.stockBoxData.map((entry) => (
                 <tr key={entry.stockBoxDataId} className="bg-white/90">
+                 {isAdmin && (
+  <td className="border px-3 py-2 text-center">
+    <input
+      type="checkbox"
+      checked={selectedIds.includes(entry.stockBoxDataId)}
+      onChange={() => handleCheckOne(entry.stockBoxDataId)}
+      className="w-4 h-4"
+    />
+  </td>
+)}
+
                   <td className="border px-3 py-2 text-center">
                     {entry.stockBoxDataId}
                   </td>
@@ -264,18 +296,7 @@ window.location.reload();
                     {formatDMY(entry.sellingDate)}
                   </td>
                   <td className="border px-3 py-2">{entry.epcNumber}</td>
-                <td className="border px-3 py-2 text-center">
-
-  {isAdmin && (
-    <IconButton
-      color="error"
-    onClick={() => handleAskDeletePassword(entry.stockBoxDataId)}
-    >
-      <DeleteIcon />
-    </IconButton>
-  )}
-
-</td>
+            
                 </tr>
               ))}
             </tbody>
@@ -302,7 +323,6 @@ window.location.reload();
         <button
           onClick={() => {
             setPasswordDialog(false);
-            setPendingDeleteId(null);
             setPasswordInput("");
           }}
           className="px-4 py-2 border rounded-lg"
