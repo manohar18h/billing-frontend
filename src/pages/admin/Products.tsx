@@ -18,6 +18,7 @@ import {
 import api from "@/services/api";
 import QRCode from "qrcode";
 import { useWorkers } from "@/contexts/WorkersContext";
+import { useNavigate } from "react-router-dom";
 
 const goldItems = [
   "Batuvu",
@@ -338,6 +339,10 @@ export interface SpeclWorkRequest {
 /* ============================ Component ============================ */
 const Products: React.FC = () => {
   /* --------- SEARCH (top) --------- */
+  const navigate = useNavigate();
+
+  const role = localStorage.getItem("role");
+const basePath = role === "SALES" ? "/sales" : "/admin";
   const [q, setQ] = useState<ProductQuery>(initialQuery);
   const [topLoading, setTopLoading] = useState(false);
   const [topResults, setTopResults] = useState<StockProduct[] | null>(null);
@@ -420,7 +425,7 @@ const Products: React.FC = () => {
       console.log("requestBody", JSON.stringify(requestBody));
 
       const res = await api.post(
-        `/admin/addSpeclWork/${selectedWorkerId}`,
+          `${basePath}/addSpeclWork/${selectedWorkerId}`,
         requestBody,
         {
           headers: {
@@ -476,7 +481,7 @@ const Products: React.FC = () => {
       const token = localStorage.getItem("token") ?? "";
 
       // ✅ axios auto-prepends VITE_API_URL
-      const url = `/admin/getStockProduct/${encodeURIComponent(
+      const url = `${basePath}/getStockProduct/${encodeURIComponent(
         q.metal.trim(),
       )}/${encodeURIComponent(q.itemName.trim())}/${encodeURIComponent(
         q.catalogue.trim(),
@@ -531,7 +536,7 @@ const Products: React.FC = () => {
       const token = localStorage.getItem("token") ?? "";
 
       const response = await api.post<StockApiResponse>(
-        `/admin/addStockCount/${row.stockProductId}`,
+        `${basePath}/addStockCount/${row.stockProductId}`,
         null, // no body
         {
           params: { stock: newStock },
@@ -660,7 +665,7 @@ const Products: React.FC = () => {
       console.log("Request Body:", payload);
 
       const res = await api.post<StockProduct | StockProduct[]>(
-        "/admin/addStockProduct",
+        `${basePath}/addStockProduct`,
         payload,
         {
           headers: {
@@ -690,7 +695,7 @@ const Products: React.FC = () => {
           const token = localStorage.getItem("token") ?? "";
 
           const barcodeRes = await api.get<StockProduct>(
-            `/admin/getByBarcode`,
+            `${basePath}/getByBarcode`,
             {
               params: { barcodeValue: newBarcode },
               headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -852,7 +857,7 @@ const Products: React.FC = () => {
       setBarcodeSearchLoading(true);
 
       const token = localStorage.getItem("token") ?? "";
-      const res = await api.get<StockProduct>(`/admin/getByBarcode`, {
+      const res = await api.get<StockProduct>(`${basePath}/getByBarcode`, {
         params: { barcodeValue: barcodeSearch.trim() },
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
@@ -871,6 +876,8 @@ const Products: React.FC = () => {
       setBarcodeSearchLoading(false);
     }
   };
+
+  
 
   const buildSmallLabelHtml = (r: StockProduct, imageSrc: string) => {
     const barcodeValue = r.barcodeValue ?? "-";
@@ -1032,7 +1039,7 @@ const Products: React.FC = () => {
 
       const token = localStorage.getItem("token") ?? "";
       await api.post(
-        `/admin/stock-product/save-epc`,
+        `${basePath}/stock-product/save-epc`,
         {
           barcodeValue: selectedLabelRow.barcodeValue,
           epc: epcValue.trim(),
@@ -1073,7 +1080,20 @@ const Products: React.FC = () => {
   };
 
   return (
-    <Box>
+    <div
+    className={
+      role === "SALES"
+        ? "min-h-screen bg-[#f8f5ff] px-6 py-6 lg:px-16"
+        : ""
+    }
+  >
+    <div
+      className={
+        role === "SALES"
+          ? "max-w-7xl mx-auto space-y-8"
+          : ""
+      }
+    >
       {/* ---------- SEARCH STOCK PRODUCT ---------- */}
       <Paper
         elevation={0}
@@ -1086,6 +1106,22 @@ const Products: React.FC = () => {
           boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
         }}
       >
+        {role === "SALES" && (
+  <Box display="flex" justifyContent="flex-end" mb={2}>
+    <Button
+      variant="outlined"
+      color="error"
+      onClick={() => navigate("/sales")}
+      sx={{
+        borderRadius: "14px",
+        px: 3,
+        fontWeight: 700,
+      }}
+    >
+      Close
+    </Button>
+  </Box>
+)}
         <Typography variant="h5" fontWeight={700} color="primary" mb={3}>
           Search Stock Product
         </Typography>
@@ -2583,7 +2619,8 @@ const Products: React.FC = () => {
           </Typography>
         </Paper>
       )}
-    </Box>
+     </div>
+  </div>
   );
 };
 

@@ -77,7 +77,22 @@ type StockDataBox = {
   stockBoxData: StockBoxDataEntry[];
 };
 
-const SalesPage: React.FC = () => {
+type SalesPageProps = {
+  mode?: "stockBox" | "estimation";
+};
+
+const SalesPage: React.FC<SalesPageProps> = ({ mode }) => {
+    const token = localStorage.getItem("token");
+const role = localStorage.getItem("role");
+const basePath = role === "ADMIN" ? "/admin" : "/sales";
+ const isAdmin = role === "ADMIN";
+  const barcodeApi =
+  role === "ADMIN"
+    ? `${basePath}/getByBarcode`
+    : `${basePath}/getDataByBarcode`;
+  const isSales = role === "SALES";
+const showEstimationSection = !isSales || mode === "estimation";
+const showStockBoxSection = !isSales || mode === "stockBox";
   const [searchQuery, setSearchQuery] = useState("");
   const [order, setOrder] = useState<BarcodeProduct | null>(null);
   const [metalPrice, setMetalPrice] = useState(0);
@@ -87,13 +102,7 @@ const SalesPage: React.FC = () => {
 
 
 
-  const token = localStorage.getItem("token");
-const role = localStorage.getItem("role");
-const basePath = role === "ADMIN" ? "/admin" : "/sales";
-  const barcodeApi =
-  role === "ADMIN"
-    ? `${basePath}/getByBarcode`
-    : `${basePath}/getDataByBarcode`;
+
   const [rows, setRows] = useState<StockDataBox[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -101,7 +110,7 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
   const [search, setSearch] = useState<string>(""); // 👈 search state
 
 
-    const isAdmin = role === "ADMIN";
+   
 
 const [editBox, setEditBox] = useState<StockDataBox | null>(null);
 const [editCount, setEditCount] = useState("");
@@ -327,6 +336,7 @@ if (!confirmDelete) return;
 
   return (
     <div className="p-6 bg-white text-black">
+      
       <style>
         {`
   @media print {
@@ -424,32 +434,35 @@ if (!confirmDelete) return;
   }
 `}
       </style>
-   {role === "SALES" && (
-  <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    mb={4}
-  >
-    <Button
-      variant="contained"
-      color="primary"
-      size="large"
-      onClick={() => navigate("/admin/products")}
-      sx={{
-        borderRadius: "14px",
-        px: 5,
-        py: 1.5,
-        fontWeight: "bold",
-        fontSize: "16px",
-      }}
-    >
-      Open Products
-    </Button>
-  </Box>
-)}
 
-      <Box>
+{showEstimationSection && (
+  <Paper
+    elevation={0}
+    sx={{
+      p: 5,
+      mt: 4,
+      borderRadius: "28px",
+      backgroundColor: "rgba(255,255,255,0.9)",
+      border: "1px solid #d0b3ff",
+      boxShadow: "0 10px 30px rgba(136,71,255,0.18)",
+    }}
+  >
+    <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+      <Typography variant="h4" fontWeight="bold" color="primary">
+        Estimation
+      </Typography>
+
+      {isSales && (
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={() => navigate("/sales")}
+          sx={{ borderRadius: "12px", fontWeight: "bold" }}
+        >
+          Close
+        </Button>
+      )}
+    </Box>
         {/* 🔍 Search Bar */}
         <Box
           display="flex"
@@ -489,58 +502,52 @@ if (!confirmDelete) return;
 
         {/* 📋 Show Data Only After Search */}
         {order && (
-          <Paper
-            sx={{
-              p: 4,
-              borderRadius: "24px",
-              backgroundColor: "rgba(255,255,255,0.95)",
-              boxShadow: "0px 10px 30px rgba(136,71,255,0.2)",
-            }}
-          >
-            <Typography variant="h5" mb={3} fontWeight="bold" color="primary">
-              Product Details
-            </Typography>
+  <div className="mt-8 rounded-[28px] bg-gradient-to-br from-[#091020] via-[#2b0b57] to-[#3d0068] p-8 text-white shadow-2xl">
+    <div className="flex justify-between items-center mb-6">
+      <h2 className="text-3xl font-extrabold text-purple-300">
+        Product Details
+      </h2>
 
-            <Grid container spacing={3}>
-              {/* Show all fields except stockProductId & barcodeValue */}
-              {Object.entries(order).map(([key, value]) => {
-                if (key === "stockProductId" || key === "barcodeValue") {
-                  return null;
-                }
-                return (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={key}>
-                    <TextField
-                      label={key.replace(/_/g, " ")}
-                      value={value}
-                      fullWidth
-                      InputProps={{ readOnly: true }}
-                    />
-                  </Grid>
-                );
-              })}
+      <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-yellow-300">
+        Barcode: {order.barcodeValue}
+      </span>
+    </div>
 
-              {/* Metal Price */}
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <TextField
-                  label="Metal Price"
-                  value={metalPrice}
-                  fullWidth
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="space-y-3">
+        <p><b className="text-pink-300">Item Name:</b> <span className="text-emerald-300 font-bold">{order.itemName}</span></p>
+        <p><b className="text-pink-300">Catalogue:</b> <span className="text-emerald-300 font-bold">{order.catalogue}</span></p>
+        <p><b className="text-pink-300">Design:</b> <span className="text-emerald-300 font-bold">{order.design}</span></p>
+        <p><b className="text-pink-300">Size:</b> <span className="text-emerald-300 font-bold">{order.size}</span></p>
+        <p><b className="text-pink-300">Metal:</b> <span className="text-emerald-300 font-bold">{order.metal}</span></p>
+        <p><b className="text-pink-300">Metal Price:</b> <span className="text-yellow-300 font-bold">{metalPrice}</span></p>
+        <p><b className="text-pink-300">Metal Weight:</b> <span className="text-yellow-300 font-bold">{order.metal_weight}</span></p>
+        <p><b className="text-pink-300">Wastage:</b> <span className="text-yellow-300 font-bold">{order.wastage || "—"}</span></p>
+        <p><b className="text-pink-300">Making Charges:</b> <span className="text-yellow-300 font-bold">{order.making_charges}</span></p>
+        <p><b className="text-pink-300">Stone Weight:</b> <span className="text-yellow-300 font-bold">{order.stone_weight || "—"}</span></p>
+        <p><b className="text-pink-300">Stone Amount:</b> <span className="text-yellow-300 font-bold">{order.stone_amount || "—"}</span></p>
+      </div>
 
-              {/* Total Amount */}
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <TextField
-                  label="Total Amount"
-                  value={totalAmount}
-                  fullWidth
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-        )}
+      <div className="space-y-3 border-l border-white/20 pl-8">
+        <p><b className="text-pink-300">Wax Weight:</b> <span className="text-yellow-300 font-bold">{order.wax_weight || "—"}</span></p>
+        <p><b className="text-pink-300">Wax Amount:</b> <span className="text-yellow-300 font-bold">{order.wax_amount || "—"}</span></p>
+        <p><b className="text-pink-300">Diamond Weight:</b> <span className="text-yellow-300 font-bold">{order.diamond_weight || "—"}</span></p>
+        <p><b className="text-pink-300">Diamond Amount:</b> <span className="text-yellow-300 font-bold">{order.diamond_amount || "—"}</span></p>
+        <p><b className="text-pink-300">Bits Weight:</b> <span className="text-yellow-300 font-bold">{order.bits_weight || "—"}</span></p>
+        <p><b className="text-pink-300">Bits Amount:</b> <span className="text-yellow-300 font-bold">{order.bits_amount || "—"}</span></p>
+        <p><b className="text-pink-300">Gross Weight:</b> <span className="text-yellow-300 font-bold">{order.gross_weight}</span></p>
+        <p><b className="text-pink-300">Stock Box:</b> <span className="text-yellow-300 font-bold">{order.stockBox || "—"}</span></p>
+
+        <div className="mt-6 rounded-2xl bg-white/10 p-4">
+          <p className="text-pink-300 font-bold">Final Estimation Amount</p>
+          <p className="text-4xl font-extrabold text-yellow-300 mt-2">
+            ₹{totalAmount}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
         {order && (
           <Box mt={3} textAlign="center">
             <Button
@@ -794,8 +801,9 @@ if (!confirmDelete) return;
             </div>
           </div>
         )}
-      </Box>
-      {showEstimation && (
+    </Paper>
+)}
+      {showEstimationSection && showEstimation && (
         <div className="text-center mt-6 print:hidden">
           <button
             onClick={() => window.print()}
@@ -805,6 +813,9 @@ if (!confirmDelete) return;
           </button>
         </div>
       )}
+
+
+{showStockBoxSection && (
 
       <div className="mt-10 p-3 flex flex-col items-center justify-center">
         <Paper
@@ -820,14 +831,22 @@ if (!confirmDelete) return;
             boxShadow: "0 10px 30px rgba(136,71,255,0.3)",
           }}
         >
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            color="primary"
-            gutterBottom
-          >
-            All Stock Box Data
-          </Typography>
+         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+  <Typography variant="h4" fontWeight="bold" color="primary">
+    All Stock Box Data
+  </Typography>
+
+  {isSales && (
+    <Button
+      variant="outlined"
+      color="error"
+      onClick={() => navigate("/sales")}
+      sx={{ borderRadius: "12px", fontWeight: "bold" }}
+    >
+      Close
+    </Button>
+  )}
+</Box>
 
           {/* 🔍 Search Bar */}
           <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
@@ -898,7 +917,11 @@ if (!confirmDelete) return;
       color="primary"
       onClick={() => {
         localStorage.setItem("selectedStockBox", JSON.stringify(box));
-        navigate(`/admin/salesStockBoxDetails/${box.stockBoxId}`);
+       navigate(
+  isSales
+    ? `/sales/stock-box-details/${box.stockBoxId}`
+    : `/admin/salesStockBoxDetails/${box.stockBoxId}`
+);
       }}
     >
       <VisibilityIcon fontSize="medium" />
@@ -936,6 +959,7 @@ if (!confirmDelete) return;
           )}
         </Paper>
       </div>
+)}
 
 {editBox && (
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

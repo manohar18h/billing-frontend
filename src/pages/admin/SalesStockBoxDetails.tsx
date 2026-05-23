@@ -211,18 +211,21 @@ window.location.reload();
                     Selling Date
                   </div>
                 </th>
-                <th className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center">EPC</div>
-                </th>
-          {isAdmin && (
-  <th className="border px-3 py-2 text-center">
-    <div className="flex justify-center items-center">
-      Action
-    </div>
-  </th>
-)}
-              </tr>
-            </thead>
+               <th className="border px-3 py-2 text-center">
+      <div className="flex justify-center items-center">
+        EPC
+      </div>
+    </th>
+
+    {isAdmin && (
+      <th className="border px-3 py-2 text-center">
+        <div className="flex justify-center items-center">
+          Delete
+        </div>
+      </th>
+    )}
+  </tr>
+</thead>
             <tbody>
               {stockBox.stockBoxData.map((entry) => (
                 <tr key={entry.stockBoxDataId} className="bg-white/90">
