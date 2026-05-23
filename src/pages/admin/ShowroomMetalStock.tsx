@@ -64,11 +64,11 @@ interface OldReturnMetals {
   oldMetalReturnId: number;
   onlyExchangeMetal: string;
   onlyExchange_metal_name: string;
-  onlyExchange_metal_weight: string;
-  onlyExchange_metal_purity_weight: string;
-  onlyExchange_total_amount: string;
-  onlyExchange_item_cash_amount: string;
-  onlyExchange_item_phnpay_amount: string;
+  onlyExchange_metal_weight: number;
+  onlyExchange_metal_purity_weight: number;
+  onlyExchange_total_amount: number;
+  onlyExchange_item_cash_amount: number;
+  onlyExchange_item_phnpay_amount: number;
   active: boolean;
   type: string;
   date: string;
@@ -248,8 +248,8 @@ const ShowroomMetalStock: React.FC = () => {
       const activeItems = (res.data || []).filter(
         (item) => item.active === true,
       );
+            setOldReturnData(activeItems);
 
-      setOldReturnData(activeItems);
     } catch (error) {
       console.error("Error fetching worker stock:", error);
     }
@@ -1757,7 +1757,7 @@ const ShowroomMetalStock: React.FC = () => {
                     sx={{ fontSize: "0.95rem" }}
                   >
                     <div className="flex justify-center items-center">
-                      {r.onlyExchangeMetal}
+                     {r.onlyExchangeMetal}
                     </div>
                   </TableCell>
 
