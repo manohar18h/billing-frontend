@@ -353,7 +353,7 @@ const fetchItemNamesByMetal = async (metal: string) => {
   const token = localStorage.getItem("token") ?? "";
 
  const res = await api.get<{ itemName: string }[]>(
-  `/admin/item-names/${metalType}`,
+  `${basePath}/item-names/${metalType}`,
   {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   },
@@ -380,7 +380,7 @@ const saveNewItemNameIfNeeded = async (metal: string, itemNameValue: string) => 
   const token = localStorage.getItem("token") ?? "";
 
   await api.post(
-    "/admin/item-names",
+    `${basePath}/item-names`,
     { metalType, itemName },
     {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
