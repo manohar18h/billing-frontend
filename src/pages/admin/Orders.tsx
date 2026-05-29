@@ -466,10 +466,10 @@ useEffect(() => {
     .get(`/admin/item-names/${metalType}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-    .then((res) => {
-      const names = res.data
-        .map((item: any) => item.itemName)
-        .filter(Boolean);
+   .then((res: { data: { itemName: string }[] }) => {
+  const names = res.data
+    .map((item) => item.itemName)
+   .filter((name): name is string => Boolean(name));
 
       setItemOptions(names);
     })

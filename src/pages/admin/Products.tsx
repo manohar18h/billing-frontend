@@ -352,12 +352,16 @@ const fetchItemNamesByMetal = async (metal: string) => {
 
   const token = localStorage.getItem("token") ?? "";
 
-  const res = await api.get(`/admin/item-names/${metalType}`, {
+ const res = await api.get<{ itemName: string }[]>(
+  `/admin/item-names/${metalType}`,
+  {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-  });
+  },
+);
 
-  const names = res.data.map((item: any) => item.itemName).filter(Boolean);
-
+const names = res.data
+  .map((item) => item.itemName)
+  .filter((name): name is string => Boolean(name));
   setItemOptions(names);
 };
 
