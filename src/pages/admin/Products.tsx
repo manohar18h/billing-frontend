@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import {
+import React, { useState, useRef, useEffect } from "react";
+import {  
   Box,
   Paper,
   Typography,
@@ -20,150 +20,7 @@ import QRCode from "qrcode";
 import { useWorkers } from "@/contexts/WorkersContext";
 import { useNavigate } from "react-router-dom";
 
-const goldItems = [
-  "Batuvu",
-  "One Stone Pulla",
-  "Gundu Pulla",
-  "3-Pujala Pulla",
-  "Sridevi Pulla",
-  "Sadha J-Pulla",
-  "Sadha Nose Ring",
-  "J-Stone Pulla",
-  "Fancy Pulla",
-  "Chandravanka Pulla",
-  "Kamma Pulla",
-  "Muthyam Pulla",
-  "Pressing One Stone Pulla",
-  "Pressing Gundu Pulla",
-  "Kammalu",
-  "Chand Bali Kammalu",
-  "Stone Kammalu",
-  "Sherlu Kammalu",
-  "Pogulu",
-  "Mukku Pogu",
-  "Sadha Mukku Pogu",
-  "Earring",
-  "Earring Small",
-  "Fancy Earring",
-  "Jhumkas",
-  "Sadha Vanku",
-  "Stone Vanku",
-  "Studs",
-  "Laxmi Devi Puste",
-  "Andhra Puste",
-  "Gante Puste",
-  "Thirmandhar Puste",
-  "Silva Puste",
-  "Fancy Puste",
-  "House Puste",
-  "Chaknam Puste",
-  "Matilu",
-  "Matilu Small",
-  "Matilu Big",
-  "Pusthela Thadu",
-  "Kadiyam",
-  "Ladies Ring",
-  "Men Ring",
-  "Fancy Ring",
-  "Fancy Baby Ring",
-  "Bracelet H.M",
-  "Bracelet M.M",
-  "Necklace",
-  "Nallapusalu Chain",
-  "7 piece Necklace",
-  "Chain",
-  "Gundla Mala",
-  "Gundlu Yannalu",
-  "Design Gundlu",
-  "Champaswaralu",
-  "Long Haram",
-  "Short Haram",
-  "Locket",
-  "Bangle",
-  "kankanalu",
-  "Baby Bangle",
-  "Papidi Billa",
-  "God Idol",
-  "God Mokkulu",
-  "Gold 24 Biscuit",
-  "Gold 22 Biscuit",
-  "Other",
-];
 
-const silverItems = [
-  "Vottulu",
-  "Pilenlu",
-  "Batuvu",
-  "Mettelu",
-  "Chuttu Mettelu",
-  "Spring Mettelu",
-  "Jali Mettelu",
-  "Bracelet H.M",
-  "Bracelet M.M",
-  "Chain H.M",
-  "Chain M.M",
-  "Kathi Billa",
-  "Nalla Pusala Danda ",
-  "Ladies Ring",
-  "Men Ring",
-  "Small Ring",
-  "Fancy Ring",
-  "Fancy Baby Ring",
-  "Kadiyam",
-  "Bedi",
-  "Small Kadiyam",
-  "Sadan Kadiyam",
-  "Billa Kadiyam",
-  "Bongu Kadiyam",
-  "R.D Kadam",
-  "Ragi Kadiyam",
-  "Kadiyal Plain",
-  "Bolgajal Kadiyal",
-  "R.D Sadan Kadiyal",
-  "Pattilu",
-  "Bolgajal Pattilu",
-  "Single Chain Pattilu",
-  "Fancy Pattilu",
-  "Pusala Pattilu",
-  "Jaler Pattilu",
-  "S-Patagolsu",
-  "Nadumu Golusu",
-  "Chekkudu Gutti - HM",
-  "Chekkudu Gutti - MM",
-  "Locket",
-  "Bangle",
-  "Baby Bangle",
-  "Uyyala",
-  "God Idol",
-  "God Mokkulu",
-  "Ashtalakshmi Kalash",
-  "Tulsi",
-  "Deepam",
-  "Flowers",
-  "Kamakshi Deepam",
-  "Panchapali",
-  "Chemmalu",
-  "Small Deepam Plates",
-  "Kumkum Bharani",
-  "Kalash",
-  "Ganta",
-  "Plates",
-  "Glass",
-  "Bowls",
-  "Spoons",
-  "Glass & Bowls",
-  "Glass & Spoons",
-  "Bowls & Spoons",
-  "Plates & Bowls",
-  "Plates & Spoons",
-  "Plates & Glass",
-  "Plates & Glass & Spoons",
-  "Plates & Bowls & Spoons",
-  "Plates & Glass & Bowls",
-  "Plates & Glass & Bowls & Spoons",
-  "Silver Biscuit",
-  "Other",
-];
 
 const prettySelectSx = {
   "& .MuiOutlinedInput-root": {
@@ -343,6 +200,16 @@ const Products: React.FC = () => {
 
   const role = localStorage.getItem("role");
 const basePath = role === "SALES" ? "/sales" : "/admin";
+
+const [itemOptions, setItemOptions] = useState<string[]>([]);
+const [searchItemInputValue, setSearchItemInputValue] = useState("");
+const [searchItemDropdownOpen, setSearchItemDropdownOpen] = useState(false);
+
+const [productItemInputValue, setProductItemInputValue] = useState("");
+const [productItemDropdownOpen, setProductItemDropdownOpen] = useState(false);
+
+const [spclItemInputValue, setSpclItemInputValue] = useState("");
+const [spclItemDropdownOpen, setSpclItemDropdownOpen] = useState(false);
   const [q, setQ] = useState<ProductQuery>(initialQuery);
   const [topLoading, setTopLoading] = useState(false);
   const [topResults, setTopResults] = useState<StockProduct[] | null>(null);
@@ -410,6 +277,7 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
 
     try {
       const token = localStorage.getItem("token");
+      await saveNewItemNameIfNeeded(spclWork.metal, spclWork.itemName);
 
       const requestBody = {
         itemName: spclWork.itemName,
@@ -452,6 +320,8 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
         itemLinkCode: "",
       });
       setSelectedWorkerId("");
+      setSpclItemInputValue("");
+setSpclItemDropdownOpen(false);
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Error submitting lot work:", error.message);
@@ -461,6 +331,60 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
       }
     }
   };
+
+  const getMetalTypeForItemApi = (metal: string) => {
+  if (metal === "24 Gold" || metal === "22 Gold") return "Gold";
+  if (metal === "999 Silver" || metal === "995 Silver") return "Silver";
+  return "";
+};
+
+const capitalizeWords = (text: string) => {
+  return text.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const fetchItemNamesByMetal = async (metal: string) => {
+  const metalType = getMetalTypeForItemApi(metal);
+
+  if (!metalType) {
+    setItemOptions([]);
+    return;
+  }
+
+  const token = localStorage.getItem("token") ?? "";
+
+  const res = await api.get(`/admin/item-names/${metalType}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+
+  const names = res.data.map((item: any) => item.itemName).filter(Boolean);
+
+  setItemOptions(names);
+};
+
+const saveNewItemNameIfNeeded = async (metal: string, itemNameValue: string) => {
+  const metalType = getMetalTypeForItemApi(metal);
+  const itemName = capitalizeWords(itemNameValue.trim());
+
+  if (!metalType || !itemName) return;
+
+  const alreadyExists = itemOptions.some(
+    (item) => item.toLowerCase() === itemName.toLowerCase(),
+  );
+
+  if (alreadyExists) return;
+
+  const token = localStorage.getItem("token") ?? "";
+
+  await api.post(
+    "/admin/item-names",
+    { metalType, itemName },
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    },
+  );
+
+  setItemOptions((prev) => [...prev, itemName].sort());
+};
 
   const searchTop = async () => {
     // If any field missing → open the form instead
@@ -512,6 +436,8 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
       setTopLoading(false);
     }
   };
+
+  
 
   const saveStock = async (row: StockProduct) => {
     if (editValue.trim() === "") {
@@ -609,6 +535,8 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
       alert("Please fill the required fields.");
       return;
     }
+
+    await saveNewItemNameIfNeeded(product.metal, product.itemName);
 
     const safeNum = (val: any) =>
       val === null || val === undefined || val === "" ? 0 : Number(val);
@@ -713,6 +641,8 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
       }
 
       setProduct(initialProduct);
+      setProductItemInputValue("");
+setProductItemDropdownOpen(false);
       setErrors({});
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -740,23 +670,7 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
   // --- State ---
   const [product, setProduct] = useState<ProductForm>(initialProduct);
 
-  const getProductItemOptions = () => {
-    if (
-      product.metal.toLowerCase() === "24 gold" ||
-      product.metal.toLowerCase() === "22 gold"
-    ) {
-      return goldItems;
-    }
-
-    if (
-      product.metal.toLowerCase() === "999 silver" ||
-      product.metal.toLowerCase() === "995 silver"
-    ) {
-      return silverItems;
-    }
-
-    return [];
-  };
+ 
 
   // --- Handler for normal product fields ---
   const onProductChange =
@@ -877,6 +791,24 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
     }
   };
 
+
+  useEffect(() => {
+  if (q.metal) {
+    fetchItemNamesByMetal(q.metal);
+  }
+}, [q.metal]);
+
+useEffect(() => {
+  if (product.metal) {
+    fetchItemNamesByMetal(product.metal);
+  }
+}, [product.metal]);
+
+useEffect(() => {
+  if (spclWork.metal) {
+    fetchItemNamesByMetal(spclWork.metal);
+  }
+}, [spclWork.metal]);
   
 
   const buildSmallLabelHtml = (r: StockProduct, imageSrc: string) => {
@@ -1162,44 +1094,43 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
 
           {/* ItemName (select depends on metal) */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              select
-              label="ItemName"
-              value={q.itemName}
-              onChange={onQChange("itemName")}
-              fullWidth
-              sx={prettySelectSx}
-              InputLabelProps={{ shrink: true }}
-              disabled={!q.metal}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (val) =>
-                  val ? (
-                    (val as string)
-                  ) : (
-                    <span style={{ color: "#9aa0a6" }}>Select item</span>
-                  ),
-                MenuProps: {
-                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>Select Item</em>
-              </MenuItem>
-              {(q.metal.toLowerCase() === "24 gold" ||
-              q.metal.toLowerCase() === "22 gold"
-                ? goldItems
-                : q.metal.toLowerCase() === "999 silver" ||
-                    q.metal.toLocaleLowerCase() === "995 silver"
-                  ? silverItems
-                  : []
-              ).map((it) => (
-                <MenuItem key={it} value={it}>
-                  {it}
-                </MenuItem>
-              ))}
-            </TextField>
+           <Autocomplete
+  freeSolo
+  open={searchItemDropdownOpen && itemOptions.length > 0}
+  onOpen={() => itemOptions.length > 0 && setSearchItemDropdownOpen(true)}
+  onClose={() => setSearchItemDropdownOpen(false)}
+  options={itemOptions}
+  inputValue={searchItemInputValue}
+  value={q.itemName || ""}
+  disabled={!q.metal}
+  filterOptions={(options, state) =>
+    options.filter((option) =>
+      option.toLowerCase().includes(state.inputValue.toLowerCase()),
+    )
+  }
+  onInputChange={(_, newInputValue) => {
+    const formatted = capitalizeWords(newInputValue);
+    setSearchItemInputValue(formatted);
+    setQ((prev) => ({ ...prev, itemName: formatted }));
+    setSearchItemDropdownOpen(true);
+  }}
+  onChange={(_, newValue) => {
+    const selected = newValue || "";
+    setSearchItemInputValue(selected);
+    setQ((prev) => ({ ...prev, itemName: selected }));
+    setSearchItemDropdownOpen(false);
+  }}
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      label="ItemName"
+      placeholder="Search item..."
+      fullWidth
+      InputLabelProps={{ shrink: true }}
+      sx={prettySelectSx}
+    />
+  )}
+/>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
@@ -1482,7 +1413,18 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
                     select
                     label="Metal"
                     value={product.metal}
-                    onChange={onProductChange("metal")}
+                   onChange={(e) => {
+  const selectedMetal = e.target.value;
+
+  setProduct((prev) => ({
+    ...prev,
+    metal: selectedMetal,
+    itemName: "",
+  }));
+
+  setProductItemInputValue("");
+  setProductItemDropdownOpen(false);
+}}
                     fullWidth
                     sx={prettySelectSx}
                     InputLabelProps={{ shrink: true }}
@@ -1508,36 +1450,59 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
 
                 {/* ItemName Auto Complete */}
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Autocomplete
-                    options={getProductItemOptions()}
-                    value={product.itemName || null}
-                    disabled={!product.metal}
-                    onChange={(_, newValue) => {
-                      setProduct((prev) => ({
-                        ...prev,
-                        itemName: newValue || "",
-                      }));
+                 <Autocomplete
+  freeSolo
+  open={productItemDropdownOpen && itemOptions.length > 0}
+  onOpen={() => itemOptions.length > 0 && setProductItemDropdownOpen(true)}
+  onClose={() => setProductItemDropdownOpen(false)}
+  options={itemOptions}
+  inputValue={productItemInputValue}
+  value={product.itemName || ""}
+  disabled={!product.metal}
+  filterOptions={(options, state) =>
+    options.filter((option) =>
+      option.toLowerCase().includes(state.inputValue.toLowerCase()),
+    )
+  }
+  onInputChange={(_, newInputValue) => {
+    const formatted = capitalizeWords(newInputValue);
 
-                      if (errors.itemName) {
-                        setErrors((prev) => ({
-                          ...prev,
-                          itemName: "",
-                        }));
-                      }
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="ItemName"
-                        placeholder="Search item..."
-                        fullWidth
-                        error={!!errors.itemName}
-                        helperText={errors.itemName || ""}
-                        InputLabelProps={{ shrink: true }}
-                        sx={prettySelectSx}
-                      />
-                    )}
-                  />
+    setProductItemInputValue(formatted);
+    setProduct((prev) => ({
+      ...prev,
+      itemName: formatted,
+    }));
+
+    setProductItemDropdownOpen(true);
+
+    if (errors.itemName) {
+      setErrors((prev) => ({ ...prev, itemName: "" }));
+    }
+  }}
+  onChange={(_, newValue) => {
+    const selected = newValue || "";
+
+    setProductItemInputValue(selected);
+    setProduct((prev) => ({
+      ...prev,
+      itemName: selected,
+    }));
+
+    setProductItemDropdownOpen(false);
+  }}
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      label="ItemName"
+      placeholder="Search or add item..."
+      fullWidth
+      error={!!errors.itemName}
+      helperText={errors.itemName || ""}
+      InputLabelProps={{ shrink: true }}
+      sx={prettySelectSx}
+    />
+  )}
+/>
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -2240,9 +2205,20 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
                     select
                     label="Metal"
                     value={spclWork.metal}
-                    onChange={handleSelect("metal")}
-                    fullWidth
-                  >
+onChange={(e) => {
+  const selectedMetal = e.target.value;
+
+  setSpclWork((prev) => ({
+    ...prev,
+    metal: selectedMetal,
+    itemName: "",
+  }));
+
+  setSpclItemInputValue("");
+  setSpclItemDropdownOpen(false);
+}}
+fullWidth    
+              >
                     <MenuItem value="">Select Metal</MenuItem>
                     <MenuItem value="24 Gold">24 Gold</MenuItem>
                     <MenuItem value="22 Gold">22 Gold</MenuItem>
@@ -2254,28 +2230,42 @@ const basePath = role === "SALES" ? "/sales" : "/admin";
                 {/* ItemName select (depends on metal) */}
                 {/* Worker Spcl Work ItemName Auto Complete */}
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Autocomplete
-                    options={
-                      spclWork.metal.includes("Gold") ? goldItems : silverItems
-                    }
-                    value={spclWork.itemName || null}
-                    disabled={!spclWork.metal}
-                    onChange={(_, newValue) => {
-                      setSpclWork((prev) => ({
-                        ...prev,
-                        itemName: newValue || "",
-                      }));
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Item Name"
-                        placeholder="Search item..."
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                      />
-                    )}
-                  />
+                <Autocomplete
+  freeSolo
+  open={spclItemDropdownOpen && itemOptions.length > 0}
+  onOpen={() => itemOptions.length > 0 && setSpclItemDropdownOpen(true)}
+  onClose={() => setSpclItemDropdownOpen(false)}
+  options={itemOptions}
+  inputValue={spclItemInputValue}
+  value={spclWork.itemName || ""}
+  disabled={!spclWork.metal}
+  filterOptions={(options, state) =>
+    options.filter((option) =>
+      option.toLowerCase().includes(state.inputValue.toLowerCase()),
+    )
+  }
+  onInputChange={(_, newInputValue) => {
+    const formatted = capitalizeWords(newInputValue);
+    setSpclItemInputValue(formatted);
+    setSpclWork((prev) => ({ ...prev, itemName: formatted }));
+    setSpclItemDropdownOpen(true);
+  }}
+  onChange={(_, newValue) => {
+    const selected = newValue || "";
+    setSpclItemInputValue(selected);
+    setSpclWork((prev) => ({ ...prev, itemName: selected }));
+    setSpclItemDropdownOpen(false);
+  }}
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      label="Item Name"
+      placeholder="Search or add item..."
+      fullWidth
+      InputLabelProps={{ shrink: true }}
+    />
+  )}
+/>
                 </Grid>
 
                 {/* Metal Weight */}

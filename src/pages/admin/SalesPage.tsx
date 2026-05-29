@@ -115,8 +115,6 @@ const [selectedDescBox, setSelectedDescBox] = useState<StockDataBox | null>(null
   const [search, setSearch] = useState<string>(""); // 👈 search state
 
 
-   
-
 const [editBox, setEditBox] = useState<StockDataBox | null>(null);
 const [editCount, setEditCount] = useState("");
 const [editWeight, setEditWeight] = useState("");

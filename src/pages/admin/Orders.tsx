@@ -70,151 +70,7 @@ type AppWorker = {
 };
 
 const Orders: React.FC = () => {
-  const goldItems = [
-    "Batuvu",
-    "One Stone Pulla",
-    "Gundu Pulla",
-    "3-Pujala Pulla",
-    "Sridevi Pulla",
-    "Sadha J-Pulla",
-    "Sadha Nose Ring",
-    "J-Stone Pulla",
-    "Fancy Pulla",
-    "Chandravanka Pulla",
-    "Kamma Pulla",
-    "Muthyam Pulla",
-    "Pressing One Stone Pulla",
-    "Pressing Gundu Pulla",
-    "Kammalu",
-    "Chand Bali Kammalu",
-    "Stone Kammalu",
-    "Sherlu Kammalu",
-    "Pogulu",
-    "Mukku Pogu",
-    "Sadha Mukku Pogu",
-    "Earring",
-    "Earring Small",
-    "Fancy Earring",
-    "Jhumkas",
-    "Sadha Vanku",
-    "Stone Vanku",
-    "Studs",
-    "Laxmi Devi Puste",
-    "Andhra Puste",
-    "Gante Puste",
-    "Thirmandhar Puste",
-    "Silva Puste",
-    "Fancy Puste",
-    "House Puste",
-    "Chaknam Puste",
-    "Matilu",
-    "Matilu Small",
-    "Matilu Big",
-    "Pusthela Thadu",
-    "Kadiyam",
-    "Kadiyam",
-    "Ladies Ring",
-    "Men Ring",
-    "Fancy Ring",
-    "Fancy Baby Ring",
-    "Bracelet H.M",
-    "Bracelet M.M",
-    "Necklace",
-    "Nallapusalu Chain",
-    "7 piece Necklace",
-    "Chain",
-    "Gundla Mala",
-    "Gundlu Yannalu",
-    "Design Gundlu",
-    "Champaswaralu",
-    "Long Haram",
-    "Short Haram",
-    "Locket",
-    "Bangle",
-    "kankanalu",
-    "Baby Bangle",
-    "Papidi Billa",
-    "God Idol",
-    "God Mokkulu",
-    "Gold 24 Biscuit",
-    "Gold 22 Biscuit",
-    "Other",
-  ];
-
-  const silverItems = [
-    "Vottulu",
-    "Pilenlu",
-    "Batuvu",
-    "Mettelu",
-    "Spring Mettelu",
-    "Chuttu Mettelu",
-    "Jali Mettelu",
-    "Bracelet H.M",
-    "Bracelet M.M",
-    "Chain H.M",
-    "Chain M.M",
-    "Kathi Billa",
-    "Nalla Pusala Danda ",
-    "Ladies Ring",
-    "Men Ring",
-    "Small Ring",
-    "Fancy Ring",
-    "Fancy Baby Ring",
-    "Kadiyam",
-    "Bedi",
-    "Small Kadiyam",
-    "Sadan Kadiyam",
-    "Billa Kadiyam",
-    "Bongu Kadiyam",
-    "R.D Kadam",
-    "Ragi Kadiyam",
-    "Kadiyal Plain",
-    "Bolgajal Kadiyal",
-    "R.D Sadan Kadiyal",
-    "Pattilu",
-    "Bolgajal Pattilu",
-    "Single Chain Pattilu",
-    "Fancy Pattilu",
-    "Pusala Pattilu",
-    "Jaler Pattilu",
-    "S-Patagolsu",
-    "Nadumu Golusu",
-    "Chekkudu Gutti - HM",
-    "Chekkudu Gutti - MM",
-    "Locket",
-    "Bangle",
-    "Baby Bangle",
-    "Uyyala",
-    "God Idol",
-    "God Mokkulu",
-    "Ashtalakshmi Kalash",
-    "Tulsi",
-    "Deepam",
-    "Flowers",
-    "Kamakshi Deepam",
-    "Panchapali",
-    "Chemmalu",
-    "Small Deepam Plates",
-    "Kumkum Bharani",
-    "Kalash",
-    "Ganta",
-    "Plates",
-    "Glass",
-    "Bowls",
-    "Spoons",
-    "Glass & Bowls",
-    "Glass & Spoons",
-    "Bowls & Spoons",
-    "Plates & Bowls",
-    "Plates & Spoons",
-    "Plates & Glass",
-    "Plates & Glass & Spoons",
-    "Plates & Bowls & Spoons",
-    "Plates & Glass & Bowls",
-    "Plates & Glass & Bowls & Spoons",
-    "Silver Biscuit",
-    "Other",
-  ];
+ 
   const bottomOrderRef = useRef<HTMLDivElement | null>(null);
 
   const handleClearExchange = () => {
@@ -344,6 +200,10 @@ const Orders: React.FC = () => {
   console.log("📦 Received numericOrderId from navigation:", numericOrderId);
 
   const token = localStorage.getItem("token");
+
+  const [itemOptions, setItemOptions] = useState<string[]>([]);
+  const [itemInputValue, setItemInputValue] = useState("");
+  const [itemDropdownOpen, setItemDropdownOpen] = useState(false);
 
   const [exchange, setExchange] = useState({
     exchange_metal: "",
@@ -587,13 +447,64 @@ const Orders: React.FC = () => {
     }
   };
 
-  const getItemOptions = () => {
-    if (order.metal === "24 Gold" || order.metal === "22 Gold")
-      return goldItems;
-    if (order.metal === "999 Silver" || order.metal === "995 Silver")
-      return silverItems;
-    return [];
-  };
+ const getMetalTypeForItemApi = (metal: string) => {
+  if (metal === "24 Gold" || metal === "22 Gold") return "Gold";
+  if (metal === "999 Silver" || metal === "995 Silver") return "Silver";
+  return "";
+};
+
+useEffect(() => {
+  const metalType = getMetalTypeForItemApi(order.metal);
+
+  if (!metalType) {
+    setItemOptions([]);
+    setItemDropdownOpen(false);
+    return;
+  }
+
+  api
+    .get(`/admin/item-names/${metalType}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    .then((res) => {
+      const names = res.data
+        .map((item: any) => item.itemName)
+        .filter(Boolean);
+
+      setItemOptions(names);
+    })
+    .catch((err) => {
+      console.error("Failed to fetch item names:", err);
+      setItemOptions([]);
+      setItemDropdownOpen(false);
+    });
+}, [order.metal, token]);
+
+const saveNewItemNameIfNeeded = async () => {
+  const metalType = getMetalTypeForItemApi(order.metal);
+  const itemName = order.itemName.trim();
+
+  if (!metalType || !itemName) return;
+
+  const alreadyExists = itemOptions.some(
+    (item) => item.toLowerCase() === itemName.toLowerCase(),
+  );
+
+  if (alreadyExists) return;
+
+  await api.post(
+    "/admin/item-names",
+    {
+      metalType,
+      itemName,
+    },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+
+  setItemOptions((prev) => [...prev, itemName].sort());
+};
 
   const [orderOpen, setOrderOpen] = useState(false);
   const [slectOrderId, setSlectOrderId] = useState<number | null>(null);
@@ -1020,6 +931,12 @@ const Orders: React.FC = () => {
     return Number.isInteger(rounded) ? rounded.toString() : rounded.toString();
   };
 
+ const capitalizeWords = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
   // Auto-calculate gross weight whenever dependencies change
   useEffect(() => {
     const {
@@ -1254,17 +1171,19 @@ const Orders: React.FC = () => {
                   select
                   label="Metal"
                   value={order.metal}
-                  onChange={(e) => {
-                    const selectedMetal = e.target.value;
-                    setOrder({
-                      ...order,
-                      metal: selectedMetal,
-                      metalPrice: getUpdatedMetalPrice(
-                        selectedMetal,
-                        order.itemName,
-                      ),
-                    });
-                  }}
+             onChange={(e) => {
+  const selectedMetal = e.target.value;
+
+  setOrder({
+    ...order,
+    metal: selectedMetal,
+    itemName: "",
+    metalPrice: getUpdatedMetalPrice(selectedMetal, ""),
+  });
+
+  setItemInputValue("");
+  setItemDropdownOpen(false);
+}}
                   disabled={
                     isEditing || (isPrefilled && (key as string) !== "discount")
                   }
@@ -1453,51 +1372,88 @@ const Orders: React.FC = () => {
                   <MenuItem value="Done">Done</MenuItem>
                 </TextField>
               ) : key === "itemName" ? (
-                <Autocomplete
-                  options={getItemOptions()}
-                  value={order.itemName || null}
-                  disabled={
-                    isEditing || (isPrefilled && (key as string) !== "discount")
-                  }
-                  onChange={(_, newValue) => {
-                    const newItemName = newValue || "";
+                     <Autocomplete
+  freeSolo
+  open={itemDropdownOpen && itemOptions.length > 0}
+  onOpen={() => {
+    if (itemOptions.length > 0) {
+      setItemDropdownOpen(true);
+    }
+  }}
+  onClose={() => setItemDropdownOpen(false)}
+  autoHighlight
+  options={itemOptions}
+  inputValue={itemInputValue}
+  value={order.itemName || ""}
+  filterOptions={(options, state) =>
+    options.filter((option) =>
+      option.toLowerCase().includes(state.inputValue.toLowerCase())
+    )
+  }
+  disabled={isEditing || (isPrefilled && (key as string) !== "discount")}
+onInputChange={(_, newInputValue) => {
+  const formattedValue = capitalizeWords(newInputValue);
 
-                    setOrder({
-                      ...order,
-                      itemName: newItemName,
-                      metalPrice: getUpdatedMetalPrice(
-                        order.metal,
-                        newItemName,
-                      ),
-                    });
+  setItemInputValue(formattedValue);
 
-                    if (orderErrors.itemName) {
-                      setOrderErrors((prev) => ({ ...prev, itemName: "" }));
-                    }
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Item Name"
-                      placeholder="Search item..."
-                      error={!!orderErrors.itemName}
-                      helperText={orderErrors.itemName || ""}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{
-                        style: { color: "#333" },
-                        shrink: true,
-                      }}
-                      sx={{
-                        minWidth: "200px",
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderWidth: "2px",
-                          borderColor: "gray",
-                        },
-                      }}
-                    />
-                  )}
-                />
+  setOrder((prev) => ({
+    ...prev,
+    itemName: formattedValue,
+    metalPrice: getUpdatedMetalPrice(prev.metal, formattedValue),
+  }));
+
+  if (itemOptions.length > 0) {
+    setItemDropdownOpen(true);
+  }
+
+  if (orderErrors.itemName) {
+    setOrderErrors((prev) => ({
+      ...prev,
+      itemName: "",
+    }));
+  }
+}}
+  onChange={(_, newValue) => {
+    const selectedValue = newValue || "";
+
+    setItemInputValue(selectedValue);
+
+    setOrder((prev) => ({
+      ...prev,
+      itemName: selectedValue,
+      metalPrice: getUpdatedMetalPrice(prev.metal, selectedValue),
+    }));
+
+    setItemDropdownOpen(false);
+  }}
+  noOptionsText={
+    order.metal
+      ? "No matching item found. Type full name and submit to add."
+      : "Please select metal first"
+  }
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      label="Item Name"
+      placeholder="Search or add item..."
+      error={!!orderErrors.itemName}
+      helperText={orderErrors.itemName || ""}
+      fullWidth
+      variant="outlined"
+      InputLabelProps={{
+        style: { color: "#333" },
+        shrink: true,
+      }}
+      sx={{
+        minWidth: "200px",
+        "& .MuiOutlinedInput-notchedOutline": {
+          borderWidth: "2px",
+          borderColor: "gray",
+        },
+      }}
+    />
+  )}
+/>
               ) : (
                 <TextField
                   {...thickTextFieldProps}
@@ -1587,15 +1543,17 @@ const Orders: React.FC = () => {
           <Button
             variant="contained"
             disabled={false}
-            onClick={() => {
-              window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+            onClick={async () => {
+  window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
 
-              if (isEditing) {
-                handleUpdateOrder();
-              } else {
-                handleOrderSubmit();
-              }
-            }}
+  await saveNewItemNameIfNeeded();
+
+  if (isEditing) {
+    handleUpdateOrder();
+  } else {
+    handleOrderSubmit();
+  }
+}}
           >
             {isEditing ? "Update" : "Submit"}
           </Button>
