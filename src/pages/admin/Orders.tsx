@@ -462,22 +462,22 @@ useEffect(() => {
     return;
   }
 
-  api
-    .get(`/admin/item-names/${metalType}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-   .then((res: { data: { itemName: string }[] }) => {
-  const names = res.data
-    .map((item) => item.itemName)
-   .filter((name): name is string => Boolean(name));
+ api
+  .get<{ itemName: string }[]>(`/admin/item-names/${metalType}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  .then((res) => {
+    const names = res.data
+      .map((item) => item.itemName)
+      .filter((name): name is string => Boolean(name));
 
-      setItemOptions(names);
-    })
-    .catch((err) => {
-      console.error("Failed to fetch item names:", err);
-      setItemOptions([]);
-      setItemDropdownOpen(false);
-    });
+    setItemOptions(names);
+  })
+  .catch((err) => {
+    console.error("Failed to fetch item names:", err);
+    setItemOptions([]);
+    setItemDropdownOpen(false);
+  });
 }, [order.metal, token]);
 
 const saveNewItemNameIfNeeded = async () => {
