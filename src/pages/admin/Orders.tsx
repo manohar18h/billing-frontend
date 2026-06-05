@@ -532,14 +532,15 @@ const saveNewItemNameIfNeeded = async () => {
     setSlectOldItemId(null);
   };
 
-  const calculateTotals = (data: typeof order, overrideMetalPrice?: number) => {
-    let metalPrice = 0;
+ const calculateTotals = (
+  data: typeof order,
+  overrideMetalPrice?: number
+) => {
 
-    if (overrideMetalPrice !== undefined) {
-      metalPrice = overrideMetalPrice;
-    } else {
-      metalPrice = getUpdatedMetalPrice(data.metal, data.itemName);
-    }
+ const metalPrice =
+  overrideMetalPrice !== undefined
+    ? Number(overrideMetalPrice)
+    : Number(data.metalPrice || 0);
 
     // Calculate wastage weight
     const wastageWeight = (data.wastage / 100) * data.metal_weight;
@@ -1004,7 +1005,7 @@ const saveNewItemNameIfNeeded = async () => {
   useEffect(() => {
     const { total_item_amount } = calculateTotals(
       order,
-      isEditing ? order.metalPrice : undefined,
+      order.metalPrice
     );
 
     setOrder((prev) => ({
@@ -1399,7 +1400,9 @@ onInputChange={(_, newInputValue) => {
   setOrder((prev) => ({
     ...prev,
     itemName: formattedValue,
-    metalPrice: getUpdatedMetalPrice(prev.metal, formattedValue),
+     metalPrice: isEditing
+      ? prev.metalPrice
+      : getUpdatedMetalPrice(prev.metal, formattedValue),
   }));
 
   if (itemOptions.length > 0) {
@@ -1421,8 +1424,10 @@ onInputChange={(_, newInputValue) => {
     setOrder((prev) => ({
       ...prev,
       itemName: selectedValue,
-      metalPrice: getUpdatedMetalPrice(prev.metal, selectedValue),
-    }));
+      metalPrice: isEditing
+      ? prev.metalPrice
+      : getUpdatedMetalPrice(prev.metal, selectedValue),
+  }));
 
     setItemDropdownOpen(false);
   }}
@@ -1521,7 +1526,7 @@ onInputChange={(_, newInputValue) => {
                   disabled={
                     key === "gross_weight" ||
                     key === "metalPrice" ||
-                    (isPrefilled && key !== "discount")
+                    (!isEditing && isPrefilled && key !== "discount")
                   }
                   InputProps={{
                     readOnly: key === "gross_weight" || key === "metalPrice",
@@ -1698,7 +1703,10 @@ onInputChange={(_, newInputValue) => {
                             sx={{
                               "&:hover": { backgroundColor: "#E0E0E0" },
                             }}
+                            
                             onClick={() => {
+                              console.log("EDIT ORDER:", ord.orderId);
+console.log("DB METAL PRICE:", ord.metalPrice);
                               setOrder({
                                 metal: ord.metal || "",
                                 metalPrice: ord.metalPrice ?? 0,
@@ -1744,7 +1752,8 @@ onInputChange={(_, newInputValue) => {
                                   ord.metalPrice,
                                 ).total_item_amount,
                               });
-
+setItemInputValue(ord.itemName || "");
+setItemDropdownOpen(false);
                               setIsEditing(true);
                               setEditingOrderId(ord.orderId); // still keep the orderId in a separate state
                               setOrderErrors({});
