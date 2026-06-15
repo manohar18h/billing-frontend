@@ -90,7 +90,7 @@ const BillLoanDetails: React.FC = () => {
   const [endSignature, setEndSignature] = useState<string | null>(null);
 
   const checkBackFrom = localStorage.getItem("checkBackFrom");
-
+const [payDescription, setPayDescription] = useState("");
   const handleBackClick = () => {
     if (checkBackFrom === "billLoanNumber" || checkBackFrom === "Loan") {
       navigate("/admin/Loan");
@@ -683,6 +683,14 @@ const BillLoanDetails: React.FC = () => {
               value={payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
             />
+            <TextField
+  label="Description"
+  fullWidth
+  multiline
+  minRows={2}
+  value={payDescription}
+  onChange={(e) => setPayDescription(e.target.value)}
+/>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -704,7 +712,7 @@ const BillLoanDetails: React.FC = () => {
                 console.log("🔥 API URL:", url);
                 await api.post(
                   url,
-                  {},
+                  { description: payDescription },
                   { headers: { Authorization: `Bearer ${token}` } },
                 );
 
@@ -721,12 +729,9 @@ const BillLoanDetails: React.FC = () => {
 
                   if (payType === "Paying Interest") {
                     newPaidInterestAmount += paid;
-                    newExistInterestDue = Math.max(
-                      newExistInterestDue - paid,
-                      0,
-                    );
+                    newExistInterestDue = newExistInterestDue - paid;
                   } else if (payType === "Paying Principle") {
-                    newExistDue = Math.max(newExistDue - paid, 0);
+                    newExistDue = newExistDue - paid;
                     newPaid += paid;
                   } else if (payType === "Adding Principle") {
                     newTotal += paid;
@@ -750,18 +755,19 @@ const BillLoanDetails: React.FC = () => {
                 });
 
                 setItems(updatedItems);
+                setPayDescription("");
 
                 sessionStorage.setItem(
-                  "intemsState",
+                  "itemsState",
                   JSON.stringify({
                     itemsList: updatedItems,
                   }),
                 );
                 setPayDialogOpen(false);
-              } catch (err) {
-                console.error("Payment failed:", err);
-                alert("Payment failed");
-              }
+             } catch (err: any) {
+  console.error("Payment failed:", err.response?.data || err);
+  alert(err.response?.data?.error || err.response?.data || "Payment failed");
+}
             }}
             color="primary"
             variant="contained"

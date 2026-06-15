@@ -56,6 +56,8 @@ const LoanItems: React.FC = () => {
     null,
   );
 
+  const [itemInputValue, setItemInputValue] = useState("");
+
   const loanCustomerId =
     location.state?.loanCustomerId || localStorage.getItem("loanCustomerId");
 
@@ -90,6 +92,7 @@ const LoanItems: React.FC = () => {
       deliveryStatus: "",
     });
     setItemErrors({});
+    setItemInputValue("");
   };
 
   const [item, setItem] = useState({
@@ -107,163 +110,8 @@ const LoanItems: React.FC = () => {
     itemStatus: "",
     deliveryStatus: "",
   });
-  const goldItems = [
-    "Batuvu",
-    "One Stone Pulla",
-    "Gundu Pulla",
-    "3-Pujala Pulla",
-    "Sridevi Pulla",
-    "Sadha J-Pulla",
-    "Sadha Nose Ring",
-    "J-Stone Pulla",
-    "Fancy Pulla",
-    "Chandravanka Pulla",
-    "Kamma Pulla",
-    "Muthyam Pulla",
-    "Pressing One Stone Pulla",
-    "Pressing Gundu Pulla",
-    "Kammalu",
-    "Chand Bali Kammalu",
-    "Stone Kammalu",
-    "Sherlu Kammalu",
-    "Pogulu",
-    "Mukku Pogu",
-    "Sadha Mukku Pogu",
-    "Earring",
-    "Earring Small",
-    "Fancy Earring",
-    "Jhumkas",
-    "Sadha Vanku",
-    "Stone Vanku",
-    "Studs",
-    "Laxmi Devi Puste",
-    "Andhra Puste",
-    "Gante Puste",
-    "Thirmandhar Puste",
-    "Silva Puste",
-    "Fancy Puste",
-    "House Puste",
-    "Chaknam Puste",
-    "Matilu",
-    "Matilu Small",
-    "Matilu Big",
-    "Pusthela Thadu",
-    "Kadiyam",
-    "Ladies Ring",
-    "Men Ring",
-    "Fancy Ring",
-    "Bracelet H.M",
-    "Bracelet M.M",
-    "Necklace",
-    "Nallapusalu Chain",
-    "7 piece Necklace",
-    "Chain",
-    "Gundla Mala",
-    "Gundlu Yannalu",
-    "Design Gundlu",
-    "Champaswaralu",
-    "Long Haram",
-    "Short Haram",
-    "Locket",
-    "Bangle",
-    "kankanalu",
-    "Baby Bangle",
-    "Papidi Billa",
-    "God Idol",
-    "God Mokkulu",
-    "Gold 24 Biscuit",
-    "Gold 22 Biscuit",
-    "Other",
-  ];
+ 
 
-  const silverItems = [
-    "Vottulu",
-    "Pilenlu",
-    "Batuvu",
-    "Mettelu",
-    "Chuttu Mettelu",
-    "Spring Mettelu",
-    "Jali Mettelu",
-    "Bracelet H.M",
-    "Bracelet M.M",
-    "Chain H.M",
-    "Chain M.M",
-    "Kathi Billa",
-    "Nalla Pusala Danda ",
-    "Ladies Ring",
-    "Men Ring",
-    "Small Ring",
-    "Fancy Ring",
-    "Kadiyam",
-    "Bedi",
-    "Small Kadiyam",
-    "Sadan Kadiyam",
-    "Billa Kadiyam",
-    "Bongu Kadiyam",
-    "R.D Kadam",
-    "Ragi Kadiyam",
-    "Kadiyal Plain",
-    "Bolgajal Kadiyal",
-    "R.D Sadan Kadiyal",
-    "Pattilu",
-    "Bolgajal Pattilu",
-    "Single Chain Pattilu",
-    "Fancy Pattilu",
-    "Pusala Pattilu",
-    "Jaler Pattilu",
-    "S-Patagolsu",
-    "Nadumu Golusu",
-    "Chekkudu Gutti - HM",
-    "Chekkudu Gutti - MM",
-    "Locket",
-    "Bangle",
-    "Baby Bangle",
-    "Uyyala",
-    "God Idol",
-    "God Mokkulu",
-    "Ashtalakshmi Kalash",
-    "Tulsi",
-    "Deepam",
-    "Flowers",
-    "Kamakshi Deepam",
-    "Panchapali",
-    "Chemmalu",
-    "Small Deepam Plates",
-    "Kumkum Bharani",
-    "Kalash",
-    "Ganta",
-    "Plates",
-    "Glass",
-    "Bowls",
-    "Spoons",
-    "Glass & Bowls",
-    "Glass & Spoons",
-    "Bowls & Spoons",
-    "Plates & Bowls",
-    "Plates & Spoons",
-    "Plates & Glass",
-    "Plates & Glass & Spoons",
-    "Plates & Bowls & Spoons",
-    "Plates & Glass & Bowls",
-    "Plates & Glass & Bowls & Spoons",
-    "Silver Biscuit",
-    "Other",
-  ];
-  const getItemOptions = () => {
-    if (
-      item.metal === "24 Gold" ||
-      item.metal === "22 Gold" ||
-      item.metal === "Gold"
-    )
-      return goldItems;
-    if (
-      item.metal === "999 Silver" ||
-      item.metal === "995 Silver" ||
-      item.metal === "Silver"
-    )
-      return silverItems;
-    return [];
-  };
 
   const thickTextFieldProps = {
     variant: "outlined" as const,
@@ -276,30 +124,111 @@ const LoanItems: React.FC = () => {
       label: { style: { fontWeight: "bold", color: "#333" } },
     },
   };
-
+const [itemOptions, setItemOptions] = useState<string[]>([]);
   const [itemOpen, setItemOpen] = useState(false);
   const [selectItemId, setSlectItemId] = useState<number | null>(null);
-
   const handleClickItemOpen = (id: number) => {
     setSlectItemId(id);
     setItemOpen(true);
   };
+
+  const getMetalTypeForItemApi = (metal: string) => {
+  if (metal === "24 Gold" || metal === "22 Gold" || metal === "Gold") return "Gold";
+  if (
+    metal === "999 Silver" ||
+    metal === "995 Silver" ||
+    metal === "Silver"
+  )
+    return "Silver";
+  return "";
+};
+
+useEffect(() => {
+  const metalType = getMetalTypeForItemApi(item.metal);
+
+  if (!metalType) {
+    setItemOptions([]);
+    return;
+  }
+
+  api
+    .get<{ itemName: string }[]>(`/admin/item-names/${metalType}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    .then((res) => {
+      const names = res.data
+        .map((item) => item.itemName)
+        .filter((name): name is string => Boolean(name));
+
+      setItemOptions(names);
+    })
+    .catch((err) => {
+      console.error("Failed to fetch item names:", err);
+      setItemOptions([]);
+    });
+}, [item.metal, token]);
+
+const getFinalItemNames = () => {
+  const pending = itemInputValue.trim();
+
+  const names = [
+    ...item.itemName,
+    ...(pending ? [pending] : []),
+  ]
+    .map((name) => capitalizeWords(String(name).trim()))
+    .filter(Boolean);
+
+  return Array.from(new Set(names));
+};
+
+const saveNewItemNamesIfNeeded = async (finalNames: string[]) => {
+  const metalType = getMetalTypeForItemApi(item.metal);
+  if (!metalType) return;
+
+  const newNames = finalNames.filter(
+    (name) =>
+      !itemOptions.some(
+        (option) => option.toLowerCase() === name.toLowerCase(),
+      ),
+  );
+
+  for (const itemName of newNames) {
+    await api.post(
+      "/admin/item-names",
+      { metalType, itemName },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  }
+
+  if (newNames.length > 0) {
+    setItemOptions((prev) =>
+      Array.from(new Set([...prev, ...newNames])).sort(),
+    );
+  }
+};
+
+const capitalizeWords = (text: string) => {
+  return text.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};
 
   const handleItemClose = () => {
     setItemOpen(false);
     setSlectItemId(null);
   };
 
-  const handleItemSubmit = async () => {
+  const handleItemSubmit = async (finalItem = item) => {
     console.log("customerid  in order  :  " + loanCustomerId);
     console.log("Token id: " + token);
 
-    // ✅ Convert array → comma separated string
-    const payload = {
-      ...item,
-      itemName: item.itemName.join(", "),
-    };
+     
 
+    // ✅ Convert array → comma separated string
+   const payload = {
+    ...finalItem,
+    itemName: Array.isArray(finalItem.itemName)
+      ? finalItem.itemName.join(", ")
+      : finalItem.itemName,
+  };
     console.log("Request Body:", JSON.stringify(payload, null, 2));
 
     try {
@@ -341,19 +270,19 @@ const LoanItems: React.FC = () => {
     }
   }, [itemsList]);
 
-  const handleUpdateItem = async () => {
+  const handleUpdateItem = async (finalItem = item) => {
     if (!editingItemId) return;
 
     console.log("Editing ID:", editingItemId);
     console.log("Original Item State:", item);
 
     // ✅ Convert array → string for backend
-    const payload = {
-      ...item,
-      itemName: Array.isArray(item.itemName)
-        ? item.itemName.join(", ")
-        : item.itemName,
-    };
+   const payload = {
+    ...finalItem,
+    itemName: Array.isArray(finalItem.itemName)
+      ? finalItem.itemName.join(", ")
+      : finalItem.itemName,
+  };
 
     console.log("Update Request Body:", JSON.stringify(payload, null, 2));
 
@@ -603,11 +532,16 @@ const LoanItems: React.FC = () => {
                       setItem({
                         ...item,
                         metal: selectedMetal,
+                        itemName: [],
                       });
+                      setItemInputValue("");
+                      setItemErrors((prev) => ({ ...prev, itemName: "" }));
                     }}
+                    
                     error={!!itemErrors.metal}
                     helperText={itemErrors.metal || ""}
                     fullWidth
+                    
                     variant="outlined"
                     InputLabelProps={{
                       style: { color: "#333" },
@@ -780,52 +714,67 @@ const LoanItems: React.FC = () => {
                   </TextField>
                 ) : key === "itemName" ? (
                   <Autocomplete
-                    multiple
-                    options={getItemOptions()}
-                    value={item.itemName}
-                    disableCloseOnSelect
-                    onChange={(_, newValue) => {
-                      setItem({
-                        ...item,
-                        itemName: newValue,
-                      });
+  multiple
+  freeSolo
+  options={itemOptions}
+  value={item.itemName}
+   inputValue={itemInputValue}
+  onInputChange={(_, newInputValue) => {
+    setItemInputValue(capitalizeWords(newInputValue));
+  }}
+  disableCloseOnSelect
+  filterSelectedOptions
+  onChange={(_, newValue) => {
+    const formattedValues = newValue
+      .map((value) => capitalizeWords(String(value).trim()))
+      .filter(Boolean);
 
-                      if (itemErrors.itemName) {
-                        setItemErrors((prev) => ({
-                          ...prev,
-                          itemName: "",
-                        }));
-                      }
-                    }}
-                    renderOption={(props, option, { selected }) => (
-                      <li {...props}>
-                        <Checkbox checked={selected} />
-                        {option}
-                      </li>
-                    )}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Item Name"
-                        placeholder="Search item..."
-                        error={!!itemErrors.itemName}
-                        helperText={itemErrors.itemName || ""}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{
-                          style: { color: "#333" },
-                          shrink: true,
-                        }}
-                        sx={{
-                          minWidth: "200px",
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderWidth: "2px",
-                            borderColor: "gray",
-                          },
-                        }}
-                      />
-                    )}
-                  />
+    setItem({
+      ...item,
+      itemName: formattedValues,
+    });
+
+    if (itemErrors.itemName) {
+      setItemErrors((prev) => ({
+        ...prev,
+        itemName: "",
+      }));
+    }
+  }}
+  renderOption={(props, option, { selected }) => (
+    <li {...props}>
+      <Checkbox checked={selected} />
+      <ListItemText primary={option} />
+    </li>
+  )}
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      label="Item Name"
+      placeholder={
+        item.metal ? "Search or type new item..." : "Select metal first"
+      }
+      error={!!itemErrors.itemName}
+      helperText={
+        itemErrors.itemName ||
+        "Select multiple items or type new item and press Enter"
+      }
+      fullWidth
+      variant="outlined"
+      InputLabelProps={{
+        style: { color: "#333" },
+        shrink: true,
+      }}
+      sx={{
+        minWidth: "200px",
+        "& .MuiOutlinedInput-notchedOutline": {
+          borderWidth: "2px",
+          borderColor: "gray",
+        },
+      }}
+    />
+  )}
+/>
                 ) : (
                   <TextField
                     {...thickTextFieldProps}
@@ -893,16 +842,35 @@ const LoanItems: React.FC = () => {
           </Button>
           <Button
             variant="contained"
-            onClick={() => {
-              window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+    onClick={async () => {
+  window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
 
-              if (isEditing) {
-                handleUpdateItem();
-              } else {
-                handleItemSubmit();
-              }
-              // 👇 scroll down after action
-            }}
+  const finalNames = getFinalItemNames();
+
+  if (finalNames.length === 0) {
+    setItemErrors((prev) => ({
+      ...prev,
+      itemName: "Please select or enter item name",
+    }));
+    return;
+  }
+
+  await saveNewItemNamesIfNeeded(finalNames);
+
+  const finalItem = {
+    ...item,
+    itemName: finalNames,
+  };
+
+  setItem(finalItem);
+  setItemInputValue("");
+
+  if (isEditing) {
+    handleUpdateItem(finalItem);
+  } else {
+    handleItemSubmit(finalItem);
+  }
+}}
           >
             {isEditing ? "Update" : "Submit"}
           </Button>
@@ -1104,6 +1072,7 @@ const LoanItems: React.FC = () => {
 
                               setIsEditing(true);
                               setEditingItemId(itm.loanId); // still keep the orderId in a separate state
+                              setItemInputValue("");
                               setItemErrors({});
                             }}
                           >
@@ -1348,7 +1317,7 @@ const LoanItems: React.FC = () => {
                   "editBillFromBillLoanDetails",
                 );
                 sessionStorage.setItem(
-                  "intemsState",
+                  "itemsState",
                   JSON.stringify({
                     itemsList: updatedItems,
                   }),

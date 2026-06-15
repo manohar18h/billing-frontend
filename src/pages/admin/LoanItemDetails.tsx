@@ -3,14 +3,15 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import api from "@/services/api";
 
 const LoanItemDetails: React.FC = () => {
-  interface LoanTotalAmtHistory {
-    amountHistoryId: number;
-    paymentMethod: string;
-    paymentType: string;
-    amount: number;
-    paymentDate: string; // ISO date string
-    loanId: number;
-  }
+ interface LoanTotalAmtHistory {
+  amountHistoryId: number;
+  paymentMethod: string;
+  paymentType: string;
+  amount: number;
+  paymentDate: string;
+  loanId: number;
+  description: string;
+}
 
   // Main order interface
   interface LoanItem {
@@ -195,29 +196,72 @@ const LoanItemDetails: React.FC = () => {
                 className="rounded-2xl bg-white/10 p-4"
               >
                 <div className="text-lg font-bold text-emerald-300">
-                  ₹{tx.amount}
-                </div>
-                <div className="mt-1 text-sm text-red-300">
-                  {tx.paymentMethod}
-                </div>
-                <div className="mt-1 text-sm text-yellow-300">
-                  {tx.paymentType}
-                </div>
-                <div className="mt-1 text-xs text-gray-300">
-                  {new Date(tx.paymentDate).toLocaleDateString("en-GB")}
-                </div>
+  Paid Amount: ₹{tx.amount}
+</div>
+
+<div className="mt-1 text-sm text-red-300">
+  Payment Method: {tx.paymentMethod}
+</div>
+
+<div className="mt-1 text-sm text-yellow-300">
+  Payment Type: {tx.paymentType}
+</div>
+
+<div className="mt-1 text-sm text-blue-300">
+  Description: {tx.description || "—"}
+</div>
+
+<div className="mt-1 text-xs text-gray-300">
+  Payment Date: {new Date(tx.paymentDate).toLocaleDateString("en-GB")}
+</div>
               </div>
             ))}
           </div>
 
           <ul className="mb-10 hidden list-disc space-y-2 pl-5 md:block">
             {item.loanTotalAmtHistories.map((tx) => (
-              <li key={tx.amountHistoryId} className="text-emerald-300">
-                ₹{tx.amount} -{" "}
-                <span className="text-red-300">{tx.paymentMethod}</span> on{" "}
-                {new Date(tx.paymentDate).toLocaleDateString("en-GB")} -{" "}
-                <span className="text-yellow-300">{tx.paymentType}</span>
-              </li>
+       <li
+  key={tx.amountHistoryId}
+  className="rounded-xl border border-white/10 bg-white/5 p-4"
+>
+  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm md:text-base">
+    
+    <div>
+      <span className="font-semibold text-cyan-300">
+        Paid Amount:
+      </span>{" "}
+      ₹{tx.amount}
+    </div>
+
+    <div>
+      <span className="font-semibold text-red-300">
+        Method:
+      </span>{" "}
+      {tx.paymentMethod}
+    </div>
+
+    <div>
+      <span className="font-semibold text-yellow-300">
+        Type:
+      </span>{" "}
+      {tx.paymentType}
+    </div>
+    <div>
+      <span className="font-semibold text-blue-300">
+        Description:
+      </span>{" "}
+      {tx.description || "—"}
+    </div>
+
+    <div>
+      <span className="font-semibold text-purple-300">
+        Date:
+      </span>{" "}
+      {new Date(tx.paymentDate).toLocaleDateString("en-GB")}
+    </div>
+
+  </div>
+</li>
             ))}
           </ul>
         </div>
