@@ -493,11 +493,11 @@ const Loan: React.FC = () => {
             Search Loan Customer
           </Typography>
 
-          <Box
-            mt={4}
-            className="flex flex-col sm:flex-row w-full max-w-2xl gap-3 sm:gap-2"
-            mb={4}
-          >
+         <Box
+  mt={4}
+  mb={4}
+  className="grid w-full grid-cols-1 gap-3 md:max-w-3xl md:grid-cols-[220px_1fr_150px]"
+>
             <TextField
               select
               label="Search Type"
@@ -511,7 +511,7 @@ const Loan: React.FC = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              sx={{ width: "1500px" }}
+             sx={{ width: "100%" }}
             >
               <MenuItem value="">
                 <em>Select Search Type</em>
@@ -524,7 +524,7 @@ const Loan: React.FC = () => {
             </TextField>
 
             <TextField
-              sx={{ width: "200%" }}
+              sx={{ width: "100%" }}
               variant="outlined"
               placeholder="Search customers..."
               value={searchQuery}
@@ -549,15 +549,16 @@ const Loan: React.FC = () => {
               onClick={async () => {
                 handleSearch();
               }}
-              sx={{
-                paddingX: 6,
-                paddingY: 0.2,
-                borderRadius: "12px",
-                fontWeight: "bold",
-                borderColor: "#8847FF",
-                color: "#8847FF",
-                "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
-              }}
+            sx={{
+  height: { xs: 48, md: "auto" },
+  px: { xs: 4, md: 6 },
+  py: { xs: 1.2, md: 0.2 },
+  borderRadius: "12px",
+  fontWeight: "bold",
+  borderColor: "#8847FF",
+  color: "#8847FF",
+  "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+}}
             >
               Search
             </Button>
@@ -565,8 +566,8 @@ const Loan: React.FC = () => {
         </Paper>
       </div>
 
-      <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6">
-        <Paper
+<div className="mt-6 px-2 md:mt-10 md:p-3 flex flex-col items-center justify-center gap-6">
+          <Paper
           elevation={4}
           sx={{ borderRadius: "24px" }}
           className="relative p-6 rounded-xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
@@ -590,7 +591,7 @@ const Loan: React.FC = () => {
                 "aadharCard",
               ] as (keyof Customer)[]
             ).map((key) => (
-              <Grid key={key} size={{ xs: 6, sm: 4 }}>
+              <Grid key={key} size={{ xs: 12, sm: 6, md: 4 }}>
                 {key === "village" ? (
                   <Autocomplete
                     freeSolo
@@ -707,7 +708,7 @@ const Loan: React.FC = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 6,
+           p: { xs: 2, md: 6 },
             width: "100%",
             maxWidth: "80rem",
             borderRadius: "24px",
@@ -728,14 +729,17 @@ const Loan: React.FC = () => {
 
           {/* Filters row */}
           <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 2,
-              mt: 2,
-              mb: 3,
-            }}
+           sx={{
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    sm: "1fr 1fr",
+    md: "180px 180px 170px 200px auto",
+  },
+  gap: 2,
+  mt: 2,
+  mb: 3,
+}}
           >
             <TextField
               label="From"
@@ -744,8 +748,7 @@ const Loan: React.FC = () => {
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
               InputLabelProps={{ shrink: true }}
-              sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
-            />
+sx={{ width: "100%" }}            />
 
             <TextField
               label="To"
@@ -754,8 +757,7 @@ const Loan: React.FC = () => {
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
               InputLabelProps={{ shrink: true }}
-              sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
-            />
+sx={{ width: "100%" }}            />
 
             <TextField
               select
@@ -763,8 +765,7 @@ const Loan: React.FC = () => {
               size="small"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              sx={{ width: 170, ml: { xs: 0, sm: 1 } }}
-              InputLabelProps={{ shrink: true }}
+sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="delivered">Delivered</MenuItem>
@@ -832,11 +833,15 @@ const Loan: React.FC = () => {
               variant="outlined"
               size="small"
               onClick={clearFilters}
-              sx={{ whiteSpace: "nowrap" }}
-            >
+sx={{
+  width: { xs: "100%", md: "auto" },
+  whiteSpace: "nowrap",
+}}            >
               Clear
             </Button>
           </Box>
+
+
 
           <Box
             sx={{
@@ -881,14 +886,112 @@ const Loan: React.FC = () => {
             <p className="py-4">No billing orders found.</p>
           ) : (
             <div className="mt-4">
-              <Box
-                sx={{
-                  width: "100%",
-                  overflowX: "auto", // allows horizontal scrolling on small screens
-                }}
-              >
-                <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden sx={{ minWidth: 800">
-                  <thead className="bg-gray-200">
+
+              {/* Mobile card view */}
+<div className="space-y-3 md:hidden">
+  {filteredRows.map((bill, index) => {
+    const isDelivered =
+      normalizeStatus(bill.deliveryStatus) === "delivered";
+
+    return (
+      <div
+        key={bill.loanBillId}
+        className="rounded-2xl border border-gray-100 bg-[#fffaf0] p-4 shadow-sm"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold text-gray-500">
+              #{page * pageSize + index + 1}
+            </div>
+
+            <div className="mt-1 text-xs text-gray-500">Loan Bill No</div>
+            <div className="font-bold text-blue-700">
+              {bill.loanBillNumber}
+            </div>
+          </div>
+
+          <input
+            type="checkbox"
+            checked={Boolean(bill.checked)}
+            disabled={isDelivered}
+            onChange={(e) =>
+              handleCheckboxChange(Number(bill.loanBillId), e.target.checked)
+            }
+            className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+          />
+        </div>
+
+        <div className="mt-3">
+          <div className="font-bold text-[#b6276f]">{bill.name}</div>
+          <div className="text-xs text-gray-600">{bill.village}</div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-white p-2">
+            <div className="text-[11px] text-gray-500">Date</div>
+            <div className="text-sm font-bold">
+              {formatDateDMY(bill.orderDate)}
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-white p-2">
+            <div className="text-[11px] text-gray-500">Total</div>
+            <div className="text-sm font-bold text-[#e38111]">
+              ₹{bill.totalAmount != null ? bill.totalAmount.toFixed(2) : "-"}
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-white p-2">
+            <div className="text-[11px] text-gray-500">Item</div>
+            <div className="text-sm font-bold">
+              {bill.itemNames?.join(", ") || "-"}
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-white p-2">
+            <div className="text-[11px] text-gray-500">Weight</div>
+            <div className="text-sm font-bold">
+              {bill.itemWeight?.join(", ") || "-"}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {renderStatusChip(bill.itemStatus)}
+          {renderStatusChip(bill.deliveryStatus)}
+        </div>
+
+        <div className="mt-3 flex justify-end">
+          <button
+            onClick={() => {
+              localStorage.removeItem("billLoanNumber");
+              localStorage.removeItem("checkBackFrom");
+
+              localStorage.setItem("billLoanNumber", bill.loanBillNumber);
+              localStorage.setItem("checkBackFrom", "Loan");
+              navigate("/admin/bill-loan-details");
+            }}
+            className="rounded-full bg-[#85400b] px-4 py-2 text-xs font-bold text-white"
+          >
+            View
+          </button>
+        </div>
+      </div>
+    );
+  })}
+</div>
+             <Box
+  sx={{
+    width: "100%",
+    overflowX: "auto",
+    display: { xs: "none", md: "block" },
+  }}
+>
+
+
+
+
+<table className="min-w-[1100px] w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">                  <thead className="bg-gray-200">
                     <tr>
                       <th className="border px-3 py-2 text-center">
                         <div className="flex justify-center items-center">
@@ -1111,6 +1214,7 @@ const Loan: React.FC = () => {
                   Next ▶
                 </Button>
               </Box>
+
             </div>
           )}
         </Paper>

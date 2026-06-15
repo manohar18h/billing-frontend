@@ -213,12 +213,16 @@ const isAdmin = role === "ADMIN";
       </div>
     );
 
-  const line = (label: string, value: string | number | null | undefined) => (
-    <div className="flex justify-between border-b py-1 text-sm">
-      <span className="font-medium text-gray-600">{label}:</span>
-      <span className="text-gray-800">{value ?? "-"}</span>
-    </div>
-  );
+ const line = (label: string, value: string | number | null | undefined) => (
+  <div className="flex items-start justify-between gap-3 border-b border-gray-200 py-1 text-sm dark:border-gray-700">
+    <span className="font-medium text-gray-600 dark:text-gray-300">
+      {label}:
+    </span>
+    <span className="text-right font-semibold text-gray-800 dark:text-gray-100">
+      {value ?? "-"}
+    </span>
+  </div>
+);
 
   const clearDates = () => {
     setFromDate("");
@@ -631,37 +635,36 @@ const handleDeleteTransaction = (t: any) => {
 };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
-      <div className="w-full max-w-5xl bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-8 relative">
+<div className="min-h-screen bg-[#f5f5f5] p-3 pb-[90px] dark:bg-[#1a1b1f] md:flex md:items-center md:justify-center md:p-8">
+<div className="relative w-full rounded-2xl border border-purple-300/50 bg-white/90 p-4 shadow-2xl backdrop-blur-lg dark:bg-[#222] md:max-w-5xl md:rounded-3xl md:p-8">
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-4 right-4 bg-purple-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-purple-700"
-        >
+className="absolute right-3 top-3 rounded-lg bg-purple-600 px-3 py-1 text-xs text-white hover:bg-purple-700 md:right-4 md:top-4 md:px-4 md:text-sm"        >
           Close
         </button>
 
-        <h1 className="text-2xl font-bold text-purple-700 dark:text-purple-300 mb-6">
-          Worker Details #{worker.workerId}
+<h1 className="mb-5 pr-20 text-xl font-bold text-purple-700 dark:text-purple-300 md:mb-6 md:pr-0 md:text-2xl">
+            Worker Details #{worker.workerId}
         </h1>
 
-        <div className="mb-20 flex justify-center">
+        <div className="mb-8 flex justify-center md:mb-20">
           <div
-            className="w-full max-w-3xl rounded-2xl shadow-xl p-6"
+            className="w-full max-w-3xl rounded-2xl p-4 shadow-xl md:p-6"
             style={{
               background: "linear-gradient(135deg, #0f172a, #334155)", // dark gradient
               color: "#fff",
             }}
           >
             {/* Title */}
-            <h2 className="text-2xl font-bold text-center mb-6 text-amber-300">
-              Worker Basic Information
+<h2 className="mb-4 text-center text-xl font-bold text-amber-300 md:mb-6 md:text-2xl">
+                Worker Basic Information
             </h2>
 
             {/* Grid */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-6">
               {/* Left Column */}
-              <div className="space-y-3 pr-4 border-r border-white/20">
-                {[
+             <div className="space-y-2 border-white/20 md:border-r md:pr-4 md:space-y-3">
+               {[
                   ["Full Name", worker.fullName, "text-amber-200"],
                   ["Phone", worker.phnNumber, "text-teal-300"],
                   ["Village", worker.village, "text-green-300"],
@@ -682,7 +685,7 @@ const handleDeleteTransaction = (t: any) => {
                     "text-red-400 font-bold",
                   ],
                 ].map(([label, value, color], i) => (
-                  <p key={i} className="flex justify-between">
+                  <p key={i} className="flex items-start justify-between gap-3 rounded-xl bg-white/5 px-3 py-2 text-sm md:bg-transparent md:px-0 md:py-0 md:text-base">
                     <span className="text-gray-300 font-medium">{label}:</span>
                     <span className={`${color}`}>{value}</span>
                   </p>
@@ -690,7 +693,7 @@ const handleDeleteTransaction = (t: any) => {
               </div>
 
               {/* Right Column */}
-              <div className="space-y-3 pl-4">
+              <div className="space-y-2 md:pl-4 md:space-y-3">
                 {[
                   [
                     "Earned Wastage",
@@ -729,7 +732,7 @@ const handleDeleteTransaction = (t: any) => {
                     "text-slate-200 font-bold",
                   ],
                 ].map(([label, value, color], i) => (
-                  <p key={i} className="flex justify-between">
+                  <p key={i} className="flex items-start justify-between gap-3 rounded-xl bg-white/5 px-3 py-2 text-sm md:bg-transparent md:px-0 md:py-0 md:text-base">
                     <span className="text-gray-300 font-medium">{label}:</span>
                     <span className={`${color}`}>{value}</span>
                   </p>
@@ -741,14 +744,13 @@ const handleDeleteTransaction = (t: any) => {
 
         {/* Date Filters (above sections) */}
         <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 2,
-            mt: 1,
-            mb: 3,
-          }}
+         sx={{
+  display: "grid",
+  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr auto" },
+  gap: 2,
+  mt: 1,
+  mb: 3,
+}}
         >
           <TextField
             label="From"
@@ -757,8 +759,10 @@ const handleDeleteTransaction = (t: any) => {
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
-          />
+sx={{
+  width: { xs: "100%", sm: 180 },
+  "& .MuiOutlinedInput-input": { py: 0.75 },
+}}          />
           <TextField
             label="To"
             type="date"
@@ -766,14 +770,18 @@ const handleDeleteTransaction = (t: any) => {
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
-          />
+sx={{
+  width: { xs: "100%", sm: 180 },
+  "& .MuiOutlinedInput-input": { py: 0.75 },
+}}          />
           <Button
             variant="outlined"
             size="small"
             onClick={clearDates}
-            sx={{ whiteSpace: "nowrap" }}
-          >
+sx={{
+  width: { xs: "100%", sm: "auto" },
+  whiteSpace: "nowrap",
+}}          >
             CLEAR
           </Button>
         </Box>
@@ -788,13 +796,13 @@ const handleDeleteTransaction = (t: any) => {
             {visibleWorkerStockResult.map((s) => (
               <div
                 key={s.stockId}
-                className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
+className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-3 shadow-sm dark:border-gray-700 dark:bg-[#2b2b2b] md:grid-cols-2 md:gap-4 md:divide-x md:divide-gray-300 md:rounded-lg md:border-2 md:bg-transparent md:shadow-none md:dark:divide-gray-600"
               >
-                <div className="pr-4">
+                <div className="space-y-1 md:pr-4">
                   {line("Metal", s.metal)}
                   {line("Weight", `${s.metalWeight} g`)}
                 </div>
-                <div className="pl-4">
+                <div className="space-y-1 md:pl-4">
                   {line("Date", displayFromRaw(s.todaysDate))}
                   {line("Stock ID", s.stockId)}
                 </div>
@@ -896,7 +904,7 @@ const handleDeleteTransaction = (t: any) => {
             {visibleLotWorks.map((l) => (
               <div
                 key={l.lotId}
-                className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
+className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-3 shadow-sm dark:border-gray-700 dark:bg-[#2b2b2b] md:grid-cols-2 md:gap-4 md:divide-x md:divide-gray-300 md:rounded-lg md:border-2 md:bg-transparent md:shadow-none md:dark:divide-gray-600"
               >
                 <div className="pr-4">
                   {line("Metal", l.metal)}
@@ -904,15 +912,14 @@ const handleDeleteTransaction = (t: any) => {
                   {line("Weight", `${l.itemWeight} g`)}
                   {line("Pieces", l.pieces)}
                 </div>
-                <div className="pl-4">
+                <div className="space-y-1 md:pl-4">
                   {line("Date", displayFromRaw(l.deliveryDate))}
                   {line("Wastage", `${l.wastage} %`)}
                   {line("Amount", `₹${l.amount}`)}
                   {line("Lot ID", l.lotId)}
                 </div>
                 {isAdmin && (
-  <div className="col-span-2 flex justify-end gap-2 pt-2 border-t border-gray-300 dark:border-gray-600">
-
+  <div className="flex justify-end gap-2 border-t border-gray-300 pt-2 dark:border-gray-600 md:col-span-2">
     <IconButton
       color="warning"
       onClick={() => handleEditLotWork(l)}
@@ -1047,7 +1054,7 @@ const handleDeleteTransaction = (t: any) => {
             {visibleSpclWork.map((s, i) => (
               <div
                 key={i}
-                className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
+className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-3 shadow-sm dark:border-gray-700 dark:bg-[#2b2b2b] md:grid-cols-2 md:gap-4 md:divide-x md:divide-gray-300 md:rounded-lg md:border-2 md:bg-transparent md:shadow-none md:dark:divide-gray-600"
               >
                 <div className="pr-4">
                   {line("Metal", s.metal)}
@@ -1056,7 +1063,7 @@ const handleDeleteTransaction = (t: any) => {
                   {line("Other Metal", s.otherMetalName)}
                   {line("Other Weight", `${s.otherWeight} g`)}
                 </div>
-                <div className="pl-4">
+                <div className="space-y-1 md:pl-4">
                   {line("Amount", `₹${s.amount}`)}
                   {line("Wastage", s.wastage)}
                   {line("Date", displayFromRaw(s.deliveryDate))}
@@ -1095,14 +1102,14 @@ const handleDeleteTransaction = (t: any) => {
             {visibleRepairs.map((r, i) => (
               <div
                 key={i}
-                className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
+className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-3 shadow-sm dark:border-gray-700 dark:bg-[#2b2b2b] md:grid-cols-2 md:gap-4 md:divide-x md:divide-gray-300 md:rounded-lg md:border-2 md:bg-transparent md:shadow-none md:dark:divide-gray-600"
               >
                 <div className="pr-4">
                   {line("Metal", r.metal)}
                   {line("Item", r.itemName)}
                   {line("Weight", `${r.metalWeight} g`)}
                 </div>
-                <div className="pl-4">
+                <div className="space-y-1 md:pl-4">
                   {line("Customer Pay", `₹${r.customerPay}`)}
                   {line("Worker Pay", `₹${r.workerPay}`)}
                   {line("Date", displayFromRaw(r.deliveryDate))}
@@ -1236,14 +1243,14 @@ const handleDeleteTransaction = (t: any) => {
             {visiblePays.map((p) => (
               <div
                 key={p.wpid}
-                className="mb-4 rounded-lg border-2 border-gray-400 p-3 grid grid-cols-2 gap-4 divide-x divide-gray-300 dark:divide-gray-600"
+className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-3 shadow-sm dark:border-gray-700 dark:bg-[#2b2b2b] md:grid-cols-2 md:gap-4 md:divide-x md:divide-gray-300 md:rounded-lg md:border-2 md:bg-transparent md:shadow-none md:dark:divide-gray-600"
               >
                 <div className="pr-4">
                   {line("Order ID", p.orderId)}
                   {line("Metal", p.metal)}
                   {line("Weight", `${p.metal_weight} g`)}
                 </div>
-                <div className="pl-4">
+                <div className="space-y-1 md:pl-4">
                   {line("Date", displayFromRaw(p.date))}
                   {line("Pay", `₹${p.workPay}`)}
                   {line("Wastage", p.wastage)}
@@ -1336,19 +1343,18 @@ const handleDeleteTransaction = (t: any) => {
               Transactions
             </h2>
 
-            <ul className="mb-8 pl-5 list-disc">
+            <ul className="mb-8 space-y-3 md:list-disc md:pl-5">
               {visibleTxs.map((t) => (
            <li
   key={t.wtid}
-  className="mb-3 rounded-lg border-2 border-gray-300 dark:border-gray-700 p-3 flex justify-between items-center"
+className="flex flex-col gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-3 dark:border-gray-700 dark:bg-[#2b2b2b] md:flex-row md:items-center md:justify-between md:rounded-lg md:border-2 md:bg-transparent"
 >
-  <div className="text-[18px] text-gray-800 dark:text-gray-200">
+  <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 md:text-[18px]">
     ₹{t.paid} on {displayFromRaw(t.paymentDate)}, {t.reason ?? "-"}
   </div>
 
   {isAdmin && (
-    <div className="flex items-center gap-2 border-l pl-4 border-gray-300 dark:border-gray-600">
-
+    <div className="flex justify-end gap-2 border-t border-gray-300 pt-2 dark:border-gray-600 md:border-l md:border-t-0 md:pl-4 md:pt-0">
       <IconButton
         color="warning"
         onClick={() => handleEditTransaction(t)}

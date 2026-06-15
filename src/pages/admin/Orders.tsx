@@ -1063,6 +1063,8 @@ const saveNewItemNameIfNeeded = async () => {
     }));
   }, [exchange.exchange_metal_price, exchange.exchange_purity_weight]);
 
+  
+
   return (
     <Box>
       <Paper

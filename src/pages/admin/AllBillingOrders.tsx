@@ -254,11 +254,11 @@ const AllBillingOrders: React.FC = () => {
   };
 
   return (
-    <div className="mt-10 p-3 flex flex-col items-center justify-center">
-      <Paper
+<div className="mt-4 flex flex-col items-center justify-center px-3 pb-[90px] md:mt-10 md:p-3 md:pb-0">
+        <Paper
         elevation={0}
         sx={{
-          p: 6,
+          p: { xs: 2, md: 6 },
           width: "100%",
           maxWidth: "80rem",
           borderRadius: "24px",
@@ -268,20 +268,29 @@ const AllBillingOrders: React.FC = () => {
           boxShadow: "0 10px 30px rgba(136,71,255,0.3)",
         }}
       >
-        <Typography variant="h4" fontWeight="bold" color="primary" gutterBottom>
+        <Typography
+  variant="h4"
+  fontWeight="bold"
+  color="primary"
+  gutterBottom
+  sx={{ fontSize: { xs: "24px", md: "34px" } }}
+>
           All Billing Orders
         </Typography>
 
         {/* Filters row */}
         <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 2,
-            mt: 2,
-            mb: 3,
-          }}
+         sx={{
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    sm: "1fr 1fr",
+    md: "180px 180px 170px 170px auto",
+  },
+  gap: 2,
+  mt: 2,
+  mb: 3,
+}}
         >
           <TextField
             label="From"
@@ -290,8 +299,10 @@ const AllBillingOrders: React.FC = () => {
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
-          />
+sx={{
+  width: "100%",
+  "& .MuiOutlinedInput-input": { py: 0.75 },
+}}          />
 
           <TextField
             label="To"
@@ -300,16 +311,20 @@ const AllBillingOrders: React.FC = () => {
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{ width: 180, "& .MuiOutlinedInput-input": { py: 0.75 } }}
-          />
+sx={{
+  width: "100%",
+  "& .MuiOutlinedInput-input": { py: 0.75 },
+}}          />
           <TextField
             select
             label="Work Status"
             size="small"
             value={workFilter}
             onChange={(e) => setWorkFilter(e.target.value as any)}
-            sx={{ width: 170, ml: { xs: 0, sm: 1 } }}
-            InputLabelProps={{ shrink: true }}
+sx={{
+  width: "100%",
+  "& .MuiOutlinedInput-input": { py: 0.75 },
+}}            InputLabelProps={{ shrink: true }}
           >
             <MenuItem value="all">All</MenuItem>
             <MenuItem value="done">Done</MenuItem>
@@ -322,8 +337,10 @@ const AllBillingOrders: React.FC = () => {
             size="small"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            sx={{ width: 170, ml: { xs: 0, sm: 1 } }}
-            InputLabelProps={{ shrink: true }}
+sx={{
+  width: "100%",
+  "& .MuiOutlinedInput-input": { py: 0.75 },
+}}            InputLabelProps={{ shrink: true }}
           >
             <MenuItem value="all">All</MenuItem>
             <MenuItem value="delivered">Delivered</MenuItem>
@@ -335,20 +352,23 @@ const AllBillingOrders: React.FC = () => {
             variant="outlined"
             size="small"
             onClick={clearFilters}
-            sx={{ whiteSpace: "nowrap" }}
-          >
+sx={{
+  width: { xs: "100%", md: "auto" },
+  whiteSpace: "nowrap",
+}}          >
             Clear
           </Button>
         </Box>
 
         <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: 1, // smaller gap
-            mt: 2, // smaller margin
-          }}
+        sx={{
+  display: "flex",
+  justifyContent: { xs: "center", md: "flex-end" },
+  alignItems: "center",
+  flexWrap: "wrap",
+  gap: 1,
+  mt: 2,
+}}
         >
           <Button
             size="small" // 👈 smaller button

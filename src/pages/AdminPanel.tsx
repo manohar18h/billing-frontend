@@ -11,7 +11,7 @@ import {
   Gem,
   ReceiptText,
   BadgeIndianRupee,
-  ShoppingCart,
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import hjlogoo from "../assets/hjlogoo.png";
@@ -52,6 +52,17 @@ const menuItems = [
   { icon: BadgeIndianRupee, label: "Loan", path: "/admin/Loan" },
   { icon: BoxIcon, label: "Stock Box", path: "/admin/sale" },
 ];
+
+
+const mobileMenuItems = [
+  { icon: LayoutDashboard, label: "Home", path: "/admin/dashboard" },
+  { icon: Users, label: "Customer", path: "/admin/customers" },
+  { icon: PersonStanding, label: "Worker", path: "/admin/workers" },
+  { icon: ReceiptText, label: "Bill", path: "/admin/billing-orders" },
+  { icon: BadgeIndianRupee, label: "Loan", path: "/admin/Loan" },
+  { icon: MoreHorizontal, label: "More", path: "/admin/products" },
+];
+
 
 type SidebarProps = {
   activeIndex: number;
@@ -101,10 +112,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       ref={containerRef}
-      className="fixed left-0 top-0 h-screen w-[80px] z-20 
+      className="fixed left-0 top-0 hidden h-screen w-[80px] z-20 
 bg-gradient-to-b from-black via-gray-900 to-amber-700
-             flex flex-col items-center py-4 
-             rounded-tr-3xl rounded-br-3xl overflow-hidden shadow-xl"
+md:flex flex-col items-center py-4 
+rounded-tr-3xl rounded-br-3xl overflow-hidden shadow-xl"
     >
       {/* White curved highlight (same width as item = w-14) */}
       <div
@@ -173,6 +184,36 @@ bg-gradient-to-b from-black via-gray-900 to-amber-700
   );
 };
 
+const MobileBottomNav = () => {
+  const location = useLocation();
+
+  return (
+    <nav className="fixed bottom-0 left-0 z-50 hidden h-[64px] w-[100dvw] max-w-[100dvw] overflow-hidden border-t border-gray-200 bg-white shadow-[0_-4px_15px_rgba(0,0,0,0.08)] max-md:grid max-md:grid-cols-6">
+      {mobileMenuItems.map((item) => {
+        const isActive = location.pathname
+          .toLowerCase()
+          .startsWith(item.path.toLowerCase());
+
+        return (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={`flex min-w-0 flex-col items-center justify-center gap-[3px] ${
+              isActive ? "text-[#85400b]" : "text-gray-700"
+            }`}
+          >
+            <item.icon className="h-[21px] w-[21px]" />
+
+            <span className="w-full truncate text-center text-[9px] font-semibold leading-none">
+              {item.label}
+            </span>
+          </NavLink>
+        );
+      })}
+    </nav>
+  );
+};
+
 function AdminPanelContent() {
   const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
@@ -221,16 +262,18 @@ function AdminPanelContent() {
   };
 
   return (
+    
     // add left padding equal to fixed sidebar width so content never sits under it
-    <div className="min-h-screen bg-white dark:bg-[#1a1b1f] transition-colors pl-[82px]">
-      <Sidebar
+<div className="min-h-screen max-w-[100dvw] overflow-x-hidden bg-white pb-[75px] transition-colors dark:bg-[#1a1b1f] md:pb-0 md:pl-[82px]">
+        <Sidebar
         activeIndex={activeIndex}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode((v) => !v)}
         onLogout={handleLogout}
       />
+      <MobileBottomNav />
 
-      <main className="p-6 text-gray-800 dark:text-white">
+      <main className="overflow-x-hidden p-3 text-gray-800 dark:text-white md:p-6">
         <div className="bg-gradient-to-r from-gray-900 to-amber-700 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center ">
           <div>
             <h1 className="text-2xl font-bold">Hambire Jewellery</h1>

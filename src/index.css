@@ -66,3 +66,9 @@
     @apply bg-background text-foreground;
   }
 }
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}

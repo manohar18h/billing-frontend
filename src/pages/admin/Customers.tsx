@@ -271,52 +271,62 @@ const SearchAddCustomer: React.FC = () => {
   );
 
   return (
-    <div>
-      <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6 ">
-        <Paper
+    <div className="w-full overflow-x-hidden px-3 pb-[90px] md:px-0 md:pb-0">
+<div className="mt-4 flex flex-col items-center justify-center gap-4 md:mt-10 md:p-3">
+          <Paper
           elevation={4}
           sx={{ borderRadius: "24px" }}
-          className="relative p-6 rounded-xl w-full  max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
-        >
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            color="primary"
-            gutterBottom
-          >
-            Search Customer
-          </Typography>
+         className="relative w-full rounded-xl border border-[#d0b3ff] bg-white/75 p-4 shadow-[0_10px_30px_rgba(136,71,255,0.3)] backdrop-blur-lg md:max-w-6xl md:p-6"
+         >
+         <Typography
+  variant="h5"
+  fontWeight="bold"
+  color="primary"
+  gutterBottom
+  sx={{ fontSize: { xs: "22px", md: "34px" } }}
+>
+  Search Customer
+</Typography>
 
-          <Box
-            mt={6}
-            display="flex"
-            gap={2}
-            maxWidth={600}
-            alignSelf="center"
-            mb={4}
-          >
-            <TextField
-              select
-              label="Search Type"
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                style: { color: "#333" },
-                shrink: true, // ✅ ensures label is always visible
-              }}
-              InputProps={{
-                style: { fontWeight: 500 },
-              }}
-              sx={{
-                minWidth: "200px",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderWidth: "2px",
-                  borderColor: "gray",
-                },
-              }}
-            >
+ <Box
+  mt={{ xs: 3, md: 6 }}
+  display="grid"
+  gridTemplateColumns={{ xs: "1fr", md: "220px 1fr 150px" }}
+  gap={2}
+  maxWidth="900px"
+  mb={4}
+>
+           <TextField
+  select
+  label="Search Type"
+  value={searchType}
+  onChange={(e) => setSearchType(e.target.value)}
+  fullWidth
+  variant="outlined"
+  InputLabelProps={{
+    shrink: true,
+  }}
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "16px",
+      backgroundColor: "#fff",
+      height: "56px",
+      fontWeight: 500,
+      cursor: "pointer",
+    },
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderWidth: "1.5px",
+      borderColor: "#9ca3af",
+    },
+    "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#8847FF",
+    },
+    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#8847FF",
+      borderWidth: "2px",
+    },
+  }}
+>
               <MenuItem value="">
                 <em>Select Search Type</em>
               </MenuItem>
@@ -405,21 +415,22 @@ const SearchAddCustomer: React.FC = () => {
         </Paper>
       </div>
 
-      <div className="mt-10 p-3 flex flex-col items-center justify-center gap-6">
-        <Paper
+<div className="mt-4 flex flex-col items-center justify-center gap-4 md:mt-10 md:p-3">
+          <Paper
           elevation={4}
           sx={{ borderRadius: "24px" }}
-          className="relative p-6 rounded-xl w-full max-w-6xl bg-white/75 backdrop-blur-lg border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)]"
+      className="relative w-full rounded-xl border border-[#d0b3ff] bg-white/75 p-4 shadow-[0_10px_30px_rgba(136,71,255,0.3)] backdrop-blur-lg md:max-w-6xl md:p-6"
         >
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            color="primary"
-            gutterBottom
-          >
-            Add Customer
-          </Typography>
-          <Grid container spacing={3} mt={6}>
+        <Typography
+  variant="h5"
+  fontWeight="bold"
+  color="primary"
+  gutterBottom
+  sx={{ fontSize: { xs: "22px", md: "34px" } }}
+>
+  Add Customer
+</Typography>
+          <Grid container spacing={{ xs: 2, md: 3 }} mt={{ xs: 3, md: 6 }}>
             {(
               [
                 "name",
@@ -429,7 +440,7 @@ const SearchAddCustomer: React.FC = () => {
                 "password",
               ] as (keyof Customer)[]
             ).map((key) => (
-              <Grid key={key} size={{ xs: 6, sm: 4 }}>
+              <Grid key={key} size={{ xs: 12, sm: 6, md: 4 }}>
                 {key === "village" ? (
                   <Autocomplete
                     freeSolo
@@ -500,21 +511,22 @@ const SearchAddCustomer: React.FC = () => {
             ))}
           </Grid>
 
-          <Box display="flex" justifyContent="flex-end" mt={4}>
+          <Box display="flex" justifyContent={{ xs: "center", md: "flex-end" }} mt={4}>
             <Button
               onClick={handleAddCustomer}
               variant="outlined"
-              sx={{
-                paddingX: 4,
-                paddingY: 1.5,
-                borderRadius: "12px",
-                fontWeight: "bold",
-                boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
-                borderColor: "#8847FF",
-                color: "#8847FF",
-                transition: "all 0.3s",
-                "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
-              }}
+            sx={{
+  width: { xs: "100%", md: "auto" },
+  paddingX: 4,
+  paddingY: 1.5,
+  borderRadius: "12px",
+  fontWeight: "bold",
+  boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+  borderColor: "#8847FF",
+  color: "#8847FF",
+  transition: "all 0.3s",
+  "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+}}
             >
               Next
             </Button>
@@ -561,36 +573,56 @@ const SearchAddCustomer: React.FC = () => {
               }}
             />
 
-            <div className="max-h-[640px] overflow-y-auto border border-gray-300 rounded-lg">
-              <table className="w-full border-collapse">
-                <thead className="bg-purple-200 sticky top-0 z-10">
-                  <tr>
-                    <th className="p-3 text-left font-bold">Name</th>
-                    <th className="p-3 text-left font-bold">Phone Number</th>
-                  </tr>
-                </thead>
+         <div className="max-h-[640px] overflow-y-auto rounded-lg border border-gray-300">
+  {/* Mobile cards */}
+  <div className="space-y-3 p-3 md:hidden">
+    {filteredVillageCustomers.length > 0 ? (
+      filteredVillageCustomers.map((c: any, index) => (
+        <div
+          key={index}
+          className="rounded-2xl border border-purple-100 bg-purple-50 p-4 shadow-sm"
+        >
+          <div className="text-xs text-gray-500">Name</div>
+          <div className="font-bold text-[#4911a9]">{c.name}</div>
 
-                <tbody>
-                  {filteredVillageCustomers.length > 0 ? (
-                    filteredVillageCustomers.map((c: any, index) => (
-                      <tr
-                        key={index}
-                        className="border-b hover:bg-purple-50 transition-all"
-                      >
-                        <td className="p-3">{c.name}</td>
-                        <td className="p-3">{c.phoneNumber}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={2} className="p-4 text-center text-gray-500">
-                        No customer found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <div className="mt-2 text-xs text-gray-500">Phone Number</div>
+          <div className="font-bold text-[#85400b]">{c.phoneNumber}</div>
+        </div>
+      ))
+    ) : (
+      <div className="rounded-xl bg-gray-50 p-4 text-center text-sm text-gray-500">
+        No customer found
+      </div>
+    )}
+  </div>
+
+  {/* Desktop table */}
+  <table className="hidden w-full border-collapse md:table">
+    <thead className="sticky top-0 z-10 bg-purple-200">
+      <tr>
+        <th className="p-3 text-left font-bold">Name</th>
+        <th className="p-3 text-left font-bold">Phone Number</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {filteredVillageCustomers.length > 0 ? (
+        filteredVillageCustomers.map((c: any, index) => (
+          <tr key={index} className="border-b transition-all hover:bg-purple-50">
+            <td className="p-3">{c.name}</td>
+            <td className="p-3">{c.phoneNumber}</td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan={2} className="p-4 text-center text-gray-500">
+            No customer found
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
           </Paper>
         )}
       </div>

@@ -396,7 +396,7 @@ We hope to serve you again soon!
   if (!bill) return <p className="p-6">Loading Bill Summary...</p>;
 
   return (
-    <div className="p-6 bg-white text-black">
+    <div className="bg-white px-2 py-4 pb-24 text-black md:p-6">
       {/* PRINT CSS */}
       <style>
         {`
@@ -600,11 +600,16 @@ We hope to serve you again soon!
           transform: scale(0.7);
         }
       }
-      @media (max-width: 800px) {
-        .invoice-table {
-          transform: scale(0.6);
-        }
-      }
+     @media screen and (max-width: 767px) {
+  .invoice-table {
+    transform: none !important;
+    table-layout: fixed;
+  }
+
+  #print-section {
+    box-shadow: none;
+  }
+}
     `}
       </style>
 
@@ -612,7 +617,7 @@ We hope to serve you again soon!
       <div
         id="print-section"
         ref={printRef}
-        className="p-6 bg-white shadow-2xl rounded-md max-w-[800px] mx-auto mt-15 print:shadow-none print:rounded-none print:p-4 print:bg-white"
+className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-15 md:p-6 print:mt-0 print:rounded-none print:bg-white print:p-4 print:shadow-none"
       >
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 pb-4 mb-4 mt-20">
@@ -702,9 +707,9 @@ We hope to serve you again soon!
         </div>
 
         {/* Table */}
-        <div className="w-full flex justify-center invoice-table-wrapper">
-          <table className="invoice-table border border-collapse text-sm mb-6 invoice-table">
-            <thead>
+       <div className="w-full overflow-x-auto md:flex md:justify-center invoice-table-wrapper">
+<table className="invoice-table min-w-[900px] border border-collapse text-sm mb-6">
+              <thead>
               <tr className="bg-[#B45309] text-[#ffffff]">
                 <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
                   Name

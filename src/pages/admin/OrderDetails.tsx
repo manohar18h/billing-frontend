@@ -212,9 +212,9 @@ const OrderDetails: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
-      <div className="w-full max-w-6xl bg-gradient-to-r  from-[#0f172a] via-[#1e1b4b] to-[#3b0764] text-white rounded-3xl shadow-2xl p-10 relative">
-        {/* Close button */}
+    <div className="min-h-screen bg-[#f5f5f5] p-3 pb-[90px] dark:bg-[#1a1b1f] md:flex md:items-center md:justify-center md:p-8 md:pb-8">
+<div className="relative w-full rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#3b0764] p-4 text-white shadow-2xl md:max-w-6xl md:rounded-3xl md:p-10">
+          {/* Close button */}
         <button
           onClick={() => {
             const from = sessionStorage.getItem("from");
@@ -243,19 +243,19 @@ const OrderDetails: React.FC = () => {
               navigate("/admin");
             }
           }}
-          className="absolute top-5 right-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-lg text-sm hover:opacity-90"
+className="absolute right-3 top-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-xs text-white hover:opacity-90 md:right-5 md:top-5 md:px-4 md:text-sm"
         >
           ✕ Close
         </button>
 
         {/* Title */}
-        <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-8">
-          Order Details (#{order.orderId})
-        </h1>
+      <h1 className="mb-6 pr-20 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-2xl font-extrabold text-transparent md:mb-8 md:pr-0 md:text-3xl">
+  Order Details (#{order.orderId})
+</h1>
 
         {/* Order Info Grid */}
-        <div className="grid grid-cols-2 gap-8 mb-10">
-          <div className="pr-6 border-r border-purple-300/40">
+        <div className="mb-8 grid grid-cols-1 gap-4 md:mb-10 md:grid-cols-2 md:gap-8">
+          <div className="border-purple-300/40 md:border-r md:pr-6">
             {[
               [
                 "Order Date",
@@ -288,7 +288,7 @@ const OrderDetails: React.FC = () => {
             ))}
           </div>
 
-          <div className="pl-6">
+          <div className="md:pl-6">
             {[
               ["Enamel Weight", order.enamel_weight],
               ["Enamel Amount", order.enamel_amount],
@@ -328,8 +328,8 @@ const OrderDetails: React.FC = () => {
               Old Exchanged Items
             </h2>
             {order.oldItems.map((item: OldItem, index: number) => (
-              <div key={index} className="grid grid-cols-2 gap-6 mb-10">
-                <div className="pr-6 border-r border-purple-300/40">
+              <div key={index} className="mb-6 grid grid-cols-1 gap-3 rounded-2xl bg-white/5 p-4 md:mb-10 md:grid-cols-2 md:gap-6 md:bg-transparent md:p-0">
+               <div className="border-purple-300/40 md:border-r md:pr-6">
                   <p>
                     <span className="text-purple-200">Metal Name:</span>{" "}
                     <span className="text-emerald-300">
@@ -349,7 +349,7 @@ const OrderDetails: React.FC = () => {
                     </span>
                   </p>
                 </div>
-                <div className="pl-6">
+                <div className="md:pl-6">
                   <p>
                     <span className="text-pink-200">Metal Purity:</span>{" "}
                     <span className="text-yellow-300">
@@ -380,7 +380,7 @@ const OrderDetails: React.FC = () => {
             <h2 className="text-2xl font-bold text-purple-300 mb-4">
               Worker Details
             </h2>
-            <div className="grid grid-cols-2 gap-6 mb-10">
+            <div className="mb-6 grid grid-cols-1 gap-3 rounded-2xl bg-white/5 p-4 md:mb-10 md:grid-cols-2 md:gap-6 md:bg-transparent md:p-0">
               <div className="pr-6 border-r border-purple-300/40">
                 <p>
                   <span className="text-purple-200">Name:</span>{" "}
@@ -432,9 +432,9 @@ const OrderDetails: React.FC = () => {
             <h2 className="text-2xl font-bold text-purple-300 mb-4">
               Transactions
             </h2>
-            <ul className="mb-10 pl-5 list-disc space-y-2">
+            <ul className="mb-8 space-y-2 md:mb-10 md:list-disc md:pl-5">
               {order.transactions.map((tx: Transaction) => (
-                <li key={tx.transactionId} className="text-emerald-300">
+                <li key={tx.transactionId} className="rounded-xl bg-white/5 p-3 text-sm text-emerald-300 md:bg-transparent md:p-0 md:text-base">
                   ₹{tx.paidAmount} -{}
                   <span className="text-red-300">
                     {tx.paymentMethod}

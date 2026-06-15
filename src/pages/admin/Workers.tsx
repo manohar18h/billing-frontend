@@ -152,11 +152,11 @@ const Workers: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="mt-10 p-4 rounded-[24px] bg-white/80 backdrop-blur-md border border-[#d0b3ff]  min-h-[500px] flex flex-col items-center">
-        <Box sx={{ p: 4, width: "100%", maxWidth: 820 }}>
-          <div className=" p-4 rounded-[24px] bg-white/80 backdrop-blur-md border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)] min-h-[500px] flex flex-col items-center">
-            <Box sx={{ p: 4, width: "100%", maxWidth: 820 }}>
+    <div className="w-full overflow-x-hidden px-3 pb-[90px] md:px-0 md:pb-0">
+<div className="mt-4 flex flex-col items-center rounded-[20px] border border-[#d0b3ff] bg-white/80 p-3 backdrop-blur-md md:mt-10 md:min-h-[500px] md:p-4">
+        <Box sx={{ p: { xs: 0, md: 4 }, width: "100%", maxWidth: 820 }}>
+<div className="flex w-full flex-col items-center rounded-[20px] border border-[#d0b3ff] bg-white p-4 shadow-[0_10px_30px_rgba(136,71,255,0.18)] md:min-h-[500px] md:rounded-[24px]">
+             <Box sx={{ p: { xs: 0, md: 4 }, width: "100%", maxWidth: 820 }}>
               <Typography
                 variant="h5"
                 fontWeight="bold"
@@ -170,7 +170,12 @@ const Workers: React.FC = () => {
                 Search Worker
               </Typography>
 
-              <Stack direction="row" spacing={1} mb={5} alignItems="center">
+              <Stack
+  direction={{ xs: "column", sm: "row" }}
+  spacing={2}
+  mb={5}
+  alignItems="stretch"
+>
                 <TextField
                   select
                   size="small"
@@ -179,7 +184,13 @@ const Workers: React.FC = () => {
                   onChange={(e) =>
                     setSelectedId(e.target.value ? Number(e.target.value) : "")
                   }
-                  sx={{ width: 260 }}
+                  sx={{
+  width: { xs: "100%", sm: 260 },
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "14px",
+    backgroundColor: "#fff",
+  },
+}}
                 >
                   <MenuItem value="" disabled>
                     -- choose name --
@@ -194,12 +205,15 @@ const Workers: React.FC = () => {
                 <Button
                   onClick={handleView}
                   variant="contained"
-                  sx={{
-                    background: "#8847FF",
-                    fontWeight: 600,
-                    textTransform: "none",
-                    "&:hover": { background: "#6c30cc" },
-                  }}
+                 sx={{
+  width: { xs: "100%", sm: "auto" },
+  height: "40px",
+  background: "#8847FF",
+  fontWeight: 600,
+  textTransform: "none",
+  borderRadius: "12px",
+  "&:hover": { background: "#6c30cc" },
+}}
                 >
                   View
                 </Button>
@@ -218,8 +232,8 @@ const Workers: React.FC = () => {
                 Add Worker
               </Typography>
 
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 6, sm: 4 }}>
+              <Grid container spacing={{ xs: 2, md: 3 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <TextField
                     label="Full Name"
                     value={worker.fullName}
@@ -229,7 +243,7 @@ const Workers: React.FC = () => {
                   />
                 </Grid>
 
-                <Grid size={{ xs: 6, sm: 4 }}>
+               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <TextField
                     label="Username"
                     value={worker.userName}
@@ -239,7 +253,7 @@ const Workers: React.FC = () => {
                   />
                 </Grid>
 
-                <Grid size={{ xs: 6, sm: 4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <TextField
                     type="password"
                     label="Password"
@@ -250,7 +264,7 @@ const Workers: React.FC = () => {
                   />
                 </Grid>
 
-                <Grid size={{ xs: 6, sm: 4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <TextField
                     label="Phone Number"
                     value={worker.phnNumber}
@@ -260,7 +274,7 @@ const Workers: React.FC = () => {
                   />
                 </Grid>
 
-                <Grid size={{ xs: 6, sm: 4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <TextField
                     label="Village"
                     value={worker.village}
@@ -271,20 +285,21 @@ const Workers: React.FC = () => {
                 </Grid>
               </Grid>
 
-              <Box display="flex" justifyContent="flex-end" mt={4}>
+              <Box display="flex" justifyContent={{ xs: "center", md: "flex-end" }} mt={4}>
                 <Button
                   onClick={addWorker}
                   variant="outlined"
-                  sx={{
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: 2,
-                    fontWeight: "bold",
-                    borderColor: "#8847FF",
-                    color: "#8847FF",
-                    boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
-                    "&:hover": { background: "#8847FF", color: "#fff" },
-                  }}
+                sx={{
+  width: { xs: "100%", md: "auto" },
+  px: 4,
+  py: 1.5,
+  borderRadius: 2,
+  fontWeight: "bold",
+  borderColor: "#8847FF",
+  color: "#8847FF",
+  boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+  "&:hover": { background: "#8847FF", color: "#fff" },
+}}
                 >
                   Add
                 </Button>
@@ -293,11 +308,11 @@ const Workers: React.FC = () => {
           </div>
         </Box>
       </div>
-      <div className="mt-5 p-4 rounded-[24px] bg-white/80 backdrop-blur-md border border-[#d0b3ff]  min-h-[500px] flex flex-col items-center">
-        <Box sx={{ p: 4, width: "100%", maxWidth: 820 }}>
-          <div className=" p-4 rounded-[24px] bg-white/80 backdrop-blur-md border border-[#d0b3ff] shadow-[0_10px_30px_rgba(136,71,255,0.3)] min-h-[500px] flex flex-col items-center">
-            <Box sx={{ p: 4, width: "100%", maxWidth: 820 }}>
-              <Box p={3}>
+<div className="mt-5 flex flex-col items-center rounded-[20px] border border-[#d0b3ff] bg-white/80 p-3 backdrop-blur-md md:min-h-[500px] md:p-4">
+        <Box sx={{ p: { xs: 0, md: 4 }, width: "100%", maxWidth: 820 }}>
+<div className="flex w-full flex-col items-center rounded-[20px] border border-[#d0b3ff] bg-white p-4 shadow-[0_10px_30px_rgba(136,71,255,0.18)] md:min-h-[500px] md:rounded-[24px]">
+              <Box sx={{ p: { xs: 0, md: 4 }, width: "100%", maxWidth: 820 }}>
+              <Box sx={{ p: { xs: 0, md: 3 } }}>
                 <Typography
                   variant="h5"
                   fontWeight="bold"
@@ -307,34 +322,59 @@ const Workers: React.FC = () => {
                 >
                   Services
                 </Typography>
-                <Box display="flex" justifyContent="center" gap={6} mb={3}>
+                <Box
+  display="grid"
+  gridTemplateColumns={{ xs: "1fr 1fr", sm: "repeat(4, 1fr)" }}
+  gap={{ xs: 1.5, md: 6 }}
+  mb={3}
+>
                   <TabBtn
                     active={active === "add"}
                     onClick={() => scrollTo(addRef)}
+                    sx={{
+  fontSize: { xs: "12px", md: "14px" },
+  minWidth: 0,
+  px: { xs: 1, md: 2 },
+}}
                   >
                     Add Stock
                   </TabBtn>
                   <TabBtn
                     active={active === "lot"}
                     onClick={() => scrollTo(lotRef)}
+                    sx={{
+  fontSize: { xs: "12px", md: "14px" },
+  minWidth: 0,
+  px: { xs: 1, md: 2 },
+}}
                   >
                     Lot Work
                   </TabBtn>
                   <TabBtn
                     active={active === "repair"}
                     onClick={() => scrollTo(repairRef)}
+                    sx={{
+  fontSize: { xs: "12px", md: "14px" },
+  minWidth: 0,
+  px: { xs: 1, md: 2 },
+}}
                   >
                     Repair Work
                   </TabBtn>
                   <TabBtn
                     active={active === "tx"}
                     onClick={() => scrollTo(txRef)}
+                    sx={{
+  fontSize: { xs: "12px", md: "14px" },
+  minWidth: 0,
+  px: { xs: 1, md: 2 },
+}}
                   >
                     Transaction
                   </TabBtn>
                 </Box>
 
-                <Box display="flex" flexDirection="column" gap={12}>
+                <Box display="flex" flexDirection="column" gap={{ xs: 5, md: 12 }}>
                   <Box ref={addRef} data-section="add">
                     <WorkerStock />
                   </Box>

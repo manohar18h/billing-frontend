@@ -1120,122 +1120,164 @@ const LatestOrders: React.FC = () => {
   };
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-      <div className=" text-[#85400b] mb-3 font-bold text-lg">
-        Today's Order
-      </div>
-      <div className="mt-4">
-        <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">Check</div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center ">
-                  Bill Number
-                </div>
-              </th>
-              <th className="border px-3 py-2 text-center ">
-                <div className="flex justify-center items-center">Name</div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">Total</div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">Due</div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">Work</div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">Status</div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">View</div>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {rows.map((r) => {
-              const isDelivered =
-                normalizeStatus(r.deliveryStatus) === "delivered";
-
-              return (
-                <tr key={r.billId} className="bg-white">
-                  {/* CHECKBOX */}
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(r.checked)}
-                        disabled={isDelivered}
-                        onChange={(e) =>
-                          handleCheckboxChange(
-                            Number(r.billId),
-                            e.target.checked,
-                          )
-                        }
-                        className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
-                      />
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center text-[#4911a9] font-semibold">
-                      {r.billNumber}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center text-[#b6276f] font-semibold">
-                      {r.name}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center  text-[#e38111]  font-semibold">
-                      {r.billTotalAmount}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center text-[#e60b0b] font-semibold">
-                      {r.billDueAmount}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center font-semibold">
-                      {renderStatusChip(r.workStatus)}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center font-semibold">
-                      {renderStatusChip(r.deliveryStatus)}
-                    </div>
-                  </td>
-
-                  <td>
-                    <div className="flex justify-center items-center">
-                      <IconButton
-                        size="medium"
-                        color="primary"
-                        sx={{
-                          "&:hover": { backgroundColor: "#E0E0E0" },
-                        }}
-                        onClick={() => {
-                          localStorage.setItem("billNumber", r.billNumber);
-                          navigate("/admin/bill-details");
-                        }}
-                      >
-                        <VisibilityIcon fontSize="medium" />
-                      </IconButton>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+  <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 md:p-5">
+    <div className="mb-3 text-lg font-bold text-[#85400b]">
+      Today's Order
     </div>
-  );
+
+    {/* Mobile card view */}
+    <div className="space-y-3 md:hidden">
+      {rows.length === 0 ? (
+        <div className="rounded-xl bg-gray-50 p-4 text-center text-sm text-gray-500">
+          No orders found today
+        </div>
+      ) : (
+        rows.map((r) => {
+          const isDelivered =
+            normalizeStatus(r.deliveryStatus) === "delivered";
+
+          return (
+            <div
+              key={r.billId}
+              className="rounded-2xl border border-gray-100 bg-[#fffaf0] p-4 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs text-gray-500">Bill No</div>
+                  <div className="font-bold text-blue-700">{r.billNumber}</div>
+                </div>
+
+                <input
+                  type="checkbox"
+                  checked={Boolean(r.checked)}
+                  disabled={isDelivered}
+                  onChange={(e) =>
+                    handleCheckboxChange(Number(r.billId), e.target.checked)
+                  }
+                  className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+                />
+              </div>
+
+              <div className="mt-3 text-sm">
+                <div className="font-bold text-[#b6276f]">{r.name}</div>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-white p-2">
+                    <div className="text-[11px] text-gray-500">Total</div>
+                    <div className="font-bold text-[#e38111]">
+                      ₹{Number(r.billTotalAmount || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl bg-white p-2">
+                    <div className="text-[11px] text-gray-500">Due</div>
+                    <div className="font-bold text-red-600">
+                      ₹{Number(r.billDueAmount || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {renderStatusChip(r.workStatus)}
+                  {renderStatusChip(r.deliveryStatus)}
+                </div>
+
+                <button
+                  onClick={() => {
+                    localStorage.setItem("billNumber", r.billNumber);
+                    navigate("/admin/bill-details");
+                  }}
+                  className="rounded-full bg-[#85400b] px-4 py-2 text-xs font-bold text-white"
+                >
+                  View
+                </button>
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+
+    {/* Desktop table view */}
+    <div className="mt-4 hidden overflow-x-auto md:block">
+      <table className="min-w-[850px] w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
+        <thead className="bg-gray-200">
+          <tr>
+            <th className="border px-3 py-2 text-center">Check</th>
+            <th className="border px-3 py-2 text-center">Bill Number</th>
+            <th className="border px-3 py-2 text-center">Name</th>
+            <th className="border px-3 py-2 text-center">Total</th>
+            <th className="border px-3 py-2 text-center">Due</th>
+            <th className="border px-3 py-2 text-center">Work</th>
+            <th className="border px-3 py-2 text-center">Status</th>
+            <th className="border px-3 py-2 text-center">View</th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-gray-100">
+          {rows.map((r) => {
+            const isDelivered =
+              normalizeStatus(r.deliveryStatus) === "delivered";
+
+            return (
+              <tr key={r.billId} className="bg-white">
+                <td className="border px-3 py-2 text-center">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(r.checked)}
+                    disabled={isDelivered}
+                    onChange={(e) =>
+                      handleCheckboxChange(Number(r.billId), e.target.checked)
+                    }
+                    className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+                  />
+                </td>
+
+                <td className="border px-3 py-2 text-center font-semibold text-[#4911a9]">
+                  {r.billNumber}
+                </td>
+
+                <td className="border px-3 py-2 text-center font-semibold text-[#b6276f]">
+                  {r.name}
+                </td>
+
+                <td className="border px-3 py-2 text-center font-semibold text-[#e38111]">
+                  {r.billTotalAmount}
+                </td>
+
+                <td className="border px-3 py-2 text-center font-semibold text-red-600">
+                  {r.billDueAmount}
+                </td>
+
+                <td className="border px-3 py-2 text-center">
+                  {renderStatusChip(r.workStatus)}
+                </td>
+
+                <td className="border px-3 py-2 text-center">
+                  {renderStatusChip(r.deliveryStatus)}
+                </td>
+
+                <td className="border px-3 py-2 text-center">
+                  <IconButton
+                    size="medium"
+                    color="primary"
+                    onClick={() => {
+                      localStorage.setItem("billNumber", r.billNumber);
+                      navigate("/admin/bill-details");
+                    }}
+                  >
+                    <VisibilityIcon fontSize="medium" />
+                  </IconButton>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
 };
 
 const LatestLoanOrders: React.FC = () => {
@@ -1330,240 +1372,336 @@ const LatestLoanOrders: React.FC = () => {
       <div className=" text-[#85400b] mb-3 font-bold text-lg">
         Today's Loan Order
       </div>
-      <div className="mt-4">
-        <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">Check</div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center ">
-                  Loan Bill Number
-                </div>
-              </th>
-              <th className="border px-3 py-2 text-center ">
-                <div className="flex justify-center items-center">Name</div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">Total</div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">
-                  Interest Paid
-                </div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">
-                  Item Status
-                </div>
-              </th>
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">
-                  Delivery Status
-                </div>
-              </th>
+     {/* Mobile card view */}
+<div className="space-y-3 md:hidden">
+  {rows.length === 0 ? (
+    <div className="rounded-xl bg-gray-50 p-4 text-center text-sm text-gray-500">
+      No loan orders found today
+    </div>
+  ) : (
+    rows.map((r) => {
+      const isDelivered =
+        normalizeStatus(r.deliveryStatus) === "delivered";
 
-              <th className="border px-3 py-2 text-center">
-                <div className="flex justify-center items-center">View</div>
-              </th>
+      return (
+        <div
+          key={r.loanBillId}
+          className="rounded-2xl border border-gray-100 bg-[#f8fbff] p-4 shadow-sm"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-xs text-gray-500">Loan Bill No</div>
+              <div className="font-bold text-blue-700">{r.loanBillNumber}</div>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={Boolean(r.checked)}
+              disabled={isDelivered}
+              onChange={(e) =>
+                handleLoanCheckboxChange(Number(r.loanBillId), e.target.checked)
+              }
+              className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+            />
+          </div>
+
+          <div className="mt-3 font-bold text-[#b6276f]">{r.name}</div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-white p-2">
+              <div className="text-[11px] text-gray-500">Total</div>
+              <div className="font-bold text-[#e38111]">
+                ₹{Number(r.totalAmount || 0).toLocaleString("en-IN")}
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-white p-2">
+              <div className="text-[11px] text-gray-500">Interest Paid</div>
+              <div className="font-bold text-red-600">
+                ₹{Number(r.paidInterestAmount || 0).toLocaleString("en-IN")}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
+              {renderStatusChip(r.itemStatus)}
+              {renderStatusChip(r.deliveryStatus)}
+            </div>
+
+            <button
+              onClick={() => {
+                localStorage.removeItem("billLoanNumber");
+                localStorage.removeItem("checkBackFrom");
+                localStorage.setItem("billLoanNumber", r.loanBillNumber);
+                localStorage.setItem("checkBackFrom", "DashBoard");
+                navigate("/admin/bill-loan-details");
+              }}
+              className="rounded-full bg-[#85400b] px-4 py-2 text-xs font-bold text-white"
+            >
+              View
+            </button>
+          </div>
+        </div>
+      );
+    })
+  )}
+</div>
+{/* Desktop table view */}
+<div className="mt-4 hidden overflow-x-auto md:block">
+  <table className="min-w-[850px] w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
+    <thead className="bg-gray-200">
+      <tr>
+        <th className="border px-3 py-2 text-center">Check</th>
+        <th className="border px-3 py-2 text-center">Loan Bill Number</th>
+        <th className="border px-3 py-2 text-center">Name</th>
+        <th className="border px-3 py-2 text-center">Total</th>
+        <th className="border px-3 py-2 text-center">Interest Paid</th>
+        <th className="border px-3 py-2 text-center">Item Status</th>
+        <th className="border px-3 py-2 text-center">Delivery Status</th>
+        <th className="border px-3 py-2 text-center">View</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {rows.length === 0 ? (
+        <tr>
+          <td colSpan={8} className="border px-3 py-4 text-center text-gray-500">
+            No loan orders found today
+          </td>
+        </tr>
+      ) : (
+        rows.map((r) => {
+          const isDelivered =
+            normalizeStatus(r.deliveryStatus) === "delivered";
+
+          return (
+            <tr key={r.loanBillId} className="bg-white">
+              <td className="border px-3 py-2 text-center">
+                <input
+                  type="checkbox"
+                  checked={Boolean(r.checked)}
+                  disabled={isDelivered}
+                  onChange={(e) =>
+                    handleLoanCheckboxChange(
+                      Number(r.loanBillId),
+                      e.target.checked,
+                    )
+                  }
+                  className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
+                />
+              </td>
+
+              <td className="border px-3 py-2 text-center font-semibold text-blue-700">
+                {r.loanBillNumber}
+              </td>
+
+              <td className="border px-3 py-2 text-center font-semibold text-[#b6276f]">
+                {r.name}
+              </td>
+
+              <td className="border px-3 py-2 text-center font-semibold text-[#e38111]">
+                ₹{Number(r.totalAmount || 0).toLocaleString("en-IN")}
+              </td>
+
+              <td className="border px-3 py-2 text-center font-semibold text-red-600">
+                ₹{Number(r.paidInterestAmount || 0).toLocaleString("en-IN")}
+              </td>
+
+              <td className="border px-3 py-2 text-center">
+                {renderStatusChip(r.itemStatus)}
+              </td>
+
+              <td className="border px-3 py-2 text-center">
+                {renderStatusChip(r.deliveryStatus)}
+              </td>
+
+              <td className="border px-3 py-2 text-center">
+                <IconButton
+                  size="medium"
+                  color="primary"
+                  onClick={() => {
+                    localStorage.removeItem("billLoanNumber");
+                    localStorage.removeItem("checkBackFrom");
+                    localStorage.setItem("billLoanNumber", r.loanBillNumber);
+                    localStorage.setItem("checkBackFrom", "DashBoard");
+                    navigate("/admin/bill-loan-details");
+                  }}
+                >
+                  <VisibilityIcon fontSize="medium" />
+                </IconButton>
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {rows.map((r) => {
-              const isDelivered =
-                normalizeStatus(r.deliveryStatus) === "delivered";
+          );
+        })
+      )}
+    </tbody>
+  </table>
+</div>
 
-              return (
-                <tr key={r.loanBillId} className="bg-white">
-                  {/* CHECKBOX */}
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(r.checked)}
-                        disabled={isDelivered}
-                        onChange={(e) =>
-                          handleLoanCheckboxChange(
-                            Number(r.loanBillId),
-                            e.target.checked,
-                          )
-                        }
-                        className={`jewel-checkbox ${isDelivered ? "disabled" : ""}`}
-                      />
-                    </div>
-                  </td>
-
-                  {/* {rows.map((r, i) => (
-              <tr key={i} className="bg-white"> */}
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center text-[#4911a9] font-semibold">
-                      {r.loanBillNumber}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center text-[#b6276f] font-semibold">
-                      {r.name}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center  text-[#e38111]  font-semibold">
-                      {r.totalAmount}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center text-[#e60b0b] font-semibold">
-                      {r.paidInterestAmount}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center font-semibold">
-                      {renderStatusChip(r.itemStatus)}
-                    </div>
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    <div className="flex justify-center items-center font-semibold">
-                      {renderStatusChip(r.deliveryStatus)}
-                    </div>
-                  </td>
-
-                  <td>
-                    <div className="flex justify-center items-center">
-                      <IconButton
-                        size="medium"
-                        color="primary"
-                        sx={{
-                          "&:hover": { backgroundColor: "#E0E0E0" },
-                        }}
-                        onClick={() => {
-                          localStorage.removeItem("billLoanNumber");
-                          localStorage.removeItem("checkBackFrom");
-
-                          localStorage.setItem(
-                            "billLoanNumber",
-                            r.loanBillNumber,
-                          );
-                          localStorage.setItem("checkBackFrom", "DashBoard");
-                          navigate("/admin/bill-loan-details");
-                        }}
-                      >
-                        <VisibilityIcon fontSize="medium" />
-                      </IconButton>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 };
+
 const TodayOldExchangeTable: React.FC = () => {
   const [rows, setRows] = useState<TodayOldExchangeData[]>([]);
 
-  const fetchTodayOldExchangeData = async () => {
-    try {
-      const token = localStorage.getItem("token") ?? "";
-
-      const { data } = await api.get<TodayOldExchangeData[]>(
-        "/admin/today-old-return-metal-data",
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        },
-      );
-console.log("Today old return data:", data);
-      setRows(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Failed to fetch today old exchange data:", error);
-    }
-  };
-
   useEffect(() => {
+    const fetchTodayOldExchangeData = async () => {
+      try {
+        const token = localStorage.getItem("token") ?? "";
+
+        const { data } = await api.get<TodayOldExchangeData[]>(
+          "/admin/today-old-return-metal-data",
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          },
+        );
+
+        setRows(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch today old exchange data:", error);
+      }
+    };
+
     fetchTodayOldExchangeData();
   }, []);
 
-const totalGoldGrossWeight = rows
-  .filter((item) => item.onlyExchangeMetal?.toLowerCase() === "gold")
-  .reduce((sum, item) => sum + (item.onlyExchange_metal_weight || 0), 0);
-
-const totalSilverGrossWeight = rows
-  .filter((item) => item.onlyExchangeMetal?.toLowerCase() === "silver")
-  .reduce((sum, item) => sum + (item.onlyExchange_metal_weight || 0), 0);
-
   return (
-    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-  <div className="flex items-center justify-between mb-3">
-  <div className="text-[#85400b] font-bold text-lg">
-    Today's Old Return & Old Exchange
-  </div>
+    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 md:p-5">
+      <div className="mb-3 text-lg font-bold text-[#85400b]">
+        Today's Old Return & Old Exchange
+      </div>
 
-  <div className="flex items-center gap-3">
-    <div className="bg-yellow-100 text-[#85400b] px-4 py-2 rounded-xl font-bold text-sm">
-      Total Gold Wt : {totalGoldGrossWeight.toFixed(3)}
-    </div>
+      <div className="space-y-3 md:hidden">
+        {rows.length === 0 ? (
+          <div className="rounded-xl bg-gray-50 p-4 text-center text-sm text-gray-500">
+            No old return or old exchange data found today
+          </div>
+        ) : (
+          rows.map((item) => (
+            <div
+              key={item.oldMetalReturnId}
+              className="rounded-2xl border border-gray-100 bg-[#fffaf0] p-4 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs text-gray-500">Type</div>
+                  <div className="font-bold text-purple-700">
+                    {item.type === "Return"
+                      ? "Return Metal"
+                      : item.type === "Exchange"
+                        ? "Exchange Item"
+                        : item.type}
+                  </div>
+                </div>
 
-    <div className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold text-sm">
-      Total Silver Wt : {totalSilverGrossWeight.toFixed(3)}
-    </div>
-  </div>
+                <div className="rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-700">
+                  {item.billNumber || "-"}
+                </div>
+              </div>
+
+              <div className="mt-3 font-bold text-gray-800">
+                {item.onlyExchangeMetal} - {item.onlyExchange_metal_name}
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-white p-2">
+                  <div className="text-[11px] text-gray-500">Gross Wt</div>
+                  <div className="font-bold">
+                    {Number(item.onlyExchange_metal_weight || 0).toFixed(3)}
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-white p-2">
+                  <div className="text-[11px] text-gray-500">Purity Wt</div>
+                  <div className="font-bold">
+                    {Number(
+                      item.onlyExchange_metal_purity_weight || 0,
+                    ).toFixed(3)}
+                  </div>
+                </div>
+
+                <div className="col-span-2 rounded-xl bg-white p-2">
+                  <div className="text-[11px] text-gray-500">Amount</div>
+                  <div className="font-bold text-[#e38111]">
+                    ₹
+                    {Number(
+                      item.onlyExchange_total_amount || 0,
+                    ).toLocaleString("en-IN")}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+{/* Desktop table view */}
+<div className="mt-4 hidden overflow-x-auto md:block">
+  <table className="min-w-[850px] w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
+    <thead className="bg-gray-200">
+      <tr>
+        <th className="border px-3 py-2 text-center">Type</th>
+        <th className="border px-3 py-2 text-center">Bill No</th>
+        <th className="border px-3 py-2 text-center">Metal</th>
+        <th className="border px-3 py-2 text-center">Name</th>
+        <th className="border px-3 py-2 text-center">Gross Wt</th>
+        <th className="border px-3 py-2 text-center">Purity Wt</th>
+        <th className="border px-3 py-2 text-center">Amount</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {rows.length === 0 ? (
+        <tr>
+          <td colSpan={7} className="border px-3 py-4 text-center text-gray-500">
+            No old return or old exchange data found today
+          </td>
+        </tr>
+      ) : (
+        rows.map((item) => (
+          <tr key={item.oldMetalReturnId} className="bg-white">
+            <td className="border px-3 py-2 text-center font-semibold text-purple-700">
+              {item.type === "Return"
+                ? "Return Metal"
+                : item.type === "Exchange"
+                  ? "Exchange Item"
+                  : item.type}
+            </td>
+
+            <td className="border px-3 py-2 text-center font-semibold text-blue-700">
+              {item.billNumber || "-"}
+            </td>
+
+            <td className="border px-3 py-2 text-center">
+              {item.onlyExchangeMetal}
+            </td>
+
+            <td className="border px-3 py-2 text-center">
+              {item.onlyExchange_metal_name}
+            </td>
+
+            <td className="border px-3 py-2 text-center">
+              {Number(item.onlyExchange_metal_weight || 0).toFixed(3)}
+            </td>
+
+            <td className="border px-3 py-2 text-center">
+              {Number(item.onlyExchange_metal_purity_weight || 0).toFixed(3)}
+            </td>
+
+            <td className="border px-3 py-2 text-center font-semibold text-[#e38111]">
+              ₹{Number(item.onlyExchange_total_amount || 0).toLocaleString("en-IN")}
+            </td>
+          </tr>
+        ))
+      )}
+    </tbody>
+  </table>
 </div>
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border px-3 py-2 text-center">Type</th>
-              <th className="border px-3 py-2 text-center">Bill No</th>
-              <th className="border px-3 py-2 text-center">Metal</th>
-              <th className="border px-3 py-2 text-center">Name</th>
-              <th className="border px-3 py-2 text-center">Gross Wt</th>
-              <th className="border px-3 py-2 text-center">Metal Wt</th>
-              <th className="border px-3 py-2 text-center">Purity Wt</th>
-              <th className="border px-3 py-2 text-center">Amount</th>
-           </tr>
-          </thead>
-
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={11} className="border px-3 py-4 text-center text-gray-500">
-                  No old return or old exchange data found today
-                </td>
-              </tr>
-            ) : (
-    rows.map((item) => (
-  <tr key={item.oldMetalReturnId} className="bg-white">
-   <td className="border px-3 py-2 text-center font-semibold text-purple-700">
-  {item.type === "Return"
-    ? "Return Metal"
-    : item.type === "Exchange"
-      ? "Exchange Item"
-      : item.type}
-</td>
-    <td className="border px-3 py-2 text-center font-semibold text-blue-700">
-      {item.billNumber || "-"}
-    </td>
-
-    <td className="border px-3 py-2 text-center">{item.onlyExchangeMetal}</td>
-    <td className="border px-3 py-2 text-center">{item.onlyExchange_metal_name}</td>
-    <td className="border px-3 py-2 text-center">{item.onlyExchange_metal_weight}</td>
-    <td className="border px-3 py-2 text-center">{item.onlyExchange_metal_weight}</td>
-    <td className="border px-3 py-2 text-center">{item.onlyExchange_metal_purity_weight}</td>
-    <td className="border px-3 py-2 text-center text-[#e38111] font-semibold">
-      ₹{item.onlyExchange_total_amount}
-    </td>
-  </tr>
-))
-            )}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 };
-
 
 /* ---------- Business Growth: static country list + bars ---------- */
 const BusinessGrowth: React.FC = () => {
@@ -1684,9 +1822,9 @@ const Dashboard: React.FC = () => {
   const token = localStorage.getItem("token") || "";
 
   return (
-    <div className="mt-6 space-y-6">
+    <div className="mt-4 space-y-4 px-1 md:mt-6 md:space-y-6 md:px-0">
       {/* KPI row (first tile = Metal Prices) */}
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetalPricesCard />
         <MetricCard
           title="Total Orders"
@@ -1718,7 +1856,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Charts row */}
-      <div className="grid gap-5 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <TargetCard token={token} />
 
         <div className="xl:col-span-2">
@@ -1727,7 +1865,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Tables / Growth row */}
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* LEFT SIDE */}
         <div className="lg:col-span-2 space-y-5">
           <LatestOrders />

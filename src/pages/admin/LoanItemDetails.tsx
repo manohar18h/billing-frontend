@@ -101,109 +101,129 @@ const LoanItemDetails: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
-      <div className="w-full max-w-6xl bg-gradient-to-r  from-[#0f172a] via-[#1e1b4b] to-[#3b0764] text-white rounded-3xl shadow-2xl p-10 relative">
-        {/* Close button */}
-        <button
-          onClick={() => {
-            const from = localStorage.getItem("from");
+  <div className="min-h-screen bg-[#f5f5f5] p-3 pb-24 md:flex md:items-center md:justify-center md:p-8 dark:bg-[#1a1b1f]">
+    <div className="relative w-full rounded-3xl bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#3b0764] p-4 pt-16 text-white shadow-2xl md:max-w-6xl md:p-10">
+      <button
+        onClick={() => {
+          const from = localStorage.getItem("from");
 
-            if (from === "LoanItems") {
-              navigate("/admin/loanItems", {
-                state: { showItemsList: true, loanCustomerId },
-              });
-            } else if (from === "BillLoanDetails") {
-              const stored = sessionStorage.getItem("itemsState");
-              const parsed = stored ? JSON.parse(stored) : null;
-              const restoredItems = parsed?.items || [];
+          if (from === "LoanItems") {
+            navigate("/admin/loanItems", {
+              state: { showItemsList: true, loanCustomerId },
+            });
+          } else if (from === "BillLoanDetails") {
+            const stored = sessionStorage.getItem("itemsState");
+            const parsed = stored ? JSON.parse(stored) : null;
+            const restoredItems = parsed?.items || [];
 
-              navigate("/admin/bill-loan-details", {
-                state: {
-                  showItemsList: true,
-                  loanCustomerId,
-                  items: restoredItems,
-                },
-              });
-            } else {
-              navigate("/admin");
-            }
-          }}
-          className="absolute top-5 right-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-lg text-sm hover:opacity-90"
-        >
-          ✕ Close
-        </button>
+            navigate("/admin/bill-loan-details", {
+              state: {
+                showItemsList: true,
+                loanCustomerId,
+                items: restoredItems,
+              },
+            });
+          } else {
+            navigate("/admin");
+          }
+        }}
+        className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-xs font-bold text-white md:rounded-lg md:py-1 md:text-sm"
+      >
+        ✕ Close
+      </button>
 
-        {/* Title */}
-        <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-8">
-          Loan Item Details (#{item.loanId})
-        </h1>
+      <h1 className="mb-6 text-[22px] font-extrabold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 md:mb-8 md:text-3xl">
+        Loan Item Details (#{item.loanId})
+      </h1>
 
-        {/* Order Info Grid */}
-        <div className="grid grid-cols-2 gap-8 mb-10">
-          <div className="pr-6 border-r border-purple-300/40">
-            {[
-              [
-                "Loan Date",
-                new Date(item.loanDate).toLocaleDateString("en-GB"),
-              ],
-              ["Item Name", item.itemName],
-              ["Metal", item.metal],
-              ["Gross Weight", item.gross_weight],
-              ["Net Weight", item.net_weight],
-              ["Rate of Interest", item.rate_of_interest],
-              ["Total Amount", item.total_amount],
-            ].map(([label, value]) => (
-              <p key={label} className="mb-2 text-lg">
-                <span className="text-purple-300 font-semibold">{label}:</span>{" "}
-                <span className="text-emerald-300 font-bold">
-                  {value || "—"}
-                </span>
-              </p>
-            ))}
-          </div>
-
-          <div className="pl-6">
-            {[
-              ["Paid Amount", item.paid_amount],
-              ["Due Amount", item.due_amount],
-              ["Paid Interest Amount", item.paid_interest_amount],
-              ["Due Interest Amount", item.due_interest_amount],
-              ["Active Month Count", item.active_month_count],
-              ["Item Status", item.itemStatus || "Not Packed"],
-              ["Delivery Status", item.deliveryStatus],
-            ].map(([label, value]) => (
-              <p key={label} className="mb-2 text-lg">
-                <span className="text-pink-300 font-semibold">{label}:</span>{" "}
-                <span className="text-yellow-300 font-bold">
-                  {value || "—"}
-                </span>
-              </p>
-            ))}
-          </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 md:mb-10">
+        <div className="rounded-2xl bg-white/10 p-4 md:border-r md:border-purple-300/40 md:bg-transparent md:pr-6">
+          {[
+            ["Loan Date", new Date(item.loanDate).toLocaleDateString("en-GB")],
+            ["Item Name", item.itemName],
+            ["Metal", item.metal],
+            ["Gross Weight", item.gross_weight],
+            ["Net Weight", item.net_weight],
+            ["Rate of Interest", item.rate_of_interest],
+            ["Total Amount", item.total_amount],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="mb-2 flex items-start justify-between gap-3 border-b border-white/10 pb-2 text-sm md:block md:border-0 md:pb-0 md:text-lg"
+            >
+              <span className="font-semibold text-purple-300">{label}:</span>
+              <span className="text-right font-bold text-emerald-300 md:text-left">
+                {value || "—"}
+              </span>
+            </div>
+          ))}
         </div>
 
-        {/* Transactions */}
-        {item.loanTotalAmtHistories?.length > 0 && (
-          <>
-            <h2 className="text-2xl font-bold text-purple-300 mb-4">
-              Transactions
-            </h2>
-            <ul className="mb-10 pl-5 list-disc space-y-2">
-              {item.loanTotalAmtHistories.map((tx: LoanTotalAmtHistory) => (
-                <li key={tx.amountHistoryId} className="text-emerald-300">
-                  ₹{tx.amount} -{}
-                  <span className="text-red-300">
-                    {tx.paymentMethod}
-                  </span> on{" "}
-                  {new Date(tx.paymentDate).toLocaleDateString("en-GB")} -{" "}
-                  <span className="text-yellow-300">{tx.paymentType}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <div className="rounded-2xl bg-white/10 p-4 md:bg-transparent md:pl-6">
+          {[
+            ["Paid Amount", item.paid_amount],
+            ["Due Amount", item.due_amount],
+            ["Paid Interest Amount", item.paid_interest_amount],
+            ["Due Interest Amount", item.due_interest_amount],
+            ["Active Month Count", item.active_month_count],
+            ["Item Status", item.itemStatus || "Not Packed"],
+            ["Delivery Status", item.deliveryStatus],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="mb-2 flex items-start justify-between gap-3 border-b border-white/10 pb-2 text-sm md:block md:border-0 md:pb-0 md:text-lg"
+            >
+              <span className="font-semibold text-pink-300">{label}:</span>
+              <span className="text-right font-bold text-yellow-300 md:text-left">
+                {value || "—"}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {item.loanTotalAmtHistories?.length > 0 && (
+        <div className="mt-6">
+          <h2 className="mb-4 text-xl font-bold text-purple-300 md:text-2xl">
+            Transactions
+          </h2>
+
+          <div className="space-y-3 md:hidden">
+            {item.loanTotalAmtHistories.map((tx) => (
+              <div
+                key={tx.amountHistoryId}
+                className="rounded-2xl bg-white/10 p-4"
+              >
+                <div className="text-lg font-bold text-emerald-300">
+                  ₹{tx.amount}
+                </div>
+                <div className="mt-1 text-sm text-red-300">
+                  {tx.paymentMethod}
+                </div>
+                <div className="mt-1 text-sm text-yellow-300">
+                  {tx.paymentType}
+                </div>
+                <div className="mt-1 text-xs text-gray-300">
+                  {new Date(tx.paymentDate).toLocaleDateString("en-GB")}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <ul className="mb-10 hidden list-disc space-y-2 pl-5 md:block">
+            {item.loanTotalAmtHistories.map((tx) => (
+              <li key={tx.amountHistoryId} className="text-emerald-300">
+                ₹{tx.amount} -{" "}
+                <span className="text-red-300">{tx.paymentMethod}</span> on{" "}
+                {new Date(tx.paymentDate).toLocaleDateString("en-GB")} -{" "}
+                <span className="text-yellow-300">{tx.paymentType}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 };
 export default LoanItemDetails;
