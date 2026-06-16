@@ -362,7 +362,7 @@ const confirmDelete = window.confirm(
   `Are you sure want to delete?\n\n` +
   `Stock Box Name: ${box.stockBoxName}\n` +
   `Total Count: ${box.totalStockBoxCount}\n` +
-  `Total Weight: ${box.totalStockBoxWeight}`
+  `Total Weight: ${Number(box.totalStockBoxWeight || 0).toFixed(3)}`
 );
 
 if (!confirmDelete) return;
@@ -385,7 +385,7 @@ if (!confirmDelete) return;
   }, [rows, search]);
 
   return (
-    <div className="p-6 bg-white text-black">
+   <div className="bg-white p-3 text-black md:p-6">
       
       <style>
         {`
@@ -489,13 +489,15 @@ if (!confirmDelete) return;
   <Paper
     elevation={0}
     sx={{
-      p: 5,
-      mt: 4,
-      borderRadius: "28px",
-      backgroundColor: "rgba(255,255,255,0.9)",
-      border: "1px solid #d0b3ff",
-      boxShadow: "0 10px 30px rgba(136,71,255,0.18)",
-    }}
+  p: { xs: 2, md: 6 },
+  width: "100%",
+  maxWidth: "80rem",
+  borderRadius: "24px",
+  backgroundColor: "rgba(255,255,255,0.75)",
+  backdropFilter: "blur(12px)",
+  border: "1px solid #d0b3ff",
+  boxShadow: "0 10px 30px rgba(136,71,255,0.3)",
+}}
   >
     <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
       <Typography variant="h4" fontWeight="bold" color="primary">
@@ -527,6 +529,11 @@ if (!confirmDelete) return;
             variant="outlined"
             placeholder="Enter Barcode..."
             value={searchQuery}
+            sx={{
+  width: { xs: "100%", md: 320 },
+  backgroundColor: "white",
+  borderRadius: "10px",
+}}
             onChange={(e) => setSearchQuery(e.target.value)}
            InputProps={{
   startAdornment: (
@@ -975,119 +982,213 @@ if (!confirmDelete) return;
           ) : filteredRows.length === 0 ? (
             <p className="py-4">No stock boxes found.</p>
           ) : (
-            <div className="mt-4">
-              <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
-                <thead className="bg-gray-200">
-                  <tr>
-                    <th className="border px-3 py-2 text-center">Select</th>
-                    <th className="border px-3 py-2 text-center">
-                      <div className="flex justify-center items-center">
-                        Stock Box Name
-                      </div>
-                    </th>
-                    <th className="border px-3 py-2 text-center">
-                      <div className="flex justify-center items-center">
-                        Total Stock Box Count
-                      </div>
-                    </th>
-                    <th className="border px-3 py-2 text-center">
-                      <div className="flex justify-center items-center">
-                        Total Stock Box Weight
-                      </div>
-                    </th>
-                    <th className="border px-3 py-2 text-center">Description</th>
-                    <th className="border px-3 py-2 text-center">
-                      <div className="flex justify-center items-center">
-                        Actions
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRows.map((box) => (
-                    <tr
-                      key={box.stockBoxId}
-                      className="bg-white/90 text-center"
-                    >
-                      <td className="border px-3 py-2 text-center">
-  <input
-    type="checkbox"
-    checked={box.checked === true}
-    onChange={(e) => handleUpdateChecked(box, e.target.checked)}
-    className="w-4 h-4"
-  />
-</td>
-                      <td className="border px-3 py-2">{box.stockBoxName}</td>
-                      <td className="border px-3 py-2">
-                        {box.totalStockBoxCount}
-                      </td>
-                      <td className="border px-3 py-2">
-                        {box.totalStockBoxWeight}
-                      </td>
-                      <td className="border px-3 py-2 text-center">
-  <div className="flex justify-center items-center gap-2">
-    <span>{box.description || "Add"}</span>
+          <div className="mt-4">
+  {/* Mobile card view */}
+  <div className="space-y-3 md:hidden">
+    {filteredRows.map((box) => (
+      <div
+        key={box.stockBoxId}
+        className="rounded-2xl border border-gray-100 bg-[#fffaf0] p-4 shadow-sm"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-xs text-gray-500">Stock Box</div>
+            <div className="font-bold text-blue-700">
+              {box.stockBoxName}
+            </div>
+          </div>
 
-    <IconButton
-      size="small"
-      color="secondary"
-      onClick={() => {
-        setSelectedDescBox(box);
-        setDescriptionInput(box.description || "");
-        setDescDialog(true);
-      }}
-    >
-      <EditIcon fontSize="small" />
-    </IconButton>
-  </div>
-</td>
-                    <td className="border px-3 py-2 text-center">
-  <div className="flex justify-center items-center gap-2">
+          <input
+            type="checkbox"
+            checked={box.checked === true}
+            onChange={(e) => handleUpdateChecked(box, e.target.checked)}
+            className="h-5 w-5"
+          />
+        </div>
 
-    <IconButton
-      size="medium"
-      color="primary"
-      onClick={() => {
-        localStorage.setItem("selectedStockBox", JSON.stringify(box));
-       navigate(
-  isSales
-    ? `/sales/stock-box-details/${box.stockBoxId}`
-    : `/admin/salesStockBoxDetails/${box.stockBoxId}`
-);
-      }}
-    >
-      <VisibilityIcon fontSize="medium" />
-    </IconButton>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-white p-2">
+            <div className="text-[11px] text-gray-500">Count</div>
+            <div className="text-sm font-bold">
+              {box.totalStockBoxCount}
+            </div>
+          </div>
 
-    {isAdmin && (
-      <>
-        <IconButton
-          size="medium"
-          color="warning"
-          onClick={() => handleProtectedAction("edit", box)}
-        >
-          <EditIcon fontSize="medium" />
-        </IconButton>
+          <div className="rounded-xl bg-white p-2">
+            <div className="text-[11px] text-gray-500">Weight</div>
+            <div className="text-sm font-bold text-[#e38111]">
+              {Number(box.totalStockBoxWeight || 0).toFixed(3)}
+            </div>
+          </div>
 
-        {(!box.stockBoxData || box.stockBoxData.length === 0) && (
+          <div className="col-span-2 rounded-xl bg-white p-2">
+            <div className="text-[11px] text-gray-500">Description</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm font-bold">
+                {box.description || "Add"}
+              </div>
+
+              <IconButton
+                size="small"
+                color="secondary"
+                onClick={() => {
+                  setSelectedDescBox(box);
+                  setDescriptionInput(box.description || "");
+                  setDescDialog(true);
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 flex justify-end gap-2">
           <IconButton
             size="medium"
-            color="error"
-            onClick={() => handleProtectedAction("delete", box)}
+            color="primary"
+            onClick={() => {
+              localStorage.setItem("selectedStockBox", JSON.stringify(box));
+              navigate(
+                isSales
+                  ? `/sales/stock-box-details/${box.stockBoxId}`
+                  : `/admin/salesStockBoxDetails/${box.stockBoxId}`,
+              );
+            }}
           >
-            <DeleteIcon fontSize="medium" />
+            <VisibilityIcon fontSize="medium" />
           </IconButton>
-        )}
-      </>
-    )}
 
+          {isAdmin && (
+            <>
+              <IconButton
+                size="medium"
+                color="warning"
+                onClick={() => handleProtectedAction("edit", box)}
+              >
+                <EditIcon fontSize="medium" />
+              </IconButton>
+
+              {(!box.stockBoxData || box.stockBoxData.length === 0) && (
+                <IconButton
+                  size="medium"
+                  color="error"
+                  onClick={() => handleProtectedAction("delete", box)}
+                >
+                  <DeleteIcon fontSize="medium" />
+                </IconButton>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    ))}
   </div>
-</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+  {/* Desktop table view */}
+  <div className="hidden overflow-x-auto md:block">
+    <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
+      {/* keep your old table code here */}
+
+      <div className="hidden overflow-x-auto md:block">
+  <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
+    <thead className="bg-gray-200">
+      <tr>
+        <th className="border px-3 py-2 text-center">Select</th>
+        <th className="border px-3 py-2 text-center">Stock Box Name</th>
+        <th className="border px-3 py-2 text-center">Total Stock Box Count</th>
+        <th className="border px-3 py-2 text-center">Total Stock Box Weight</th>
+        <th className="border px-3 py-2 text-center">Description</th>
+        <th className="border px-3 py-2 text-center">Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {filteredRows.map((box) => (
+        <tr key={box.stockBoxId} className="bg-white/90 text-center">
+          <td className="border px-3 py-2">
+            <input
+              type="checkbox"
+              checked={box.checked === true}
+              onChange={(e) => handleUpdateChecked(box, e.target.checked)}
+              className="h-4 w-4"
+            />
+          </td>
+
+          <td className="border px-3 py-2">{box.stockBoxName}</td>
+
+          <td className="border px-3 py-2">{box.totalStockBoxCount}</td>
+
+          <td className="border px-3 py-2">
+            {Number(box.totalStockBoxWeight || 0).toFixed(3)}
+          </td>
+
+          <td className="border px-3 py-2">
+            <div className="flex items-center justify-center gap-2">
+              <span>{box.description || "Add"}</span>
+
+              <IconButton
+                size="small"
+                color="secondary"
+                onClick={() => {
+                  setSelectedDescBox(box);
+                  setDescriptionInput(box.description || "");
+                  setDescDialog(true);
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
             </div>
+          </td>
+
+          <td className="border px-3 py-2">
+            <div className="flex items-center justify-center gap-2">
+              <IconButton
+                size="medium"
+                color="primary"
+                onClick={() => {
+                  localStorage.setItem("selectedStockBox", JSON.stringify(box));
+                  navigate(
+                    isSales
+                      ? `/sales/stock-box-details/${box.stockBoxId}`
+                      : `/admin/salesStockBoxDetails/${box.stockBoxId}`,
+                  );
+                }}
+              >
+                <VisibilityIcon fontSize="medium" />
+              </IconButton>
+
+              {isAdmin && (
+                <>
+                  <IconButton
+                    size="medium"
+                    color="warning"
+                    onClick={() => handleProtectedAction("edit", box)}
+                  >
+                    <EditIcon fontSize="medium" />
+                  </IconButton>
+
+                  {(!box.stockBoxData || box.stockBoxData.length === 0) && (
+                    <IconButton
+                      size="medium"
+                      color="error"
+                      onClick={() => handleProtectedAction("delete", box)}
+                    >
+                      <DeleteIcon fontSize="medium" />
+                    </IconButton>
+                  )}
+                </>
+              )}
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+    </table>
+  </div>
+</div>
           )}
         </Paper>
       </div>

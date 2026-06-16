@@ -61,8 +61,19 @@ const LoanItems: React.FC = () => {
   const loanCustomerId =
     location.state?.loanCustomerId || localStorage.getItem("loanCustomerId");
 
-  const billLoanNumber =
-    location.state?.billLoanNumber || localStorage.getItem("billLoanNumber");
+const billLoanNumber = fromBillLoanDetails
+  ? location.state?.billLoanNumber || localStorage.getItem("billLoanNumber")
+  : null;
+
+  const hasBillNo = Boolean(billLoanNumber);
+
+const lockAfterBillFields = [
+  "total_amount",
+  "total_amount1",
+  "paymentMethod1",
+  "total_amount2",
+  "paymentMethod2",
+];
 
   const asNumber = (v: number | string | null | undefined): number =>
     v == null || v === "" ? 0 : Number(v);
@@ -299,14 +310,16 @@ const capitalizeWords = (text: string) => {
 
       const updatedItem: any = updatedItemFromBackend;
 
-      const updatedItems = itemsList.map((o) =>
-        o.loanId === editingItemId
-          ? {
-              ...updatedItem,
-              due_interest_amount: updatedItem.due_interest_amount,
-            }
-          : o,
-      );
+     const updatedItems = itemsList.map((o) =>
+  o.loanId === editingItemId
+    ? {
+        ...o,                 // keep old fields
+        ...updatedItem,        // backend updated fields
+        ...payload,            // keep frontend sent fields
+        itemName: payload.itemName,
+      }
+    : o,
+);
 
       setItemsList(updatedItems);
 
@@ -319,17 +332,15 @@ const capitalizeWords = (text: string) => {
       setIsEditing(false);
       setEditingItemId(null);
 
-      alert(
-        "Loan Item updated successfully, Don't forget to Generate Updated Bill",
-      );
-
-      if (billLoanNumber) {
-        localStorage.setItem("billLoanNumber", billLoanNumber);
-
-        navigate(`/admin/bill-loan-details`, {
-          replace: true,
-        });
-      }
+     alert(
+  fromBillLoanDetails
+    ? "Loan Item updated successfully, Don't forget to Generate Updated Bill"
+    : "Loan Item updated successfully"
+);
+      if (fromBillLoanDetails && billLoanNumber) {
+  localStorage.setItem("billLoanNumber", billLoanNumber);
+  navigate("/admin/bill-loan-details", { replace: true });
+}
     } catch (error: any) {
       console.error("Update Error:", error);
 
@@ -441,9 +452,9 @@ const capitalizeWords = (text: string) => {
 
     if (loanFrom === "BillLoanDetails") {
       // read from localStorage if state missing
-      const billLoanNumber =
-        location.state?.billLoanNumber ||
-        localStorage.getItem("billLoanNumber");
+     const billLoanNumber = fromBillLoanDetails
+  ? location.state?.billLoanNumber || localStorage.getItem("billLoanNumber")
+  : null;
 
       const loanCustomerId =
         location.state?.loanCustomerId ||
@@ -644,6 +655,7 @@ const capitalizeWords = (text: string) => {
                   <TextField
                     select
                     label="Payment Method"
+                    disabled={isEditing && hasBillNo}
                     value={item.paymentMethod1}
                     onChange={(e) =>
                       setItem({
@@ -680,6 +692,7 @@ const capitalizeWords = (text: string) => {
                   <TextField
                     select
                     label="Payment Method"
+                    disabled={isEditing && hasBillNo}
                     value={item.paymentMethod2}
                     onChange={(e) =>
                       setItem({
@@ -824,8 +837,9 @@ const capitalizeWords = (text: string) => {
                         setItemErrors((prev) => ({ ...prev, [key]: "" }));
                       }
                     }}
-                    disabled={isEditing && key === "total_amount"} // ✅ Disable only on edit
-                  />
+disabled={
+  isEditing && hasBillNo && lockAfterBillFields.includes(key)
+}                  />
                 )}
               </Box>
             );
@@ -1045,6 +1059,7 @@ const capitalizeWords = (text: string) => {
                               "&:hover": { backgroundColor: "#E0E0E0" },
                             }}
                             onClick={() => {
+                              console.log("EDIT ITEM", itm);
                               setItem({
                                 metal: itm.metal || "",
                                 itemName: itm.itemName
@@ -1056,10 +1071,10 @@ const capitalizeWords = (text: string) => {
                                 net_weight: itm.net_weight || 0,
                                 rate_of_interest: itm.rate_of_interest || 0,
                                 total_amount: itm.total_amount || 0,
-                                total_amount1: itm.total_amount1 || 0,
-                                paymentMethod1: itm.paymentMethod1 || "",
-                                total_amount2: itm.total_amount2 || 0,
-                                paymentMethod2: itm.paymentMethod2 || "",
+                                total_amount1: itm.total_amount1 ?? itm.totalAmount1 ?? 0,
+paymentMethod1: itm.paymentMethod1 ?? itm.payment_method1 ?? "",
+total_amount2: itm.total_amount2 ?? itm.totalAmount2 ?? 0,
+paymentMethod2: itm.paymentMethod2 ?? itm.payment_method2 ?? "",
                                 due_interest_amount:
                                   itm.due_interest_amount || 0,
                                 deliveryStatus:
@@ -1206,6 +1221,7 @@ const capitalizeWords = (text: string) => {
               select
               label="Payment Method"
               value={payMethod}
+              disabled={isEditing && hasBillNo}
               onChange={(e) => setPayMethod(e.target.value)}
               fullWidth
               variant="outlined"

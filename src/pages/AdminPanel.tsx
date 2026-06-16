@@ -12,6 +12,7 @@ import {
   ReceiptText,
   BadgeIndianRupee,
   MoreHorizontal,
+  Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import hjlogoo from "../assets/hjlogoo.png";
@@ -60,7 +61,7 @@ const mobileMenuItems = [
   { icon: PersonStanding, label: "Worker", path: "/admin/workers" },
   { icon: ReceiptText, label: "Bill", path: "/admin/billing-orders" },
   { icon: BadgeIndianRupee, label: "Loan", path: "/admin/Loan" },
-  { icon: MoreHorizontal, label: "More", path: "/admin/products" },
+   { icon: Store, label: "Sales", path: "/admin/sale" },
 ];
 
 
@@ -277,9 +278,9 @@ function AdminPanelContent() {
         <div className="bg-gradient-to-r from-gray-900 to-amber-700 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center ">
           <div>
             <h1 className="text-2xl font-bold">Hambire Jewellery</h1>
-            <p className="text-sm opacity-80">
-              Welcome to your smart billing-inventory panel.
-            </p>
+            <p className="text-[12px] opacity-80 md:text-sm">
+  Welcome to your smart billing-inventory panel.
+</p>
           </div>
           <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-md border border-gray-200">
             <img

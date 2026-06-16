@@ -171,7 +171,7 @@ const handleBulkDelete = async () => {
     <div>
       Total Weight:
       <span className="text-purple-700 ml-2">
-        {stockBox.totalStockBoxWeight}
+        {Number(stockBox.totalStockBoxWeight || 0).toFixed(3)}
       </span>
     </div>
   </div>
@@ -203,9 +203,100 @@ const handleBulkDelete = async () => {
   </div>
 )}
 
-        {stockBox.stockBoxData && stockBox.stockBoxData.length > 0 ? (
-          <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
-            <thead className="bg-gray-200">
+       {stockBox.stockBoxData && stockBox.stockBoxData.length > 0 ? (
+  <>
+    {/* Mobile card view */}
+    <div className="space-y-3 md:hidden">
+      {stockBox.stockBoxData.map((entry) => (
+        <div
+          key={entry.stockBoxDataId}
+          className="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-xs text-gray-500">ID</div>
+              <div className="font-bold text-purple-700">
+                #{entry.stockBoxDataId}
+              </div>
+            </div>
+
+            {isAdmin && (
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(entry.stockBoxDataId)}
+                onChange={() => handleCheckOne(entry.stockBoxDataId)}
+                className="h-5 w-5"
+              />
+            )}
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+            <div className="rounded-xl bg-purple-50 p-2">
+              <div className="text-[11px] text-gray-500">Pieces</div>
+              <div className="font-bold">{entry.pieces}</div>
+            </div>
+
+            <div className="rounded-xl bg-purple-50 p-2">
+              <div className="text-[11px] text-gray-500">Weight</div>
+              <div className="font-bold">
+                {Number(entry.metalWeight || 0).toFixed(3)}
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-purple-50 p-2">
+              <div className="text-[11px] text-gray-500">Method</div>
+              <div
+                className={`font-bold ${
+                  entry.methodType === "ADDED"
+                    ? "text-green-600"
+                    : entry.methodType === "SELL"
+                      ? "text-red-600"
+                      : "text-gray-800"
+                }`}
+              >
+                {entry.methodType || "-"}
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-purple-50 p-2">
+              <div className="text-[11px] text-gray-500">Method2</div>
+              <div
+                className={`font-bold ${
+                  entry.methodType2 === "SELL"
+                    ? "text-red-600"
+                    : "text-gray-800"
+                }`}
+              >
+                {entry.methodType2 || "-"}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 space-y-1 text-sm">
+            <div>
+              <span className="font-semibold text-gray-500">Date: </span>
+              {formatDMY(entry.date) || "-"}
+            </div>
+            <div>
+              <span className="font-semibold text-gray-500">Selling Date: </span>
+              {formatDMY(entry.sellingDate) || "-"}
+            </div>
+            <div>
+              <span className="font-semibold text-gray-500">Barcode: </span>
+              {entry.barcodeValue || "-"}
+            </div>
+            <div className="break-all">
+              <span className="font-semibold text-gray-500">EPC: </span>
+              {entry.epcNumber || "-"}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* Desktop table view */}
+    <div className="hidden overflow-x-auto md:block">
+      <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">   <thead className="bg-gray-200">
               <tr>
   {isAdmin && (
   <th className="border px-3 py-2 text-center">Select</th>
@@ -281,7 +372,7 @@ const handleBulkDelete = async () => {
                     {entry.methodType}
                   </td>
                   <td className="border px-3 py-2 text-center align-middle">
-                    {entry.metalWeight}
+                   {Number(entry.metalWeight || 0).toFixed(3)}
                   </td>
                   <td className="border px-3 py-2">{formatDMY(entry.date)}</td>
                   <td className="border px-3 py-2">{entry.barcodeValue}</td>
@@ -302,7 +393,9 @@ const handleBulkDelete = async () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+               </table>
+    </div>
+  </>
         ) : (
           <p>No stock box data available</p>
         )}
