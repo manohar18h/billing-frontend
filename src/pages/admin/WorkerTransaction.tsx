@@ -21,6 +21,7 @@ import {
 type FormState = {
   workerId: string;
   methodType: "Wastage" | "Amount" | "";
+  paymentMethod: "Cash" | "Phone Pay" | "";
   inputValue: string; // Either wastage number or amount
   reason: string;
 };
@@ -32,6 +33,7 @@ interface WorkerPaymentResponse {
   message?: string;
   reason?: string;
   methodType?: string;
+   paymentMethod?: string;
 }
 
 const WorkerTransaction: React.FC = () => {
@@ -39,6 +41,7 @@ const WorkerTransaction: React.FC = () => {
   const [form, setForm] = useState<FormState>({
     workerId: "",
     methodType: "",
+     paymentMethod: "",
     inputValue: "",
     reason: "",
   });
@@ -55,41 +58,106 @@ const WorkerTransaction: React.FC = () => {
     setForm((prev) => ({ ...prev, [field]: val }));
 
   const handleSubmit = async () => {
-    const { workerId, methodType, inputValue, reason } = form;
+ const {
+  workerId,
+  methodType,
+  paymentMethod,
+  inputValue,
+  reason,
+} = form;
 
-    if (!workerId || !methodType || !inputValue || !reason) {
-      alert("Please fill all required fields.");
-      return;
-    }
+if (!workerId || !methodType || !inputValue || !reason.trim()) {
+  alert("Please fill all required fields.");
+  return;
+}
+
+if (methodType === "Amount" && !paymentMethod) {
+  alert("Please select a payment method.");
+  return;
+}
+
+if (Number(inputValue) <= 0) {
+  alert(
+    methodType === "Amount"
+      ? "Please enter a valid amount."
+      : "Please enter a valid wastage value.",
+  );
+  return;
+}
 
     try {
       const token = localStorage.getItem("token");
 
+if (!token) {
+  setDialogMessage("Authentication token not found. Please login again.");
+  setIsSuccess(false);
+  setDialogOpen(true);
+  return;
+}
+
       console.group("🚀 Worker Transaction Request");
 
-      console.log("Query Params:", { methodType, paid: inputValue, reason });
+console.log("Query Params:", {
+  methodType,
+  paymentMethod,
+  paid: inputValue,
+  reason,
+});
       console.log("Token:", token);
       console.log("WorkerId:", workerId);
       console.groupEnd();
 
-      const res = await api.post<WorkerPaymentResponse>(
-        `/admin/addAmountWorker/${workerId}?methodType=${methodType}&paid=${inputValue}&reason=${encodeURIComponent(
-          reason,
-        )}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+    const body = {
+  type: methodType,
+  paymentMethod:
+    methodType === "Amount"
+      ? paymentMethod
+      : null,
+  paid: Number(inputValue),
+  reason: reason.trim(),
+};
+
+console.log("Worker transaction body:", body);
+
+const res = await api.post<WorkerPaymentResponse>(
+  `/admin/addAmountWorker/${workerId}`,
+  body,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  },
+);
+
+
       const result = res.data;
 
-      setDialogMessage(
-        `✅ Transaction successful!\nPaid: ₹${
-          result.paid
-        }\nDate: ${new Date(result.paymentDate).toLocaleString()}`,
-      );
+    const transactionValue =
+  methodType === "Amount"
+    ? `Paid Amount: ₹${Number(result.paid).toLocaleString("en-IN")}`
+    : `Paid Wastage: ${result.paid} gm`;
+
+const paymentMethodText =
+  methodType === "Amount"
+    ? `\nPayment Method: ${result.paymentMethod || paymentMethod}`
+    : "";
+
+setDialogMessage(
+  `✅ Transaction successful!
+${transactionValue}${paymentMethodText}
+Date: ${new Date(result.paymentDate).toLocaleString("en-IN")}`,
+);
       setIsSuccess(true);
       setDialogOpen(true);
 
-      setForm({ workerId: "", methodType: "", inputValue: "", reason: "" });
+setForm({
+  workerId: "",
+  methodType: "",
+  paymentMethod: "",
+  inputValue: "",
+  reason: "",
+});
       await invalidate();
       await refresh();
     } catch (err: any) {
@@ -150,23 +218,43 @@ const WorkerTransaction: React.FC = () => {
             </TextField>
           </Grid>
 
-          {/* Method Type selector */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              select
-              fullWidth
-              label="Method Type"
-              value={form.methodType}
-              onChange={(e) => handleChange("methodType", e.target.value)}
-              required
-            >
-              <MenuItem value="" disabled>
-                -- Select Method --
-              </MenuItem>
-              <MenuItem value="Wastage">Wastage</MenuItem>
-              <MenuItem value="Amount">Amount</MenuItem>
-            </TextField>
-          </Grid>
+         <Grid size={{ xs: 12, sm: 6 }}>
+  <TextField
+    select
+    fullWidth
+    label="Method Type"
+    value={form.methodType}
+    onChange={(e) => {
+      const value =
+        e.target.value as FormState["methodType"];
+
+      setForm((prev) => ({
+        ...prev,
+        methodType: value,
+        paymentMethod:
+          value === "Amount"
+            ? prev.paymentMethod
+            : "",
+        inputValue: "",
+      }));
+    }}
+    required
+    InputLabelProps={{ shrink: true }}
+    SelectProps={{ displayEmpty: true }}
+  >
+    <MenuItem value="" disabled>
+      -- Select Method --
+    </MenuItem>
+
+    <MenuItem value="Wastage">
+      Wastage
+    </MenuItem>
+
+    <MenuItem value="Amount">
+      Amount
+    </MenuItem>
+  </TextField>
+</Grid>
 
           {/* Pending (read-only, gray) */}
           {form.methodType && (
@@ -177,32 +265,76 @@ const WorkerTransaction: React.FC = () => {
                 value={pendingValue}
                 InputProps={{ readOnly: true }}
                 sx={{ input: { backgroundColor: "#f0f0f0", color: "#555" } }}
-              />
+
+             />
             </Grid>
           )}
 
+          {form.methodType === "Amount" && (
+  <Grid size={{ xs: 12, sm: 6 }}>
+    <TextField
+      select
+      fullWidth
+      label="Payment Method"
+      value={form.paymentMethod}
+      onChange={(e) =>
+        handleChange("paymentMethod", e.target.value)
+      }
+      required
+      InputLabelProps={{ shrink: true }}
+      SelectProps={{ displayEmpty: true }}
+    >
+      <MenuItem value="" disabled>
+        -- Select Payment Method --
+      </MenuItem>
+
+      <MenuItem value="Cash">Cash</MenuItem>
+
+      <MenuItem value="Phone Pay">
+        Phone Pay
+      </MenuItem>
+    </TextField>
+  </Grid>
+)}
+
           {/* Input value (amount or wastage) */}
-          {form.methodType && (
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type="number"
-                label={`Enter ${form.methodType}`}
-                inputProps={{
-                  step: "any",
-                  onKeyDown: (e) => {
-                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                      e.preventDefault();
-                    }
-                  },
-                }}
-                onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                value={form.inputValue}
-                onChange={(e) => handleChange("inputValue", e.target.value)}
-                required
-              />
-            </Grid>
-          )}
+        {/* Input value: amount or wastage */}
+{form.methodType && (
+  <Grid size={{ xs: 12, sm: 6 }}>
+    <TextField
+      fullWidth
+      type="number"
+      label={
+        form.methodType === "Amount"
+          ? "Enter Amount"
+          : "Enter Wastage"
+      }
+      inputProps={{
+        step: "any",
+        min: 0,
+        onKeyDown: (e) => {
+          if (
+            e.key === "ArrowUp" ||
+            e.key === "ArrowDown"
+          ) {
+            e.preventDefault();
+          }
+        },
+      }}
+      onWheel={(e) =>
+        (e.target as HTMLInputElement).blur()
+      }
+      value={form.inputValue}
+      onChange={(e) =>
+        handleChange(
+          "inputValue",
+          e.target.value,
+        )
+      }
+      required
+    />
+  </Grid>
+)}
 
           {/* Reason */}
           {form.methodType && (

@@ -60,10 +60,7 @@ const BillData: React.FC = () => {
   const [billingData, setBillingData] = useState<Billing[]>([]);
   const navigate = useNavigate();
 
-  const overviewRef = React.useRef<HTMLDivElement | null>(null);
-const preBookingRef = React.useRef<HTMLDivElement | null>(null);
-const flexi11Ref = React.useRef<HTMLDivElement | null>(null);
-const quickBuyRef = React.useRef<HTMLDivElement | null>(null);
+
 
   const [openEdit, setOpenEdit] = useState(false);
 
@@ -76,14 +73,24 @@ const [villageSearch, setVillageSearch] = useState("");
 const [villageResults, setVillageResults] = useState<string[]>([]);
 const [villageLoading, setVillageLoading] = useState(false);
 const [schemeDashboard, setSchemeDashboard] = useState<any>(null);
+const overviewRef = React.useRef<HTMLDivElement | null>(null);
+const preBookingRef = React.useRef<HTMLDivElement | null>(null);
+const flexi11Ref = React.useRef<HTMLDivElement | null>(null);
+const quickBuyRef = React.useRef<HTMLDivElement | null>(null);
+
+const [showActiveSchemes, setShowActiveSchemes] = useState(false);
 const [showSchemeDashboard, setShowSchemeDashboard] = useState(false);
 const [schemeTab, setSchemeTab] = useState<
   "overview" | "preBooking" | "flexi11" | "quickBuy"
 >("overview");
+
+
 const [selectedScheme, setSelectedScheme] = useState<any>(null);
 const [selectedSchemeType, setSelectedSchemeType] = useState<
   "PRE_BOOKING" | "FLEXI_11" | "QUICK_BUY" | null
 >(null);
+
+
 
 const preBookingCards = schemeDashboard?.preBookingSchemes || [];
 const flexi11Cards = schemeDashboard?.flexi11Schemes || [];
@@ -307,55 +314,9 @@ const getCompletedMonths = (item: any) => {
   return Math.floor((elapsed / total) * item.holdMonths);
 };
 
-const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
-  if (!ref.current) return;
 
-  const y =
-    ref.current.getBoundingClientRect().top +
-    window.pageYOffset -
-    80;
 
-  window.scrollTo({
-    top: y,
-    behavior: "smooth",
-  });
-};
 
-const handleSchemeTabClick = (
-  tab: "overview" | "preBooking" | "flexi11" | "quickBuy"
-) => {
-  setSchemeTab(tab);
-
-  if (showSchemeDashboard) {
-    setShowSchemeDashboard(false);
-
-    setTimeout(() => {
-      const target =
-        tab === "overview"
-          ? overviewRef
-          : tab === "preBooking"
-          ? preBookingRef
-          : tab === "flexi11"
-          ? flexi11Ref
-          : quickBuyRef;
-
-      scrollToSection(target);
-    }, 3000);
-  } else {
-    setTimeout(() => {
-      const target =
-        tab === "overview"
-          ? overviewRef
-          : tab === "preBooking"
-          ? preBookingRef
-          : tab === "flexi11"
-          ? flexi11Ref
-          : quickBuyRef;
-
-      scrollToSection(target);
-    }, 100);
-  }
-};
 
   
   // ✅ Add Order Handler (copied from CustomerDetails)
@@ -453,6 +414,30 @@ const selectedRate =
     ? silver995Rate
     : 0;
 
+    const selectedRateTitle =
+  preBookingType === "Advance Gold Booking"
+    ? "24K Gold Rate"
+    : preBookingType === "Advance Kamal Silver Booking"
+    ? "Kamal Silver Rate"
+    : preBookingType === "Advance Swastik Silver Booking"
+    ? "Swastik Silver Rate"
+    : "";
+
+const calculatePreBookingAmount = (weight: string) => {
+  const perGram = selectedRate ? selectedRate / 10 : 0;
+  return Number(weight || 0) * perGram;
+};
+
+const quickRate =
+  quickMetal === "Gold"
+    ? goldRate
+    : quickMetal === "Kamal Silver"
+    ? silver999Rate
+    : silver995Rate;
+
+const quickWeight =
+  quickRate > 0 ? Number(quickAmount || 0) / (quickRate / 10) : 0;
+
 const handleAdminCreatePreBooking = async () => {
   if (isAdvanceBooking) {
     if (!selectedRate) return alert("Metal rate not loaded");
@@ -512,6 +497,7 @@ const handleAdminCreatePreBooking = async () => {
 
     fetchSchemeDashboard(customer.phoneNumber);
     setSchemeTab("overview");
+setShowActiveSchemes(true);
   } catch (error: any) {
   alert(getApiErrorMessage(error, "Failed to add Pre-Booking scheme"));
 }
@@ -539,7 +525,8 @@ const handleAdminCreateFlexi11 = async () => {
 
     alert("Flexi 11 scheme added successfully");
     fetchSchemeDashboard(customer.phoneNumber);
-    setSchemeTab("overview");
+   setSchemeTab("overview");
+setShowActiveSchemes(true);
   } catch (error: any) {
   alert(getApiErrorMessage(error, "Failed to add Pre-Booking scheme"));
 }
@@ -583,7 +570,8 @@ const handleAdminCreateQuickBuy = async () => {
 
     alert("Quick Buy added successfully");
     fetchSchemeDashboard(customer.phoneNumber);
-    setSchemeTab("overview");
+   setSchemeTab("overview");
+setShowActiveSchemes(true);
   } catch (error: any) {
   alert(getApiErrorMessage(error, "Failed to add Pre-Booking scheme"));
 }
@@ -597,6 +585,84 @@ const getApiErrorMessage = (error: any, fallback: string) => {
 
   return fallback;
 };
+
+
+const handleAdminPayFlexiMonth = async (scheme: any) => {
+  const ratePerGram = goldRate / 10;
+  const paidAmount = Number(scheme.monthlyAmount || 0);
+
+  if (!paidAmount || !ratePerGram) {
+    return alert("Invalid amount or gold rate");
+  }
+
+  try {
+    await api.post(
+      "/scheme/pay-flexi-month",
+      {
+        schemeId: scheme.schemeId,
+        paidAmount,
+        ratePerGram,
+        paymentMethod: "ADMIN",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    alert("Payment saved successfully");
+    fetchSchemeDashboard(customer.phoneNumber);
+    setShowActiveSchemes(true);
+  } catch (error: any) {
+    alert(getApiErrorMessage(error, "Payment failed"));
+  }
+};
+
+const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
+  if (!ref.current) return;
+
+  const y =
+    ref.current.getBoundingClientRect().top +
+    window.pageYOffset -
+    80;
+
+  window.scrollTo({
+    top: y,
+    behavior: "smooth",
+  });
+};
+
+const handleSchemeTabClick = (
+  tab: "overview" | "preBooking" | "flexi11" | "quickBuy"
+) => {
+  setSchemeTab(tab);
+
+  const target =
+    tab === "overview"
+      ? overviewRef
+      : tab === "preBooking"
+      ? preBookingRef
+      : tab === "flexi11"
+      ? flexi11Ref
+      : quickBuyRef;
+
+  if (showActiveSchemes) {
+    setShowActiveSchemes(false);
+
+    setTimeout(() => {
+      scrollToSection(target);
+    }, 300);
+  } else {
+    setTimeout(() => {
+      scrollToSection(target);
+    }, 100);
+  }
+};
+
+
+
+
 
   return (
     <div>
@@ -710,14 +776,64 @@ const getApiErrorMessage = (error: any, fallback: string) => {
         </div>
       </div>
 
-      {schemeDashboard && (
+{schemeDashboard && (
   <div className="mt-10 flex flex-col items-center justify-center px-3">
-    <div className="w-full max-w-6xl rounded-[30px] bg-white p-6 shadow-xl">
-      <h3 className="mb-6 text-3xl font-bold text-[#b98213]">
-        Scheme Wallet Details
-      </h3>
+    <div className="w-full max-w-6xl overflow-hidden rounded-[34px] border border-[#f5c542]/40 bg-[#111] shadow-2xl">
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <button
+        onClick={() => setShowSchemeDashboard((prev) => !prev)}
+        className={`${clickable} flex w-full items-center justify-between gap-4 px-8 py-6 text-left max-md:px-4 max-md:py-5`}
+      >
+        <div>
+          <p className="text-[13px] font-bold uppercase tracking-[4px] text-[#f5c542]">
+            Scheme Dashboard
+          </p>
+
+          <h3 className="mt-2 font-serif text-[34px] text-white max-md:text-[25px]">
+            Customer Scheme Wallet
+          </h3>
+
+          <p className="mt-2 text-white/60">
+            Open wallet, schemes, transactions and add new scheme.
+          </p>
+        </div>
+
+        <div
+          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#f5c542] text-[28px] font-bold text-black transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            showSchemeDashboard ? "rotate-180" : ""
+          }`}
+        >
+          ↓
+        </div>
+      </button>
+
+      <div
+        className={`grid transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          showSchemeDashboard
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div
+            className={`bg-white p-6 transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              showSchemeDashboard
+                ? "translate-y-0 scale-100 opacity-100"
+                : "-translate-y-6 scale-[0.98] opacity-0"
+            }`}
+          >
+              <div className="mb-6">
+        <p className="text-[14px] font-bold uppercase tracking-[4px] text-[#b98213]">
+          Hambire Scheme Dashboard
+        </p>
+
+        <h2 className="mt-3 font-serif text-[46px] max-md:text-[30px]">
+          Customer Scheme Wallet
+        </h2>
+      </div>
+
+      {/* WALLET CARDS */}
+      <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
         {[
           {
             title: "Active Schemes",
@@ -758,7 +874,15 @@ const getApiErrorMessage = (error: any, fallback: string) => {
                 : "bg-[#fbf7ef]"
             }`}
           >
-            <p className="text-[13px] text-gray-500">{item.title}</p>
+            <p
+              className={`text-[13px] ${
+                item.title === "Active Schemes"
+                  ? "text-white/60"
+                  : "text-gray-600"
+              }`}
+            >
+              {item.title}
+            </p>
 
             <h3
               className={`mt-2 text-[20px] font-bold ${
@@ -779,540 +903,584 @@ const getApiErrorMessage = (error: any, fallback: string) => {
         ))}
       </div>
 
-      {/* TAB BUTTONS - keep this just below wallet cards */}
-<div className="mt-8 grid grid-cols-4 gap-4 max-md:grid-cols-2 max-md:gap-3">
-  {[
-    ["overview", "Overview"],
-    ["preBooking", "Pre-Booking"],
-    ["flexi11", "Flexi 11"],
-    ["quickBuy", "Quick Buy"],
-  ].map(([key, label]) => (
+      {/* SAME TABS AS SCHEME REGISTER */}
+      <div className="mt-8 grid grid-cols-4 gap-4 max-md:grid-cols-2 max-md:gap-3">
+        {[
+          ["overview", "Overview"],
+          ["preBooking", "Pre-Booking"],
+          ["flexi11", "Flexi 11"],
+          ["quickBuy", "Quick Buy"],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => handleSchemeTabClick(key as any)}
+            className={`${clickable} rounded-full px-6 py-3 font-bold max-md:px-3 max-md:text-[14px] ${
+              schemeTab === key
+                ? "bg-[#f5c542] text-black"
+                : "bg-[#fbf7ef] text-black"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* VIEW ALL SCHEMES COLLAPSE */}
+      <div className="mt-8 overflow-hidden rounded-[30px] border border-[#f5c542]/40 bg-[#111] shadow-2xl">
+        <button
+          onClick={() => setShowActiveSchemes((prev) => !prev)}
+          className={`${clickable} flex w-full items-center justify-between gap-4 px-8 py-6 text-left max-md:px-4 max-md:py-5`}
+        >
+          <div>
+            <p className="text-[13px] font-bold uppercase tracking-[4px] text-[#f5c542]">
+              View All Schemes & Transactions
+            </p>
+
+            <h3 className="mt-2 font-serif text-[32px] text-white max-md:text-[24px]">
+              Customer Running Gold & Silver Benefits
+            </h3>
+
+            <p className="mt-2 text-white/60">
+              Check Pre-Booking, Flexi 11 and Quick Buy transactions.
+            </p>
+          </div>
+
+          <div
+            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#f5c542] text-[28px] font-bold text-black transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              showActiveSchemes ? "rotate-180" : ""
+            }`}
+          >
+            ↓
+          </div>
+        </button>
+
+        <div
+          className={`grid transition-all duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            showActiveSchemes
+              ? "grid-rows-[1fr] opacity-100"
+              : "grid-rows-[0fr] opacity-0"
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="border-t border-white/10 px-8 py-8 max-md:px-4">
+              {totalSchemeCards === 0 ? (
+                <div className="rounded-[24px] bg-white/10 p-8 text-center text-white">
+                  No active schemes found.
+                </div>
+              ) : (
+                <div
+                  className={`grid grid-cols-3 gap-6 transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] max-md:grid-cols-1 ${
+                    showActiveSchemes
+                      ? "translate-y-0 scale-100 opacity-100"
+                      : "translate-y-8 scale-[0.98] opacity-0"
+                  }`}
+                >
+                {preBookingCards.map((item: any, index: number) => {
+    const isOldExchange =
+      item.schemeSubType === "OLD_GOLD_EXCHANGE" ||
+      item.schemeSubType === "OLD_SILVER_EXCHANGE";
+
+    return (
+      <div
+        key={`pre-${item.schemeId}`}
+  className="
+    cursor-pointer
+    transition-all
+    duration-300
+    hover:-translate-y-1
+    hover:shadow-2xl
+    active:scale-[0.98]
+    rounded-[26px]
+    bg-white/[0.07]
+    p-6
+    text-white
+    shadow-xl
+  "      >
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-bold text-[#f5c542]">
+              Pre-Booking #{index + 1}
+            </p>
+            <h4 className="mt-2 text-[22px] font-bold">
+              {item.schemeSubType?.replaceAll("_", " ")}
+            </h4>
+          </div>
+
+          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+            {item.status}
+          </span>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          <div className="flex justify-between border-b border-white/10 pb-2">
+            <span className="text-white/50">Metal</span>
+            <b>{item.metalName || "-"}</b>
+          </div>
+
+          {isOldExchange ? (
+            <>
+              <div className="flex justify-between border-b border-white/10 pb-2">
+                <span className="text-white/50">Item Name</span>
+                <b>{item.itemName || "Old Jewellery"}</b>
+              </div>
+
+              <div className="flex justify-between border-b border-white/10 pb-2">
+                <span className="text-white/50">Exchange Amount</span>
+                <b>{formatMoney(item.oldExchangeAmount)}</b>
+              </div>
+
+              <div className="flex justify-between border-b border-white/10 pb-2">
+                <span className="text-white/50">Purity Weight</span>
+                <b>{item.oldPurityWeight || 0} gm</b>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between border-b border-white/10 pb-2">
+                <span className="text-white/50">Amount</span>
+                <b>{formatMoney(item.amount)}</b>
+              </div>
+
+              <div className="flex justify-between border-b border-white/10 pb-2">
+                <span className="text-white/50">Weight</span>
+                <b>{item.metalWeight || 0} gm</b>
+              </div>
+
+              <div className="flex justify-between border-b border-white/10 pb-2">
+                <span className="text-white/50">Booked Rate</span>
+                <b>₹{item.ratePerGram || 0}/gm</b>
+              </div>
+            </>
+          )}
+
+          <div className="flex justify-between border-b border-white/10 pb-2">
+            <span className="text-white/50">Hold Months</span>
+            <b>
+  {getCompletedMonths(item)}/{item.holdMonths || 0} Months
+</b>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-white/50">Maturity</span>
+            <b>{formatDate(item.maturityDate)}</b>
+          </div>
+        </div>
+
+       <button
+  onClick={() => openSchemeDetails("PRE_BOOKING", item)}
+  className={detailButtonClass}
+>
+  View Details
+</button>
+      </div>
+    );
+  })}
+
+  {flexi11Cards.map((item: any, index: number) => (
+    <div
+      key={`flexi-${item.schemeId}`}
+  className="
+    cursor-pointer
+    transition-all
+    duration-300
+    hover:-translate-y-1
+    hover:shadow-2xl
+    active:scale-[0.98]
+    rounded-[26px]
+    bg-white/[0.07]
+    p-6
+    text-white
+    shadow-xl
+  "    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-bold text-[#f5c542]">
+            Flexi 11 #{index + 1}
+          </p>
+          <h4 className="mt-2 text-[22px] font-bold">
+            Monthly Gold Savings
+          </h4>
+        </div>
+
+        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+          {item.status}
+        </span>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        <div className="flex justify-between border-b border-white/10 pb-2">
+          <span className="text-white/50">Metal</span>
+          <b>{item.metalName || "Gold"}</b>
+        </div>
+
+        <div className="flex justify-between border-b border-white/10 pb-2">
+          <span className="text-white/50">Monthly Amount</span>
+          <b>{formatMoney(item.monthlyAmount)}</b>
+        </div>
+
+        <div className="flex justify-between border-b border-white/10 pb-2">
+          <span className="text-white/50">Total Paid</span>
+          <b>{formatMoney(item.totalPaidAmount)}</b>
+        </div>
+
+        <div className="flex justify-between border-b border-white/10 pb-2">
+          <span className="text-white/50">Gold Collected</span>
+          <b>{Number(item.totalGoldWeight || 0).toFixed(4)} gm</b>
+        </div>
+
+        <div className="flex justify-between border-b border-white/10 pb-2">
+          <span className="text-white/50">Next Due Date</span>
+          <b>{formatDate(item.nextDueDate)}</b>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-white/50">Paid Months</span>
+          <b>
+            {item.paidMonths || 0}/{item.durationMonths || 11}
+          </b>
+        </div>
+      </div>
+
+     <div className="mt-5 flex gap-3">
+ {item.showPayButton && (
+  <button
+    onClick={(e) => {
+      e.preventDefault();
+      handleAdminPayFlexiMonth(item);
+    }}
+    className={`${clickable} flex-1 rounded-xl bg-[#f5c542] py-3 font-bold text-black shadow-lg`}
+  >
+    Pay Now
+  </button>
+)}
+
+ <button
+  onClick={() => openSchemeDetails("FLEXI_11", item)}
+  className={`${detailButtonClass} ${
+    item.showPayButton ? "" : "col-span-2"
+  }`}
+>
+  View Details
+</button>
+</div>
+    </div>
+  ))}
+
+  {quickBuyCards.map((item: any) => (
+    <div
+      key={`quick-${item.metalName}`}
+  className="
+    cursor-pointer
+    transition-all
+    duration-300
+    hover:-translate-y-1
+    hover:shadow-2xl
+    active:scale-[0.98]
+    rounded-[26px]
+    bg-white/[0.07]
+    p-6
+    text-white
+    shadow-xl
+  "    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-bold text-[#f5c542]">
+            Quick Buy {item.metalName}
+          </p>
+          <h4 className="mt-2 text-[22px] font-bold">
+            {item.transactionCount} Transactions
+          </h4>
+        </div>
+
+        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
+          COMPLETED
+        </span>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        <div className="flex justify-between border-b border-white/10 pb-2">
+          <span className="text-white/50">Metal</span>
+          <b>{item.metalName}</b>
+        </div>
+
+        <div className="flex justify-between border-b border-white/10 pb-2">
+          <span className="text-white/50">Total Amount</span>
+          <b>{formatMoney(item.totalAmount)}</b>
+        </div>
+
+        <div className="flex justify-between border-b border-white/10 pb-2">
+          <span className="text-white/50">Total Weight</span>
+          <b>{Number(item.totalWeight || 0).toFixed(4)} gm</b>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-white/50">Transactions</span>
+          <b>{item.transactionCount}</b>
+        </div>
+      </div>
+
+      <button
+  onClick={() => openSchemeDetails("QUICK_BUY", item)}
+  className={detailButtonClass}
+>
+  View Transactions
+</button>
+    </div>
+  ))}
+  
+</div>        )}
+      </div>
+    </div>
+  </div>
+</div>
+
+      {/* OVERVIEW SAME AS SCHEME REGISTER */}
+      <div ref={overviewRef}>
+        {schemeTab === "overview" && (
+          <div className="mt-10 grid grid-cols-3 gap-6 max-md:grid-cols-1">
+            {[
+              {
+                title: "Pre-Booking & Exchange",
+                desc: "Hold advance amount or old jewellery and buy later with VA benefits.",
+                action: "Start Pre-Booking",
+                tab: "preBooking",
+              },
+              {
+                title: "Flexi 11 Month Plan",
+                desc: "Pay monthly amount for 11 months and track amount + gold grams.",
+                action: "Start Flexi Plan",
+                tab: "flexi11",
+              },
+              {
+                title: "Quick Buy Gold/Silver",
+                desc: "Enter amount, calculate metal weight and save it in wallet instantly.",
+                action: "Buy Metal",
+                tab: "quickBuy",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-[30px] bg-[#111] p-7 text-white shadow-xl"
+              >
+                <h3 className="font-serif text-[28px] text-[#f5c542]">
+                  {item.title}
+                </h3>
+
+                <p className="mt-4 text-[16px] leading-7 text-white/70">
+                  {item.desc}
+                </p>
+
+                <button
+                  onClick={() => handleSchemeTabClick(item.tab as any)}
+                  className={`${clickable} mt-5 w-full rounded-full bg-[#f5c542] px-5 py-3 font-bold text-black`}
+                >
+                  {item.action}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* KEEP YOUR EXISTING ADD FORMS */}
+      <div ref={preBookingRef}>
+        {schemeTab === "preBooking" && (
+          <div className="mt-8 rounded-[30px] bg-[#111] p-8 text-white shadow-2xl">
+           <p className="text-[14px] font-bold uppercase tracking-[4px] text-[#f5c542]">
+  Pre-Booking & Exchange
+</p>
+
+<div className="flex items-start justify-between max-md:flex-col max-md:gap-4">
+  <div>
+    <h3 className="mt-2 font-serif text-[38px] max-md:text-[28px]">
+      Hold Gold Value & Buy Jewellery Later
+    </h3>
+
+    <p className="mt-4 max-w-[950px] text-[17px] leading-8 text-white/70">
+      Customer can either pay advance amount or submit old jewellery for exchange.
+      After holding for selected months, customer can purchase jewellery with eligible VA benefit.
+    </p>
+  </div>
+
+  {isAdvanceBooking && selectedRate > 0 && (
+    <div className="text-right max-md:text-left">
+      <p className="text-[14px] font-semibold uppercase tracking-[2px] text-[#f5c542]">
+        {selectedRateTitle}
+      </p>
+
+      <h2 className="mt-1 text-[42px] font-extrabold leading-none text-[#f5c542] max-md:text-[32px]">
+        ₹{selectedRate / 10}
+      </h2>
+
+      <p className="mt-1 text-[15px] text-white/60">Per Gram</p>
+    </div>
+  )}
+</div>
+
+<div className="mt-8 grid grid-cols-2 gap-6 max-md:grid-cols-1">
+  <div>
+    <label className="mb-2 block text-white/70">Scheme Type</label>
+    <select
+      value={preBookingType}
+      onChange={(e) => setPreBookingType(e.target.value)}
+      className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
+    >
+      <option>Advance Gold Booking</option>
+      <option>Advance Kamal Silver Booking</option>
+      <option>Advance Swastik Silver Booking</option>
+      <option>Old Gold Exchange</option>
+      <option>Old Silver Exchange</option>
+    </select>
+  </div>
+
+  <div>
+    <label className="mb-2 block text-white/70">Hold Period</label>
+    <select
+      value={holdMonths}
+      onChange={(e) => setHoldMonths(e.target.value)}
+      className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
+    >
+      <option value="5">5 Months - 5% VA Benefit</option>
+      <option value="6">6 Months - 6% VA Benefit</option>
+      <option value="7">7 Months - 7% VA Benefit</option>
+      <option value="8">8 Months - 8% VA Benefit</option>
+      <option value="9">9 Months - 9% VA Benefit</option>
+      <option value="10">10 Months - 10% VA Benefit</option>
+      <option value="11">11 Months - Full Eligible VA Benefit</option>
+      <option value="12">12 Months - Full Eligible VA Benefit</option>
+    </select>
+  </div>
+
+  {isAdvanceBooking && (
+    <>
+      <div>
+        <label className="mb-2 block text-white/70">Metal Weight</label>
+        <input
+          value={metalWeight}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^0-9.]/g, "");
+            setMetalWeight(value);
+
+            const amount = calculatePreBookingAmount(value);
+            setMetalAmount(amount ? amount.toFixed(0) : "");
+          }}
+          placeholder="Enter metal weight in grams"
+          className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-white/70">Metal Amount</label>
+        <input
+          value={metalAmount}
+          onChange={(e) => setMetalAmount(e.target.value.replace(/\D/g, ""))}
+          placeholder="Enter amount for metal"
+          className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
+        />
+      </div>
+    </>
+  )}
+
+  {isOldExchange && (
+    <>
+      <input value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="Gold Chain / Ring / Bangles" className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none" />
+      <input value={oldGrossWeight} onChange={(e) => setOldGrossWeight(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="Enter gross weight" className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none" />
+      <input value={oldPurity} onChange={(e) => setOldPurity(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="Enter purity weight" className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none" />
+      <input value={oldExchangeAmount} onChange={(e) => setOldExchangeAmount(e.target.value.replace(/\D/g, ""))} placeholder="Enter old exchange amount" className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none" />
+    </>
+  )}
+</div>
+
+<button
+  onClick={handleAdminCreatePreBooking}
+  className={`${clickable} mt-5 w-full rounded-full bg-[#f5c542] px-5 py-3 font-bold text-black`}
+>
+  Pay / Submit Old Gold & Activate Pre-Booking
+</button>
+          </div>
+        )}
+      </div>
+
+      <div ref={flexi11Ref}>
+        {schemeTab === "flexi11" && (
+          <div className="mt-8 rounded-[30px] bg-[#111] p-8 text-white">
+            <h3 className="font-serif text-[38px] text-[#f5c542]">Flexi 11 Month Plan</h3>
+
+<div className="mt-8 grid grid-cols-4 gap-5 max-md:grid-cols-2">
+  {[1000, 2000, 5000, 10000, 15000, 20000, 25000, 50000].map((value) => (
     <button
-      key={key}
-      onClick={() => handleSchemeTabClick(key as any)}
- className={`${clickable} rounded-full px-6 py-3 font-bold max-md:px-3 max-md:text-[14px] ${    
-        schemeTab === key
+      key={value}
+      onClick={() => setMonthlyAmount(String(value))}
+      className={`${clickable} rounded-2xl border border-[#f5c542]/30 px-5 py-6 text-[22px] font-bold ${
+        monthlyAmount === String(value)
           ? "bg-[#f5c542] text-black"
-          : "bg-[#fbf7ef] text-black"
+          : "bg-[#fff8e6] text-black"
       }`}
     >
-      {label}
+      ₹{value.toLocaleString("en-IN")}
     </button>
   ))}
 </div>
 
+<button
+  onClick={handleAdminCreateFlexi11}
+  className={`${clickable} mt-5 w-full rounded-full bg-[#f5c542] px-5 py-3 font-bold text-black`}
+>
+  Pay First Month & Activate
+</button>
+          </div>
+        )}
+      </div>
 
-<div className="mt-8 overflow-hidden rounded-[30px] border border-[#f5c542]/40 bg-[#111] shadow-2xl">
-  <button
-    onClick={() => setShowSchemeDashboard((prev) => !prev)}
-    className={`${clickable} flex w-full items-center justify-between gap-4 px-8 py-6 text-left max-md:px-4 max-md:py-5`}
-  >
-    <div>
-      <p className="text-[13px] font-bold uppercase tracking-[4px] text-[#f5c542]">
-        View All Schemes & Transactions
-      </p>
+      <div ref={quickBuyRef}>
+        {schemeTab === "quickBuy" && (
+          <div className="mt-8 rounded-[30px] bg-[#111] p-8 text-white">
+            <h3 className="font-serif text-[38px] text-[#f5c542]">Quick Buy Gold & Silver</h3>
 
-      <h3 className="mt-2 font-serif text-[32px] text-white max-md:text-[24px]">
-        Customer Running Gold & Silver Benefits
-      </h3>
-
-      <p className="mt-2 text-white/60">
-        Check Pre-Booking, Flexi 11 and Quick Buy transactions.
-      </p>
-    </div>
-
-    <div
-      className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#f5c542] text-[28px] font-bold text-black transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
-        showSchemeDashboard ? "rotate-180" : ""
+<div className="mt-8 grid grid-cols-3 gap-3">
+  {["Gold", "Kamal Silver", "Swastik Silver"].map((metal) => (
+    <button
+      key={metal}
+      onClick={() => setQuickMetal(metal as any)}
+      className={`${clickable} rounded-2xl px-2 py-4 text-[13px] font-bold md:text-[22px] ${
+        quickMetal === metal ? "bg-[#f5c542] text-black" : "bg-white/10 text-white"
       }`}
     >
-      ↓
-    </div>
-  </button>
-
-  <div
-    className={`grid transition-all duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
-      showSchemeDashboard
-        ? "grid-rows-[1fr] opacity-100"
-        : "grid-rows-[0fr] opacity-0"
-    }`}
-  >
-    <div className="overflow-hidden">
-      <div className="border-t border-white/10 px-8 py-8 max-md:px-4"> 
-      {totalSchemeCards === 0 ? (
-    <div className="rounded-[24px] bg-white/10 p-8 text-center text-white">
-      No active schemes found.
-    </div>
-  ) : (
-    <div
-      className={`grid grid-cols-3 gap-6 transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] max-md:grid-cols-1 ${
-        showSchemeDashboard
-          ? "translate-y-0 scale-100 opacity-100"
-          : "translate-y-8 scale-[0.98] opacity-0"
-      }`}
-    >
-      {preBookingCards.map((item: any, index: number) => {
-        const isOld =
-          item.schemeSubType === "OLD_GOLD_EXCHANGE" ||
-          item.schemeSubType === "OLD_SILVER_EXCHANGE";
-
-        return (
-          <div
-            key={`pre-${item.schemeId}`}
-            className="cursor-pointer rounded-[26px] bg-white/[0.07] p-6 text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98]"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-bold text-[#f5c542]">
-                  Pre-Booking #{index + 1}
-                </p>
-                <h4 className="mt-2 text-[22px] font-bold">
-                  {item.schemeSubType?.replaceAll("_", " ")}
-                </h4>
-              </div>
-
-              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-                {item.status}
-              </span>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              <div className="flex justify-between border-b border-white/10 pb-2">
-                <span className="text-white/50">Metal</span>
-                <b>{item.metalName || "-"}</b>
-              </div>
-
-              {isOld ? (
-                <>
-                  <div className="flex justify-between border-b border-white/10 pb-2">
-                    <span className="text-white/50">Item Name</span>
-                    <b>{item.itemName || "Old Jewellery"}</b>
-                  </div>
-
-                  <div className="flex justify-between border-b border-white/10 pb-2">
-                    <span className="text-white/50">Exchange Amount</span>
-                    <b>{formatMoney(item.oldExchangeAmount)}</b>
-                  </div>
-
-                  <div className="flex justify-between border-b border-white/10 pb-2">
-                    <span className="text-white/50">Purity Weight</span>
-                    <b>{item.oldPurityWeight || 0} gm</b>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex justify-between border-b border-white/10 pb-2">
-                    <span className="text-white/50">Amount</span>
-                    <b>{formatMoney(item.amount)}</b>
-                  </div>
-
-                  <div className="flex justify-between border-b border-white/10 pb-2">
-                    <span className="text-white/50">Weight</span>
-                    <b>{item.metalWeight || 0} gm</b>
-                  </div>
-
-                  <div className="flex justify-between border-b border-white/10 pb-2">
-                    <span className="text-white/50">Booked Rate</span>
-                    <b>₹{item.ratePerGram || 0}/gm</b>
-                  </div>
-                </>
-              )}
-
-              <div className="flex justify-between border-b border-white/10 pb-2">
-                <span className="text-white/50">Hold Months</span>
-                <b>{getCompletedMonths(item)}/{item.holdMonths || 0} Months</b>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-white/50">Maturity</span>
-                <b>{formatDate(item.maturityDate)}</b>
-              </div>
-            </div>
-
-            <button
-              onClick={() => openSchemeDetails("PRE_BOOKING", item)}
-              className={detailButtonClass}
-            >
-              View Details
-            </button>
-          </div>
-        );
-      })}
-
-      {flexi11Cards.map((item: any, index: number) => (
-        <div
-          key={`flexi-${item.schemeId}`}
-          className="cursor-pointer rounded-[26px] bg-white/[0.07] p-6 text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98]"
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-bold text-[#f5c542]">
-                Flexi 11 #{index + 1}
-              </p>
-              <h4 className="mt-2 text-[22px] font-bold">
-                Monthly Gold Savings
-              </h4>
-            </div>
-
-            <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-              {item.status}
-            </span>
-          </div>
-
-          <div className="mt-5 space-y-3">
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <span className="text-white/50">Monthly Amount</span>
-              <b>{formatMoney(item.monthlyAmount)}</b>
-            </div>
-
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <span className="text-white/50">Total Paid</span>
-              <b>{formatMoney(item.totalPaidAmount)}</b>
-            </div>
-
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <span className="text-white/50">Gold Collected</span>
-              <b>{Number(item.totalGoldWeight || 0).toFixed(4)} gm</b>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-white/50">Paid Months</span>
-              <b>{item.paidMonths || 0}/{item.durationMonths || 11}</b>
-            </div>
-          </div>
-
-          <button
-            onClick={() => openSchemeDetails("FLEXI_11", item)}
-            className={detailButtonClass}
-          >
-            View Details
-          </button>
-        </div>
-      ))}
-
-      {quickBuyCards.map((item: any) => (
-        <div
-          key={`quick-${item.metalName}`}
-          className="cursor-pointer rounded-[26px] bg-white/[0.07] p-6 text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98]"
-        >
-          <p className="text-sm font-bold text-[#f5c542]">
-            Quick Buy {item.metalName}
-          </p>
-
-          <h4 className="mt-2 text-[22px] font-bold">
-            {item.transactionCount} Transactions
-          </h4>
-
-          <div className="mt-5 space-y-3">
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <span className="text-white/50">Total Amount</span>
-              <b>{formatMoney(item.totalAmount)}</b>
-            </div>
-
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <span className="text-white/50">Total Weight</span>
-              <b>{Number(item.totalWeight || 0).toFixed(4)} gm</b>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-white/50">Transactions</span>
-              <b>{item.transactionCount}</b>
-            </div>
-          </div>
-
-          <button
-            onClick={() => openSchemeDetails("QUICK_BUY", item)}
-            className={detailButtonClass}
-          >
-            View Transactions
-          </button>
-        </div>
-      ))}
-    </div>
-  )}
+      {metal}
+    </button>
+  ))}
 </div>
-              
-                     </div>
+
+<input
+  value={quickAmount}
+  onChange={(e) => setQuickAmount(e.target.value.replace(/\D/g, ""))}
+  placeholder="Enter amount"
+  className="mt-8 w-full rounded-2xl border border-white/20 bg-black/40 px-5 py-5 text-[26px] outline-none"
+/>
+
+<div className="mt-5 rounded-[28px] bg-white/10 p-6 text-center">
+  <p className="text-white/60">Metal Weight</p>
+  <h4 className="mt-3 text-[42px] font-bold text-[#f5c542]">
+    {quickWeight.toFixed(3)} gm
+  </h4>
+</div>
+
+<button
+  onClick={handleAdminCreateQuickBuy}
+  className={`${clickable} mt-5 w-full rounded-full bg-[#f5c542] px-5 py-3 font-bold text-black`}
+>
+  Pay Now & Save {quickMetal} in Wallet
+</button>
           </div>
+        )}
+      </div>
+             </div>
         </div>
       </div>
-
-      
-      
-  </div>
-)}
-
-<div ref={overviewRef}>
-  {schemeTab === "overview" && (
-    <div className="mt-10 grid grid-cols-3 gap-6 max-md:grid-cols-1">
-      {[
-        {
-          title: "Pre-Booking & Exchange",
-          desc: "Hold advance amount or old jewellery and buy later with VA benefits.",
-          action: "Start Pre-Booking",
-          tab: "preBooking",
-        },
-        {
-          title: "Flexi 11 Month Plan",
-          desc: "Pay monthly amount for 11 months and track amount + gold grams.",
-          action: "Start Flexi Plan",
-          tab: "flexi11",
-        },
-        {
-          title: "Quick Buy Gold/Silver",
-          desc: "Enter amount, calculate metal weight and save it in wallet instantly.",
-          action: "Buy Metal",
-          tab: "quickBuy",
-        },
-      ].map((item) => (
-        <div
-          key={item.title}
-          className="rounded-[30px] bg-[#111] p-7 text-white shadow-xl"
-        >
-          <h3 className="font-serif text-[28px] text-[#f5c542]">
-            {item.title}
-          </h3>
-
-          <p className="mt-4 text-[16px] leading-7 text-white/70">
-            {item.desc}
-          </p>
-
-          <button
-            onClick={() => handleSchemeTabClick(item.tab as any)}
-className={`${clickable} mt-5 w-full rounded-full bg-[#f5c542] px-5 py-3 font-bold text-black`}          >
-            {item.action}
-          </button>
-        </div>
-      ))}
     </div>
-  )}
-</div>
-
-
-
-
-<div ref={preBookingRef}>
-  {schemeTab === "preBooking" && (
-  <div className="mt-8 rounded-[30px] bg-[#111] p-8 text-white shadow-2xl">
-    <p className="text-[14px] font-bold uppercase tracking-[4px] text-[#f5c542]">
-      Pre-Booking & Exchange
-    </p>
-
-    <h3 className="mt-2 font-serif text-[32px] text-[#f5c542]">
-      Add Pre-Booking Scheme
-    </h3>
-
-    <p className="mt-3 text-white/60">
-      Admin can add advance booking or old gold/silver exchange for this customer.
-    </p>
-
-    <div className="mt-6 grid grid-cols-2 gap-5 max-md:grid-cols-1">
-      <div>
-        <label className="mb-2 block text-white/70">Scheme Type</label>
-        <select
-          value={preBookingType}
-          onChange={(e) => {
-            setPreBookingType(e.target.value);
-
-            setMetalWeight("");
-            setMetalAmount("");
-            setItemName("");
-            setOldGrossWeight("");
-            setOldPurity("");
-            setOldExchangeAmount("");
-          }}
-          className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
-        >
-          <option>Advance Gold Booking</option>
-          <option>Advance Kamal Silver Booking</option>
-          <option>Advance Swastik Silver Booking</option>
-          <option>Old Gold Exchange</option>
-          <option>Old Silver Exchange</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="mb-2 block text-white/70">Hold Period</label>
-        <select
-          value={holdMonths}
-          onChange={(e) => setHoldMonths(e.target.value)}
-          className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
-        >
-          <option value="5">5 Months - 5% VA Benefit</option>
-          <option value="6">6 Months - 6% VA Benefit</option>
-          <option value="7">7 Months - 7% VA Benefit</option>
-          <option value="8">8 Months - 8% VA Benefit</option>
-          <option value="9">9 Months - 9% VA Benefit</option>
-          <option value="10">10 Months - 10% VA Benefit</option>
-          <option value="11">11 Months - Full Eligible VA Benefit</option>
-        </select>
-      </div>
-
-      {isAdvanceBooking && (
-        <>
-          <div>
-            <label className="mb-2 block text-white/70">Metal Weight</label>
-            <input
-              value={metalWeight}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9.]/g, "");
-                setMetalWeight(value);
-
-                const amount =
-                  (Number(value || 0) * Number(selectedRate || 0)) / 10;
-
-                setMetalAmount(amount ? amount.toFixed(0) : "");
-              }}
-              placeholder="Enter metal weight in grams"
-              className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-white/70">Metal Amount</label>
-            <input
-              value={metalAmount}
-              onChange={(e) =>
-                setMetalAmount(e.target.value.replace(/\D/g, ""))
-              }
-              placeholder="Enter amount"
-              className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
-            />
-          </div>
-        </>
-      )}
-
-      {isOldExchange && (
-        <>
-          <div>
-            <label className="mb-2 block text-white/70">Item Name</label>
-            <input
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-              placeholder="Gold Chain / Ring / Bangles"
-              className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-white/70">
-              Old Metal Gross Weight
-            </label>
-            <input
-              value={oldGrossWeight}
-              onChange={(e) =>
-                setOldGrossWeight(e.target.value.replace(/[^0-9.]/g, ""))
-              }
-              placeholder="Enter gross weight"
-              className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-white/70">Purity Weight</label>
-            <input
-              value={oldPurity}
-              onChange={(e) =>
-                setOldPurity(e.target.value.replace(/[^0-9.]/g, ""))
-              }
-              placeholder="Enter purity weight"
-              className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-white/70">
-              Old Exchange Amount
-            </label>
-            <input
-              value={oldExchangeAmount}
-              onChange={(e) =>
-                setOldExchangeAmount(e.target.value.replace(/\D/g, ""))
-              }
-              placeholder="Enter old exchange amount"
-              className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
-            />
-          </div>
-        </>
-      )}
-    </div>
-
-    <button
-      onClick={handleAdminCreatePreBooking}
-      className="mt-6 w-full rounded-full bg-[#f5c542] px-5 py-4 font-bold text-black"
-    >
-      {isOldExchange
-        ? "Submit Old Gold/Silver & Activate Pre-Booking"
-        : "Add Advance Booking Scheme"}
-    </button>
   </div>
 )}
-
-</div>
-       
-       <div ref={flexi11Ref}>
-{schemeTab === "flexi11" && (
-  <div className="mt-8 rounded-[30px] bg-[#111] p-8 text-white">
-    <h3 className="font-serif text-[32px] text-[#f5c542]">
-      Add Flexi 11 Scheme
-    </h3>
-
-    <input
-      value={monthlyAmount}
-      onChange={(e) => setMonthlyAmount(e.target.value.replace(/\D/g, ""))}
-      placeholder="Monthly amount"
-      className="mt-6 w-full rounded-xl bg-black/40 p-4"
-    />
-
-    <button
-      onClick={handleAdminCreateFlexi11}
-      className="mt-6 w-full rounded-full bg-[#f5c542] py-4 font-bold text-black"
-    >
-      Pay First Month & Activate
-    </button>
-  </div>
-)}
-</div>
-
-<div ref={quickBuyRef}>
-{schemeTab === "quickBuy" && (
-  <div className="mt-8 rounded-[30px] bg-[#111] p-8 text-white">
-    <h3 className="font-serif text-[32px] text-[#f5c542]">
-      Add Quick Buy
-    </h3>
-
-    <div className="mt-6 grid grid-cols-3 gap-4">
-      {["Gold", "Kamal Silver", "Swastik Silver"].map((metal) => (
-        <button
-          key={metal}
-          onClick={() => setQuickMetal(metal as any)}
-          className={`rounded-xl p-4 font-bold ${
-            quickMetal === metal
-              ? "bg-[#f5c542] text-black"
-              : "bg-white/10 text-white"
-          }`}
-        >
-          {metal}
-        </button>
-      ))}
-    </div>
-
-    <input
-      value={quickAmount}
-      onChange={(e) => setQuickAmount(e.target.value.replace(/\D/g, ""))}
-      placeholder="Amount"
-      className="mt-6 w-full rounded-xl bg-black/40 p-4"
-    />
-
-    <button
-      onClick={handleAdminCreateQuickBuy}
-      className="mt-6 w-full rounded-full bg-[#f5c542] py-4 font-bold text-black"
-    >
-      Add Quick Buy
-    </button>
-  </div>
-)}
-</div>
+  
 
       {/* Billing Table */}
       <div className="mt-10 p-3 flex flex-col items-center justify-center">

@@ -27,6 +27,7 @@ const RepairWork: React.FC = () => {
     metalWeight: "",
     customerPay: "",
     workerPay: "",
+    paymentMethod: "",
   });
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | "">("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,6 +42,23 @@ const RepairWork: React.FC = () => {
       alert("Please select a worker first.");
       return;
     }
+    if (!repairData.itemName.trim()) {
+  alert("Please enter item name.");
+  return;
+}
+    if (!repairData.paymentMethod) {
+  alert("Please select a payment method.");
+  return;
+}
+if (!repairData.customerPay || Number(repairData.customerPay) <= 0) {
+  alert("Please enter a valid customer pay amount.");
+  return;
+}
+
+if (!repairData.workerPay || Number(repairData.workerPay) < 0) {
+  alert("Please enter a valid worker pay amount.");
+  return;
+}
 
     try {
       const token = localStorage.getItem("token");
@@ -48,13 +66,17 @@ const RepairWork: React.FC = () => {
         throw new Error("No authentication token found.");
       }
 
-      const body = {
-        metal: repairData.metal || "",
-        itemName: repairData.itemName,
-        metalWeight: parseFloat(repairData.metalWeight) || 0.0,
-        customerPay: parseFloat(repairData.customerPay),
-        workerPay: parseFloat(repairData.workerPay),
-      };
+     const body = {
+  metal: repairData.metal || "",
+  itemName: repairData.itemName.trim(),
+  metalWeight:
+    repairData.metal === "Non Metal"
+      ? 0
+      : Number(repairData.metalWeight || 0),
+  customerPay: Number(repairData.customerPay || 0),
+  workerPay: Number(repairData.workerPay || 0),
+  paymentMethod: repairData.paymentMethod,
+};
 
       console.log("RequestBody Repair", body);
 
@@ -67,13 +89,14 @@ const RepairWork: React.FC = () => {
       setDialogMessage("Repair work submitted successfully.");
       setIsSuccess(true);
       setDialogOpen(true);
-      setRepairData({
-        metal: "",
-        itemName: "",
-        metalWeight: "",
-        customerPay: "",
-        workerPay: "",
-      });
+   setRepairData({
+  metal: "",
+  itemName: "",
+  metalWeight: "",
+  customerPay: "",
+  workerPay: "",
+  paymentMethod: "",
+});
       setSelectedWorkerId("");
       await invalidate();
       await refresh();
@@ -186,6 +209,28 @@ const RepairWork: React.FC = () => {
               }}
             />
           </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+  <TextField
+    select
+    fullWidth
+    label="Payment Method"
+    value={repairData.paymentMethod}
+    onChange={(e) =>
+      handleChange("paymentMethod", e.target.value)
+    }
+    required
+    InputLabelProps={{ shrink: true }}
+    SelectProps={{ displayEmpty: true }}
+  >
+    <MenuItem value="" disabled>
+      -- Select Payment Method --
+    </MenuItem>
+
+    <MenuItem value="Cash">Cash</MenuItem>
+    <MenuItem value="Phone Pay">Phone Pay</MenuItem>
+  </TextField>
+</Grid>
 
           {/* Pays */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>

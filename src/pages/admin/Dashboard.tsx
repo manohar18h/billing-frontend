@@ -111,6 +111,8 @@ type RevenueMetric = {
   previousRevenue: number;
   totalRevenue: number;
   percentageChange: number;
+  cashAmount: number;
+  onlineAmount: number;
 };
 
 interface OrderStat {
@@ -165,13 +167,22 @@ function useRevenueMetric(
 
   useEffect(() => {
     if (!token) return;
+     setData(null);
     api
       .get<RevenueMetric>(`${endpoint}?filter=${filter}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      .then((res) => setData(res.data))
-      .catch((err) => console.error("Error fetching revenue metric:", err));
-  }, [endpoint, filter, token]);
+     .then((res) => {
+        console.log("Revenue response:", res.data);
+        setData(res.data);
+      })
+ .catch((err) => {
+        console.error("Revenue API failed:", err);
+        console.error("Status:", err.response?.status);
+        console.error("Backend response:", err.response?.data);
+        console.error("Requested URL:", `${endpoint}?filter=${filter}`);
+      });
+    }, [endpoint, filter, token]);
 
   return data;
 }
@@ -400,6 +411,8 @@ const MetricCard: React.FC<{
     "THIS_YEAR",
   ] as const;
 
+
+
   const getVsLabel = (filter: string) => {
     switch (filter) {
       case "ALL":
@@ -492,9 +505,23 @@ const RevenueCard: React.FC<{
     "THIS_WEEK",
     "THIS_MONTH",
     "THIS_YEAR",
-    "CASH",
-    "ONLINE",
   ] as const;
+
+    const getRevenueTitle = (filter: string) => {
+    switch (filter) {
+      case "TODAY":
+        return "Today's Total Revenue";
+      case "THIS_WEEK":
+        return "This Week Total Revenue";
+      case "THIS_MONTH":
+        return "This Month Total Revenue";
+      case "THIS_YEAR":
+        return "This Year Total Revenue";
+      case "ALL":
+      default:
+        return "Total Revenue";
+    }
+  };
 
   const getVsLabel = (filter: string) => {
     switch (filter) {
@@ -516,7 +543,7 @@ const RevenueCard: React.FC<{
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5 relative">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-sm text-gray-500 font-medium">{title}</div>
+        <div className="text-sm text-gray-500 font-medium"> {getRevenueTitle(filter)}</div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -568,6 +595,27 @@ const RevenueCard: React.FC<{
           Total Revenue: ₹{data.totalRevenue.toLocaleString()}
         </div>
       )}
+      {data && (
+  <div className="mt-3 grid grid-cols-2 gap-2">
+    <div className="rounded-xl bg-green-50 px-3 py-2">
+      <div className="text-[11px] font-semibold text-green-700">
+        Cash
+      </div>
+      <div className="mt-1 text-sm font-bold text-green-800">
+        ₹{Number(data.cashAmount || 0).toLocaleString("en-IN")}
+      </div>
+    </div>
+
+    <div className="rounded-xl bg-blue-50 px-3 py-2">
+      <div className="text-[11px] font-semibold text-blue-700">
+        Online / PhonePe
+      </div>
+      <div className="mt-1 text-sm font-bold text-blue-800">
+        ₹{Number(data.onlineAmount || 0).toLocaleString("en-IN")}
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };
@@ -979,7 +1027,7 @@ const DueAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-sm text-gray-500 font-medium">Total Due</div>
+        <div className="text-sm text-gray-500 font-medium">Total Order Due Amount</div>
       </div>
 
       <div className="text-2xl font-bold">
@@ -1016,7 +1064,7 @@ const DueLoanAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-sm text-gray-500 font-medium">Total Loan Due</div>
+        <div className="text-sm text-gray-500 font-medium">Total Loan Due Amount</div>
       </div>
 
       <div className="text-2xl font-bold">
@@ -1048,6 +1096,24 @@ const LatestOrders: React.FC = () => {
       console.error("Failed to fetch Todays bills:", e);
     }
   };
+
+  const totalTodayOrders = rows.length;
+
+const deliveredTodayOrders = rows.filter(
+  (r) => normalizeStatus(r.deliveryStatus) === "delivered"
+).length;
+
+const canceledTodayOrders = rows.filter(
+  (r) =>
+    ["cancelled", "canceled"].includes(
+      (r.deliveryStatus || "").trim().toLowerCase()
+    )
+).length;
+
+const pendingTodayOrders = rows.filter(
+  (r) => normalizeStatus(r.deliveryStatus) === "pending"
+).length;
+
 
   useEffect(() => {
     fetchBillingRows();
@@ -1119,11 +1185,33 @@ const LatestOrders: React.FC = () => {
     );
   };
 
+  
+
   return (
   <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 md:p-5">
-    <div className="mb-3 text-lg font-bold text-[#85400b]">
-      Today's Order
-    </div>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <div className="text-lg font-bold text-[#85400b]">
+    Today's Order
+  </div>
+
+  <div className="flex flex-wrap gap-2">
+    <span className="rounded-full bg-blue-100 px-4 py-1 text-[13px] font-bold text-blue-700">
+      Total: {totalTodayOrders}
+    </span>
+
+    <span className="rounded-full bg-green-100 px-4 py-1 text-[13px] font-bold text-green-700">
+      Delivered: {deliveredTodayOrders}
+    </span>
+
+    <span className="rounded-full bg-yellow-100 px-4 py-1 text-[13px] font-bold text-yellow-700">
+      Pending: {pendingTodayOrders}
+    </span>
+
+    <span className="rounded-full bg-red-100 px-4 py-1 text-[13px] font-bold text-red-700">
+      Canceled: {canceledTodayOrders}
+    </span>
+  </div>
+</div>
 
     {/* Mobile card view */}
     <div className="space-y-3 md:hidden">
@@ -1340,6 +1428,18 @@ const LatestLoanOrders: React.FC = () => {
     }
   };
 
+const totalTodayLoanOrders = rows.length;
+
+const packedTodayLoanOrders = rows.filter(
+  (r) => (r.itemStatus || "").trim().toLowerCase() === "packed"
+).length;
+
+const notPackedTodayLoanOrders = rows.filter((r) =>
+  ["pending", "not packed", "not_packed", "notpacked"].includes(
+    (r.itemStatus || "").trim().toLowerCase()
+  )
+).length;
+
   const renderStatusChip = (raw: string) => {
     const n = normalizeStatus(raw);
     if (n === "delivered")
@@ -1369,9 +1469,25 @@ const LatestLoanOrders: React.FC = () => {
 
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-      <div className=" text-[#85400b] mb-3 font-bold text-lg">
-        Today's Loan Order
-      </div>
+     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <div className="text-lg font-bold text-[#85400b]">
+    Today's Loan Order
+  </div>
+
+  <div className="flex flex-wrap gap-2">
+    <span className="rounded-full bg-blue-100 px-4 py-2 text-[13px] font-bold text-blue-700">
+      Total: {totalTodayLoanOrders}
+    </span>
+
+    <span className="rounded-full bg-green-100 px-4 py-2 text-[13px] font-bold text-green-700">
+      Packed: {packedTodayLoanOrders}
+    </span>
+
+    <span className="rounded-full bg-orange-100 px-4 py-2 text-[13px] font-bold text-orange-700">
+      Not Packed: {notPackedTodayLoanOrders}
+    </span>
+  </div>
+</div>
      {/* Mobile card view */}
 <div className="space-y-3 md:hidden">
   {rows.length === 0 ? (
@@ -1565,13 +1681,51 @@ const TodayOldExchangeTable: React.FC = () => {
     };
 
     fetchTodayOldExchangeData();
-  }, []);
+  }, []);const totalOldExchangeCount = rows.length;
+
+const totalGoldWeight = rows
+  .filter(
+    (r) =>
+      (r.onlyExchangeMetal || "").trim().toLowerCase() === "gold"
+  )
+  .reduce(
+    (sum, r) => sum + Number(r.onlyExchange_metal_purity_weight || 0),
+    0
+  );
+
+const totalSilverWeight = rows
+  .filter(
+    (r) =>
+      (r.onlyExchangeMetal || "").trim().toLowerCase() === "silver"
+  )
+  .reduce(
+    (sum, r) => sum + Number(r.onlyExchange_metal_purity_weight || 0),
+    0
+  );
+
+
 
   return (
     <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 md:p-5">
-      <div className="mb-3 text-lg font-bold text-[#85400b]">
-        Today's Old Return & Old Exchange
-      </div>
+     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <div className="text-lg font-bold text-[#85400b]">
+    Today's Old Return & Old Exchange
+  </div>
+
+  <div className="flex flex-wrap gap-2">
+    <span className="rounded-full bg-blue-100 px-4 py-2 text-[13px] font-bold text-blue-700">
+      Total: {totalOldExchangeCount}
+    </span>
+
+    <span className="rounded-full bg-yellow-100 px-4 py-2 text-[13px] font-bold text-yellow-700">
+      Gold: {totalGoldWeight.toFixed(3)} gm
+    </span>
+
+    <span className="rounded-full bg-gray-200 px-4 py-2 text-[13px] font-bold text-gray-700">
+      Silver: {totalSilverWeight.toFixed(3)} gm
+    </span>
+  </div>
+</div>
 
       <div className="space-y-3 md:hidden">
         {rows.length === 0 ? (
