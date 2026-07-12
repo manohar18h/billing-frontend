@@ -787,7 +787,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                     {item.metal === "22 Gold"
                       ? "22k-916"
                       : item.metal === "24 Gold"
-                        ? "24k"
+                        ? "Gold"
                         : item.metal === "995 Silver"
                           ? "Swastik 999"
                           : item.metal === "999 Silver"

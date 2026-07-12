@@ -233,18 +233,48 @@ const SearchAddCustomer: React.FC = () => {
 
       const result = response.data;
 
-      if (result?.customerId) {
-        localStorage.setItem("customerId", result.customerId);
-        localStorage.setItem("from", "customer");
-        console.log("customerId in customer:", result.customerId);
+      // if (result?.customerId) {
+      //   localStorage.setItem("customerId", result.customerId);
+      //   localStorage.setItem("from", "customer");
+      //   console.log("customerId in customer:", result.customerId);
 
-        navigate("/admin/orders", {
-          replace: true,
-          state: { fromCustomer: true },
-        });
-      } else {
-        toast.error("Failed to add customer");
-      }
+      //   navigate("/admin/orders", {
+      //     replace: true,
+      //     state: { fromCustomer: true },
+      //   });
+      // } else {
+      //   toast.error("Failed to add customer");
+      // }
+
+      if (result?.customerId) {
+  localStorage.setItem("customerId", String(result.customerId));
+  localStorage.setItem("CusDetailsCustomerId", String(result.customerId));
+  localStorage.setItem("bill-phnNumber", result.phoneNumber);
+  localStorage.setItem("from", "customer");
+
+  // Store profile so BillData can display it even when there are no bills
+  sessionStorage.setItem(
+    "billCustomer",
+    JSON.stringify({
+      customerId: result.customerId,
+      name: result.name,
+      village: result.village,
+      phoneNumber: result.phoneNumber,
+      emailId: result.emailId,
+      numberOfOrders: 0,
+      totalDueAmount: 0,
+    }),
+  );
+
+  navigate("/admin/bill-Data", {
+    replace: true,
+    state: {
+      newlyAddedCustomer: result,
+    },
+  });
+} else {
+  toast.error("Failed to add customer");
+}
     } catch (error: unknown) {
       if (error instanceof Error) {
         // covers both network errors and general JS errors

@@ -34,6 +34,26 @@ interface SelectedOrder {
   size: string;
 }
 
+interface CustomerProfileResponse {
+  customerId: number;
+  name: string;
+  village: string;
+  phoneNumber: string;
+  emailId: string;
+
+  numberOfOrders: number;
+  totalDueAmount: number;
+
+  fullAddress?: string;
+  pincode?: string;
+
+  mobileVerified: boolean;
+  aadhaarVerified: boolean;
+
+  schemeDashboard: any;
+}
+
+
 interface Billing {
   billId: number;
   billNumber: string;
@@ -57,10 +77,16 @@ interface Billing {
 }
 
 const BillData: React.FC = () => {
-  const [billingData, setBillingData] = useState<Billing[]>([]);
   const navigate = useNavigate();
 
+const [customer, setCustomer] =
+  useState<CustomerProfileResponse | null>(null);
 
+const [billingData, setBillingData] =
+  useState<Billing[]>([]);
+
+const [pageLoading, setPageLoading] =
+  useState(true);
 
   const [openEdit, setOpenEdit] = useState(false);
 
@@ -72,8 +98,8 @@ const [editEmail, setEditEmail] = useState("");
 const [villageSearch, setVillageSearch] = useState("");
 const [villageResults, setVillageResults] = useState<string[]>([]);
 const [villageLoading, setVillageLoading] = useState(false);
-const [schemeDashboard, setSchemeDashboard] = useState<any>(null);
-const overviewRef = React.useRef<HTMLDivElement | null>(null);
+
+  const overviewRef = React.useRef<HTMLDivElement | null>(null);
 const preBookingRef = React.useRef<HTMLDivElement | null>(null);
 const flexi11Ref = React.useRef<HTMLDivElement | null>(null);
 const quickBuyRef = React.useRef<HTMLDivElement | null>(null);
@@ -89,6 +115,10 @@ const [selectedScheme, setSelectedScheme] = useState<any>(null);
 const [selectedSchemeType, setSelectedSchemeType] = useState<
   "PRE_BOOKING" | "FLEXI_11" | "QUICK_BUY" | null
 >(null);
+
+
+const schemeDashboard =
+  customer?.schemeDashboard || null;
 
 
 
@@ -152,19 +182,25 @@ useEffect(() => {
   fetchRates();
 }, []);
 
-const fetchSchemeDashboard = async (phoneNumber: string) => {
-  try {
-    const res = await api.get(`/scheme/dashboard/by-phone/${phoneNumber}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+const fetchCustomerProfile = async (
+  phoneNumber: string,
+): Promise<CustomerProfileResponse> => {
+  const response =
+    await api.get<CustomerProfileResponse>(
+      `/scheme/customer-profile/by-phone/${phoneNumber}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       },
-    });
+    );
 
-    setSchemeDashboard(res.data);
-  } catch (error) {
-    setSchemeDashboard(null);
-  }
+  return response.data;
 };
+
+
+
+
 
 const detailButtonClass = `
   ${clickable}
@@ -236,66 +272,106 @@ const formatWeight = (value: any) =>
 const formatDate = (value: any) =>
   value ? new Date(value).toLocaleDateString("en-IN") : "-";
 
+useEffect(() => {
+  const loadBillDataPage = async () => {
+    const phoneNumber =
+      localStorage.getItem("bill-phnNumber");
 
-  useEffect(() => {
-    const phnNumber = localStorage.getItem("bill-phnNumber");
-
-    console.log("phn number :" + phnNumber);
-    console.log("token :" + localStorage.getItem("token"));
-
-    if (phnNumber) {
-      api
-        .get<Billing[]>(`/admin/by-phone/${phnNumber}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        })
-        .then((response) => {
-          if (response.data.length === 0) {
-            navigate("/admin/customers", {
-              replace: true,
-              state: {
-                errorMessage: "No billing data found for this phone number.",
-              },
-            });
-          } else {
-            setBillingData(response.data);
-           fetchSchemeDashboard(phnNumber);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching billing data:", error);
-          navigate("/admin/customers", {
-            replace: true,
-            state: {
-              errorMessage: "No billing data found for this phone number.",
-            },
-          });
-        });
-    } else {
+    if (!phoneNumber) {
       navigate("/admin/customers", {
         replace: true,
-        state: { errorMessage: "Phone number is missing." },
+        state: {
+          errorMessage: "Phone number is missing.",
+        },
       });
+
+      return;
     }
-  }, [navigate]);
 
-  if (billingData.length === 0) {
-    return <p className="p-4">No billing data found for this phone number.</p>;
-  }
+    setPageLoading(true);
 
-  const customer = billingData[0]; // all bills belong to same customer
+    try {
+      const token =
+        localStorage.getItem("token");
 
-  // ✅ Aggregate values
-  const totalOrders = billingData.reduce(
-    (sum, bill) => sum + bill.numberOfOrders,
-    0,
+      const [
+        customerResponse,
+        billingResponse,
+      ] = await Promise.all([
+        api.get<CustomerProfileResponse>(
+          `/scheme/customer-profile/by-phone/${phoneNumber}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        ),
+
+        api.get<Billing[]>(
+          `/admin/by-phone/${phoneNumber}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        ),
+      ]);
+
+      setCustomer(customerResponse.data);
+
+      setBillingData(
+        Array.isArray(billingResponse.data)
+          ? billingResponse.data
+          : [],
+      );
+    } catch (error: any) {
+      console.error(
+        "Error loading customer details:",
+        error,
+      );
+
+      navigate("/admin/customers", {
+        replace: true,
+        state: {
+          errorMessage:
+            error?.response?.data?.message ||
+            error?.response?.data ||
+            "Customer details could not be loaded.",
+        },
+      });
+    } finally {
+      setPageLoading(false);
+    }
+  };
+
+  loadBillDataPage();
+}, [navigate]);
+
+if (pageLoading) {
+  return (
+    <div className="flex min-h-[400px] items-center justify-center">
+      <p className="text-lg font-semibold text-gray-600">
+        Loading customer details...
+      </p>
+    </div>
   );
-  const totalDueAmount = billingData.reduce(
-    (sum, bill) => sum + bill.billDueAmount,
-    0,
-  );
+}
 
+if (!customer) {
+  return (
+    <div className="flex min-h-[400px] items-center justify-center">
+      <p className="text-lg font-semibold text-red-600">
+        Customer profile not found.
+      </p>
+    </div>
+  );
+}
+
+const totalOrders =
+  Number(customer.numberOfOrders || 0);
+
+const totalDueAmount =
+  Number(customer.totalDueAmount || 0);
 
 
 
@@ -320,22 +396,50 @@ const getCompletedMonths = (item: any) => {
 
   
   // ✅ Add Order Handler (copied from CustomerDetails)
-  const handleAddOrder = () => {
-    const customer = billingData[0]; // same customer for all bills
-    const orders = billingData.flatMap((bill) => bill.selectedOrders); // collect all existing orders
+ const handleAddOrder = () => {
+  if (!customer?.customerId) {
+    alert("Customer details are missing");
+    return;
+  }
 
-    localStorage.removeItem("from");
-    localStorage.removeItem("editBillFromBillDetails");
-    localStorage.setItem("CusDetailsCustomerId", String(customer?.customerId));
-    sessionStorage.setItem("customer", JSON.stringify(customer));
-    sessionStorage.setItem("orders", JSON.stringify(orders));
-    localStorage.setItem("from", "customerDetails");
+  localStorage.removeItem("from");
+  localStorage.removeItem(
+    "editBillFromBillDetails",
+  );
 
-    navigate("/admin/orders", {
-      replace: true,
-      state: { fromCustomerDetails: true, customerId: customer?.customerId },
-    });
-  };
+  localStorage.setItem(
+    "CusDetailsCustomerId",
+    String(customer.customerId),
+  );
+
+  localStorage.setItem(
+    "customerId",
+    String(customer.customerId),
+  );
+
+  localStorage.setItem(
+    "from",
+    "customerDetails",
+  );
+
+  sessionStorage.setItem(
+    "customer",
+    JSON.stringify(customer),
+  );
+
+  sessionStorage.setItem(
+    "orders",
+    JSON.stringify([]),
+  );
+
+  navigate("/admin/orders", {
+    replace: true,
+    state: {
+      fromCustomerDetails: true,
+      customerId: customer.customerId,
+    },
+  });
+};
 
   const handleOpenEdit = () => {
   setEditName(customer.name || "");
@@ -347,8 +451,8 @@ const getCompletedMonths = (item: any) => {
 };
 const handleUpdateCustomer = async () => {
   try {
-    await api.put(
-      `/admin/customer/update/${customer.customerId}`,
+await api.put(
+  `/admin/updateCustomer/${customer.customerId}`,
       {
         name: editName,
         village: editVillage,
@@ -370,7 +474,16 @@ const handleUpdateCustomer = async () => {
     setOpenEdit(false);
 
     // ✅ now reload will search with new phone number
-    window.location.reload();
+    localStorage.setItem(
+  "bill-phnNumber",
+  editPhone,
+);
+
+await refreshCustomerProfile(editPhone);
+
+setOpenEdit(false);
+
+alert("Customer Updated Successfully");
 
   } catch (error) {
     console.error(error);
@@ -437,7 +550,26 @@ const quickRate =
 
 const quickWeight =
   quickRate > 0 ? Number(quickAmount || 0) / (quickRate / 10) : 0;
+const refreshCustomerProfile = async (
+  phoneNumber?: string,
+) => {
+  const targetPhone =
+    phoneNumber || customer?.phoneNumber;
 
+  if (!targetPhone) return;
+
+  try {
+    const updatedCustomer =
+      await fetchCustomerProfile(targetPhone);
+
+    setCustomer(updatedCustomer);
+  } catch (error) {
+    console.error(
+      "Failed to refresh customer profile:",
+      error,
+    );
+  }
+};
 const handleAdminCreatePreBooking = async () => {
   if (isAdvanceBooking) {
     if (!selectedRate) return alert("Metal rate not loaded");
@@ -495,7 +627,7 @@ const handleAdminCreatePreBooking = async () => {
     setMetalWeight("");
     setMetalAmount("");
 
-    fetchSchemeDashboard(customer.phoneNumber);
+    await refreshCustomerProfile();
     setSchemeTab("overview");
 setShowActiveSchemes(true);
   } catch (error: any) {
@@ -524,7 +656,7 @@ const handleAdminCreateFlexi11 = async () => {
     );
 
     alert("Flexi 11 scheme added successfully");
-    fetchSchemeDashboard(customer.phoneNumber);
+    await refreshCustomerProfile();
    setSchemeTab("overview");
 setShowActiveSchemes(true);
   } catch (error: any) {
@@ -569,7 +701,7 @@ const handleAdminCreateQuickBuy = async () => {
     );
 
     alert("Quick Buy added successfully");
-    fetchSchemeDashboard(customer.phoneNumber);
+    await refreshCustomerProfile();
    setSchemeTab("overview");
 setShowActiveSchemes(true);
   } catch (error: any) {
@@ -612,7 +744,7 @@ const handleAdminPayFlexiMonth = async (scheme: any) => {
     );
 
     alert("Payment saved successfully");
-    fetchSchemeDashboard(customer.phoneNumber);
+    await refreshCustomerProfile();
     setShowActiveSchemes(true);
   } catch (error: any) {
     alert(getApiErrorMessage(error, "Payment failed"));
@@ -1547,9 +1679,28 @@ const handleSchemeTabClick = (
                 </tr>
               </thead>
               <tbody>
-                {billingData.map((bill) => (
-                  <tr key={bill.billId} className="text-center">
-                    <td className="border px-3 py-2">
+  {billingData.length === 0 ? (
+    <tr>
+      <td
+        colSpan={11}
+        className="border px-4 py-12 text-center"
+      >
+        <p className="text-xl font-bold text-gray-700">
+          No billing history
+        </p>
+
+        <p className="mt-2 text-sm text-gray-500">
+          This customer has no generated bills yet.
+        </p>
+      </td>
+    </tr>
+  ) : (
+    billingData.map((bill) => (
+      <tr
+        key={bill.billId}
+        className="text-center"
+      >
+  <td className="border px-3 py-2">
                       {bill.billingDate
                         ? new Date(bill.billingDate).toLocaleString()
                         : "N/A"}
@@ -1613,9 +1764,11 @@ const handleSchemeTabClick = (
                         <VisibilityIcon fontSize="medium" />
                       </IconButton>
                     </td>
-                  </tr>
-                ))}
-              </tbody>
+                          </tr>
+    ))
+  )}
+</tbody>
+             
             </table>
           </Box>
         </div>
