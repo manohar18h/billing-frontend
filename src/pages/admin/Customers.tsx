@@ -9,6 +9,11 @@ import {
   Typography,
   MenuItem,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +32,13 @@ const SearchAddCustomer: React.FC = () => {
   const [searchType, setSearchType] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+
+   useEffect(() => {
+  localStorage.removeItem("editBillFromBillDetails");
+  localStorage.removeItem("billNumber");
+  localStorage.removeItem("bill-phnNumber");
+  localStorage.removeItem("phnNumber");
+}, []);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -37,11 +49,12 @@ const SearchAddCustomer: React.FC = () => {
   const [deleteMessage, setDeleteMessage] = useState("");
   const [customerNameSearch, setCustomerNameSearch] = useState("");
 
-  localStorage.removeItem("editBillFromBillDetails");
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+const [duplicatePhoneNumber, setDuplicatePhoneNumber] = useState("");
+const [duplicateMessage, setDuplicateMessage] = useState("");
+const [savingCustomer, setSavingCustomer] = useState(false);
 
-  localStorage.removeItem("billNumber");
-  localStorage.removeItem("bill-phnNumber");
-  localStorage.removeItem("phnNumber");
+  
 
   interface Customer {
     customerId: string;
@@ -194,107 +207,208 @@ const SearchAddCustomer: React.FC = () => {
     }
   };
 
+ 
+
   const capitalizeFirst = (value: string) =>
     value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
 
-  const handleAddCustomer = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      localStorage.removeItem("CusDetailsCustomerId");
-      localStorage.removeItem("customerId");
-      localStorage.removeItem("from");
 
-      setFieldErrors({});
+  const handleCloseDuplicateDialog = () => {
+  setDuplicateDialogOpen(false);
+  setDuplicatePhoneNumber("");
+  setDuplicateMessage("");
+};
 
-      // --- Add village if not empty ---
-      if (customer.village?.trim()) {
-        await api.post(
-          "/admin/addVillage",
-          { name: customer.village.trim() },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-      }
+const handleOpenExistingCustomer = () => {
+  const phoneNumber = String(duplicatePhoneNumber || "").trim();
 
-      console.log("requestbody : ", JSON.stringify(customer));
+  if (!phoneNumber) {
+    toast.error("Customer phone number is missing.");
+    return;
+  }
 
-      const response = await api.post<Customer>(
-        "/admin/addCustomer",
-        customer,
+  localStorage.removeItem("customerId");
+  localStorage.removeItem("CusDetailsCustomerId");
+  localStorage.removeItem("from");
+
+  localStorage.setItem("bill-phnNumber", phoneNumber);
+
+  navigate("/admin/bill-Data", {
+    replace: true,
+  });
+};
+const handleAddCustomer = async () => {
+  if (savingCustomer) return;
+
+  const phoneNumber = String(customer.phoneNumber || "").trim();
+
+  setFieldErrors({});
+
+  if (!customer.name.trim()) {
+    setFieldErrors((prev) => ({
+      ...prev,
+      name: "Customer name is required",
+    }));
+    return;
+  }
+
+  if (!customer.village.trim()) {
+    setFieldErrors((prev) => ({
+      ...prev,
+      village: "Village is required",
+    }));
+    return;
+  }
+
+  if (!phoneNumber) {
+    setFieldErrors((prev) => ({
+      ...prev,
+      phoneNumber: "Phone number is required",
+    }));
+    return;
+  }
+
+  if (!/^\d{10}$/.test(phoneNumber)) {
+    setFieldErrors((prev) => ({
+      ...prev,
+      phoneNumber: "Enter a valid 10-digit phone number",
+    }));
+    return;
+  }
+
+  setSavingCustomer(true);
+
+  try {
+    const token = localStorage.getItem("token");
+
+    localStorage.removeItem("CusDetailsCustomerId");
+    localStorage.removeItem("customerId");
+    localStorage.removeItem("from");
+
+    if (customer.village.trim()) {
+      await api.post(
+        "/admin/addVillage",
+        {
+          name: customer.village.trim(),
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         },
       );
+    }
 
-      const result = response.data;
+    const response = await api.post<Customer>(
+      "/admin/addCustomer",
+      {
+        ...customer,
+        phoneNumber,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
 
-      // if (result?.customerId) {
-      //   localStorage.setItem("customerId", result.customerId);
-      //   localStorage.setItem("from", "customer");
-      //   console.log("customerId in customer:", result.customerId);
+    const result = response.data;
 
-      //   navigate("/admin/orders", {
-      //     replace: true,
-      //     state: { fromCustomer: true },
-      //   });
-      // } else {
-      //   toast.error("Failed to add customer");
-      // }
+    if (!result?.customerId) {
+      toast.error("Failed to create customer.");
+      return;
+    }
 
-      if (result?.customerId) {
-  localStorage.setItem("customerId", String(result.customerId));
-  localStorage.setItem("CusDetailsCustomerId", String(result.customerId));
-  localStorage.setItem("bill-phnNumber", result.phoneNumber);
-  localStorage.setItem("from", "customer");
+    localStorage.setItem(
+      "customerId",
+      String(result.customerId),
+    );
 
-  // Store profile so BillData can display it even when there are no bills
-  sessionStorage.setItem(
-    "billCustomer",
-    JSON.stringify({
-      customerId: result.customerId,
-      name: result.name,
-      village: result.village,
-      phoneNumber: result.phoneNumber,
-      emailId: result.emailId,
-      numberOfOrders: 0,
-      totalDueAmount: 0,
-    }),
-  );
+    localStorage.setItem(
+      "CusDetailsCustomerId",
+      String(result.customerId),
+    );
 
-  navigate("/admin/bill-Data", {
-    replace: true,
-    state: {
-      newlyAddedCustomer: result,
-    },
-  });
-} else {
-  toast.error("Failed to add customer");
-}
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        // covers both network errors and general JS errors
-        console.error("Error adding customer:", error.message);
-        toast.error(error.message);
-      } else {
-        // fallback for unexpected error shapes
-        console.error("Unexpected error:", error);
-        toast.error("Something went wrong");
+    localStorage.setItem(
+      "bill-phnNumber",
+      String(result.phoneNumber),
+    );
+
+    localStorage.setItem("from", "customer");
+
+    navigate("/admin/bill-Data", {
+      replace: true,
+    });
+  } catch (error: any) {
+    console.error("Error adding customer:", error);
+
+    const status = error?.response?.status;
+    const responseData = error?.response?.data;
+
+    if (status === 409) {
+      const message =
+        typeof responseData === "string"
+          ? responseData
+          : responseData?.message ||
+            responseData?.error ||
+            "This phone number is already registered.";
+
+      setDuplicatePhoneNumber(phoneNumber);
+      setDuplicateMessage(message);
+      setDuplicateDialogOpen(true);
+
+      return;
+    }
+
+    if (status === 400 && responseData) {
+      if (
+        typeof responseData === "object" &&
+        !Array.isArray(responseData)
+      ) {
+        const validationErrors: Partial<
+          Record<keyof Customer, string>
+        > = {};
+
+        Object.entries(responseData).forEach(
+          ([field, message]) => {
+            if (field in customer) {
+              validationErrors[field as keyof Customer] =
+                String(message);
+            }
+          },
+        );
+
+        if (Object.keys(validationErrors).length > 0) {
+          setFieldErrors(validationErrors);
+          return;
+        }
       }
     }
-  };
-  useEffect(() => {
-    localStorage.removeItem("editBillFromBillDetails");
-    if (location.state?.errorMessage) {
-      toast.error(location.state.errorMessage);
 
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
+    const errorMessage =
+      typeof responseData === "string"
+        ? responseData
+        : responseData?.message ||
+          responseData?.error ||
+          error?.message ||
+          "Something went wrong while creating the customer.";
+
+    toast.error(errorMessage);
+  } finally {
+    setSavingCustomer(false);
+  }
+};
+  
+ useEffect(() => {
+  if (location.state?.errorMessage) {
+    toast.error(location.state.errorMessage);
+
+    navigate(location.pathname, {
+      replace: true,
+      state: {},
+    });
+  }
+}, [location.state, location.pathname, navigate]);
 
   const filteredVillageCustomers = villageCustomers.filter((customer) =>
     customer.name.toLowerCase().includes(customerNameSearch.toLowerCase()),
@@ -542,24 +656,38 @@ const SearchAddCustomer: React.FC = () => {
           </Grid>
 
           <Box display="flex" justifyContent={{ xs: "center", md: "flex-end" }} mt={4}>
-            <Button
-              onClick={handleAddCustomer}
-              variant="outlined"
-            sx={{
-  width: { xs: "100%", md: "auto" },
-  paddingX: 4,
-  paddingY: 1.5,
-  borderRadius: "12px",
-  fontWeight: "bold",
-  boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
-  borderColor: "#8847FF",
-  color: "#8847FF",
-  transition: "all 0.3s",
-  "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
-}}
-            >
-              Next
-            </Button>
+           <Button
+  onClick={handleAddCustomer}
+  variant="outlined"
+  disabled={savingCustomer}
+  sx={{
+    width: { xs: "100%", md: "auto" },
+    paddingX: 4,
+    paddingY: 1.5,
+    borderRadius: "12px",
+    fontWeight: "bold",
+    boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+    borderColor: "#8847FF",
+    color: "#8847FF",
+    transition: "all 0.3s",
+    "&:hover": {
+      backgroundColor: "#8847FF",
+      color: "#fff",
+    },
+  }}
+>
+  {savingCustomer ? (
+    <>
+      <CircularProgress
+        size={20}
+        sx={{ mr: 1, color: "#8847FF" }}
+      />
+      Creating...
+    </>
+  ) : (
+    "Next"
+  )}
+</Button>
           </Box>
         </Paper>
       </div>
@@ -661,6 +789,169 @@ const SearchAddCustomer: React.FC = () => {
           {deleteMessage}
         </div>
       )}
+
+      <Dialog
+  open={duplicateDialogOpen}
+  onClose={handleCloseDuplicateDialog}
+  fullWidth
+  maxWidth="sm"
+  PaperProps={{
+    sx: {
+      borderRadius: "24px",
+      overflow: "hidden",
+      boxShadow: "0 24px 80px rgba(0,0,0,0.28)",
+    },
+  }}
+>
+  <Box
+    sx={{
+      background:
+        "linear-gradient(135deg, #4c1d95 0%, #8847FF 55%, #b56cff 100%)",
+      color: "#fff",
+      textAlign: "center",
+      px: 3,
+      pt: 4,
+      pb: 3,
+    }}
+  >
+    <Box
+      sx={{
+        width: 70,
+        height: 70,
+        mx: "auto",
+        mb: 2,
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "rgba(255,255,255,0.18)",
+        border: "2px solid rgba(255,255,255,0.35)",
+        fontSize: "34px",
+      }}
+    >
+      👤
+    </Box>
+
+    <DialogTitle
+      sx={{
+        p: 0,
+        fontSize: { xs: "24px", md: "30px" },
+        fontWeight: 800,
+      }}
+    >
+      Customer Already Exists
+    </DialogTitle>
+  </Box>
+
+  <DialogContent
+    sx={{
+      textAlign: "center",
+      px: { xs: 3, md: 5 },
+      pt: "30px !important",
+      pb: 2,
+    }}
+  >
+    <Typography
+      sx={{
+        color: "#4b5563",
+        fontSize: "16px",
+        lineHeight: 1.7,
+      }}
+    >
+      {duplicateMessage ||
+        "A customer account is already registered with this mobile number."}
+    </Typography>
+
+    <Box
+      sx={{
+        mt: 3,
+        p: 2,
+        borderRadius: "16px",
+        backgroundColor: "#f5f0ff",
+        border: "1px solid #dfccff",
+      }}
+    >
+      <Typography
+        sx={{
+          color: "#6b21a8",
+          fontSize: "13px",
+          fontWeight: 600,
+        }}
+      >
+        REGISTERED MOBILE NUMBER
+      </Typography>
+
+      <Typography
+        sx={{
+          mt: 0.5,
+          color: "#2e1065",
+          fontSize: { xs: "22px", md: "26px" },
+          fontWeight: 800,
+          letterSpacing: "1px",
+        }}
+      >
+        {duplicatePhoneNumber}
+      </Typography>
+    </Box>
+
+    <Typography
+      sx={{
+        mt: 3,
+        color: "#111827",
+        fontSize: "17px",
+        fontWeight: 600,
+      }}
+    >
+      Would you like to open the existing customer profile?
+    </Typography>
+  </DialogContent>
+
+  <DialogActions
+    sx={{
+      px: { xs: 3, md: 5 },
+      pb: 4,
+      pt: 2,
+      gap: 1.5,
+      justifyContent: "center",
+      flexDirection: { xs: "column-reverse", sm: "row" },
+    }}
+  >
+    <Button
+      onClick={handleCloseDuplicateDialog}
+      variant="outlined"
+      fullWidth
+      sx={{
+        borderRadius: "12px",
+        py: 1.4,
+        fontWeight: 700,
+        borderColor: "#9ca3af",
+        color: "#4b5563",
+      }}
+    >
+      No, Cancel
+    </Button>
+
+    <Button
+      onClick={handleOpenExistingCustomer}
+      variant="contained"
+      fullWidth
+      sx={{
+        borderRadius: "12px",
+        py: 1.4,
+        fontWeight: 700,
+        background:
+          "linear-gradient(135deg, #6d28d9, #8847FF)",
+        boxShadow: "0 8px 20px rgba(136,71,255,0.35)",
+        "&:hover": {
+          background:
+            "linear-gradient(135deg, #5b21b6, #7c3aed)",
+        },
+      }}
+    >
+      Yes, Open Profile
+    </Button>
+  </DialogActions>
+</Dialog>
     </div>
   );
 };
