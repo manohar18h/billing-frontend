@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "@/services/api";
 import hjlogoo from "../../assets/hjlogoo.png";
+import ashadamOffer from "../../assets/ashadamoffer.jpeg"
 
 const GenerateBill: React.FC = () => {
   const printRef = useRef<HTMLDivElement>(null);
@@ -22,6 +23,7 @@ const GenerateBill: React.FC = () => {
   const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("");
   const [discountLoading, setDiscountLoading] = useState(false);
+  const [selectedCoupon, setSelectedCoupon] = useState("");
   const navigate = useNavigate();
 
   // Transaction model
@@ -213,10 +215,11 @@ We hope to serve you again soon!
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      await refreshBill();
+     await refreshBill();
 
-      setDiscountDialogOpen(false);
-      setDiscountAmount("");
+setDiscountDialogOpen(false);
+setDiscountAmount("");
+setSelectedCoupon("");
     } catch (error: any) {
       console.error("Discount update failed:", error);
       alert(
@@ -392,6 +395,79 @@ We hope to serve you again soon!
   }, 0);
 
   const nonZeroColCount = dynamicColumnCount;
+
+  const parseDDMMYYYY = (dateValue?: string): Date | null => {
+  if (!dateValue) return null;
+
+  const parts = dateValue.trim().split("/");
+
+  if (parts.length !== 3) return null;
+
+  const day = Number(parts[0]);
+  const month = Number(parts[1]);
+  const year = Number(parts[2]);
+
+  if (
+    !Number.isInteger(day) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(year)
+  ) {
+    return null;
+  }
+
+  const parsedDate = new Date(year, month - 1, day);
+
+  // Protect against invalid dates such as 32/07/2026
+  if (
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  parsedDate.setHours(0, 0, 0, 0);
+
+  return parsedDate;
+};
+
+const isOfferEligible = React.useMemo(() => {
+  const orderDate = parseDDMMYYYY(bill?.orderDate);
+
+  if (!orderDate) return false;
+
+  // JavaScript month numbers start from 0:
+  // July = 6, August = 7
+  const offerStartDate = new Date(2026, 6, 14);
+  const offerEndDate = new Date(2026, 7, 15);
+
+  offerStartDate.setHours(0, 0, 0, 0);
+  offerEndDate.setHours(23, 59, 59, 999);
+
+  return (
+    orderDate.getTime() >= offerStartDate.getTime() &&
+    orderDate.getTime() <= offerEndDate.getTime()
+  );
+}, [bill?.orderDate]);
+
+const totalMakingCharges = React.useMemo(() => {
+  if (!bill?.selectedOrders) return 0;
+
+  return bill.selectedOrders.reduce((total, order) => {
+    const isCanceled =
+      order.deliveryStatus?.toLowerCase() === "canceled";
+
+    if (isCanceled) {
+      return total;
+    }
+
+    return total + Number(order.making_charges || 0);
+  }, 0);
+}, [bill?.selectedOrders]);
+
+const offerCouponDiscount = React.useMemo(() => {
+  return Math.round(totalMakingCharges * 0.2 * 100) / 100;
+}, [totalMakingCharges]);
 
   if (!bill) return <p className="p-6">Loading Bill Summary...</p>;
 
@@ -909,7 +985,18 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
         </div>
 
         {/* Totals */}
-        <div className="flex justify-end mt-10">
+        <div className="flex justify-between  items-start mt-10">
+
+<div className="w-[420px] flex justify-center mt-3">
+  {isOfferEligible && (
+    <img
+      src={ashadamOffer}
+      alt="Ashadam Offer"
+      className="w-[190px] h-auto object-contain"
+    />
+  )}
+</div>
+
           <div className=" p-4 rounded-3xl border border-orange-900 mr-10">
             <table className="text-sm w-64 table-fixed">
               <tbody>
@@ -1026,7 +1113,11 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
 
             <div className="flex justify-end gap-3 mt-4 print:hidden">
               <button
-                onClick={() => setDiscountDialogOpen(true)}
+               onClick={() => {
+  setSelectedCoupon("");
+  setDiscountAmount("");
+  setDiscountDialogOpen(true);
+}}
                 className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
               >
                 Add Discount
@@ -1172,19 +1263,79 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 print:hidden">
           <div className="bg-white rounded-xl shadow-xl w-[90%] max-w-md p-6">
             <h2 className="text-lg font-bold mb-4">Add Extra Discount</h2>
+<div className="mb-4">
+  <label className="block text-sm font-medium mb-1">
+    Coupon / Offer
+  </label>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">
-                Discount Amount
-              </label>
-              <input
-                type="number"
-                value={discountAmount}
-                onChange={(e) => setDiscountAmount(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2"
-                placeholder="Enter discount amount"
-              />
-            </div>
+  <select
+    value={selectedCoupon}
+    onChange={(e) => {
+      const selectedValue = e.target.value;
+
+      setSelectedCoupon(selectedValue);
+
+      if (selectedValue === "ASHADAM_20_MC") {
+        setDiscountAmount(
+          offerCouponDiscount.toFixed(2),
+        );
+      } else {
+        setDiscountAmount("");
+      }
+    }}
+    className="w-full border rounded-lg px-3 py-2 bg-white"
+  >
+    <option value="">No Coupon / Manual Discount</option>
+
+    {isOfferEligible && (
+      <option value="ASHADAM_20_MC">
+        Ashadam Sales – 20% Off Making Charges
+      </option>
+    )}
+  </select>
+</div>
+
+{selectedCoupon === "ASHADAM_20_MC" && (
+  <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm">
+    <div className="flex justify-between">
+      <span>Total Making Charges:</span>
+
+      <strong>
+        ₹{totalMakingCharges.toFixed(2)}
+      </strong>
+    </div>
+
+    <div className="mt-1 flex justify-between text-green-700">
+      <span>Ashadam Discount (20%):</span>
+
+      <strong>
+        ₹{offerCouponDiscount.toFixed(2)}
+      </strong>
+    </div>
+  </div>
+)}
+           <div className="mb-4">
+  <label className="block text-sm font-medium mb-1">
+    Discount Amount
+  </label>
+
+  <input
+    type="number"
+    min="0"
+    step="0.01"
+    value={discountAmount}
+    onChange={(e) => setDiscountAmount(e.target.value)}
+    className="w-full border rounded-lg px-3 py-2"
+    placeholder="Enter discount amount"
+  />
+
+  {selectedCoupon === "ASHADAM_20_MC" && (
+    <p className="mt-1 text-xs text-gray-500">
+      The 20% coupon amount was calculated automatically.
+      You can adjust or round it before applying.
+    </p>
+  )}
+</div>
 
             <div className="flex justify-end gap-2">
               <button
