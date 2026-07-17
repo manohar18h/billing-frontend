@@ -1,4 +1,4 @@
-import axios, { AxiosHeaders } from "axios";
+import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -10,13 +10,9 @@ api.interceptors.request.use(
     const token = localStorage.getItem("token");
 
     if (token) {
-      config.headers =
-        config.headers ?? new AxiosHeaders();
-
-      config.headers.set(
-        "Authorization",
-        `Bearer ${token}`,
-      );
+      Object.assign(config.headers, {
+        Authorization: `Bearer ${token}`,
+      });
     }
 
     return config;
