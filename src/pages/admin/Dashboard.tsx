@@ -339,7 +339,7 @@ const MetalPricesCard: React.FC = () => {
                   onChange={(e) => {
                     const value = e.target.value;
                     setG24Draft(value);
-                    const new22 = (Number(value) * 91.67) / 100;
+                    const new22 = (Number(value) * 92.7) / 100;
                     setG22Draft(new22.toFixed(0));
                   }}
                   className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
