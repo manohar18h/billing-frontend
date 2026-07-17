@@ -10,9 +10,12 @@ api.interceptors.request.use(
     const token = localStorage.getItem("token");
 
     if (token) {
-      Object.assign(config.headers, {
-        Authorization: `Bearer ${token}`,
-      });
+      const headers = config.headers as Record<
+        string,
+        string
+      >;
+
+      headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
