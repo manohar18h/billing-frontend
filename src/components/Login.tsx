@@ -27,18 +27,17 @@ const LoginScreen: React.FC = () => {
       // Save token & role to localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
-      setSuccess("Login Successful!");
 
       // Redirect based on role returned by backend
-      if (data.role === "SALES") {
-        setTimeout(() => navigate("/sales"), 1000);
-      } else if (data.role === "WORKER") {
-        setTimeout(() => navigate("/worker"), 1000);
-      } else if (data.role === "ADMIN") {
-        setTimeout(() => navigate("/admin"), 1000);
-      } else {
-        alert("Unknown role, please contact support.");
-      }
+     if (data.role === "SALES") {
+  navigate("/sales", { replace: true });
+} else if (data.role === "WORKER") {
+  navigate("/worker", { replace: true });
+} else if (data.role === "ADMIN") {
+  navigate("/admin", { replace: true });
+} else {
+  alert("Unknown role, please contact support.");
+}
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Login error:", error.message);
