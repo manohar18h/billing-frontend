@@ -22,27 +22,14 @@ import { useLocation } from "react-router-dom";
 import api from "@/services/api";
 import debounce from "lodash/debounce";
 
-import {
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-} from "firebase/auth";
 
-import type {
-  ConfirmationResult,
-} from "firebase/auth";
-
-import { auth } from "@/services/firebase";
 
 interface VillageCustomer {
   phoneNumber: string;
   name: string;
 }
 
-interface AadhaarVerifyResponse {
-  matched: boolean;
-  message: string;
-  extractedText?: string;
-}
+
 
 const SearchAddCustomer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -117,31 +104,9 @@ const [savingCustomer, setSavingCustomer] = useState(false);
   addressProofUrl: "",
 };
 
-const [aadhaarFile, setAadhaarFile] =
-  useState<File | null>(null);
 
-const [aadhaarVerified, setAadhaarVerified] =
-  useState(false);
 
-const [verifyingAadhaar, setVerifyingAadhaar] =
-  useState(false);
 
-const [otpDialogOpen, setOtpDialogOpen] =
-  useState(false);
-
-const [otp, setOtp] = useState("");
-
-const [sendingOtp, setSendingOtp] =
-  useState(false);
-
-const [verifyingOtp, setVerifyingOtp] =
-  useState(false);
-
-const [confirmationResult, setConfirmationResult] =
-  useState<ConfirmationResult | null>(null);
-
-const recaptchaVerifierRef =
-  useRef<RecaptchaVerifier | null>(null);
 
   // Debounced API call
   const fetchData = debounce(async (query: string) => {
@@ -224,9 +189,7 @@ const recaptchaVerifierRef =
     [field]: newValue,
   }));
 
-  if (field === "name" || field === "aadhaarNumber") {
-    setAadhaarVerified(false);
-  }
+
 
   setFieldErrors((prev) => ({
     ...prev,
@@ -330,34 +293,16 @@ const handleOpenExistingCustomer = () => {
 };
 
 
-const verifyAdminCustomerAadhaar = async (
-  file: File,
-  name: string,
-  aadhaarNumber: string,
-): Promise<AadhaarVerifyResponse> => {
-  const formData = new FormData();
-
-  formData.append("file", file);
-  formData.append("name", name.trim());
-  formData.append("aadhaarNumber", aadhaarNumber.trim());
-
-  const response = await api.post<AadhaarVerifyResponse>(
-    "/admin/verify-customer-aadhaar",
-    formData,
-  );
-
-  return response.data;
-};
 
 const validateCustomerRegistration = (): boolean => {
-  const errors: Partial<Record<keyof Customer, string>> = {};
+  const errors: Partial<
+    Record<keyof Customer, string>
+  > = {};
 
   const name = customer.name.trim();
   const village = customer.village.trim();
-  const phoneNumber = customer.phoneNumber.trim();
-  const fullAddress = customer.fullAddress.trim();
-  const pincode = customer.pincode.trim();
-  const aadhaarNumber = customer.aadhaarNumber.trim();
+  const phoneNumber =
+    customer.phoneNumber.replace(/\D/g, "");
 
   if (!name) {
     errors.name = "Customer name is required";
@@ -368,9 +313,11 @@ const validateCustomerRegistration = (): boolean => {
   }
 
   if (!phoneNumber) {
-    errors.phoneNumber = "Phone number is required";
+    errors.phoneNumber =
+      "Phone number is required";
   } else if (!/^\d{10}$/.test(phoneNumber)) {
-    errors.phoneNumber = "Enter a valid 10-digit phone number";
+    errors.phoneNumber =
+      "Enter a valid 10-digit phone number";
   }
 
   if (
@@ -379,460 +326,174 @@ const validateCustomerRegistration = (): boolean => {
       customer.emailId.trim(),
     )
   ) {
-    errors.emailId = "Enter a valid email address";
-  }
-
-  if (!customer.password.trim()) {
-    errors.password = "Password is required";
-  } else if (customer.password.length < 6) {
-    errors.password =
-      "Password must contain at least 6 characters";
-  }
-
-  if (!fullAddress) {
-    errors.fullAddress = "Full address is required";
-  }
-
-  if (!pincode) {
-    errors.pincode = "Pincode is required";
-  } else if (!/^\d{6}$/.test(pincode)) {
-    errors.pincode = "Enter a valid 6-digit pincode";
-  }
-
-  if (!aadhaarNumber) {
-    errors.aadhaarNumber = "Aadhaar number is required";
-  } else if (!/^\d{12}$/.test(aadhaarNumber)) {
-    errors.aadhaarNumber =
-      "Enter a valid 12-digit Aadhaar number";
-  }
-
-  if (
-    customer.panNumber.trim() &&
-    !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(
-      customer.panNumber.trim(),
-    )
-  ) {
-    errors.panNumber = "Enter a valid PAN number";
+    errors.emailId =
+      "Enter a valid email address";
   }
 
   setFieldErrors(errors);
 
   if (Object.keys(errors).length > 0) {
-    toast.error("Please correct the highlighted fields.");
-    return false;
-  }
-
-  if (!aadhaarFile) {
-    toast.error("Please upload the Aadhaar image.");
+    toast.error(
+      "Please correct the highlighted fields.",
+    );
     return false;
   }
 
   return true;
 };
 
-
 const handleAddCustomer = async () => {
-  if (
-    savingCustomer ||
-    sendingOtp ||
-    verifyingAadhaar
-  ) {
-    return;
-  }
+  if (savingCustomer) return;
 
   if (!validateCustomerRegistration()) {
     return;
   }
 
-  if (!aadhaarFile) {
-    toast.error("Please upload the Aadhaar image.");
-    return;
-  }
-
-  const phoneNumber = customer.phoneNumber.trim();
+  const phoneNumber =
+    customer.phoneNumber.replace(/\D/g, "");
 
   try {
-    setSendingOtp(true);
-    setVerifyingAadhaar(true);
+    setSavingCustomer(true);
 
-    /*
-     * First verify Aadhaar using OCR.
-     */
-    const aadhaarResult =
-      await verifyAdminCustomerAadhaar(
-        aadhaarFile,
-        customer.name,
-        customer.aadhaarNumber,
-      );
+    localStorage.removeItem(
+      "CusDetailsCustomerId",
+    );
+    localStorage.removeItem("customerId");
+    localStorage.removeItem("from");
 
-    if (!aadhaarResult.matched) {
-      setAadhaarVerified(false);
+   if (customer.village.trim()) {
+  try {
+    await api.post("/admin/addVillage", {
+      name: customer.village.trim(),
+    });
+  } catch (error: any) {
+    const status = error?.response?.status;
 
-      toast.error(
-        aadhaarResult.message ||
-          "Aadhaar verification failed.",
-      );
-
-      return;
+    // Ignore duplicate village conflict.
+    if (status !== 409) {
+      throw error;
     }
-
-    setAadhaarVerified(true);
-
-    /*
-     * Clear any old Firebase reCAPTCHA instance.
-     */
-    if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
-      recaptchaVerifierRef.current = null;
-    }
-
-    /*
-     * Create an invisible Firebase reCAPTCHA.
-     */
-    const verifier = new RecaptchaVerifier(
-      auth,
-      "admin-recaptcha-container",
+  }
+}
+    const response = await api.post<Customer>(
+      "/admin/addCustomer",
       {
-        size: "invisible",
-        callback: () => {
-          console.log("Admin reCAPTCHA verified");
-        },
-        "expired-callback": () => {
-          toast.error(
-            "reCAPTCHA expired. Please try again.",
-          );
-        },
+        name: customer.name.trim(),
+        village: customer.village.trim(),
+        phoneNumber,
+        emailId:
+          customer.emailId.trim() || null,
+
+        password: null,
+        fullAddress: null,
+        pincode: null,
+        aadhaarNumber: null,
+        panNumber: null,
+
+        mobileVerified: false,
+        aadhaarVerified: false,
       },
     );
 
-    recaptchaVerifierRef.current = verifier;
+    const result = response.data;
 
-    /*
-     * Send OTP using Firebase.
-     */
-    const result = await signInWithPhoneNumber(
-      auth,
-      `+91${phoneNumber}`,
-      verifier,
+    if (!result?.customerId) {
+      throw new Error(
+        "Customer ID was not returned.",
+      );
+    }
+
+    localStorage.setItem(
+      "customerId",
+      String(result.customerId),
     );
 
-    setConfirmationResult(result);
-    setOtp("");
-    setOtpDialogOpen(true);
+    localStorage.setItem(
+      "CusDetailsCustomerId",
+      String(result.customerId),
+    );
+
+    localStorage.setItem(
+      "bill-phnNumber",
+      String(result.phoneNumber),
+    );
+
+    localStorage.setItem("from", "customer");
 
     toast.success(
-      `OTP sent successfully to +91 ${phoneNumber}`,
+      "Customer created successfully.",
     );
+
+    navigate("/admin/bill-Data", {
+      replace: true,
+    });
   } catch (error: any) {
     console.error(
-      "Aadhaar verification or OTP error:",
+      "Customer creation error:",
       error,
     );
 
-    if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
-      recaptchaVerifierRef.current = null;
-    }
+    const status = error?.response?.status;
+    const data = error?.response?.data;
 
-    const firebaseErrorCode = error?.code;
+    if (status === 409) {
+      setDuplicatePhoneNumber(phoneNumber);
 
-    if (
-      firebaseErrorCode ===
-      "auth/too-many-requests"
-    ) {
-      toast.error(
-        "Too many OTP requests. Please try again later.",
+      setDuplicateMessage(
+        typeof data === "string"
+          ? data
+          : data?.message ||
+              "This phone number is already registered.",
       );
+
+      setDuplicateDialogOpen(true);
       return;
     }
 
     if (
-      firebaseErrorCode ===
-      "auth/invalid-phone-number"
+      status === 400 &&
+      data &&
+      typeof data === "object"
     ) {
-      toast.error("The mobile number is invalid.");
-      return;
-    }
+      const validationErrors: Partial<
+        Record<keyof Customer, string>
+      > = {};
 
-    if (
-      firebaseErrorCode ===
-      "auth/quota-exceeded"
-    ) {
-      toast.error(
-        "Firebase OTP quota has been exceeded.",
+      Object.entries(data).forEach(
+        ([field, message]) => {
+          if (field in customer) {
+            validationErrors[
+              field as keyof Customer
+            ] = String(message);
+          }
+        },
       );
-      return;
+
+      if (
+        Object.keys(validationErrors).length > 0
+      ) {
+        setFieldErrors(validationErrors);
+        return;
+      }
     }
 
     toast.error(
-      error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to verify Aadhaar or send OTP.",
+      typeof data === "string"
+        ? data
+        : data?.message ||
+            data?.error ||
+            error?.message ||
+            "Customer creation failed.",
     );
   } finally {
-    setSendingOtp(false);
-    setVerifyingAadhaar(false);
+    setSavingCustomer(false);
   }
 };
 
-const createVerifiedCustomer = async (
-  firebaseIdToken: string,
-): Promise<Customer> => {
-  if (!aadhaarFile) {
-    throw new Error("Aadhaar image is missing.");
-  }
-
-  const formData = new FormData();
-
-  const customerPayload = {
-    name: customer.name.trim(),
-    village: customer.village.trim(),
-    phoneNumber: customer.phoneNumber.trim(),
-    emailId: customer.emailId.trim(),
-    password: customer.password,
-    fullAddress: customer.fullAddress.trim(),
-    pincode: customer.pincode.trim(),
-    aadhaarNumber: customer.aadhaarNumber.trim(),
-    panNumber: customer.panNumber.trim(),
-  };
-
-  formData.append(
-    "customer",
-    new Blob(
-      [JSON.stringify(customerPayload)],
-      {
-        type: "application/json",
-      },
-    ),
-  );
-
-  formData.append("aadhaarFile", aadhaarFile);
-
-  formData.append(
-    "firebaseIdToken",
-    firebaseIdToken,
-  );
-
-  const response = await api.post<Customer>(
-    "/admin/addCustomerVerified",
-    formData,
-  );
-
-  return response.data;
-};
-
-const handleVerifyOtpAndCreateCustomer =
-  async () => {
-    if (verifyingOtp || savingCustomer) {
-      return;
-    }
-
-    if (!confirmationResult) {
-      toast.error(
-        "OTP session was not found. Please send OTP again.",
-      );
-      setOtpDialogOpen(false);
-      return;
-    }
-
-    if (!/^\d{6}$/.test(otp)) {
-      toast.error("Enter a valid 6-digit OTP.");
-      return;
-    }
-
-    if (!aadhaarFile) {
-      toast.error("Aadhaar image is missing.");
-      return;
-    }
-
-    try {
-      setVerifyingOtp(true);
-      setSavingCustomer(true);
-
-      /*
-       * Verify the OTP entered by the customer.
-       */
-      const credential =
-        await confirmationResult.confirm(otp);
-
-      /*
-       * Get Firebase ID token.
-       * The backend must verify this token.
-       */
-      const firebaseIdToken =
-        await credential.user.getIdToken(true);
-
-      /*
-       * Add village only after OTP succeeds.
-       */
-      if (customer.village.trim()) {
-        await api.post("/admin/addVillage", {
-          name: customer.village.trim(),
-        });
-      }
-
-      /*
-       * Create the customer using the secure endpoint.
-       */
-      const result =
-        await createVerifiedCustomer(
-          firebaseIdToken,
-        );
-
-      if (!result?.customerId) {
-        throw new Error(
-          "Customer creation failed. Customer ID was not returned.",
-        );
-      }
-
-      localStorage.removeItem(
-        "CusDetailsCustomerId",
-      );
-      localStorage.removeItem("customerId");
-      localStorage.removeItem("from");
-
-      localStorage.setItem(
-        "customerId",
-        String(result.customerId),
-      );
-
-      localStorage.setItem(
-        "CusDetailsCustomerId",
-        String(result.customerId),
-      );
-
-      localStorage.setItem(
-        "bill-phnNumber",
-        String(result.phoneNumber),
-      );
-
-      localStorage.setItem("from", "customer");
-
-      setOtpDialogOpen(false);
-      setOtp("");
-      setConfirmationResult(null);
-
-      toast.success(
-        "Customer registered successfully. Mobile and Aadhaar verified.",
-      );
-
-      navigate("/admin/bill-Data", {
-        replace: true,
-      });
-    } catch (error: any) {
-      console.error(
-        "OTP verification or registration error:",
-        error,
-      );
-
-      const status = error?.response?.status;
-      const responseData =
-        error?.response?.data;
-
-      if (
-        error?.code === "auth/invalid-verification-code"
-      ) {
-        toast.error(
-          "Incorrect OTP. Please enter the OTP received by the customer.",
-        );
-        return;
-      }
-
-      if (
-        error?.code === "auth/code-expired"
-      ) {
-        toast.error(
-          "OTP has expired. Please close this dialog and send OTP again.",
-        );
-        return;
-      }
-
-      if (status === 409) {
-        const message =
-          typeof responseData === "string"
-            ? responseData
-            : responseData?.message ||
-              responseData?.error ||
-              "This phone number is already registered.";
-
-        setDuplicatePhoneNumber(
-          customer.phoneNumber.trim(),
-        );
-        setDuplicateMessage(message);
-
-        setOtpDialogOpen(false);
-        setDuplicateDialogOpen(true);
-
-        return;
-      }
-
-      if (
-        status === 400 &&
-        responseData &&
-        typeof responseData === "object"
-      ) {
-        const validationErrors: Partial<
-          Record<keyof Customer, string>
-        > = {};
-
-        Object.entries(responseData).forEach(
-          ([field, message]) => {
-            if (field in customer) {
-              validationErrors[
-                field as keyof Customer
-              ] = String(message);
-            }
-          },
-        );
-
-        if (
-          Object.keys(validationErrors).length > 0
-        ) {
-          setFieldErrors(validationErrors);
-          setOtpDialogOpen(false);
-          return;
-        }
-      }
-
-      toast.error(
-        typeof responseData === "string"
-          ? responseData
-          : responseData?.message ||
-              responseData?.error ||
-              error?.message ||
-              "OTP verification or customer registration failed.",
-      );
-    } finally {
-      setVerifyingOtp(false);
-      setSavingCustomer(false);
-    }
-  };
 
 
-  const handleCloseOtpDialog = () => {
-  if (verifyingOtp || savingCustomer) {
-    return;
-  }
 
-  setOtpDialogOpen(false);
-  setOtp("");
-  setConfirmationResult(null);
 
-  if (recaptchaVerifierRef.current) {
-    recaptchaVerifierRef.current.clear();
-    recaptchaVerifierRef.current = null;
-  }
-};
-
-useEffect(() => {
-  return () => {
-    if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
-      recaptchaVerifierRef.current = null;
-    }
-  };
-}, []);
 
 
  useEffect(() => {
@@ -1017,11 +678,7 @@ useEffect(() => {
   "village",
   "phoneNumber",
   "emailId",
-  "password",
-  "fullAddress",
-  "pincode",
-  "aadhaarNumber",
-  "panNumber",
+ 
 ] as (keyof Customer)[]
             ).map((key) => (
               
@@ -1078,67 +735,37 @@ useEffect(() => {
                 ) : (
                   <TextField
   {...thickTextFieldProps}
-  label={
-    key === "phoneNumber"
-      ? "Phone Number"
-      : key === "emailId"
-        ? "Email ID"
-        : key === "fullAddress"
-          ? "Full Address"
-          : key === "aadhaarNumber"
-            ? "Aadhaar Number"
-            : key === "panNumber"
-              ? "PAN Number"
-              : key.charAt(0).toUpperCase() +
-                key.slice(1)
-  }
-  type={
-    key === "password"
-      ? "password"
-      : key === "emailId"
-        ? "email"
-        : "text"
-  }
+ label={
+  key === "phoneNumber"
+    ? "Phone Number"
+    : key === "emailId"
+      ? "Email ID"
+      : key.charAt(0).toUpperCase() +
+        key.slice(1)
+}
+ type={key === "emailId" ? "email" : "text"}
   value={String(customer[key] ?? "")}
   required={[
     "name",
     "village",
     "phoneNumber",
-    "password",
-    "fullAddress",
-    "pincode",
-    "aadhaarNumber",
   ].includes(key)}
-  inputProps={{
-    maxLength:
-      key === "phoneNumber"
-        ? 10
-        : key === "pincode"
-          ? 6
-          : key === "aadhaarNumber"
-            ? 12
-            : key === "panNumber"
-              ? 10
-              : undefined,
-    inputMode:
-      key === "phoneNumber" ||
-      key === "pincode" ||
-      key === "aadhaarNumber"
-        ? "numeric"
-        : undefined,
-  }}
+ inputProps={{
+  maxLength:
+    key === "phoneNumber"
+      ? 10
+      : undefined,
+
+  inputMode:
+    key === "phoneNumber"
+      ? "numeric"
+      : undefined,
+}}
   onChange={(e) =>
     handleChange(key, e.target.value)
   }
   error={Boolean(fieldErrors[key])}
-  helperText={
-    fieldErrors[key] ||
-    (key === "aadhaarNumber"
-      ? "Enter the 12-digit number shown on the uploaded Aadhaar."
-      : key === "password"
-        ? "Minimum 6 characters."
-        : "")
-  }
+ helperText={fieldErrors[key] || ""}
 />
                 )}
               </Grid>
@@ -1148,166 +775,44 @@ useEffect(() => {
               
             ))}
 
-            <Grid size={{ xs: 12 }}>
-  <Box
-    sx={{
-      border: "2px dashed",
-      borderColor: aadhaarVerified
-        ? "success.main"
-        : "#b8a1e8",
-      borderRadius: "16px",
-      p: 2.5,
-      backgroundColor: aadhaarVerified
-        ? "#f0fdf4"
-        : "#faf8ff",
-    }}
-  >
-    <Typography
-      sx={{
-        mb: 1.5,
-        fontWeight: 700,
-        color: "#4c1d95",
-      }}
-    >
-      Aadhaar Document
-      <span style={{ color: "red" }}> *</span>
-    </Typography>
-
-    <Button
-      component="label"
-      variant="outlined"
-      fullWidth
-      disabled={
-        verifyingAadhaar ||
-        sendingOtp ||
-        savingCustomer
-      }
-      sx={{
-        minHeight: "56px",
-        borderRadius: "12px",
-        borderColor: aadhaarVerified
-          ? "success.main"
-          : "#8847FF",
-        color: aadhaarVerified
-          ? "success.main"
-          : "#8847FF",
-        fontWeight: 700,
-      }}
-    >
-      {aadhaarFile
-        ? `Selected: ${aadhaarFile.name}`
-        : "Choose Aadhaar Image"}
-
-      <input
-        hidden
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        capture="environment"
-        onChange={(e) => {
-          const selectedFile =
-            e.target.files?.[0] || null;
-
-          if (
-            selectedFile &&
-            selectedFile.size >
-              5 * 1024 * 1024
-          ) {
-            toast.error(
-              "Aadhaar image must be below 5 MB.",
-            );
-            e.target.value = "";
-            return;
-          }
-
-          setAadhaarFile(selectedFile);
-          setAadhaarVerified(false);
-        }}
-      />
-    </Button>
-
-    <Typography
-      sx={{
-        mt: 1.2,
-        fontSize: "13px",
-        color: "#6b7280",
-      }}
-    >
-      Upload a clear JPG, PNG or WEBP image.
-      Maximum file size: 5 MB.
-    </Typography>
-
-    {aadhaarVerified && (
-      <Typography
-        sx={{
-          mt: 1.5,
-          color: "success.main",
-          fontWeight: 800,
-        }}
-      >
-        ✓ Aadhaar name and number verified
-      </Typography>
-    )}
-  </Box>
-</Grid>
           </Grid>
 
           
 
           <Box display="flex" justifyContent={{ xs: "center", md: "flex-end" }} mt={4}>
 
-          <div id="admin-recaptcha-container" />
-           <Button
+      <Button
   onClick={handleAddCustomer}
   variant="outlined"
-  disabled={
-  savingCustomer ||
-  sendingOtp ||
-  verifyingAadhaar ||
-  verifyingOtp
-}
+  disabled={savingCustomer}
   sx={{
     width: { xs: "100%", md: "auto" },
-    paddingX: 4,
-    paddingY: 1.5,
+    px: 4,
+    py: 1.5,
     borderRadius: "12px",
     fontWeight: "bold",
-    boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
     borderColor: "#8847FF",
     color: "#8847FF",
-    transition: "all 0.3s",
+    boxShadow:
+      "0px 4px 10px rgba(136,71,255,0.35)",
     "&:hover": {
       backgroundColor: "#8847FF",
       color: "#fff",
+      borderColor: "#8847FF",
     },
   }}
 >
- {verifyingAadhaar ? (
-  <>
-    <CircularProgress
-      size={20}
-      sx={{ mr: 1 }}
-    />
-    Verifying Aadhaar...
-  </>
-) : sendingOtp ? (
-  <>
-    <CircularProgress
-      size={20}
-      sx={{ mr: 1 }}
-    />
-    Sending OTP...
-  </>
-) : savingCustomer ? (
-  <>
-    <CircularProgress
-      size={20}
-      sx={{ mr: 1 }}
-    />
-    Creating Customer...
-  </>
-) : (
-  "Verify Aadhaar & Send OTP"
-)}
+  {savingCustomer ? (
+    <>
+      <CircularProgress
+        size={20}
+        sx={{ mr: 1 }}
+      />
+      Creating Customer...
+    </>
+  ) : (
+    "Create Customer"
+  )}
 </Button>
           </Box>
         </Paper>
@@ -1574,162 +1079,7 @@ useEffect(() => {
   </DialogActions>
 </Dialog>
 
-<Dialog
-  open={otpDialogOpen}
-  onClose={handleCloseOtpDialog}
-  fullWidth
-  maxWidth="xs"
-  PaperProps={{
-    sx: {
-      borderRadius: "22px",
-      overflow: "hidden",
-    },
-  }}
->
-  <Box
-    sx={{
-      background:
-        "linear-gradient(135deg, #4c1d95, #8847FF)",
-      color: "white",
-      textAlign: "center",
-      px: 3,
-      py: 3,
-    }}
-  >
-    <Typography
-      sx={{
-        fontSize: "25px",
-        fontWeight: 800,
-      }}
-    >
-      Verify Mobile Number
-    </Typography>
 
-    <Typography
-      sx={{
-        mt: 1,
-        opacity: 0.9,
-      }}
-    >
-      OTP sent to +91 {customer.phoneNumber}
-    </Typography>
-  </Box>
-
-  <DialogContent
-    sx={{
-      pt: "30px !important",
-      px: 3,
-    }}
-  >
-    <TextField
-      autoFocus
-      fullWidth
-      label="Enter 6-digit OTP"
-      value={otp}
-      disabled={verifyingOtp}
-      inputProps={{
-        maxLength: 6,
-        inputMode: "numeric",
-        style: {
-          textAlign: "center",
-          fontSize: "24px",
-          letterSpacing: "8px",
-          fontWeight: 700,
-        },
-      }}
-      onChange={(e) =>
-        setOtp(
-          e.target.value
-            .replace(/\D/g, "")
-            .slice(0, 6),
-        )
-      }
-      onKeyDown={(e) => {
-        if (
-          e.key === "Enter" &&
-          otp.length === 6
-        ) {
-          void handleVerifyOtpAndCreateCustomer();
-        }
-      }}
-      sx={{
-        "& .MuiOutlinedInput-root": {
-          borderRadius: "14px",
-        },
-      }}
-    />
-
-    <Typography
-      sx={{
-        mt: 2,
-        textAlign: "center",
-        color: "#6b7280",
-        fontSize: "14px",
-      }}
-    >
-      Ask the customer for the OTP received on
-      their mobile number.
-    </Typography>
-  </DialogContent>
-
-  <DialogActions
-    sx={{
-      px: 3,
-      pb: 3,
-      pt: 2,
-      gap: 1,
-    }}
-  >
-    <Button
-      fullWidth
-      variant="outlined"
-      disabled={verifyingOtp}
-      onClick={handleCloseOtpDialog}
-      sx={{
-        py: 1.3,
-        borderRadius: "12px",
-        fontWeight: 700,
-      }}
-    >
-      Cancel
-    </Button>
-
-    <Button
-      fullWidth
-      variant="contained"
-      disabled={
-        verifyingOtp ||
-        savingCustomer ||
-        otp.length !== 6
-      }
-      onClick={
-        handleVerifyOtpAndCreateCustomer
-      }
-      sx={{
-        py: 1.3,
-        borderRadius: "12px",
-        fontWeight: 700,
-        background:
-          "linear-gradient(135deg, #6d28d9, #8847FF)",
-      }}
-    >
-      {verifyingOtp || savingCustomer ? (
-        <>
-          <CircularProgress
-            size={19}
-            sx={{
-              mr: 1,
-              color: "white",
-            }}
-          />
-          Verifying...
-        </>
-      ) : (
-        "Verify & Create"
-      )}
-    </Button>
-  </DialogActions>
-</Dialog>
     </div>
   );
 };
