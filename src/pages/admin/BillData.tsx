@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
@@ -13,12 +17,27 @@ import api from "@/services/api"; // ← import your api.ts
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import debounce from "lodash/debounce";
+
+import {
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+} from "firebase/auth";
+
+import type {
+  ConfirmationResult,
+} from "firebase/auth";
+
+import { auth } from "@/services/firebase";
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
+  Typography,
+  CircularProgress,
+  Chip,
+  Divider,
 } from "@mui/material";
 
 
@@ -36,19 +55,25 @@ interface SelectedOrder {
 
 interface CustomerProfileResponse {
   customerId: number;
+
   name: string;
   village: string;
   phoneNumber: string;
-  emailId: string;
+  emailId?: string;
 
   numberOfOrders: number;
   totalDueAmount: number;
 
   fullAddress?: string;
   pincode?: string;
+  aadhaarNumber?: string;
+  panNumber?: string;
 
   mobileVerified: boolean;
   aadhaarVerified: boolean;
+
+  idProofUrl?: string;
+  addressProofUrl?: string;
 
   schemeDashboard: any;
 }
@@ -94,6 +119,43 @@ const [editName, setEditName] = useState("");
 const [editVillage, setEditVillage] = useState("");
 const [editPhone, setEditPhone] = useState("");
 const [editEmail, setEditEmail] = useState("");
+
+
+const [editPassword, setEditPassword] = useState("");
+const [editFullAddress, setEditFullAddress] = useState("");
+const [editPincode, setEditPincode] = useState("");
+const [editAadhaarNumber, setEditAadhaarNumber] =
+  useState("");
+const [editPanNumber, setEditPanNumber] = useState("");
+
+const [aadhaarFile, setAadhaarFile] =
+  useState<File | null>(null);
+
+const [otp, setOtp] = useState("");
+
+const [sendingOtp, setSendingOtp] =
+  useState(false);
+
+const [verifyingOtp, setVerifyingOtp] =
+  useState(false);
+
+
+  const [isRecaptchaVerified, setIsRecaptchaVerified] =
+  useState(false);
+
+const recaptchaRef =
+  useRef<RecaptchaVerifier | null>(null);
+
+const [confirmationResult, setConfirmationResult] =
+  useState<ConfirmationResult | null>(null);
+
+const [verifyingAadhaar, setVerifyingAadhaar] =
+  useState(false);
+
+const [savingProfile, setSavingProfile] =
+  useState(false);
+
+
 
 const [villageSearch, setVillageSearch] = useState("");
 const [villageResults, setVillageResults] = useState<string[]>([]);
@@ -272,6 +334,75 @@ const formatWeight = (value: any) =>
 const formatDate = (value: any) =>
   value ? new Date(value).toLocaleDateString("en-IN") : "-";
 
+
+
+useEffect(() => {
+  if (
+    !openEdit ||
+    customer?.mobileVerified
+  ) {
+    return;
+  }
+
+  const timer = window.setTimeout(() => {
+    const container =
+      document.getElementById(
+        "profile-recaptcha-container",
+      );
+
+    if (!container) {
+      console.error(
+        "Profile reCAPTCHA container was not found.",
+      );
+      return;
+    }
+
+    if (recaptchaRef.current) {
+      return;
+    }
+
+    setIsRecaptchaVerified(false);
+
+    const verifier =
+      new RecaptchaVerifier(
+        auth,
+        "profile-recaptcha-container",
+        {
+          size: "normal",
+
+          callback: () => {
+            setIsRecaptchaVerified(true);
+          },
+
+          "expired-callback": () => {
+            setIsRecaptchaVerified(false);
+            setConfirmationResult(null);
+          },
+        },
+      );
+
+    recaptchaRef.current = verifier;
+
+    verifier.render().catch((error) => {
+      console.error(
+        "reCAPTCHA render error:",
+        error,
+      );
+
+      setIsRecaptchaVerified(false);
+
+      recaptchaRef.current = null;
+    });
+  }, 500);
+
+  return () => {
+    window.clearTimeout(timer);
+  };
+}, [
+  openEdit,
+  customer?.mobileVerified,
+]);
+
 useEffect(() => {
   const loadBillDataPage = async () => {
     const phoneNumber =
@@ -346,6 +477,15 @@ useEffect(() => {
 
   loadBillDataPage();
 }, [navigate]);
+
+useEffect(() => {
+  return () => {
+    if (recaptchaRef.current) {
+      recaptchaRef.current.clear();
+      recaptchaRef.current = null;
+    }
+  };
+}, []);
 
 if (pageLoading) {
   return (
@@ -441,55 +581,332 @@ const getCompletedMonths = (item: any) => {
   });
 };
 
-  const handleOpenEdit = () => {
+const handleOpenEdit = () => {
   setEditName(customer.name || "");
   setEditVillage(customer.village || "");
   setEditPhone(customer.phoneNumber || "");
   setEditEmail(customer.emailId || "");
 
+  setEditPassword("");
+  setEditFullAddress(customer.fullAddress || "");
+  setEditPincode(customer.pincode || "");
+  setEditAadhaarNumber(
+    customer.aadhaarNumber || "",
+  );
+  setEditPanNumber(customer.panNumber || "");
+
+  setAadhaarFile(null);
+  setOtp("");
+  setConfirmationResult(null);
+  setIsRecaptchaVerified(false);
+
+  if (recaptchaRef.current) {
+    recaptchaRef.current.clear();
+    recaptchaRef.current = null;
+  }
+
   setOpenEdit(true);
 };
-const handleUpdateCustomer = async () => {
-  try {
-await api.put(
-  `/admin/updateCustomer/${customer.customerId}`,
-      {
-        name: editName,
-        village: editVillage,
-        phoneNumber: editPhone,
-        emailId: editEmail,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
 
-    // ✅ important: update old phone number storage
-    localStorage.setItem("bill-phnNumber", editPhone);
+const handleCloseEdit = () => {
+  if (
+    savingProfile ||
+    sendingOtp ||
+    verifyingOtp ||
+    verifyingAadhaar
+  ) {
+    return;
+  }
 
-    alert("Customer Updated Successfully");
+  setOpenEdit(false);
+  setOtp("");
+  setConfirmationResult(null);
+  setIsRecaptchaVerified(false);
 
-    setOpenEdit(false);
+  if (recaptchaRef.current) {
+    recaptchaRef.current.clear();
+    recaptchaRef.current = null;
+  }
 
-    // ✅ now reload will search with new phone number
-    localStorage.setItem(
-  "bill-phnNumber",
-  editPhone,
-);
+  const container = document.getElementById(
+    "profile-recaptcha-container",
+  );
 
-await refreshCustomerProfile(editPhone);
-
-setOpenEdit(false);
-
-alert("Customer Updated Successfully");
-
-  } catch (error) {
-    console.error(error);
-    alert("Update Failed");
+  if (container) {
+    container.innerHTML = "";
   }
 };
+const handleUpdateCustomer = async () => {
+  const phoneNumber =
+    editPhone.replace(/\D/g, "");
+
+  if (!editName.trim()) {
+    alert("Customer name is required.");
+    return;
+  }
+
+  if (!editVillage.trim()) {
+    alert("Village is required.");
+    return;
+  }
+
+  if (!/^\d{10}$/.test(phoneNumber)) {
+    alert("Enter a valid 10-digit phone number.");
+    return;
+  }
+
+  if (
+    editEmail.trim() &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      editEmail.trim(),
+    )
+  ) {
+    alert("Enter a valid email address.");
+    return;
+  }
+
+  if (
+    editPassword &&
+    editPassword.length < 6
+  ) {
+    alert(
+      "Password must contain at least 6 characters.",
+    );
+    return;
+  }
+
+  if (
+    editPincode &&
+    !/^\d{6}$/.test(editPincode)
+  ) {
+    alert("Pincode must contain 6 digits.");
+    return;
+  }
+
+  if (
+    editAadhaarNumber &&
+    !/^\d{12}$/.test(editAadhaarNumber)
+  ) {
+    alert(
+      "Aadhaar number must contain 12 digits.",
+    );
+    return;
+  }
+
+  try {
+    setSavingProfile(true);
+
+    await api.put(
+      `/admin/customer/${customer.customerId}/profile`,
+      {
+        name: editName.trim(),
+        village: editVillage.trim(),
+        phoneNumber,
+        emailId: editEmail.trim() || null,
+
+        password:
+          editPassword.trim() || null,
+
+        fullAddress:
+          editFullAddress.trim() || null,
+
+        pincode:
+          editPincode.trim() || null,
+
+        panNumber:
+          editPanNumber.trim() || null,
+      },
+    );
+
+    localStorage.setItem(
+      "bill-phnNumber",
+      phoneNumber,
+    );
+
+    await refreshCustomerProfile(phoneNumber);
+
+    alert("Customer profile updated successfully.");
+  } catch (error: any) {
+    alert(
+      getApiErrorMessage(
+        error,
+        "Customer profile update failed.",
+      ),
+    );
+  } finally {
+    setSavingProfile(false);
+  }
+};
+const handleSendOtp = async () => {
+  if (sendingOtp) return;
+
+  const phoneNumber =
+    editPhone.replace(/\D/g, "");
+
+  if (!/^\d{10}$/.test(phoneNumber)) {
+    alert(
+      "Enter a valid 10-digit mobile number.",
+    );
+    return;
+  }
+
+  if (!isRecaptchaVerified) {
+    alert(
+      "Please complete reCAPTCHA first.",
+    );
+    return;
+  }
+
+  if (!recaptchaRef.current) {
+    alert(
+      "reCAPTCHA is not ready. Close Edit, reopen it and try again.",
+    );
+    return;
+  }
+
+  try {
+    setSendingOtp(true);
+
+    const result =
+      await signInWithPhoneNumber(
+        auth,
+        `+91${phoneNumber}`,
+        recaptchaRef.current,
+      );
+
+    setConfirmationResult(result);
+    setOtp("");
+
+    alert(
+      `OTP sent successfully to +91 ${phoneNumber}`,
+    );
+  } catch (error: any) {
+    console.error(
+      "Firebase OTP error:",
+      error,
+    );
+
+    alert(
+      error?.message ||
+        "Failed to send OTP.",
+    );
+  } finally {
+    setSendingOtp(false);
+  }
+};
+
+const handleVerifyOtp = async () => {
+  if (!confirmationResult) {
+    alert("Please send OTP first.");
+    return;
+  }
+
+  if (!/^\d{6}$/.test(otp)) {
+    alert("Enter a valid 6-digit OTP.");
+    return;
+  }
+
+  try {
+    setVerifyingOtp(true);
+
+    const credential =
+      await confirmationResult.confirm(otp);
+
+    const firebaseIdToken =
+      await credential.user.getIdToken(true);
+
+    await api.post(
+      `/admin/customer/${customer.customerId}/verify-mobile`,
+      {
+        firebaseIdToken,
+      },
+    );
+
+    await refreshCustomerProfile();
+
+    setOtp("");
+setConfirmationResult(null);
+setIsRecaptchaVerified(false);
+
+if (recaptchaRef.current) {
+  recaptchaRef.current.clear();
+  recaptchaRef.current = null;
+}
+
+const container =
+  document.getElementById(
+    "profile-recaptcha-container",
+  );
+
+if (container) {
+  container.innerHTML = "";
+}
+
+    alert(
+      "Mobile number verified successfully.",
+    );
+  } catch (error: any) {
+    alert(
+      getApiErrorMessage(
+        error,
+        "OTP verification failed.",
+      ),
+    );
+  } finally {
+    setVerifyingOtp(false);
+  }
+};
+
+const handleVerifyAadhaar = async () => {
+  if (
+    !/^\d{12}$/.test(editAadhaarNumber)
+  ) {
+    alert(
+      "Enter a valid 12-digit Aadhaar number.",
+    );
+    return;
+  }
+
+  if (!aadhaarFile) {
+    alert("Please upload the Aadhaar image.");
+    return;
+  }
+
+  try {
+    setVerifyingAadhaar(true);
+
+    const formData = new FormData();
+
+    formData.append(
+      "aadhaarNumber",
+      editAadhaarNumber,
+    );
+
+    formData.append("file", aadhaarFile);
+
+    await api.post(
+      `/admin/customer/${customer.customerId}/verify-aadhaar`,
+      formData,
+    );
+
+    await refreshCustomerProfile();
+
+    setAadhaarFile(null);
+
+    alert("Aadhaar verified successfully.");
+  } catch (error: any) {
+    alert(
+      getApiErrorMessage(
+        error,
+        "Aadhaar verification failed.",
+      ),
+    );
+  } finally {
+    setVerifyingAadhaar(false);
+  }
+};
+
+
 
 const goldRate = Number(rates?.gold24Rate || 0);
 const silver999Rate = Number(rates?.silver999Rate || 0);
@@ -571,6 +988,9 @@ const refreshCustomerProfile = async (
   }
 };
 const handleAdminCreatePreBooking = async () => {
+  if (!validateSchemeEligibility()) {
+  return;
+}
   if (isAdvanceBooking) {
     if (!selectedRate) return alert("Metal rate not loaded");
     if (!metalWeight || !metalAmount) {
@@ -631,11 +1051,59 @@ const handleAdminCreatePreBooking = async () => {
     setSchemeTab("overview");
 setShowActiveSchemes(true);
   } catch (error: any) {
-  alert(getApiErrorMessage(error, "Failed to add Pre-Booking scheme"));
+alert(
+  getApiErrorMessage(
+    error,
+    "Failed to activate Pre-Booking scheme",
+  ),
+);
 }
 };
 
+
+const validateSchemeEligibility = (): boolean => {
+  if (!customer.mobileVerified) {
+    alert(
+      "Mobile number is not verified. Please complete OTP verification before activating a scheme.",
+    );
+    return false;
+  }
+
+  if (!customer.aadhaarVerified) {
+    alert(
+      "Aadhaar is not verified. Please upload and verify Aadhaar before activating a scheme.",
+    );
+    return false;
+  }
+
+  if (
+    !customer.fullAddress ||
+    !customer.fullAddress.trim()
+  ) {
+    alert(
+      "Full address is missing. Please complete the scheme profile first.",
+    );
+    return false;
+  }
+
+  if (
+    !customer.pincode ||
+    !/^\d{6}$/.test(customer.pincode)
+  ) {
+    alert(
+      "A valid 6-digit pincode is required before activating a scheme.",
+    );
+    return false;
+  }
+
+  return true;
+};
+
+
 const handleAdminCreateFlexi11 = async () => {
+  if (!validateSchemeEligibility()) {
+  return;
+}
   if (!goldRate) return alert("Gold rate not loaded");
   try {
     await api.post(
@@ -660,11 +1128,18 @@ const handleAdminCreateFlexi11 = async () => {
    setSchemeTab("overview");
 setShowActiveSchemes(true);
   } catch (error: any) {
-  alert(getApiErrorMessage(error, "Failed to add Pre-Booking scheme"));
-}
+alert(
+  getApiErrorMessage(
+    error,
+    "Failed to activate Flexi 11 scheme",
+  ),
+);}
 };
 
 const handleAdminCreateQuickBuy = async () => {
+  if (!validateSchemeEligibility()) {
+  return;
+}
   const rate =
     quickMetal === "Gold"
       ? goldRate
@@ -705,15 +1180,50 @@ const handleAdminCreateQuickBuy = async () => {
    setSchemeTab("overview");
 setShowActiveSchemes(true);
   } catch (error: any) {
-  alert(getApiErrorMessage(error, "Failed to add Pre-Booking scheme"));
-}
+alert(
+  getApiErrorMessage(
+    error,
+    "Failed to activate Quick Buy scheme",
+  ),
+);}
 };
-const getApiErrorMessage = (error: any, fallback: string) => {
+const getApiErrorMessage = (
+  error: any,
+  fallback: string,
+) => {
   const data = error?.response?.data;
 
-  if (typeof data === "string") return data;
-  if (data?.message) return data.message;
-  if (data?.error) return data.error;
+  console.error("Scheme API error:", {
+    status: error?.response?.status,
+    data,
+    code: error?.code,
+    message: error?.message,
+  });
+
+  if (typeof data === "string") {
+    return data;
+  }
+
+  if (
+    data?.message &&
+    typeof data.message === "string"
+  ) {
+    return data.message;
+  }
+
+  if (
+    data?.error &&
+    typeof data.error === "string"
+  ) {
+    return data.error;
+  }
+
+  if (
+    error?.message &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
 
   return fallback;
 };
@@ -791,9 +1301,6 @@ const handleSchemeTabClick = (
     }, 100);
   }
 };
-
-
-
 
 
   return (
@@ -904,6 +1411,71 @@ const handleSchemeTabClick = (
                 </span>
               </p>
             </div>
+            <div className="mt-6 grid grid-cols-2 gap-4 max-md:grid-cols-1">
+  <div
+    className={`rounded-2xl border p-4 ${
+      customer.mobileVerified
+        ? "border-green-400/40 bg-green-500/10"
+        : "border-red-400/40 bg-red-500/10"
+    }`}
+  >
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-gray-300">
+          Mobile Verification
+        </p>
+
+        <p
+          className={`mt-1 font-bold ${
+            customer.mobileVerified
+              ? "text-green-300"
+              : "text-red-300"
+          }`}
+        >
+          {customer.mobileVerified
+            ? "OTP Verified"
+            : "OTP Not Verified"}
+        </p>
+      </div>
+
+      <span className="text-2xl">
+        {customer.mobileVerified ? "✓" : "!"}
+      </span>
+    </div>
+  </div>
+
+  <div
+    className={`rounded-2xl border p-4 ${
+      customer.aadhaarVerified
+        ? "border-green-400/40 bg-green-500/10"
+        : "border-red-400/40 bg-red-500/10"
+    }`}
+  >
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-gray-300">
+          Aadhaar Verification
+        </p>
+
+        <p
+          className={`mt-1 font-bold ${
+            customer.aadhaarVerified
+              ? "text-green-300"
+              : "text-red-300"
+          }`}
+        >
+          {customer.aadhaarVerified
+            ? "Aadhaar Verified"
+            : "Aadhaar Not Verified"}
+        </p>
+      </div>
+
+      <span className="text-2xl">
+        {customer.aadhaarVerified ? "✓" : "!"}
+      </span>
+    </div>
+  </div>
+</div>
           </div>
         </div>
       </div>
@@ -2039,111 +2611,454 @@ const handleSchemeTabClick = (
     </div>
   </div>
 )}
-      <Dialog
+
+<Dialog
   open={openEdit}
-  onClose={() => setOpenEdit(false)}
-  maxWidth="sm"
+  onClose={handleCloseEdit}
+  maxWidth="md"
   fullWidth
+  PaperProps={{
+    sx: {
+      borderRadius: "26px",
+      overflow: "hidden",
+    },
+  }}
 >
-  <DialogTitle>Edit Customer</DialogTitle>
-
-  <DialogContent>
-
-    <TextField
-  margin="dense"
-  label="Name"
-  fullWidth
-  value={editName}
-  onChange={(e) => {
-
-    const formatted = e.target.value
-      .split(" ")
-      .map(
-        (word) =>
-          word.charAt(0).toUpperCase() +
-          word.slice(1).toLowerCase()
-      )
-      .join(" ");
-
-    setEditName(formatted);
-  }}
-/>
-
-   <Autocomplete
-  freeSolo
-  disableClearable
-  options={villageResults || []}
-  loading={villageLoading}
-  value={editVillage || ""}
-  onInputChange={(event, newInputValue) => {
-    setEditVillage(newInputValue);
-    setVillageSearch(newInputValue);
-  }}
-  onChange={(event, newValue) => {
-    setEditVillage(newValue || "");
-  }}
-  renderInput={(params) => (
-    <TextField
-      {...params}
-      margin="dense"
-      label="Village"
-      fullWidth
-      placeholder="Type 3 letters to search..."
-      InputProps={{
-        ...params.InputProps,
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon color="action" />
-          </InputAdornment>
-        ),
-        endAdornment: (
-          <>
-            {villageLoading ? (
-              <span className="text-gray-400 text-sm pr-2">
-                Loading...
-              </span>
-            ) : null}
-            {params.InputProps.endAdornment}
-          </>
-        ),
+  <Box
+    sx={{
+      background:
+        "linear-gradient(135deg, #111827, #4c1d95)",
+      color: "white",
+      px: { xs: 3, md: 4 },
+      py: 3,
+    }}
+  >
+    <Typography
+      sx={{
+        fontSize: { xs: "24px", md: "32px" },
+        fontWeight: 800,
       }}
-    />
-  )}
-/>
+    >
+      Customer Profile & Verification
+    </Typography>
 
-    <TextField
-      margin="dense"
-      label="Phone Number"
-      fullWidth
-      value={editPhone}
-      onChange={(e) => setEditPhone(e.target.value)}
-    />
+    <Typography
+      sx={{
+        mt: 1,
+        color: "rgba(255,255,255,0.7)",
+      }}
+    >
+      Complete customer details and verify the
+      profile before activating schemes.
+    </Typography>
+  </Box>
 
-    <TextField
-      margin="dense"
-      label="Email"
-      fullWidth
-      value={editEmail}
-      onChange={(e) => setEditEmail(e.target.value)}
-    />
+  <DialogContent
+    sx={{
+      p: { xs: 2, md: 4 },
+      backgroundColor: "#f8fafc",
+    }}
+  >
 
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "1fr 1fr",
+        },
+        gap: 2,
+      }}
+    >
+      <TextField
+        label="Customer Name"
+        value={editName}
+        required
+        fullWidth
+        onChange={(e) =>
+          setEditName(e.target.value)
+        }
+      />
+
+      <Autocomplete
+        freeSolo
+        options={villageResults || []}
+        value={editVillage || ""}
+        onInputChange={(_, value) => {
+          setEditVillage(value);
+          setVillageSearch(value);
+        }}
+        onChange={(_, value) =>
+          setEditVillage(value || "")
+        }
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Village"
+            required
+          />
+        )}
+      />
+
+      <TextField
+        label="Mobile Number"
+        value={editPhone}
+        required
+        fullWidth
+        inputProps={{
+          maxLength: 10,
+          inputMode: "numeric",
+        }}
+        onChange={(e) =>
+          setEditPhone(
+            e.target.value.replace(/\D/g, ""),
+          )
+        }
+      />
+
+      <TextField
+        label="Email ID"
+        value={editEmail}
+        fullWidth
+        onChange={(e) =>
+          setEditEmail(e.target.value)
+        }
+      />
+
+      <TextField
+        label="New Password"
+        type="password"
+        value={editPassword}
+        fullWidth
+        helperText={
+          "Leave empty to keep the current password."
+        }
+        onChange={(e) =>
+          setEditPassword(e.target.value)
+        }
+      />
+
+      <TextField
+        label="Pincode"
+        value={editPincode}
+        fullWidth
+        inputProps={{
+          maxLength: 6,
+          inputMode: "numeric",
+        }}
+        onChange={(e) =>
+          setEditPincode(
+            e.target.value.replace(/\D/g, ""),
+          )
+        }
+      />
+
+      <TextField
+        label="Full Address"
+        value={editFullAddress}
+        fullWidth
+        multiline
+        minRows={3}
+        sx={{
+          gridColumn: {
+            xs: "auto",
+            md: "1 / -1",
+          },
+        }}
+        onChange={(e) =>
+          setEditFullAddress(e.target.value)
+        }
+      />
+
+      <TextField
+        label="PAN Number"
+        value={editPanNumber}
+        fullWidth
+        inputProps={{ maxLength: 10 }}
+        onChange={(e) =>
+          setEditPanNumber(
+            e.target.value.toUpperCase(),
+          )
+        }
+      />
+
+      <TextField
+        label="Aadhaar Number"
+        value={editAadhaarNumber}
+        fullWidth
+        inputProps={{
+          maxLength: 12,
+          inputMode: "numeric",
+        }}
+        onChange={(e) =>
+          setEditAadhaarNumber(
+            e.target.value.replace(/\D/g, ""),
+          )
+        }
+      />
+    </Box>
+
+    <Divider sx={{ my: 4 }} />
+
+    <Typography
+      sx={{
+        fontSize: "20px",
+        fontWeight: 800,
+        mb: 2,
+      }}
+    >
+      Verification Status
+    </Typography>
+
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "1fr 1fr",
+        },
+        gap: 2,
+      }}
+    >
+      <Box
+        sx={{
+          border: "1px solid",
+          borderColor: customer.mobileVerified
+            ? "success.light"
+            : "warning.light",
+          borderRadius: "18px",
+          p: 2.5,
+          backgroundColor: customer.mobileVerified
+            ? "#f0fdf4"
+            : "#fff7ed",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography fontWeight={800}>
+            Mobile OTP
+          </Typography>
+
+          <Chip
+            label={
+              customer.mobileVerified
+                ? "Verified"
+                : "Not Verified"
+            }
+            color={
+              customer.mobileVerified
+                ? "success"
+                : "warning"
+            }
+            size="small"
+          />
+        </Box>
+
+        {!customer.mobileVerified && (
+          <>
+             <Box
+      sx={{
+        mt: 2,
+        display: "flex",
+        justifyContent: "center",
+        minHeight: "78px",
+        overflow: "hidden",
+      }}
+    >
+      <div id="profile-recaptcha-container" />
+    </Box>
+
+   <div
+  id="profile-recaptcha-container"
+  className="mt-4 flex justify-center"
+></div>
+
+<Typography
+  sx={{
+    mt: 1,
+    textAlign: "center",
+    color: isRecaptchaVerified
+      ? "success.main"
+      : "text.secondary",
+    fontSize: "13px",
+    fontWeight: 600,
+  }}
+>
+  {isRecaptchaVerified
+    ? "reCAPTCHA verified. You can send OTP."
+    : "Complete reCAPTCHA before sending OTP."}
+</Typography>
+           <Button
+  fullWidth
+  variant="outlined"
+  sx={{ mt: 2 }}
+  disabled={
+    sendingOtp ||
+    !isRecaptchaVerified
+  }
+  onClick={handleSendOtp}
+>
+  {sendingOtp
+    ? "Sending OTP..."
+    : "Send OTP"}
+</Button>
+
+            {confirmationResult && (
+              <>
+                <TextField
+                  fullWidth
+                  label="Enter OTP"
+                  value={otp}
+                  sx={{ mt: 2 }}
+                  inputProps={{
+                    maxLength: 6,
+                    inputMode: "numeric",
+                  }}
+                  onChange={(e) =>
+                    setOtp(
+                      e.target.value.replace(
+                        /\D/g,
+                        "",
+                      ),
+                    )
+                  }
+                />
+
+                <Button
+                  fullWidth
+                  variant="contained"
+                  sx={{ mt: 2 }}
+                  disabled={verifyingOtp}
+                  onClick={handleVerifyOtp}
+                >
+                  {verifyingOtp
+                    ? "Verifying..."
+                    : "Verify OTP"}
+                </Button>
+              </>
+            )}
+          </>
+        )}
+      </Box>
+
+      <Box
+        sx={{
+          border: "1px solid",
+          borderColor: customer.aadhaarVerified
+            ? "success.light"
+            : "warning.light",
+          borderRadius: "18px",
+          p: 2.5,
+          backgroundColor: customer.aadhaarVerified
+            ? "#f0fdf4"
+            : "#fff7ed",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography fontWeight={800}>
+            Aadhaar Verification
+          </Typography>
+
+          <Chip
+            label={
+              customer.aadhaarVerified
+                ? "Verified"
+                : "Not Verified"
+            }
+            color={
+              customer.aadhaarVerified
+                ? "success"
+                : "warning"
+            }
+            size="small"
+          />
+        </Box>
+
+        {!customer.aadhaarVerified && (
+          <>
+            <Button
+              component="label"
+              fullWidth
+              variant="outlined"
+              sx={{ mt: 2 }}
+            >
+              {aadhaarFile
+                ? aadhaarFile.name
+                : "Upload Aadhaar Image"}
+
+              <input
+                hidden
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) =>
+                  setAadhaarFile(
+                    e.target.files?.[0] ||
+                      null,
+                  )
+                }
+              />
+            </Button>
+
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{ mt: 2 }}
+              disabled={verifyingAadhaar}
+              onClick={handleVerifyAadhaar}
+            >
+              {verifyingAadhaar
+                ? "Verifying Aadhaar..."
+                : "Verify Aadhaar"}
+            </Button>
+          </>
+        )}
+      </Box>
+    </Box>
   </DialogContent>
 
-  <DialogActions>
-
-    <Button onClick={() => setOpenEdit(false)}>
-      Cancel
+  <DialogActions
+    sx={{
+      px: 4,
+      py: 3,
+      backgroundColor: "white",
+    }}
+  >
+    <Button
+      variant="outlined"
+      disabled={
+        savingProfile ||
+        sendingOtp ||
+        verifyingOtp ||
+        verifyingAadhaar
+      }
+      onClick={handleCloseEdit}
+    >
+      Close
     </Button>
 
     <Button
       variant="contained"
+      disabled={savingProfile}
       onClick={handleUpdateCustomer}
     >
-      Save
+      {savingProfile
+        ? "Saving..."
+        : "Save Profile"}
     </Button>
-
   </DialogActions>
 </Dialog>
+     
     </div>
   );
 };
