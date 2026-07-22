@@ -513,6 +513,16 @@ const totalOrders =
 const totalDueAmount =
   Number(customer.totalDueAmount || 0);
 
+  const normalizeCustomerName = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+const nameHasUnsavedChange =
+  normalizeCustomerName(editName) !==
+  normalizeCustomerName(customer.name || "");
+
 
 
 const getCompletedMonths = (item: any) => {
@@ -3023,16 +3033,36 @@ const handleSchemeTabClick = (
             </Button>
 
             <Button
-              fullWidth
-              variant="contained"
-              sx={{ mt: 2 }}
-              disabled={verifyingAadhaar}
-              onClick={handleVerifyAadhaar}
-            >
-              {verifyingAadhaar
-                ? "Verifying Aadhaar..."
-                : "Verify Aadhaar"}
-            </Button>
+  fullWidth
+  variant="contained"
+  disabled={
+    verifyingAadhaar ||
+    !aadhaarFile ||
+    nameHasUnsavedChange
+  }
+  onClick={handleVerifyAadhaar}
+>
+  {verifyingAadhaar
+    ? "Verifying Aadhaar..."
+    : nameHasUnsavedChange
+      ? "Save Changed Name First"
+      : "Verify Aadhaar"}
+
+      
+</Button>
+{nameHasUnsavedChange && (
+  <Typography
+    sx={{
+      mt: 1.5,
+      color: "warning.main",
+      fontSize: "13px",
+      fontWeight: 600,
+      textAlign: "center",
+    }}
+  >
+    The customer name was changed. Save the profile before verifying Aadhaar.
+  </Typography>
+)}
           </>
         )}
       </Box>
