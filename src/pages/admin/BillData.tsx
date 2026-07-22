@@ -524,6 +524,19 @@ const nameHasUnsavedChange =
   normalizeCustomerName(customer.name || "");
 
 
+  const normalizedSavedPhone =
+  (customer.phoneNumber || "")
+    .replace(/\D/g, "");
+
+const normalizedEditPhone =
+  editPhone.replace(/\D/g, "");
+
+const phoneHasChanged =
+  normalizedSavedPhone !== normalizedEditPhone;
+
+ 
+
+
 
 const getCompletedMonths = (item: any) => {
   if (!item.createdAt || !item.maturityDate || !item.holdMonths) return 0;
@@ -720,6 +733,9 @@ const handleUpdateCustomer = async () => {
         fullAddress:
           editFullAddress.trim() || null,
 
+          aadhaarNumber:
+  editAadhaarNumber.replace(/\D/g, "") || null,
+
         pincode:
           editPincode.trim() || null,
 
@@ -733,9 +749,32 @@ const handleUpdateCustomer = async () => {
       phoneNumber,
     );
 
-    await refreshCustomerProfile(phoneNumber);
+   await refreshCustomerProfile(phoneNumber);
 
-    alert("Customer profile updated successfully.");
+if (phoneHasChanged) {
+  setOtp("");
+  setConfirmationResult(null);
+  setIsRecaptchaVerified(false);
+
+  if (recaptchaRef.current) {
+    recaptchaRef.current.clear();
+    recaptchaRef.current = null;
+  }
+
+  const container = document.getElementById(
+    "profile-recaptcha-container"
+  );
+
+  if (container) {
+    container.innerHTML = "";
+  }
+}
+
+alert(
+  phoneHasChanged
+    ? "Profile updated. Mobile OTP verification was reset because the phone number changed."
+    : "Customer profile updated successfully.",
+);
   } catch (error: any) {
     alert(
       getApiErrorMessage(
@@ -868,6 +907,12 @@ if (container) {
 };
 
 const handleVerifyAadhaar = async () => {
+  if (customer.aadhaarVerified) {
+  alert(
+    "Aadhaar is already verified and cannot be changed.",
+  );
+  return;
+}
   if (
     !/^\d{12}$/.test(editAadhaarNumber)
   ) {
@@ -2693,14 +2738,19 @@ const handleSchemeTabClick = (
       }}
     >
       <TextField
-        label="Customer Name"
-        value={editName}
-        required
-        fullWidth
-        onChange={(e) =>
-          setEditName(e.target.value)
-        }
-      />
+  fullWidth
+  label="Customer Name"
+  value={editName}
+  onChange={(e) =>
+    setEditName(e.target.value)
+  }
+  disabled={customer.aadhaarVerified}
+  helperText={
+    customer.aadhaarVerified
+      ? "Name is locked because Aadhaar has been verified."
+      : ""
+  }
+/>
 
       <Autocomplete
         freeSolo
@@ -2722,21 +2772,38 @@ const handleSchemeTabClick = (
         )}
       />
 
-      <TextField
-        label="Mobile Number"
-        value={editPhone}
-        required
-        fullWidth
-        inputProps={{
-          maxLength: 10,
-          inputMode: "numeric",
-        }}
-        onChange={(e) =>
-          setEditPhone(
-            e.target.value.replace(/\D/g, ""),
-          )
-        }
-      />
+     <Box>
+  <TextField
+    label="Mobile Number"
+    value={editPhone}
+    required
+    fullWidth
+    inputProps={{
+      maxLength: 10,
+      inputMode: "numeric",
+    }}
+    onChange={(e) =>
+      setEditPhone(
+        e.target.value.replace(/\D/g, ""),
+      )
+    }
+  />
+
+  {phoneHasChanged && (
+    <Typography
+      sx={{
+        mt: 1,
+        color: "warning.main",
+        fontSize: "13px",
+        fontWeight: 600,
+      }}
+    >
+      Changing the mobile number will remove the
+      existing OTP verification. The new number must
+      be verified again.
+    </Typography>
+  )}
+</Box>
 
       <TextField
         label="Email ID"
@@ -2805,19 +2872,23 @@ const handleSchemeTabClick = (
       />
 
       <TextField
-        label="Aadhaar Number"
-        value={editAadhaarNumber}
-        fullWidth
-        inputProps={{
-          maxLength: 12,
-          inputMode: "numeric",
-        }}
-        onChange={(e) =>
-          setEditAadhaarNumber(
-            e.target.value.replace(/\D/g, ""),
-          )
-        }
-      />
+  fullWidth
+  label="Aadhaar Number"
+  value={editAadhaarNumber}
+  onChange={(e) =>
+    setEditAadhaarNumber(
+      e.target.value
+        .replace(/\D/g, "")
+        .slice(0, 12),
+    )
+  }
+  disabled={customer.aadhaarVerified}
+  helperText={
+    customer.aadhaarVerified
+      ? "Aadhaar number is verified and cannot be changed."
+      : "Enter the 12-digit Aadhaar number."
+  }
+/>
     </Box>
 
     <Divider sx={{ my: 4 }} />
@@ -2969,103 +3040,133 @@ const handleSchemeTabClick = (
       </Box>
 
       <Box
-        sx={{
-          border: "1px solid",
-          borderColor: customer.aadhaarVerified
-            ? "success.light"
-            : "warning.light",
-          borderRadius: "18px",
-          p: 2.5,
-          backgroundColor: customer.aadhaarVerified
-            ? "#f0fdf4"
-            : "#fff7ed",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography fontWeight={800}>
-            Aadhaar Verification
-          </Typography>
-
-          <Chip
-            label={
-              customer.aadhaarVerified
-                ? "Verified"
-                : "Not Verified"
-            }
-            color={
-              customer.aadhaarVerified
-                ? "success"
-                : "warning"
-            }
-            size="small"
-          />
-        </Box>
-
-        {!customer.aadhaarVerified && (
-          <>
-            <Button
-              component="label"
-              fullWidth
-              variant="outlined"
-              sx={{ mt: 2 }}
-            >
-              {aadhaarFile
-                ? aadhaarFile.name
-                : "Upload Aadhaar Image"}
-
-              <input
-                hidden
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) =>
-                  setAadhaarFile(
-                    e.target.files?.[0] ||
-                      null,
-                  )
-                }
-              />
-            </Button>
-
-            <Button
-  fullWidth
-  variant="contained"
-  disabled={
-    verifyingAadhaar ||
-    !aadhaarFile ||
-    nameHasUnsavedChange
-  }
-  onClick={handleVerifyAadhaar}
+  sx={{
+    border: "1px solid",
+    borderColor: customer.aadhaarVerified
+      ? "success.light"
+      : "warning.light",
+    borderRadius: "18px",
+    p: 2.5,
+    backgroundColor: customer.aadhaarVerified
+      ? "#f0fdf4"
+      : "#fff7ed",
+  }}
 >
-  {verifyingAadhaar
-    ? "Verifying Aadhaar..."
-    : nameHasUnsavedChange
-      ? "Save Changed Name First"
-      : "Verify Aadhaar"}
-
-      
-</Button>
-{nameHasUnsavedChange && (
-  <Typography
+  <Box
     sx={{
-      mt: 1.5,
-      color: "warning.main",
-      fontSize: "13px",
-      fontWeight: 600,
-      textAlign: "center",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
     }}
   >
-    The customer name was changed. Save the profile before verifying Aadhaar.
-  </Typography>
-)}
-          </>
-        )}
-      </Box>
+    <Typography fontWeight={800}>
+      Aadhaar Verification
+    </Typography>
+
+    <Chip
+      label={
+        customer.aadhaarVerified
+          ? "Verified"
+          : "Not Verified"
+      }
+      color={
+        customer.aadhaarVerified
+          ? "success"
+          : "warning"
+      }
+      size="small"
+    />
+  </Box>
+
+  {customer.aadhaarVerified ? (
+    <Box
+      sx={{
+        mt: 2,
+        p: 2,
+        borderRadius: "14px",
+        backgroundColor: "#dcfce7",
+        textAlign: "center",
+      }}
+    >
+      <Typography
+        sx={{
+          fontWeight: 800,
+          color: "success.dark",
+        }}
+      >
+        Aadhaar has already been verified.
+      </Typography>
+
+      <Typography
+        sx={{
+          mt: 1,
+          fontSize: "13px",
+          color: "text.secondary",
+        }}
+      >
+        Customer name and Aadhaar number are locked
+        and cannot be changed.
+      </Typography>
+    </Box>
+  ) : (
+    <>
+      <Button
+        component="label"
+        fullWidth
+        variant="outlined"
+        sx={{ mt: 2 }}
+      >
+        {aadhaarFile
+          ? aadhaarFile.name
+          : "Upload Aadhaar Image"}
+
+        <input
+          hidden
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(e) =>
+            setAadhaarFile(
+              e.target.files?.[0] || null,
+            )
+          }
+        />
+      </Button>
+
+      <Button
+        fullWidth
+        variant="contained"
+        sx={{ mt: 2 }}
+        disabled={
+          verifyingAadhaar ||
+          !aadhaarFile ||
+          nameHasUnsavedChange
+        }
+        onClick={handleVerifyAadhaar}
+      >
+        {verifyingAadhaar
+          ? "Verifying Aadhaar..."
+          : nameHasUnsavedChange
+            ? "Save Changed Name First"
+            : "Verify Aadhaar"}
+      </Button>
+
+      {nameHasUnsavedChange && (
+        <Typography
+          sx={{
+            mt: 1.5,
+            color: "warning.main",
+            fontSize: "13px",
+            fontWeight: 600,
+            textAlign: "center",
+          }}
+        >
+          The customer name was changed. Save the
+          profile before verifying Aadhaar.
+        </Typography>
+      )}
+    </>
+  )}
+</Box>
     </Box>
   </DialogContent>
 
