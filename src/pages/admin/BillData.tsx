@@ -884,16 +884,28 @@ const handleVerifyAadhaar = async () => {
 
     formData.append("file", aadhaarFile);
 
-    await api.post(
-      `/admin/customer/${customer.customerId}/verify-aadhaar`,
-      formData,
-    );
+  const response = await api.post<{
+  verified: boolean;
+  message: string;
+  url?: string;
+}>(
+  `/admin/customer/${customer.customerId}/verify-aadhaar`,
+  formData,
+);
 
-    await refreshCustomerProfile();
+if (!response.data.verified) {
+  throw new Error(
+    response.data.message ||
+      "Aadhaar verification failed.",
+  );
+}
+   await refreshCustomerProfile();
+setAadhaarFile(null);
 
-    setAadhaarFile(null);
-
-    alert("Aadhaar verified successfully.");
+alert(
+  response.data.message ||
+    "Aadhaar verified successfully.",
+);
   } catch (error: any) {
     alert(
       getApiErrorMessage(
