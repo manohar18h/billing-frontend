@@ -719,30 +719,37 @@ const handleUpdateCustomer = async () => {
   try {
     setSavingProfile(true);
 
-    await api.put(
-      `/admin/customer/${customer.customerId}/profile`,
-      {
-        name: editName.trim(),
-        village: editVillage.trim(),
-        phoneNumber,
-        emailId: editEmail.trim() || null,
+  const updatePayload: Record<string, any> = {
+  name: editName.trim(),
+  village: editVillage.trim(),
+  phoneNumber,
 
-        password:
-          editPassword.trim() || null,
+  emailId:
+    editEmail.trim() || null,
 
-        fullAddress:
-          editFullAddress.trim() || null,
+  password:
+    editPassword.trim() || null,
 
-          aadhaarNumber:
-  editAadhaarNumber.replace(/\D/g, "") || null,
+  fullAddress:
+    editFullAddress.trim() || null,
 
-        pincode:
-          editPincode.trim() || null,
+  pincode:
+    editPincode.trim() || null,
 
-        panNumber:
-          editPanNumber.trim() || null,
-      },
-    );
+  panNumber:
+    editPanNumber.trim() || null,
+};
+
+if (!customer.aadhaarVerified) {
+  updatePayload.aadhaarNumber =
+    editAadhaarNumber
+      .replace(/\D/g, "") || null;
+}
+
+await api.put(
+  `/admin/customer/${customer.customerId}/profile`,
+  updatePayload,
+);
 
     localStorage.setItem(
       "bill-phnNumber",
@@ -2872,9 +2879,12 @@ const handleSchemeTabClick = (
       />
 
       <TextField
-  fullWidth
   label="Aadhaar Number"
-  value={editAadhaarNumber}
+  value={
+    customer.aadhaarVerified
+      ? "XXXX XXXX XXXX"
+      : editAadhaarNumber
+  }
   onChange={(e) =>
     setEditAadhaarNumber(
       e.target.value
@@ -2888,6 +2898,7 @@ const handleSchemeTabClick = (
       ? "Aadhaar number is verified and cannot be changed."
       : "Enter the 12-digit Aadhaar number."
   }
+/>
 />
     </Box>
 
