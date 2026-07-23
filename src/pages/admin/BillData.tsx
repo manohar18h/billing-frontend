@@ -2899,7 +2899,7 @@ const handleSchemeTabClick = (
       : "Enter the 12-digit Aadhaar number."
   }
 />
-/>
+
     </Box>
 
     <Divider sx={{ my: 4 }} />
