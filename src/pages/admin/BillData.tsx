@@ -121,7 +121,6 @@ const [editPhone, setEditPhone] = useState("");
 const [editEmail, setEditEmail] = useState("");
 
 
-const [editPassword, setEditPassword] = useState("");
 const [editFullAddress, setEditFullAddress] = useState("");
 const [editPincode, setEditPincode] = useState("");
 const [editAadhaarNumber, setEditAadhaarNumber] =
@@ -610,7 +609,7 @@ const handleOpenEdit = () => {
   setEditPhone(customer.phoneNumber || "");
   setEditEmail(customer.emailId || "");
 
-  setEditPassword("");
+
   setEditFullAddress(customer.fullAddress || "");
   setEditPincode(customer.pincode || "");
   setEditAadhaarNumber(
@@ -688,15 +687,7 @@ const handleUpdateCustomer = async () => {
     return;
   }
 
-  if (
-    editPassword &&
-    editPassword.length < 6
-  ) {
-    alert(
-      "Password must contain at least 6 characters.",
-    );
-    return;
-  }
+
 
   if (
     editPincode &&
@@ -727,8 +718,7 @@ const handleUpdateCustomer = async () => {
   emailId:
     editEmail.trim() || null,
 
-  password:
-    editPassword.trim() || null,
+
 
   fullAddress:
     editFullAddress.trim() || null,
@@ -2821,18 +2811,7 @@ const handleSchemeTabClick = (
         }
       />
 
-      <TextField
-        label="New Password"
-        type="password"
-        value={editPassword}
-        fullWidth
-        helperText={
-          "Leave empty to keep the current password."
-        }
-        onChange={(e) =>
-          setEditPassword(e.target.value)
-        }
-      />
+     
 
       <TextField
         label="Pincode"
