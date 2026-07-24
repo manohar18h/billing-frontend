@@ -160,17 +160,13 @@ const [savingCustomer, setSavingCustomer] = useState(false);
 ) => {
   let newValue = value;
 
-  if (field === "name" && typeof value === "string") {
-    newValue = value
-      .split(" ")
-      .filter(Boolean)
-      .map(
-        (word) =>
-          word.charAt(0).toUpperCase() +
-          word.slice(1).toLowerCase(),
-      )
-      .join(" ");
-  }
+ if (field === "name" && typeof value === "string") {
+  newValue = value.replace(
+    /(^|\s)([a-zA-Z])/g,
+    (_match, space, letter) =>
+      space + letter.toUpperCase(),
+  );
+}
 
   if (
     field === "phoneNumber" ||
