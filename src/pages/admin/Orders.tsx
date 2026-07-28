@@ -1048,23 +1048,23 @@ const handleUpdateOrder = async () => {
             Number(order.metalPrice || 0),
           ).total_item_amount,
     };
+const response = await api.put<any>(
+  `/admin/updateOrder/${editingOrderId}`,
+  recalculatedOrder,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  },
+);
 
-    const { data: updatedOrderFromBackend } =
-      await api.put(
-        `/admin/updateOrder/${editingOrderId}`,
-        recalculatedOrder,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+const updatedOrderFromBackend = response.data;
 
-    const updatedOrders = ordersList.map((o) =>
-      o.orderId === editingOrderId
-        ? { ...updatedOrderFromBackend }
-        : o,
-    );
+const updatedOrders = ordersList.map((o) =>
+  o.orderId === editingOrderId
+    ? updatedOrderFromBackend
+    : o,
+);
 
     setOrdersList(updatedOrders);
 
