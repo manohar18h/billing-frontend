@@ -869,7 +869,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                         : item.metal === "Gold Plated"
                         ? "Gold Coated"
                         : item.metal === "Silver Plated"
-                          ? "SSilver Coated"
+                          ? "Silver Coated"
                           : item.metal === "999 Silver"
                             ? "Kamal 999"
                             : item.metal}
