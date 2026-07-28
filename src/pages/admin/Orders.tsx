@@ -38,30 +38,40 @@ import dayjs from "dayjs";
 type BarcodeProduct = {
   metal: string;
   itemName: string;
-  catalogue: string;
-  design: string;
-  size: number;
-  metal_weight: number;
-  wastage: number;
-  making_charges: number;
-  stone_weight: number;
-  stone_amount: number;
-  wax_weight: number;
-  wax_amount: number;
-  diamond_weight: number;
-  diamond_amount: number;
-  bits_weight: number;
-  bits_amount: number;
-  enamel_weight: number;
-  enamel_amount: number;
-  pearls_weight: number;
-  pearls_amount: number;
-  other_weight: number;
-  other_amount: number;
-  stockBox: string;
-  itemCode: string;
-  gross_weight: number;
-  barcodeValue?: string;
+
+  catalogue?: string | null;
+  design?: string | null;
+  size?: number | string | null;
+
+  metal_weight?: number | null;
+  wastage?: number | null;
+  making_charges?: number | null;
+
+  stone_weight?: number | null;
+  stone_amount?: number | null;
+
+  wax_weight?: number | null;
+  wax_amount?: number | null;
+
+  diamond_weight?: number | null;
+  diamond_amount?: number | null;
+
+  bits_weight?: number | null;
+  bits_amount?: number | null;
+
+  enamel_weight?: number | null;
+  enamel_amount?: number | null;
+
+  pearls_weight?: number | null;
+  pearls_amount?: number | null;
+
+  other_weight?: number | null;
+  other_amount?: number | null;
+
+  stockBox?: string | null;
+  itemCode?: string | null;
+  gross_weight?: number | null;
+  barcodeValue?: string | null;
 };
 
 type AppWorker = {
@@ -231,6 +241,19 @@ const Orders: React.FC = () => {
   const billNumber =
     location.state?.billNumber || localStorage.getItem("billNumber");
 
+
+   const isPlatedMetal = (
+  metal?: string | null,
+): boolean => {
+  const normalized =
+    metal?.trim().toLowerCase();
+
+  return (
+    normalized === "gold plated" ||
+    normalized === "silver plated"
+  );
+};
+
   useEffect(() => {
     if (!isFromBillEdit) {
       localStorage.removeItem("checkEditBill");
@@ -307,16 +330,144 @@ const Orders: React.FC = () => {
     }
   };
 
+  const validateOrderBeforeSubmit = (): boolean => {
+  const errors: { [key: string]: string } = {};
+  const plated = isPlatedMetal(order.metal);
+
+  if (!order.metal) {
+    errors.metal = "Metal is required";
+  }
+
+  if (!order.itemName.trim()) {
+    errors.itemName = "Item name is required";
+  }
+
+  if (plated) {
+    if (Number(order.making_charges) <= 0) {
+      errors.making_charges =
+        "Total item price must be greater than 0";
+    }
+  } else {
+    if (Number(order.metalPrice) <= 0) {
+      errors.metalPrice =
+        "Metal price must be greater than 0";
+    }
+
+    if (Number(order.metal_weight) <= 0) {
+      errors.metal_weight =
+        "Metal weight must be greater than 0";
+    }
+  }
+
+  setOrderErrors(errors);
+
+  return Object.keys(errors).length === 0;
+};
+
   const handleOrderSubmit = async () => {
     console.log("customerid  in order  :  " + customerId);
     console.log("Token id: " + token);
     console.log("Request Body:", JSON.stringify(order, null, 2));
 
     try {
-      const recalculatedOrder = {
-        ...order,
-        total_item_amount: calculateTotals(order).total_item_amount,
-      };
+   const plated = isPlatedMetal(order.metal);
+
+const recalculatedOrder = {
+  ...order,
+
+  metalPrice: plated
+    ? null
+    : Number(order.metalPrice || 0),
+
+  catalogue: plated
+    ? null
+    : order.catalogue,
+
+  design: plated
+    ? null
+    : order.design,
+
+  size: plated
+    ? null
+    : order.size,
+
+  metal_weight: plated
+    ? null
+    : Number(order.metal_weight || 0),
+
+  wastage: plated
+    ? null
+    : Number(order.wastage || 0),
+
+  stone_weight: plated
+    ? null
+    : Number(order.stone_weight || 0),
+
+  stone_amount: plated
+    ? null
+    : Number(order.stone_amount || 0),
+
+  wax_weight: plated
+    ? null
+    : Number(order.wax_weight || 0),
+
+  wax_amount: plated
+    ? null
+    : Number(order.wax_amount || 0),
+
+  diamond_weight: plated
+    ? null
+    : Number(order.diamond_weight || 0),
+
+  diamond_amount: plated
+    ? null
+    : Number(order.diamond_amount || 0),
+
+  bits_weight: plated
+    ? null
+    : Number(order.bits_weight || 0),
+
+  bits_amount: plated
+    ? null
+    : Number(order.bits_amount || 0),
+
+  enamel_weight: plated
+    ? null
+    : Number(order.enamel_weight || 0),
+
+  enamel_amount: plated
+    ? null
+    : Number(order.enamel_amount || 0),
+
+  pearls_weight: plated
+    ? null
+    : Number(order.pearls_weight || 0),
+
+  pearls_amount: plated
+    ? null
+    : Number(order.pearls_amount || 0),
+
+  other_weight: plated
+    ? null
+    : Number(order.other_weight || 0),
+
+  other_amount: plated
+    ? null
+    : Number(order.other_amount || 0),
+
+  gross_weight: plated
+    ? null
+    : Number(order.gross_weight || 0),
+
+  total_item_amount: plated
+    ? Math.round(
+        Number(order.making_charges || 0),
+      )
+    : calculateTotals(
+        order,
+        order.metalPrice,
+      ).total_item_amount,
+};
 
       const response = await api.post(
         `/admin/addOrder/${customerId}`,
@@ -345,13 +496,18 @@ const Orders: React.FC = () => {
         }),
       );
     } catch (error: any) {
-      if (error.response && error.response.data) {
-        setOrderErrors(error.response.data); // assumes { field: "error message" }
-      } else {
-        alert("Failed to submit order");
-        console.error("Order submission failed:", error);
-      }
-    }
+  const message =
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    "Failed to submit order";
+
+  alert(message);
+
+  console.error(
+    "Order submission failed:",
+    error.response?.data || error,
+  );
+}
   };
   useEffect(() => {
     if (ordersList.length > 0) {
@@ -447,9 +603,23 @@ const Orders: React.FC = () => {
     }
   };
 
- const getMetalTypeForItemApi = (metal: string) => {
-  if (metal === "24 Gold" || metal === "22 Gold") return "Gold";
-  if (metal === "999 Silver" || metal === "995 Silver") return "Silver";
+const getMetalTypeForItemApi = (metal: string) => {
+  if (metal === "24 Gold" || metal === "22 Gold") {
+    return "Gold";
+  }
+
+  if (metal === "999 Silver" || metal === "995 Silver") {
+    return "Silver";
+  }
+
+  if (metal === "Gold Plated") {
+    return "Gold Plated";
+  }
+
+  if (metal === "Silver Plated") {
+    return "Silver Plated";
+  }
+
   return "";
 };
 
@@ -463,7 +633,8 @@ useEffect(() => {
   }
 
  api
-  .get<{ itemName: string }[]>(`/admin/item-names/${metalType}`, {
+  .get<{ itemName: string }[]>(
+  `/admin/item-names/${encodeURIComponent(metalType)}`,{
     headers: { Authorization: `Bearer ${token}` },
   })
   .then((res) => {
@@ -532,53 +703,63 @@ const saveNewItemNameIfNeeded = async () => {
     setSlectOldItemId(null);
   };
 
- const calculateTotals = (
+const calculateTotals = (
   data: typeof order,
-  overrideMetalPrice?: number
+  overrideMetalPrice?: number,
 ) => {
+  /*
+   * For plated products, making_charges stores
+   * the complete selling price.
+   */
+  if (isPlatedMetal(data.metal)) {
+    const platedItemPrice =
+      Number(data.making_charges || 0);
 
- const metalPrice =
-  overrideMetalPrice !== undefined
-    ? Number(overrideMetalPrice)
-    : Number(data.metalPrice || 0);
+    return {
+      total_item_amount:
+        Math.round(platedItemPrice),
+    };
+  }
 
-    // Calculate wastage weight
-    const wastageWeight = (data.wastage / 100) * data.metal_weight;
+  const metalPrice =
+    overrideMetalPrice !== undefined
+      ? Number(overrideMetalPrice)
+      : Number(data.metalPrice || 0);
 
-    let total_item_amount = 0;
+  const metalWeight =
+    Number(data.metal_weight || 0);
 
-    if (
-      data.wastage === 0 &&
-      data.stone_amount === 0 &&
-      data.wax_amount === 0 &&
-      data.diamond_amount === 0 &&
-      data.bits_amount === 0 &&
-      data.enamel_amount === 0 &&
-      data.pearls_amount === 0 &&
-      data.other_amount === 0
-    ) {
-      total_item_amount =
-        (data.metal_weight * metalPrice) / 10 + data.making_charges;
-    } else {
-      total_item_amount =
-        ((data.metal_weight + wastageWeight) * metalPrice) / 10 +
-        data.making_charges +
-        (data.stone_amount +
-          data.wax_amount +
-          data.diamond_amount +
-          data.bits_amount +
-          data.enamel_amount +
-          data.pearls_amount +
-          data.other_amount);
-    }
+  const wastage =
+    Number(data.wastage || 0);
 
-    // Remove decimals → integer only
-    total_item_amount = Math.round(total_item_amount);
+  const makingCharges =
+    Number(data.making_charges || 0);
 
-    console.log("total_item_amount : ", Math.round(total_item_amount));
+  const wastageWeight =
+    (wastage / 100) * metalWeight;
 
-    return { total_item_amount: Math.round(total_item_amount) };
+  const additionalAmounts =
+    Number(data.stone_amount || 0) +
+    Number(data.wax_amount || 0) +
+    Number(data.diamond_amount || 0) +
+    Number(data.bits_amount || 0) +
+    Number(data.enamel_amount || 0) +
+    Number(data.pearls_amount || 0) +
+    Number(data.other_amount || 0);
+
+  const totalItemAmount =
+    (
+      (metalWeight + wastageWeight)
+      * metalPrice
+    ) / 10
+    + makingCharges
+    + additionalAmounts;
+
+  return {
+    total_item_amount:
+      Math.round(totalItemAmount),
   };
+};
 
   const getUpdatedMetalPrice = (metal: string, itemName: string) => {
     let price = 0;
@@ -767,133 +948,334 @@ const saveNewItemNameIfNeeded = async () => {
     }
   };
 
-  const handleUpdateOrder = async () => {
-    if (!editingOrderId) return;
+const handleUpdateOrder = async () => {
+  if (!editingOrderId) return;
 
-    try {
-      const recalculatedOrder = {
-        ...order,
-        total_item_amount: calculateTotals(order, Number(order.metalPrice))
-          .total_item_amount,
-      };
+  try {
+    const plated = isPlatedMetal(order.metal);
 
-      const { data: updatedOrderFromBackend } = await api.put(
+    const recalculatedOrder = {
+      ...order,
+
+      metalPrice: plated
+        ? null
+        : Number(order.metalPrice || 0),
+
+      catalogue: plated
+        ? null
+        : order.catalogue,
+
+      design: plated
+        ? null
+        : order.design,
+
+      size: plated
+        ? null
+        : order.size,
+
+      metal_weight: plated
+        ? null
+        : Number(order.metal_weight || 0),
+
+      wastage: plated
+        ? null
+        : Number(order.wastage || 0),
+
+      stone_weight: plated
+        ? null
+        : Number(order.stone_weight || 0),
+
+      stone_amount: plated
+        ? null
+        : Number(order.stone_amount || 0),
+
+      wax_weight: plated
+        ? null
+        : Number(order.wax_weight || 0),
+
+      wax_amount: plated
+        ? null
+        : Number(order.wax_amount || 0),
+
+      diamond_weight: plated
+        ? null
+        : Number(order.diamond_weight || 0),
+
+      diamond_amount: plated
+        ? null
+        : Number(order.diamond_amount || 0),
+
+      bits_weight: plated
+        ? null
+        : Number(order.bits_weight || 0),
+
+      bits_amount: plated
+        ? null
+        : Number(order.bits_amount || 0),
+
+      enamel_weight: plated
+        ? null
+        : Number(order.enamel_weight || 0),
+
+      enamel_amount: plated
+        ? null
+        : Number(order.enamel_amount || 0),
+
+      pearls_weight: plated
+        ? null
+        : Number(order.pearls_weight || 0),
+
+      pearls_amount: plated
+        ? null
+        : Number(order.pearls_amount || 0),
+
+      other_weight: plated
+        ? null
+        : Number(order.other_weight || 0),
+
+      other_amount: plated
+        ? null
+        : Number(order.other_amount || 0),
+
+      gross_weight: plated
+        ? null
+        : Number(order.gross_weight || 0),
+
+      total_item_amount: plated
+        ? Math.round(Number(order.making_charges || 0))
+        : calculateTotals(
+            order,
+            Number(order.metalPrice || 0),
+          ).total_item_amount,
+    };
+
+    const { data: updatedOrderFromBackend } =
+      await api.put(
         `/admin/updateOrder/${editingOrderId}`,
         recalculatedOrder,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       );
 
-      const updatedOrder: any = updatedOrderFromBackend; // 👈 cast
+    const updatedOrders = ordersList.map((o) =>
+      o.orderId === editingOrderId
+        ? { ...updatedOrderFromBackend }
+        : o,
+    );
 
-      const updatedOrders = ordersList.map((o) =>
-        o.orderId === editingOrderId ? { ...updatedOrder } : o,
-      );
+    setOrdersList(updatedOrders);
 
-      setOrdersList(updatedOrders);
-      sessionStorage.setItem(
-        "ordersState",
-        JSON.stringify({ ordersList: updatedOrders, exchangeList }),
-      );
+    sessionStorage.setItem(
+      "ordersState",
+      JSON.stringify({
+        ordersList: updatedOrders,
+        exchangeList,
+      }),
+    );
 
-      handleClearOrder();
-      setIsEditing(false);
-      setIsBillEditing(true);
-      setEditingOrderId(null);
-      markBillAsChanged();
-      alert(
-        "Order updated successfully, Dont forget to Genarate Updated Bill, Click Update Genarate Bill",
-      );
-    } catch (error: any) {
-      if (error.response?.data) {
-        setOrderErrors(error.response.data);
-      } else {
-        alert("Failed to update order");
-      }
-    }
-  };
+    handleClearOrder();
+    setIsEditing(false);
+    setIsBillEditing(true);
+    setEditingOrderId(null);
+    markBillAsChanged();
+
+    alert(
+      "Order updated successfully. Please generate the updated bill.",
+    );
+  } catch (error: any) {
+  const message =
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    "Failed to submit order";
+
+  alert(message);
+
+  console.error(
+    "Order submission failed:",
+    error.response?.data || error,
+  );
+}
+};
 
   const handleSearch = async () => {
-    if (!searchQuery) {
+   if (!searchQuery.trim()) {
       alert("Please enter barcode value");
       return;
     }
 
     try {
       const response = await api.get<BarcodeProduct>(
-        `/admin/getByBarcode?barcodeValue=${searchQuery}`,
+       `/admin/getByBarcode?barcodeValue=${encodeURIComponent(
+  searchQuery.trim(),
+)}` ,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
 
       const data = response.data;
+      const plated = isPlatedMetal(data.metal);
 
-      let getMetalPrice = 0;
+    let getMetalPrice = 0;
 
-      if (data.metal === "24 Gold") {
-        getMetalPrice = Number(localStorage.getItem("Gold24Price")) || 0;
-      } else if (data.metal === "22 Gold") {
-        getMetalPrice = Number(localStorage.getItem("Gold22Price")) || 0;
-      } else if (data.metal === "999 Silver") {
-        getMetalPrice = Number(localStorage.getItem("Silver999Price")) || 0;
-      } else if (data.metal === "995 Silver") {
-        getMetalPrice = Number(localStorage.getItem("Silver995Price")) || 0;
-      }
+if (!plated) {
+  if (data.metal === "24 Gold") {
+    getMetalPrice =
+      Number(
+        localStorage.getItem("Gold24Price"),
+      ) || 0;
+  } else if (data.metal === "22 Gold") {
+    getMetalPrice =
+      Number(
+        localStorage.getItem("Gold22Price"),
+      ) || 0;
+  } else if (data.metal === "999 Silver") {
+    getMetalPrice =
+      Number(
+        localStorage.getItem("Silver999Price"),
+      ) || 0;
+  } else if (data.metal === "995 Silver") {
+    getMetalPrice =
+      Number(
+        localStorage.getItem("Silver995Price"),
+      ) || 0;
+  }
+}
 
-      setOrder((prev) => {
-        const updatedOrder = {
-          ...prev,
+   setOrder((prev) => {
+  const scannedPrice =
+    Number(data.making_charges || 0);
 
-          // keep old values while editing
-          metal: isEditing ? prev.metal : (data.metal ?? ""),
-          metalPrice: isEditing ? prev.metalPrice : getMetalPrice,
-          itemName: isEditing ? prev.itemName : (data.itemName ?? ""),
+  const updatedOrder = {
+    ...prev,
 
-          // update remaining values from barcode
-          catalogue: data.catalogue ?? "",
-          design: data.design ?? "",
-          size: String(data.size ?? ""),
-          metal_weight: data.metal_weight ?? 0,
-          wastage: data.wastage ?? 0,
-          making_charges: data.making_charges ?? 0,
-          stone_weight: data.stone_weight ?? 0,
-          stone_amount: data.stone_amount ?? 0,
-          wax_weight: data.wax_weight ?? 0,
-          wax_amount: data.wax_amount ?? 0,
-          diamond_weight: data.diamond_weight ?? 0,
-          diamond_amount: data.diamond_amount ?? 0,
-          bits_weight: data.bits_weight ?? 0,
-          bits_amount: data.bits_amount ?? 0,
-          enamel_weight: data.enamel_weight ?? 0,
-          enamel_amount: data.enamel_amount ?? 0,
-          pearls_weight: data.pearls_weight ?? 0,
-          pearls_amount: data.pearls_amount ?? 0,
-          other_weight: data.other_weight ?? 0,
-          other_amount: data.other_amount ?? 0,
-          stockBox: data.stockBox ?? "",
-          itemCode: data.itemCode ?? "",
-          gross_weight: data.gross_weight ?? 0,
-          barcodeValue: data.barcodeValue ?? "",
+    metal: isEditing
+      ? prev.metal
+      : (data.metal ?? ""),
 
-          // keep already selected edit values
-          discount: prev.discount,
-          deliveryStatus: prev.deliveryStatus,
-          deliveryDate: prev.deliveryDate,
-          workStatus: prev.workStatus,
-        };
+    metalPrice: isEditing
+      ? prev.metalPrice
+      : plated
+        ? 0
+        : getMetalPrice,
 
-        const { total_item_amount } = calculateTotals(
-          updatedOrder,
-          isEditing ? Number(prev.metalPrice) : getMetalPrice,
-        );
+    itemName: isEditing
+      ? prev.itemName
+      : (data.itemName ?? ""),
 
-        return {
-          ...updatedOrder,
-          total_item_amount,
-        };
-      });
+    catalogue: plated
+      ? ""
+      : (data.catalogue ?? ""),
+
+    design: plated
+      ? ""
+      : (data.design ?? ""),
+
+    size: plated
+      ? ""
+      : String(data.size ?? ""),
+
+    metal_weight: plated
+      ? 0
+      : Number(data.metal_weight || 0),
+
+    wastage: plated
+      ? 0
+      : Number(data.wastage || 0),
+
+    /*
+     * Keep the scanned plated-item price here
+     * so it can be sent to the backend.
+     */
+    making_charges: scannedPrice,
+
+    stone_weight: plated
+      ? 0
+      : Number(data.stone_weight || 0),
+
+    stone_amount: plated
+      ? 0
+      : Number(data.stone_amount || 0),
+
+    wax_weight: plated
+      ? 0
+      : Number(data.wax_weight || 0),
+
+    wax_amount: plated
+      ? 0
+      : Number(data.wax_amount || 0),
+
+    diamond_weight: plated
+      ? 0
+      : Number(data.diamond_weight || 0),
+
+    diamond_amount: plated
+      ? 0
+      : Number(data.diamond_amount || 0),
+
+    bits_weight: plated
+      ? 0
+      : Number(data.bits_weight || 0),
+
+    bits_amount: plated
+      ? 0
+      : Number(data.bits_amount || 0),
+
+    enamel_weight: plated
+      ? 0
+      : Number(data.enamel_weight || 0),
+
+    enamel_amount: plated
+      ? 0
+      : Number(data.enamel_amount || 0),
+
+    pearls_weight: plated
+      ? 0
+      : Number(data.pearls_weight || 0),
+
+    pearls_amount: plated
+      ? 0
+      : Number(data.pearls_amount || 0),
+
+    other_weight: plated
+      ? 0
+      : Number(data.other_weight || 0),
+
+    other_amount: plated
+      ? 0
+      : Number(data.other_amount || 0),
+
+    gross_weight: plated
+      ? 0
+      : Number(data.gross_weight || 0),
+
+    stockBox: data.stockBox ?? "",
+    itemCode: data.itemCode ?? "",
+    barcodeValue: data.barcodeValue ?? "",
+
+    discount: prev.discount,
+    deliveryStatus: prev.deliveryStatus,
+    deliveryDate: prev.deliveryDate,
+    workStatus: prev.workStatus,
+  };
+
+  const totalItemAmount = plated
+    ? Math.round(scannedPrice)
+    : calculateTotals(
+        updatedOrder,
+        isEditing
+          ? Number(prev.metalPrice)
+          : getMetalPrice,
+      ).total_item_amount;
+
+  return {
+    ...updatedOrder,
+    total_item_amount: totalItemAmount,
+  };
+});
 
       setIsPrefilled(true);
       setOrderErrors({});
@@ -1002,31 +1384,41 @@ const saveNewItemNameIfNeeded = async () => {
     return Math.round(total * 1000) / 1000;
   };
 
-  useEffect(() => {
-    const { total_item_amount } = calculateTotals(
+useEffect(() => {
+  const { total_item_amount } =
+    calculateTotals(
       order,
-      order.metalPrice
+      order.metalPrice,
     );
 
-    setOrder((prev) => ({
+  setOrder((prev) => {
+    if (
+      prev.total_item_amount ===
+      total_item_amount
+    ) {
+      return prev;
+    }
+
+    return {
       ...prev,
       total_item_amount,
-    }));
-  }, [
-    order.metal,
-    order.metal_weight,
-    order.wastage,
-    order.making_charges,
-    order.stone_amount,
-    order.wax_amount,
-    order.diamond_amount,
-    order.bits_amount,
-    order.enamel_amount,
-    order.pearls_amount,
-    order.other_amount,
-    isEditing, // ✅ IMPORTANT
-  ]);
-
+    };
+  });
+}, [
+  order.metal,
+  order.metalPrice,
+  order.metal_weight,
+  order.wastage,
+  order.making_charges,
+  order.stone_amount,
+  order.wax_amount,
+  order.diamond_amount,
+  order.bits_amount,
+  order.enamel_amount,
+  order.pearls_amount,
+  order.other_amount,
+  isEditing,
+]);
   // 1️⃣ Set default price only when metal changes
   useEffect(() => {
     if (editingExchangeId) return;
@@ -1063,7 +1455,32 @@ const saveNewItemNameIfNeeded = async () => {
     }));
   }, [exchange.exchange_metal_price, exchange.exchange_purity_weight]);
 
-  
+  const platedOrder =
+  isPlatedMetal(order.metal);
+
+  const platedHiddenFields = new Set([
+  "metalPrice",
+  "catalogue",
+  "design",
+  "size",
+  "metal_weight",
+  "wastage",
+  "stone_weight",
+  "stone_amount",
+  "wax_weight",
+  "wax_amount",
+  "diamond_weight",
+  "diamond_amount",
+  "bits_weight",
+  "bits_amount",
+  "enamel_weight",
+  "enamel_amount",
+  "pearls_weight",
+  "pearls_amount",
+  "other_weight",
+  "other_amount",
+  "gross_weight",
+]);
 
   return (
     <Box>
@@ -1167,25 +1584,77 @@ const saveNewItemNameIfNeeded = async () => {
             gap: 3, // spacing between items (like Grid spacing={3})
           }}
         >
-          {Object.entries(order).map(([key, value]) => (
-            <Box key={key}>
+          {Object.entries(order)
+  .filter(([key]) => {
+    if (!platedOrder) return true;
+
+    return !platedHiddenFields.has(key);
+  })
+  .map(([key, value]) => (
+    <Box key={key}>
               {key === "metal" ? (
                 <TextField
                   select
                   label="Metal"
                   value={order.metal}
-             onChange={(e) => {
+          onChange={(e) => {
   const selectedMetal = e.target.value;
+  const plated = isPlatedMetal(selectedMetal);
 
-  setOrder({
-    ...order,
+  setOrder((prev) => ({
+    ...prev,
+
     metal: selectedMetal,
     itemName: "",
-    metalPrice: getUpdatedMetalPrice(selectedMetal, ""),
-  });
+
+
+    stockBox: "",
+  itemCode: "",
+  barcodeValue: "",
+
+    metalPrice: plated
+      ? 0
+      : getUpdatedMetalPrice(selectedMetal, ""),
+
+
+
+    catalogue: plated ? "" : prev.catalogue,
+    design: plated ? "" : prev.design,
+    size: plated ? "" : prev.size,
+
+    metal_weight: plated ? 0 : prev.metal_weight,
+    wastage: plated ? 0 : prev.wastage,
+
+    stone_weight: plated ? 0 : prev.stone_weight,
+    stone_amount: plated ? 0 : prev.stone_amount,
+
+    wax_weight: plated ? 0 : prev.wax_weight,
+    wax_amount: plated ? 0 : prev.wax_amount,
+
+    diamond_weight: plated ? 0 : prev.diamond_weight,
+    diamond_amount: plated ? 0 : prev.diamond_amount,
+
+    bits_weight: plated ? 0 : prev.bits_weight,
+    bits_amount: plated ? 0 : prev.bits_amount,
+
+    enamel_weight: plated ? 0 : prev.enamel_weight,
+    enamel_amount: plated ? 0 : prev.enamel_amount,
+
+    pearls_weight: plated ? 0 : prev.pearls_weight,
+    pearls_amount: plated ? 0 : prev.pearls_amount,
+
+    other_weight: plated ? 0 : prev.other_weight,
+    other_amount: plated ? 0 : prev.other_amount,
+
+    gross_weight: plated ? 0 : prev.gross_weight,
+    total_item_amount: 0,
+  }));
 
   setItemInputValue("");
   setItemDropdownOpen(false);
+  setOrderErrors({});
+  setIsPrefilled(false);
+setSearchQuery("");
 }}
                   disabled={
                     isEditing || (isPrefilled && (key as string) !== "discount")
@@ -1216,6 +1685,8 @@ const saveNewItemNameIfNeeded = async () => {
                   <MenuItem value="22 Gold">22 Gold</MenuItem>
                   <MenuItem value="999 Silver">999 Silver</MenuItem>
                   <MenuItem value="995 Silver">995 Silver</MenuItem>
+                  <MenuItem value="Gold Plated">Gold Plated</MenuItem>
+                  <MenuItem value="Silver Plated">Silver Plated</MenuItem>
                 </TextField>
               ) : key === "catalogue" ? (
                 <TextField
@@ -1464,9 +1935,13 @@ onInputChange={(_, newInputValue) => {
               ) : (
                 <TextField
                   {...thickTextFieldProps}
-                  label={key
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase())}
+                  label={
+  key === "making_charges" && platedOrder
+    ? "Total Item Price"
+    : key
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+}
                   type={typeof value === "number" ? "number" : "text"}
                   onWheel={
                     typeof value === "number"
@@ -1531,8 +2006,12 @@ onInputChange={(_, newInputValue) => {
                     (!isEditing && isPrefilled && key !== "discount")
                   }
                   InputProps={{
-                    readOnly: key === "gross_weight" || key === "metalPrice",
-                  }}
+  readOnly:
+    key === "gross_weight" ||
+    key === "metalPrice" ||
+    key === "barcodeValue" ||
+    key === "itemCode",
+}}
                 />
               )}
             </Box>
@@ -1553,13 +2032,17 @@ onInputChange={(_, newInputValue) => {
             onClick={async () => {
   window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
 
-  await saveNewItemNameIfNeeded();
+  if (!validateOrderBeforeSubmit()) {
+  return;
+}
 
-  if (isEditing) {
-    handleUpdateOrder();
-  } else {
-    handleOrderSubmit();
-  }
+await saveNewItemNameIfNeeded();
+
+if (isEditing) {
+  await handleUpdateOrder();
+} else {
+  await handleOrderSubmit();
+}
 }}
           >
             {isEditing ? "Update" : "Submit"}
@@ -1631,7 +2114,9 @@ onInputChange={(_, newInputValue) => {
                       sx={{ fontSize: "0.95rem" }}
                     >
                       <div className="flex justify-center items-center">
-                        {ord.metal_weight}
+                       {isPlatedMetal(ord.metal)
+  ? "-"
+  : (ord.metal_weight ?? "-")}
                       </div>
                     </TableCell>
 
@@ -1696,7 +2181,8 @@ onInputChange={(_, newInputValue) => {
                       sx={{ fontSize: "0.95rem" }}
                     >
                       <div className="flex justify-center items-center">
-                        {order.deliveryStatus === "Canceled" ? (
+                        {ord.deliveryStatus === "Canceled" ||
+ord.delivery_status === "Canceled" ? (
                           <>-</>
                         ) : (
                           <IconButton
@@ -1734,10 +2220,11 @@ console.log("DB METAL PRICE:", ord.metalPrice);
                                 other_weight: ord.other_weight || 0,
                                 other_amount: ord.other_amount || 0,
                                 gross_weight: ord.gross_weight || 0,
-                                stockBox: ord.stockBox || 0,
-                                itemCode: ord.itemCode || 0,
+                                stockBox: ord.stockBox || "",
+                                itemCode: ord.itemCode || "",
+
                                 discount: ord.discount || 0,
-                                barcodeValue: ord.barcodeValue || 0,
+                                barcodeValue: ord.barcodeValue || "",
                                 deliveryStatus:
                                   ord.deliveryStatus ||
                                   ord.delivery_status ||
@@ -1772,7 +2259,8 @@ setItemDropdownOpen(false);
                       sx={{ fontSize: "0.95rem" }}
                     >
                       <div className="flex justify-center items-center">
-                        {order.deliveryStatus === "Canceled" ? (
+                        {ord.deliveryStatus === "Canceled" ||
+ord.delivery_status === "Canceled" ? (
                           <CheckCircleIcon color="success" />
                         ) : editBillDetails === "editBill" ? (
                           "-"
@@ -1940,9 +2428,9 @@ setItemDropdownOpen(false);
                     // 🔸 Default for other fields
                     <TextField
                       {...thickTextFieldProps}
-                      label={key
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (c) => c.toUpperCase())}
+          label={key
+  .replace(/_/g, " ")
+  .replace(/\b\w/g, (c) => c.toUpperCase())}
                       type={typeof value === "number" ? "number" : "text"}
                       onWheel={
                         typeof value === "number"

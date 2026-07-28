@@ -89,10 +89,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ mode }) => {
 const role = localStorage.getItem("role");
 const basePath = role === "ADMIN" ? "/admin" : "/sales";
  const isAdmin = role === "ADMIN";
-  const barcodeApi =
-  role === "ADMIN"
-    ? `${basePath}/getByBarcode`
-    : `${basePath}/getDataByBarcode`;
+  const barcodeApi = `${basePath}/getByBarcode`;
   const isSales = role === "SALES";
 const showEstimationSection = !isSales || mode === "estimation";
 const showStockBoxSection = !isSales || mode === "stockBox";

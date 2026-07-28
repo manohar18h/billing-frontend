@@ -167,6 +167,14 @@ const quickBuyRef = React.useRef<HTMLDivElement | null>(null);
 
 const [showActiveSchemes, setShowActiveSchemes] = useState(false);
 const [showSchemeDashboard, setShowSchemeDashboard] = useState(false);
+type SchemeSection =
+  | "PRE_BOOKING"
+  | "FLEXI_11"
+  | "QUICK_BUY";
+
+const [activeSchemeSection, setActiveSchemeSection] =
+  useState<SchemeSection>("PRE_BOOKING");
+
 const [schemeTab, setSchemeTab] = useState<
   "overview" | "preBooking" | "flexi11" | "quickBuy"
 >("overview");
@@ -189,6 +197,257 @@ const quickBuyCards = schemeDashboard?.quickBuySummaries || [];
 
 const totalSchemeCards =
   preBookingCards.length + flexi11Cards.length + quickBuyCards.length;
+
+
+  const normalizeSchemeStatus = (status: any) =>
+  String(status || "").trim().toUpperCase();
+
+const isActiveStatus = (status: any) =>
+  normalizeSchemeStatus(status) === "ACTIVE";
+
+const isCompletedStatus = (status: any) =>
+  normalizeSchemeStatus(status) === "COMPLETED";
+
+const isInactiveStatus = (status: any) => {
+  const normalized = normalizeSchemeStatus(status);
+
+  return (
+    normalized === "INACTIVE" ||
+    normalized === "CANCELLED" ||
+    normalized === "CANCELED" ||
+    normalized === "CLOSED"
+  );
+};
+
+const sumSchemeValues = (
+  items: any[],
+  valueSelector: (item: any) => number,
+) =>
+  items.reduce(
+    (total, item) =>
+      total + Number(valueSelector(item) || 0),
+    0,
+  );
+
+/* ---------------- PRE-BOOKING SUMMARY ---------------- */
+
+const preBookingActiveCount =
+  preBookingCards.filter((item: any) =>
+    isActiveStatus(item.status),
+  ).length;
+
+const preBookingCompletedCount =
+  preBookingCards.filter((item: any) =>
+    isCompletedStatus(item.status),
+  ).length;
+
+const preBookingInactiveCount =
+  preBookingCards.filter((item: any) =>
+    isInactiveStatus(item.status),
+  ).length;
+
+const advanceGoldBookingCount =
+  preBookingCards.filter(
+    (item: any) =>
+      item.schemeSubType ===
+      "ADVANCE_GOLD_BOOKING",
+  ).length;
+
+const advanceKamalSilverCount =
+  preBookingCards.filter(
+    (item: any) =>
+      item.schemeSubType ===
+      "ADVANCE_KAMAL_SILVER_BOOKING",
+  ).length;
+
+const advanceSwastikSilverCount =
+  preBookingCards.filter(
+    (item: any) =>
+      item.schemeSubType ===
+      "ADVANCE_SWASTIK_SILVER_BOOKING",
+  ).length;
+
+const oldGoldExchangeCount =
+  preBookingCards.filter(
+    (item: any) =>
+      item.schemeSubType === "OLD_GOLD_EXCHANGE",
+  ).length;
+
+const oldSilverExchangeCount =
+  preBookingCards.filter(
+    (item: any) =>
+      item.schemeSubType === "OLD_SILVER_EXCHANGE",
+  ).length;
+
+const totalPreBookingGoldWeight =
+  sumSchemeValues(
+    preBookingCards.filter(
+      (item: any) =>
+        item.schemeSubType ===
+          "ADVANCE_GOLD_BOOKING" ||
+        item.schemeSubType ===
+          "OLD_GOLD_EXCHANGE",
+    ),
+    (item: any) =>
+      item.schemeSubType === "OLD_GOLD_EXCHANGE"
+        ? item.oldPurityWeight
+        : item.metalWeight,
+  );
+
+const totalPreBookingSilverWeight =
+  sumSchemeValues(
+    preBookingCards.filter(
+      (item: any) =>
+        item.schemeSubType ===
+          "ADVANCE_KAMAL_SILVER_BOOKING" ||
+        item.schemeSubType ===
+          "ADVANCE_SWASTIK_SILVER_BOOKING" ||
+        item.schemeSubType ===
+          "OLD_SILVER_EXCHANGE",
+    ),
+    (item: any) =>
+      item.schemeSubType === "OLD_SILVER_EXCHANGE"
+        ? item.oldPurityWeight
+        : item.metalWeight,
+  );
+
+const totalPreBookingAmount =
+  sumSchemeValues(
+    preBookingCards,
+    (item: any) =>
+      item.oldExchangeAmount ?? item.amount,
+  );
+
+/* ---------------- FLEXI 11 SUMMARY ---------------- */
+
+const flexiActiveCount =
+  flexi11Cards.filter((item: any) =>
+    isActiveStatus(item.status),
+  ).length;
+
+const flexiCompletedCount =
+  flexi11Cards.filter((item: any) =>
+    isCompletedStatus(item.status),
+  ).length;
+
+const flexiInactiveCount =
+  flexi11Cards.filter((item: any) =>
+    isInactiveStatus(item.status),
+  ).length;
+
+const flexiPaymentDueCount =
+  flexi11Cards.filter(
+    (item: any) =>
+      Boolean(item.showPayButton) &&
+      !isCompletedStatus(item.status),
+  ).length;
+
+const totalFlexiPaidAmount =
+  sumSchemeValues(
+    flexi11Cards,
+    (item: any) => item.totalPaidAmount,
+  );
+
+const totalFlexiGoldWeight =
+  sumSchemeValues(
+    flexi11Cards,
+    (item: any) => item.totalGoldWeight,
+  );
+
+const totalFlexiPaidMonths =
+  sumSchemeValues(
+    flexi11Cards,
+    (item: any) => item.paidMonths,
+  );
+
+/* ---------------- QUICK BUY SUMMARY ---------------- */
+
+const quickBuyTransactionCount =
+  sumSchemeValues(
+    quickBuyCards,
+    (item: any) => item.transactionCount,
+  );
+
+const quickBuyTotalAmount =
+  sumSchemeValues(
+    quickBuyCards,
+    (item: any) => item.totalAmount,
+  );
+
+const quickBuyGoldWeight =
+  sumSchemeValues(
+    quickBuyCards.filter((item: any) =>
+      String(item.metalName || "")
+        .toLowerCase()
+        .includes("gold"),
+    ),
+    (item: any) => item.totalWeight,
+  );
+
+const quickBuySilverWeight =
+  sumSchemeValues(
+    quickBuyCards.filter((item: any) =>
+      String(item.metalName || "")
+        .toLowerCase()
+        .includes("silver"),
+    ),
+    (item: any) => item.totalWeight,
+  );
+
+const quickBuyGoldTransactions =
+  sumSchemeValues(
+    quickBuyCards.filter((item: any) =>
+      String(item.metalName || "")
+        .toLowerCase()
+        .includes("gold"),
+    ),
+    (item: any) => item.transactionCount,
+  );
+
+const quickBuySilverTransactions =
+  sumSchemeValues(
+    quickBuyCards.filter((item: any) =>
+      String(item.metalName || "")
+        .toLowerCase()
+        .includes("silver"),
+    ),
+    (item: any) => item.transactionCount,
+  );
+
+const activeSectionTitle =
+  activeSchemeSection === "PRE_BOOKING"
+    ? "Pre-Booking & Exchange Schemes"
+    : activeSchemeSection === "FLEXI_11"
+      ? "Flexi 11 Monthly Schemes"
+      : "Quick Buy Transactions";
+
+const activeSectionCount =
+  activeSchemeSection === "PRE_BOOKING"
+    ? preBookingCards.length
+    : activeSchemeSection === "FLEXI_11"
+      ? flexi11Cards.length
+      : quickBuyTransactionCount;
+
+const openSchemeSection = (
+  section: SchemeSection,
+) => {
+  setActiveSchemeSection(section);
+  setShowActiveSchemes(true);
+
+  window.setTimeout(() => {
+    const sectionElement =
+      document.getElementById(
+        "scheme-section-details",
+      );
+
+    sectionElement?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 150);
+};
+
+
 
 const openSchemeDetails = (
   type: "PRE_BOOKING" | "FLEXI_11" | "QUICK_BUY",
@@ -283,6 +542,28 @@ const detailButtonClass = `
   hover:text-black
   hover:shadow-lg
 `;
+
+const getStatusClass = (status: any) => {
+  const normalized = normalizeSchemeStatus(status);
+
+  if (normalized === "COMPLETED") {
+    return "border border-emerald-300/30 bg-emerald-100 text-emerald-700";
+  }
+
+  if (normalized === "ACTIVE") {
+    return "border border-green-300/30 bg-green-100 text-green-700";
+  }
+
+  if (
+    normalized === "CANCELLED" ||
+    normalized === "CANCELED" ||
+    normalized === "INACTIVE"
+  ) {
+    return "border border-red-300/30 bg-red-100 text-red-700";
+  }
+
+  return "border border-gray-300 bg-gray-100 text-gray-700";
+};
 
   const handleBackClick = () => {
     navigate("/admin/customers");
@@ -1111,8 +1392,10 @@ const handleAdminCreatePreBooking = async () => {
     setMetalWeight("");
     setMetalAmount("");
 
-    await refreshCustomerProfile();
-    setSchemeTab("overview");
+  await refreshCustomerProfile();
+
+setSchemeTab("overview");
+setActiveSchemeSection("PRE_BOOKING");
 setShowActiveSchemes(true);
   } catch (error: any) {
 alert(
@@ -1188,8 +1471,10 @@ const handleAdminCreateFlexi11 = async () => {
     );
 
     alert("Flexi 11 scheme added successfully");
-    await refreshCustomerProfile();
-   setSchemeTab("overview");
+   await refreshCustomerProfile();
+
+setSchemeTab("overview");
+setActiveSchemeSection("FLEXI_11");
 setShowActiveSchemes(true);
   } catch (error: any) {
 alert(
@@ -1240,8 +1525,10 @@ const handleAdminCreateQuickBuy = async () => {
     );
 
     alert("Quick Buy added successfully");
-    await refreshCustomerProfile();
-   setSchemeTab("overview");
+   await refreshCustomerProfile();
+
+setSchemeTab("overview");
+setActiveSchemeSection("QUICK_BUY");
 setShowActiveSchemes(true);
   } catch (error: any) {
 alert(
@@ -1693,310 +1980,1024 @@ const handleSchemeTabClick = (
         ))}
       </div>
 
-      {/* VIEW ALL SCHEMES COLLAPSE */}
-      <div className="mt-8 overflow-hidden rounded-[30px] border border-[#f5c542]/40 bg-[#111] shadow-2xl">
-        <button
-          onClick={() => setShowActiveSchemes((prev) => !prev)}
-          className={`${clickable} flex w-full items-center justify-between gap-4 px-8 py-6 text-left max-md:px-4 max-md:py-5`}
+      {/* SCHEME TYPE SUMMARY CARDS */}
+<div className="mt-10">
+  <div className="mb-5 flex items-end justify-between gap-4 max-md:flex-col max-md:items-start">
+    <div>
+      <p className="text-[13px] font-bold uppercase tracking-[4px] text-[#b98213]">
+        Customer Scheme Portfolio
+      </p>
+
+      <h3 className="mt-2 font-serif text-[34px] text-[#111] max-md:text-[27px]">
+        Select a Scheme Category
+      </h3>
+
+      <p className="mt-2 max-w-3xl text-[15px] leading-7 text-gray-500">
+        Each category is separated so you can easily check
+        scheme counts, metal balances, payments and full
+        transaction details.
+      </p>
+    </div>
+
+    <div className="rounded-full bg-[#fff5d6] px-5 py-2 text-sm font-bold text-[#8c6510]">
+      {totalSchemeCards} scheme groups
+    </div>
+  </div>
+
+  <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-1">
+    {/* PRE-BOOKING SUMMARY CARD */}
+    <button
+      type="button"
+      onClick={() =>
+        openSchemeSection("PRE_BOOKING")
+      }
+      className={`${clickable} group relative overflow-hidden rounded-[30px] border p-6 text-left shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
+        activeSchemeSection === "PRE_BOOKING" &&
+        showActiveSchemes
+          ? "border-[#d79d22] bg-[#17120a] text-white ring-4 ring-[#f5c542]/20"
+          : "border-[#ead9ad] bg-gradient-to-br from-[#fffaf0] to-[#f8ebc8] text-[#17120a]"
+      }`}
+    >
+      <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#f5c542]/20" />
+
+      <div className="relative">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f5c542] text-2xl font-black text-black shadow">
+            PB
+          </div>
+
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-bold ${
+              activeSchemeSection ===
+                "PRE_BOOKING" &&
+              showActiveSchemes
+                ? "bg-white/10 text-[#f5c542]"
+                : "bg-white text-[#9b6c08]"
+            }`}
+          >
+            {preBookingCards.length} Schemes
+          </span>
+        </div>
+
+        <h4 className="mt-5 font-serif text-[27px] font-bold">
+          Pre-Booking & Exchange
+        </h4>
+
+        <p
+          className={`mt-2 min-h-[48px] text-sm leading-6 ${
+            activeSchemeSection ===
+              "PRE_BOOKING" &&
+            showActiveSchemes
+              ? "text-white/60"
+              : "text-gray-600"
+          }`}
         >
-          <div>
-            <p className="text-[13px] font-bold uppercase tracking-[4px] text-[#f5c542]">
-              View All Schemes & Transactions
+          Advance gold or silver bookings and old
+          jewellery exchange schemes.
+        </p>
+
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <div
+            className={`rounded-2xl p-3 text-center ${
+              activeSchemeSection ===
+                "PRE_BOOKING" &&
+              showActiveSchemes
+                ? "bg-white/[0.07]"
+                : "bg-white/80"
+            }`}
+          >
+            <p className="text-[11px] uppercase text-gray-500">
+              Active
             </p>
-
-            <h3 className="mt-2 font-serif text-[32px] text-white max-md:text-[24px]">
-              Customer Running Gold & Silver Benefits
-            </h3>
-
-            <p className="mt-2 text-white/60">
-              Check Pre-Booking, Flexi 11 and Quick Buy transactions.
+            <p className="mt-1 text-xl font-black text-green-500">
+              {preBookingActiveCount}
             </p>
           </div>
 
           <div
-            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#f5c542] text-[28px] font-bold text-black transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
-              showActiveSchemes ? "rotate-180" : ""
+            className={`rounded-2xl p-3 text-center ${
+              activeSchemeSection ===
+                "PRE_BOOKING" &&
+              showActiveSchemes
+                ? "bg-white/[0.07]"
+                : "bg-white/80"
             }`}
           >
-            ↓
+            <p className="text-[11px] uppercase text-gray-500">
+              Completed
+            </p>
+            <p className="mt-1 text-xl font-black text-blue-500">
+              {preBookingCompletedCount}
+            </p>
           </div>
-        </button>
+
+          <div
+            className={`rounded-2xl p-3 text-center ${
+              activeSchemeSection ===
+                "PRE_BOOKING" &&
+              showActiveSchemes
+                ? "bg-white/[0.07]"
+                : "bg-white/80"
+            }`}
+          >
+            <p className="text-[11px] uppercase text-gray-500">
+              Inactive
+            </p>
+            <p className="mt-1 text-xl font-black text-red-500">
+              {preBookingInactiveCount}
+            </p>
+          </div>
+        </div>
 
         <div
-          className={`grid transition-all duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          className={`mt-4 space-y-3 rounded-[22px] p-4 ${
+            activeSchemeSection ===
+              "PRE_BOOKING" &&
             showActiveSchemes
-              ? "grid-rows-[1fr] opacity-100"
-              : "grid-rows-[0fr] opacity-0"
+              ? "bg-white/[0.06]"
+              : "bg-white/70"
           }`}
         >
-          <div className="overflow-hidden">
-            <div className="border-t border-white/10 px-8 py-8 max-md:px-4">
-              {totalSchemeCards === 0 ? (
-                <div className="rounded-[24px] bg-white/10 p-8 text-center text-white">
-                  No active schemes found.
-                </div>
-              ) : (
-                <div
-                  className={`grid grid-cols-3 gap-6 transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] max-md:grid-cols-1 ${
-                    showActiveSchemes
-                      ? "translate-y-0 scale-100 opacity-100"
-                      : "translate-y-8 scale-[0.98] opacity-0"
-                  }`}
-                >
-                {preBookingCards.map((item: any, index: number) => {
-    const isOldExchange =
-      item.schemeSubType === "OLD_GOLD_EXCHANGE" ||
-      item.schemeSubType === "OLD_SILVER_EXCHANGE";
-
-    return (
-      <div
-        key={`pre-${item.schemeId}`}
-  className="
-    cursor-pointer
-    transition-all
-    duration-300
-    hover:-translate-y-1
-    hover:shadow-2xl
-    active:scale-[0.98]
-    rounded-[26px]
-    bg-white/[0.07]
-    p-6
-    text-white
-    shadow-xl
-  "      >
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm font-bold text-[#f5c542]">
-              Pre-Booking #{index + 1}
-            </p>
-            <h4 className="mt-2 text-[22px] font-bold">
-              {item.schemeSubType?.replaceAll("_", " ")}
-            </h4>
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="opacity-60">
+              Gold / Old Gold
+            </span>
+            <b>
+              {advanceGoldBookingCount} /{" "}
+              {oldGoldExchangeCount}
+            </b>
           </div>
 
-          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-            {item.status}
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="opacity-60">
+              Silver / Old Silver
+            </span>
+            <b>
+              {advanceKamalSilverCount +
+                advanceSwastikSilverCount}{" "}
+              / {oldSilverExchangeCount}
+            </b>
+          </div>
+
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="opacity-60">
+              Total Gold
+            </span>
+            <b>
+              {totalPreBookingGoldWeight.toFixed(3)} gm
+            </b>
+          </div>
+
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="opacity-60">
+              Total Silver
+            </span>
+            <b>
+              {totalPreBookingSilverWeight.toFixed(3)} gm
+            </b>
+          </div>
+
+          <div className="flex justify-between gap-4 border-t border-current/10 pt-3 text-sm">
+            <span className="opacity-60">
+              Total Value
+            </span>
+            <b className="text-[#d49c22]">
+              {formatMoney(totalPreBookingAmount)}
+            </b>
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-center justify-between rounded-full bg-[#f5c542] px-5 py-3 font-bold text-black">
+          <span>View Pre-Booking Schemes</span>
+          <span className="text-xl">→</span>
+        </div>
+      </div>
+    </button>
+
+    {/* FLEXI 11 SUMMARY CARD */}
+    <button
+      type="button"
+      onClick={() =>
+        openSchemeSection("FLEXI_11")
+      }
+      className={`${clickable} group relative overflow-hidden rounded-[30px] border p-6 text-left shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
+        activeSchemeSection === "FLEXI_11" &&
+        showActiveSchemes
+          ? "border-emerald-500 bg-[#071a14] text-white ring-4 ring-emerald-500/20"
+          : "border-emerald-200 bg-gradient-to-br from-[#f4fff9] to-[#dff8ea] text-[#10241b]"
+      }`}
+    >
+      <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-emerald-500/15" />
+
+      <div className="relative">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 text-xl font-black text-white shadow">
+            11
+          </div>
+
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-bold ${
+              activeSchemeSection ===
+                "FLEXI_11" &&
+              showActiveSchemes
+                ? "bg-white/10 text-emerald-300"
+                : "bg-white text-emerald-700"
+            }`}
+          >
+            {flexi11Cards.length} Schemes
           </span>
         </div>
 
-        <div className="mt-5 space-y-3">
-          <div className="flex justify-between border-b border-white/10 pb-2">
-            <span className="text-white/50">Metal</span>
-            <b>{item.metalName || "-"}</b>
+        <h4 className="mt-5 font-serif text-[27px] font-bold">
+          Flexi 11 Month Plan
+        </h4>
+
+        <p
+          className={`mt-2 min-h-[48px] text-sm leading-6 ${
+            activeSchemeSection ===
+              "FLEXI_11" &&
+            showActiveSchemes
+              ? "text-white/60"
+              : "text-gray-600"
+          }`}
+        >
+          Monthly gold savings with payment tracking,
+          due dates and collected gold weight.
+        </p>
+
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <div
+            className={`rounded-2xl p-3 text-center ${
+              activeSchemeSection ===
+                "FLEXI_11" &&
+              showActiveSchemes
+                ? "bg-white/[0.07]"
+                : "bg-white/80"
+            }`}
+          >
+            <p className="text-[11px] uppercase text-gray-500">
+              Active
+            </p>
+            <p className="mt-1 text-xl font-black text-green-500">
+              {flexiActiveCount}
+            </p>
           </div>
 
-          {isOldExchange ? (
+          <div
+            className={`rounded-2xl p-3 text-center ${
+              activeSchemeSection ===
+                "FLEXI_11" &&
+              showActiveSchemes
+                ? "bg-white/[0.07]"
+                : "bg-white/80"
+            }`}
+          >
+            <p className="text-[11px] uppercase text-gray-500">
+              Completed
+            </p>
+            <p className="mt-1 text-xl font-black text-blue-500">
+              {flexiCompletedCount}
+            </p>
+          </div>
+
+          <div
+            className={`rounded-2xl p-3 text-center ${
+              activeSchemeSection ===
+                "FLEXI_11" &&
+              showActiveSchemes
+                ? "bg-white/[0.07]"
+                : "bg-white/80"
+            }`}
+          >
+            <p className="text-[11px] uppercase text-gray-500">
+              Inactive
+            </p>
+            <p className="mt-1 text-xl font-black text-red-500">
+              {flexiInactiveCount}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className={`mt-4 space-y-3 rounded-[22px] p-4 ${
+            activeSchemeSection ===
+              "FLEXI_11" &&
+            showActiveSchemes
+              ? "bg-white/[0.06]"
+              : "bg-white/70"
+          }`}
+        >
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="opacity-60">
+              Payments Due
+            </span>
+            <b
+              className={
+                flexiPaymentDueCount > 0
+                  ? "text-orange-500"
+                  : "text-green-500"
+              }
+            >
+              {flexiPaymentDueCount}
+            </b>
+          </div>
+
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="opacity-60">
+              Paid Months
+            </span>
+            <b>{totalFlexiPaidMonths}</b>
+          </div>
+
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="opacity-60">
+              Gold Collected
+            </span>
+            <b>
+              {totalFlexiGoldWeight.toFixed(4)} gm
+            </b>
+          </div>
+
+          <div className="flex justify-between gap-4 border-t border-current/10 pt-3 text-sm">
+            <span className="opacity-60">
+              Total Paid
+            </span>
+            <b className="text-emerald-500">
+              {formatMoney(totalFlexiPaidAmount)}
+            </b>
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-center justify-between rounded-full bg-emerald-500 px-5 py-3 font-bold text-white">
+          <span>View Flexi 11 Schemes</span>
+          <span className="text-xl">→</span>
+        </div>
+      </div>
+    </button>
+
+    {/* QUICK BUY SUMMARY CARD */}
+    <button
+      type="button"
+      onClick={() =>
+        openSchemeSection("QUICK_BUY")
+      }
+      className={`${clickable} group relative overflow-hidden rounded-[30px] border p-6 text-left shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
+        activeSchemeSection === "QUICK_BUY" &&
+        showActiveSchemes
+          ? "border-blue-500 bg-[#081426] text-white ring-4 ring-blue-500/20"
+          : "border-blue-200 bg-gradient-to-br from-[#f5f9ff] to-[#dfeaff] text-[#10213d]"
+      }`}
+    >
+      <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-blue-500/15" />
+
+      <div className="relative">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500 text-2xl font-black text-white shadow">
+            QB
+          </div>
+
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-bold ${
+              activeSchemeSection ===
+                "QUICK_BUY" &&
+              showActiveSchemes
+                ? "bg-white/10 text-blue-300"
+                : "bg-white text-blue-700"
+            }`}
+          >
+            {quickBuyTransactionCount} Transactions
+          </span>
+        </div>
+
+        <h4 className="mt-5 font-serif text-[27px] font-bold">
+          Quick Buy Gold & Silver
+        </h4>
+
+        <p
+          className={`mt-2 min-h-[48px] text-sm leading-6 ${
+            activeSchemeSection ===
+              "QUICK_BUY" &&
+            showActiveSchemes
+              ? "text-white/60"
+              : "text-gray-600"
+          }`}
+        >
+          Instant gold and silver purchases stored in
+          the customer scheme wallet.
+        </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <div
+            className={`rounded-2xl p-3 text-center ${
+              activeSchemeSection ===
+                "QUICK_BUY" &&
+              showActiveSchemes
+                ? "bg-white/[0.07]"
+                : "bg-white/80"
+            }`}
+          >
+            <p className="text-[11px] uppercase text-gray-500">
+              Gold Transactions
+            </p>
+            <p className="mt-1 text-xl font-black text-[#d49c22]">
+              {quickBuyGoldTransactions}
+            </p>
+          </div>
+
+          <div
+            className={`rounded-2xl p-3 text-center ${
+              activeSchemeSection ===
+                "QUICK_BUY" &&
+              showActiveSchemes
+                ? "bg-white/[0.07]"
+                : "bg-white/80"
+            }`}
+          >
+            <p className="text-[11px] uppercase text-gray-500">
+              Silver Transactions
+            </p>
+            <p className="mt-1 text-xl font-black text-gray-500">
+              {quickBuySilverTransactions}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className={`mt-4 space-y-3 rounded-[22px] p-4 ${
+            activeSchemeSection ===
+              "QUICK_BUY" &&
+            showActiveSchemes
+              ? "bg-white/[0.06]"
+              : "bg-white/70"
+          }`}
+        >
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="opacity-60">
+              Gold Purchased
+            </span>
+            <b>
+              {quickBuyGoldWeight.toFixed(4)} gm
+            </b>
+          </div>
+
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="opacity-60">
+              Silver Purchased
+            </span>
+            <b>
+              {quickBuySilverWeight.toFixed(4)} gm
+            </b>
+          </div>
+
+          <div className="flex justify-between gap-4 border-t border-current/10 pt-3 text-sm">
+            <span className="opacity-60">
+              Total Invested
+            </span>
+            <b className="text-blue-500">
+              {formatMoney(quickBuyTotalAmount)}
+            </b>
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-center justify-between rounded-full bg-blue-500 px-5 py-3 font-bold text-white">
+          <span>View Quick Buy Details</span>
+          <span className="text-xl">→</span>
+        </div>
+      </div>
+    </button>
+  </div>
+</div>
+
+{/* SELECTED SCHEME CATEGORY DETAILS */}
+<div
+  id="scheme-section-details"
+  className="scroll-mt-24"
+>
+  <div
+    className={`mt-8 grid transition-all duration-700 ${
+      showActiveSchemes
+        ? "grid-rows-[1fr] opacity-100"
+        : "grid-rows-[0fr] opacity-0"
+    }`}
+  >
+    <div className="overflow-hidden">
+      <div className="overflow-hidden rounded-[32px] border border-[#f5c542]/30 bg-[#111] shadow-2xl">
+        <div className="flex items-center justify-between gap-4 border-b border-white/10 px-7 py-6 max-md:px-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[4px] text-[#f5c542]">
+              Selected Category
+            </p>
+
+            <h3 className="mt-2 font-serif text-[30px] text-white max-md:text-[23px]">
+              {activeSectionTitle}
+            </h3>
+
+            <p className="mt-1 text-sm text-white/50">
+              {activeSectionCount}{" "}
+              {activeSchemeSection === "QUICK_BUY"
+                ? "transactions"
+                : "schemes"}{" "}
+              found
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              setShowActiveSchemes(false)
+            }
+            className={`${clickable} flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-2xl font-bold text-white hover:bg-[#f5c542] hover:text-black`}
+            aria-label="Close scheme section"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="px-7 py-7 max-md:px-4">
+          {/* PRE-BOOKING INDIVIDUAL CARDS */}
+          {activeSchemeSection ===
+            "PRE_BOOKING" && (
             <>
-              <div className="flex justify-between border-b border-white/10 pb-2">
-                <span className="text-white/50">Item Name</span>
-                <b>{item.itemName || "Old Jewellery"}</b>
-              </div>
+              {preBookingCards.length === 0 ? (
+                <div className="rounded-[24px] bg-white/[0.07] p-10 text-center">
+                  <p className="text-xl font-bold text-white">
+                    No Pre-Booking schemes
+                  </p>
 
-              <div className="flex justify-between border-b border-white/10 pb-2">
-                <span className="text-white/50">Exchange Amount</span>
-                <b>{formatMoney(item.oldExchangeAmount)}</b>
-              </div>
+                  <p className="mt-2 text-sm text-white/50">
+                    This customer has not started a
+                    Pre-Booking or Exchange scheme.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-6 max-lg:grid-cols-2 max-md:grid-cols-1">
+                  {preBookingCards.map(
+                    (item: any, index: number) => {
+                      const oldExchange =
+                        item.schemeSubType ===
+                          "OLD_GOLD_EXCHANGE" ||
+                        item.schemeSubType ===
+                          "OLD_SILVER_EXCHANGE";
 
-              <div className="flex justify-between border-b border-white/10 pb-2">
-                <span className="text-white/50">Purity Weight</span>
-                <b>{item.oldPurityWeight || 0} gm</b>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex justify-between border-b border-white/10 pb-2">
-                <span className="text-white/50">Amount</span>
-                <b>{formatMoney(item.amount)}</b>
-              </div>
+                      return (
+                        <article
+                          key={`pre-${item.schemeId}`}
+                          onClick={() =>
+                            openSchemeDetails(
+                              "PRE_BOOKING",
+                              item,
+                            )
+                          }
+                          className="group flex cursor-pointer flex-col rounded-[26px] border border-white/10 bg-white/[0.07] p-6 text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#f5c542]/70 hover:bg-white/[0.1] hover:shadow-2xl active:scale-[0.99]"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold text-[#f5c542]">
+                                {oldExchange
+                                  ? "Exchange"
+                                  : "Pre-Booking"}{" "}
+                                #{index + 1}
+                              </p>
 
-              <div className="flex justify-between border-b border-white/10 pb-2">
-                <span className="text-white/50">Weight</span>
-                <b>{item.metalWeight || 0} gm</b>
-              </div>
+                              <h4 className="mt-2 text-[21px] font-bold leading-8">
+                                {String(
+                                  item.schemeSubType ||
+                                    "PRE BOOKING",
+                                ).replaceAll(
+                                  "_",
+                                  " ",
+                                )}
+                              </h4>
+                            </div>
 
-              <div className="flex justify-between border-b border-white/10 pb-2">
-                <span className="text-white/50">Booked Rate</span>
-                <b>₹{item.ratePerGram || 0}/gm</b>
-              </div>
+                            <span
+                              className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold ${getStatusClass(
+                                item.status,
+                              )}`}
+                            >
+                              {item.status || "UNKNOWN"}
+                            </span>
+                          </div>
+
+                          <div className="mt-5 flex-1 space-y-3">
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                              <span className="text-white/50">
+                                Metal
+                              </span>
+                              <b className="text-right">
+                                {item.metalName || "-"}
+                              </b>
+                            </div>
+
+                            {oldExchange ? (
+                              <>
+                                <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                  <span className="text-white/50">
+                                    Old Item
+                                  </span>
+                                  <b className="max-w-[55%] text-right">
+                                    {item.itemName ||
+                                      "Old Jewellery"}
+                                  </b>
+                                </div>
+
+                                <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                  <span className="text-white/50">
+                                    Purity Weight
+                                  </span>
+                                  <b>
+                                    {Number(
+                                      item.oldPurityWeight ||
+                                        0,
+                                    ).toFixed(3)}{" "}
+                                    gm
+                                  </b>
+                                </div>
+
+                                <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                  <span className="text-white/50">
+                                    Exchange Value
+                                  </span>
+                                  <b className="text-[#f5c542]">
+                                    {formatMoney(
+                                      item.oldExchangeAmount,
+                                    )}
+                                  </b>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                  <span className="text-white/50">
+                                    Booked Weight
+                                  </span>
+                                  <b>
+                                    {Number(
+                                      item.metalWeight ||
+                                        0,
+                                    ).toFixed(3)}{" "}
+                                    gm
+                                  </b>
+                                </div>
+
+                                <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                  <span className="text-white/50">
+                                    Amount
+                                  </span>
+                                  <b className="text-[#f5c542]">
+                                    {formatMoney(
+                                      item.amount,
+                                    )}
+                                  </b>
+                                </div>
+
+                                <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                  <span className="text-white/50">
+                                    Booked Rate
+                                  </span>
+                                  <b>
+                                    {formatMoney(
+                                      item.ratePerGram,
+                                    )}
+                                    /gm
+                                  </b>
+                                </div>
+                              </>
+                            )}
+
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                              <span className="text-white/50">
+                                Hold Progress
+                              </span>
+                              <b>
+                                {getCompletedMonths(
+                                  item,
+                                )}
+                                /
+                                {item.holdMonths || 0}{" "}
+                                months
+                              </b>
+                            </div>
+
+                            <div className="flex justify-between gap-4">
+                              <span className="text-white/50">
+                                Maturity
+                              </span>
+                              <b>
+                                {formatDate(
+                                  item.maturityDate,
+                                )}
+                              </b>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+
+                              openSchemeDetails(
+                                "PRE_BOOKING",
+                                item,
+                              );
+                            }}
+                            className={`${detailButtonClass} mt-6`}
+                          >
+                            View Full Details
+                          </button>
+                        </article>
+                      );
+                    },
+                  )}
+                </div>
+              )}
             </>
           )}
 
-          <div className="flex justify-between border-b border-white/10 pb-2">
-            <span className="text-white/50">Hold Months</span>
-            <b>
-  {getCompletedMonths(item)}/{item.holdMonths || 0} Months
-</b>
-          </div>
+          {/* FLEXI 11 INDIVIDUAL CARDS */}
+          {activeSchemeSection === "FLEXI_11" && (
+            <>
+              {flexi11Cards.length === 0 ? (
+                <div className="rounded-[24px] bg-white/[0.07] p-10 text-center">
+                  <p className="text-xl font-bold text-white">
+                    No Flexi 11 schemes
+                  </p>
 
-          <div className="flex justify-between">
-            <span className="text-white/50">Maturity</span>
-            <b>{formatDate(item.maturityDate)}</b>
-          </div>
+                  <p className="mt-2 text-sm text-white/50">
+                    This customer has not started a
+                    Flexi 11 monthly scheme.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-6 max-lg:grid-cols-2 max-md:grid-cols-1">
+                  {flexi11Cards.map(
+                    (item: any, index: number) => {
+                      const canPay =
+                        Boolean(
+                          item.showPayButton,
+                        ) &&
+                        isActiveStatus(
+                          item.status,
+                        ) &&
+                        !isCompletedStatus(
+                          item.status,
+                        );
+
+                      return (
+                        <article
+                          key={`flexi-${item.schemeId}`}
+                          onClick={() =>
+                            openSchemeDetails(
+                              "FLEXI_11",
+                              item,
+                            )
+                          }
+                          className="group flex cursor-pointer flex-col rounded-[26px] border border-white/10 bg-white/[0.07] p-6 text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/60 hover:bg-white/[0.1] hover:shadow-2xl active:scale-[0.99]"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold text-emerald-400">
+                                Flexi 11 #{index + 1}
+                              </p>
+
+                              <h4 className="mt-2 text-[22px] font-bold">
+                                Monthly Gold Savings
+                              </h4>
+                            </div>
+
+                            <span
+                              className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold ${getStatusClass(
+                                item.status,
+                              )}`}
+                            >
+                              {item.status || "UNKNOWN"}
+                            </span>
+                          </div>
+
+                          <div className="mt-5 flex-1 space-y-3">
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                              <span className="text-white/50">
+                                Monthly Amount
+                              </span>
+                              <b>
+                                {formatMoney(
+                                  item.monthlyAmount,
+                                )}
+                              </b>
+                            </div>
+
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                              <span className="text-white/50">
+                                Total Paid
+                              </span>
+                              <b className="text-emerald-400">
+                                {formatMoney(
+                                  item.totalPaidAmount,
+                                )}
+                              </b>
+                            </div>
+
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                              <span className="text-white/50">
+                                Gold Collected
+                              </span>
+                              <b>
+                                {Number(
+                                  item.totalGoldWeight ||
+                                    0,
+                                ).toFixed(4)}{" "}
+                                gm
+                              </b>
+                            </div>
+
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                              <span className="text-white/50">
+                                Paid Months
+                              </span>
+                              <b>
+                                {item.paidMonths || 0}/
+                                {item.durationMonths ||
+                                  11}
+                              </b>
+                            </div>
+
+                            <div className="flex justify-between gap-4">
+                              <span className="text-white/50">
+                                Next Due Date
+                              </span>
+                              <b
+                                className={
+                                  canPay
+                                    ? "text-orange-400"
+                                    : ""
+                                }
+                              >
+                                {formatDate(
+                                  item.nextDueDate,
+                                )}
+                              </b>
+                            </div>
+                          </div>
+
+                          {canPay && (
+                            <div className="mt-5 rounded-2xl border border-orange-400/30 bg-orange-400/10 px-4 py-3">
+                              <p className="text-xs font-bold uppercase tracking-[2px] text-orange-300">
+                                Payment available
+                              </p>
+
+                              <p className="mt-1 text-sm text-white/60">
+                                The next Flexi month can
+                                now be paid.
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="mt-5 grid gap-3">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+
+                                openSchemeDetails(
+                                  "FLEXI_11",
+                                  item,
+                                );
+                              }}
+                              className={detailButtonClass}
+                            >
+                              View Full Details
+                            </button>
+
+                            {canPay && (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+
+                                  handleAdminPayFlexiMonth(
+                                    item,
+                                  );
+                                }}
+                                className={`${clickable} flex h-[52px] w-full items-center justify-center rounded-xl bg-[#f5c542] px-4 font-black text-black shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#ffd85c] hover:shadow-xl active:scale-[0.98]`}
+                              >
+                                Pay Due Month —{" "}
+                                {formatMoney(
+                                  item.monthlyAmount,
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    },
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* QUICK BUY INDIVIDUAL CARDS */}
+          {activeSchemeSection === "QUICK_BUY" && (
+            <>
+              {quickBuyCards.length === 0 ? (
+                <div className="rounded-[24px] bg-white/[0.07] p-10 text-center">
+                  <p className="text-xl font-bold text-white">
+                    No Quick Buy transactions
+                  </p>
+
+                  <p className="mt-2 text-sm text-white/50">
+                    This customer has not purchased gold
+                    or silver through Quick Buy.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-6 max-lg:grid-cols-2 max-md:grid-cols-1">
+                  {quickBuyCards.map(
+                    (item: any, index: number) => (
+                      <article
+                        key={`quick-${
+                          item.metalName || index
+                        }`}
+                        onClick={() =>
+                          openSchemeDetails(
+                            "QUICK_BUY",
+                            item,
+                          )
+                        }
+                        className="group flex cursor-pointer flex-col rounded-[26px] border border-white/10 bg-white/[0.07] p-6 text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/60 hover:bg-white/[0.1] hover:shadow-2xl active:scale-[0.99]"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-bold text-blue-400">
+                              Quick Buy
+                            </p>
+
+                            <h4 className="mt-2 text-[22px] font-bold">
+                              {item.metalName || "Metal"}
+                            </h4>
+                          </div>
+
+                          <span className="shrink-0 rounded-full border border-blue-300/30 bg-blue-100 px-3 py-1 text-[11px] font-bold text-blue-700">
+                            COMPLETED
+                          </span>
+                        </div>
+                        <div className="mt-5 flex-1 space-y-3">
+                          <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                            <span className="text-white/50">
+                              Transactions
+                            </span>
+                            <b>
+                              {item.transactionCount ||
+                                0}
+                            </b>
+                          </div>
+
+                          <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                            <span className="text-white/50">
+                              Total Amount
+                            </span>
+                            <b className="text-blue-400">
+                              {formatMoney(
+                                item.totalAmount,
+                              )}
+                            </b>
+                          </div>
+
+                          <div className="flex justify-between gap-4">
+                            <span className="text-white/50">
+                              Total Weight
+                            </span>
+                            <b>
+                              {Number(
+                                item.totalWeight || 0,
+                              ).toFixed(4)}{" "}
+                              gm
+                            </b>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+
+                            openSchemeDetails(
+                              "QUICK_BUY",
+                              item,
+                            );
+                          }}
+                          className={`${detailButtonClass} mt-6`}
+                        >
+                          View All Transactions
+                        </button>
+                      </article>
+                    ),
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
-
-       <button
-  onClick={() => openSchemeDetails("PRE_BOOKING", item)}
-  className={detailButtonClass}
->
-  View Details
-</button>
-      </div>
-    );
-  })}
-
-  {flexi11Cards.map((item: any, index: number) => (
-    <div
-      key={`flexi-${item.schemeId}`}
-  className="
-    cursor-pointer
-    transition-all
-    duration-300
-    hover:-translate-y-1
-    hover:shadow-2xl
-    active:scale-[0.98]
-    rounded-[26px]
-    bg-white/[0.07]
-    p-6
-    text-white
-    shadow-xl
-  "    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-bold text-[#f5c542]">
-            Flexi 11 #{index + 1}
-          </p>
-          <h4 className="mt-2 text-[22px] font-bold">
-            Monthly Gold Savings
-          </h4>
-        </div>
-
-        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-          {item.status}
-        </span>
-      </div>
-
-      <div className="mt-5 space-y-3">
-        <div className="flex justify-between border-b border-white/10 pb-2">
-          <span className="text-white/50">Metal</span>
-          <b>{item.metalName || "Gold"}</b>
-        </div>
-
-        <div className="flex justify-between border-b border-white/10 pb-2">
-          <span className="text-white/50">Monthly Amount</span>
-          <b>{formatMoney(item.monthlyAmount)}</b>
-        </div>
-
-        <div className="flex justify-between border-b border-white/10 pb-2">
-          <span className="text-white/50">Total Paid</span>
-          <b>{formatMoney(item.totalPaidAmount)}</b>
-        </div>
-
-        <div className="flex justify-between border-b border-white/10 pb-2">
-          <span className="text-white/50">Gold Collected</span>
-          <b>{Number(item.totalGoldWeight || 0).toFixed(4)} gm</b>
-        </div>
-
-        <div className="flex justify-between border-b border-white/10 pb-2">
-          <span className="text-white/50">Next Due Date</span>
-          <b>{formatDate(item.nextDueDate)}</b>
-        </div>
-
-        <div className="flex justify-between">
-          <span className="text-white/50">Paid Months</span>
-          <b>
-            {item.paidMonths || 0}/{item.durationMonths || 11}
-          </b>
-        </div>
-      </div>
-
-     <div className="mt-5 flex gap-3">
- {item.showPayButton && (
-  <button
-    onClick={(e) => {
-      e.preventDefault();
-      handleAdminPayFlexiMonth(item);
-    }}
-    className={`${clickable} flex-1 rounded-xl bg-[#f5c542] py-3 font-bold text-black shadow-lg`}
-  >
-    Pay Now
-  </button>
-)}
-
- <button
-  onClick={() => openSchemeDetails("FLEXI_11", item)}
-  className={`${detailButtonClass} ${
-    item.showPayButton ? "" : "col-span-2"
-  }`}
->
-  View Details
-</button>
-</div>
-    </div>
-  ))}
-
-  {quickBuyCards.map((item: any) => (
-    <div
-      key={`quick-${item.metalName}`}
-  className="
-    cursor-pointer
-    transition-all
-    duration-300
-    hover:-translate-y-1
-    hover:shadow-2xl
-    active:scale-[0.98]
-    rounded-[26px]
-    bg-white/[0.07]
-    p-6
-    text-white
-    shadow-xl
-  "    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-bold text-[#f5c542]">
-            Quick Buy {item.metalName}
-          </p>
-          <h4 className="mt-2 text-[22px] font-bold">
-            {item.transactionCount} Transactions
-          </h4>
-        </div>
-
-        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-          COMPLETED
-        </span>
-      </div>
-
-      <div className="mt-5 space-y-3">
-        <div className="flex justify-between border-b border-white/10 pb-2">
-          <span className="text-white/50">Metal</span>
-          <b>{item.metalName}</b>
-        </div>
-
-        <div className="flex justify-between border-b border-white/10 pb-2">
-          <span className="text-white/50">Total Amount</span>
-          <b>{formatMoney(item.totalAmount)}</b>
-        </div>
-
-        <div className="flex justify-between border-b border-white/10 pb-2">
-          <span className="text-white/50">Total Weight</span>
-          <b>{Number(item.totalWeight || 0).toFixed(4)} gm</b>
-        </div>
-
-        <div className="flex justify-between">
-          <span className="text-white/50">Transactions</span>
-          <b>{item.transactionCount}</b>
-        </div>
-      </div>
-
-      <button
-  onClick={() => openSchemeDetails("QUICK_BUY", item)}
-  className={detailButtonClass}
->
-  View Transactions
-</button>
-    </div>
-  ))}
-  
-</div>        )}
       </div>
     </div>
   </div>

@@ -871,13 +871,13 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                             : item.metal}
                   </td>
                   <td className="border px-2 py-1 text-[#004848] font-bold text-center align-middle text-[13px]">
-                    {item.metalPrice}
+                    {item.metalPrice || "-"}
                   </td>
                   <td className="border px-2 py-1 text-[#070065] font-bold text-center align-middle text-[13px]">
-                    {item.gross_weight}
+                    {item.gross_weight ?? "-"}
                   </td>
                   <td className="border px-2 py-1 text-[#00457d] font-bold text-center align-middle text-[13px]">
-                    {item.metal_weight}
+                    {item.metal_weight ?? "-"}
                   </td>
                   {activeWeightKeys.map((key) => {
                     const showWeightColumn =
@@ -904,7 +904,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                     );
                   })}
                   <td className="border px-2 py-1 text-[#51016c] font-bold text-center align-middle text-[13px]">
-                    {item.wastage}%
+                     {Number(item.wastage || 0)}%
                   </td>
                   <td className="border px-2 py-1 text-[#965205] font-bold text-center align-middle text-[13px]">
                     {item.making_charges}

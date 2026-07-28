@@ -50,32 +50,45 @@ type StockProduct = {
   stockProductId: number;
   metal: string;
   itemName: string;
-  catalogue: string;
-  design: number | string;
-  size: number | string;
-  metal_weight: number;
-  stone_weight: number;
-  stone_amount: number;
-  wax_weight: number;
-  wax_amount: number;
-  diamond_weight: number;
-  diamond_amount: number;
-  bits_weight: number;
-  bits_amount: number;
-  enamel_weight: number;
-  enamel_amount: number;
-  pearls_weight: number;
-  pearls_amount: number;
-  other_weight: number;
-  other_amount: number;
-  gross_weight: number;
-  stock?: number;
-  stockBox: string;
-  linkWorker?: string;
-  barcodeValue?: string;
-  itemCode?: string;
-  barcodeImageBase64?: string;
-  epcNumber?: string;
+
+  catalogue?: string | null;
+  design?: number | string | null;
+  size?: number | string | null;
+
+  metal_weight?: number | null;
+  wastage?: number | null;
+  making_charges?: number | null;
+
+  stone_weight?: number | null;
+  stone_amount?: number | null;
+
+  wax_weight?: number | null;
+  wax_amount?: number | null;
+
+  diamond_weight?: number | null;
+  diamond_amount?: number | null;
+
+  bits_weight?: number | null;
+  bits_amount?: number | null;
+
+  enamel_weight?: number | null;
+  enamel_amount?: number | null;
+
+  pearls_weight?: number | null;
+  pearls_amount?: number | null;
+
+  other_weight?: number | null;
+  other_amount?: number | null;
+
+  gross_weight?: number | null;
+
+  stock?: number | null;
+  stockBox?: string | null;
+  linkWorker?: string | null;
+  barcodeValue?: string | null;
+  itemCode?: string | null;
+  barcodeImageBase64?: string | null;
+  epcNumber?: string | null;
 };
 
 interface StockProductResponse {
@@ -173,14 +186,7 @@ const initialProduct: ProductForm = {
   gross_weight: "",
 };
 
-const requiredProductKeys: (keyof ProductForm)[] = [
-  "metal",
-  "itemName",
-  "catalogue",
-  "design",
-  "size",
-  "metal_weight",
-];
+
 
 export interface SpeclWorkRequest {
   itemName: string;
@@ -194,6 +200,18 @@ export interface SpeclWorkRequest {
 }
 
 /* ============================ Component ============================ */
+
+const isPlatedMetal = (
+  metal?: string | null,
+): boolean => {
+  const normalized = metal?.trim().toLowerCase();
+
+  return (
+    normalized === "gold plated" ||
+    normalized === "silver plated"
+  );
+};
+
 const Products: React.FC = () => {
   /* --------- SEARCH (top) --------- */
   const navigate = useNavigate();
@@ -208,9 +226,22 @@ const [searchItemDropdownOpen, setSearchItemDropdownOpen] = useState(false);
 const [productItemInputValue, setProductItemInputValue] = useState("");
 const [productItemDropdownOpen, setProductItemDropdownOpen] = useState(false);
 
+const [product, setProduct] =
+  useState<ProductForm>(initialProduct);
+
+    const [q, setQ] = useState<ProductQuery>(initialQuery);
+
+
+const platedProduct =
+  isPlatedMetal(product.metal);
+
+
+const platedSearch =
+  isPlatedMetal(q.metal);
+
+
 const [spclItemInputValue, setSpclItemInputValue] = useState("");
 const [spclItemDropdownOpen, setSpclItemDropdownOpen] = useState(false);
-  const [q, setQ] = useState<ProductQuery>(initialQuery);
   const [topLoading, setTopLoading] = useState(false);
   const [topResults, setTopResults] = useState<StockProduct[] | null>(null);
 
@@ -332,9 +363,23 @@ setSpclItemDropdownOpen(false);
     }
   };
 
-  const getMetalTypeForItemApi = (metal: string) => {
-  if (metal === "24 Gold" || metal === "22 Gold") return "Gold";
-  if (metal === "999 Silver" || metal === "995 Silver") return "Silver";
+ const getMetalTypeForItemApi = (metal: string) => {
+  if (metal === "24 Gold" || metal === "22 Gold") {
+    return "Gold";
+  }
+
+  if (metal === "999 Silver" || metal === "995 Silver") {
+    return "Silver";
+  }
+
+  if (metal === "Gold Plated") {
+    return "Gold Plated";
+  }
+
+  if (metal === "Silver Plated") {
+    return "Silver Plated";
+  }
+
   return "";
 };
 
@@ -353,17 +398,20 @@ const fetchItemNamesByMetal = async (metal: string) => {
   const token = localStorage.getItem("token") ?? "";
 
  const res = await api.get<{ itemName: string }[]>(
-  `${basePath}/item-names/${metalType}`,
+  `${basePath}/item-names/${encodeURIComponent(metalType)}`,
   {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   },
 );
-
 const names = res.data
   .map((item) => item.itemName)
   .filter((name): name is string => Boolean(name));
   setItemOptions(names);
 };
+
+
+
+
 
 const saveNewItemNameIfNeeded = async (metal: string, itemNameValue: string) => {
   const metalType = getMetalTypeForItemApi(metal);
@@ -390,57 +438,107 @@ const saveNewItemNameIfNeeded = async (metal: string, itemNameValue: string) => 
   setItemOptions((prev) => [...prev, itemName].sort());
 };
 
-  const searchTop = async () => {
-    // If any field missing → open the form instead
-    if (Object.values(q).some((v) => !v.trim())) {
-      alert("Please fill all search fields (or add the product below).");
-      setTopResults(null);
-      setShowProductForm(true);
-      return;
+ 
+const searchTop = async () => {
+  const plated = isPlatedMetal(q.metal);
+
+  if (!q.metal.trim() || !q.itemName.trim()) {
+    alert("Please select metal and item name.");
+    setTopResults(null);
+    return;
+  }
+
+  if (
+    !plated &&
+    (
+      !q.catalogue.trim() ||
+      !q.design.trim() ||
+      !q.size.trim() ||
+      !q.weightRange.trim()
+    )
+  ) {
+    alert(
+      "Please fill catalogue, design, size and weight range.",
+    );
+    setTopResults(null);
+    return;
+  }
+
+  try {
+    setTopLoading(true);
+
+    const token =
+      localStorage.getItem("token") ?? "";
+
+    let url: string;
+
+    if (plated) {
+      /*
+       * This endpoint must exist in the backend.
+       * See the backend note below.
+       */
+      url =
+        `${basePath}/getStockProduct/plated` +
+        `?metal=${encodeURIComponent(q.metal.trim())}` +
+        `&itemName=${encodeURIComponent(q.itemName.trim())}`;
+    } else {
+      const [minStr, maxStr] =
+        q.weightRange.trim().split("-");
+
+      const min = Number(minStr);
+      const max = Number(maxStr);
+
+      url = `${basePath}/getStockProduct/${encodeURIComponent(
+        q.metal.trim(),
+      )}/${encodeURIComponent(
+        q.itemName.trim(),
+      )}/${encodeURIComponent(
+        q.catalogue.trim(),
+      )}/${encodeURIComponent(
+        q.design.trim(),
+      )}/${encodeURIComponent(
+        q.size.trim(),
+      )}/${min}/${max}`;
     }
 
-    try {
-      const range = q.weightRange.trim();
-      const [minStr, maxStr] = range.split("-");
-      const min = parseInt(minStr, 10);
-      const max = parseInt(maxStr, 10);
-
-      setTopLoading(true);
-      const token = localStorage.getItem("token") ?? "";
-
-      // ✅ axios auto-prepends VITE_API_URL
-      const url = `${basePath}/getStockProduct/${encodeURIComponent(
-        q.metal.trim(),
-      )}/${encodeURIComponent(q.itemName.trim())}/${encodeURIComponent(
-        q.catalogue.trim(),
-      )}/${encodeURIComponent(q.design.trim())}/${q.size.trim()}/${min}/${max}`;
-
-      const res = await api.get<StockProductResponse>(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    const res =
+      await api.get<StockProductResponse>(url, {
+        headers: token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : undefined,
       });
 
-      const data = res.data;
-      setTotalStock(data.totalStock);
+    const data = res.data;
 
-      const list = Array.isArray(data.products) ? data.products : [];
-      if (list.length) {
-        setTopResults(list);
-        setShowProductForm(false);
-      } else {
-        alert("No data found.");
-        setTopResults(null);
-        setShowProductForm(true);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Search failed.");
+    setTotalStock(data.totalStock ?? 0);
+
+    const list =
+      Array.isArray(data.products)
+        ? data.products
+        : [];
+
+    if (list.length > 0) {
+      setTopResults(list);
+      setShowProductForm(false);
+    } else {
+      alert("No data found.");
       setTopResults(null);
-      setShowProductForm(true);
-    } finally {
-      setTopLoading(false);
     }
-  };
+  } catch (err) {
+    console.error(
+      "Product search failed:",
+      err,
+    );
 
+    alert("Search failed.");
+    setTopResults(null);
+  } finally {
+    setTopLoading(false);
+  }
+};
   
 
   const saveStock = async (row: StockProduct) => {
@@ -453,10 +551,11 @@ const saveNewItemNameIfNeeded = async (metal: string, itemNameValue: string) => 
       alert("Stock must be a number.");
       return;
     }
-    if (newStock === 0) {
-      alert("Please enter a non-zero number to add.");
-      return;
-    }
+    if (newStock <= 0) {
+  alert("Stock to add must be greater than 0.");
+  return;
+}
+
 
     const current = Number(row.stock ?? 0);
 
@@ -496,6 +595,9 @@ const saveNewItemNameIfNeeded = async (metal: string, itemNameValue: string) => 
           : prev,
       );
 
+      setTotalStock((prev) => prev + newStock);
+
+
       setEditingId(null);
       setEditValue("");
     } catch (err) {
@@ -520,18 +622,67 @@ const saveNewItemNameIfNeeded = async (metal: string, itemNameValue: string) => 
     null,
   );
 
-  const validateProduct = (): boolean => {
-    const newErrors: { [key: string]: string } = {};
-    for (const key of requiredProductKeys) {
-      const value = product[key];
+ const validateProduct = (): boolean => {
+  const newErrors: Partial<Record<keyof ProductForm, string>> = {};
 
-      if (!value || String(value).trim() === "") {
-        newErrors[key] = "Required";
-      }
+  const plated = isPlatedMetal(product.metal);
+
+  if (!product.metal.trim()) {
+    newErrors.metal = "Required";
+  }
+
+  if (!product.itemName.trim()) {
+    newErrors.itemName = "Required";
+  }
+
+ if (
+  !product.making_charges ||
+  !product.making_charges.trim()
+) {
+    newErrors.making_charges = plated
+      ? "Item price is required"
+      : "Making charges are required";
+  } else if (Number(product.making_charges) <= 0) {
+    newErrors.making_charges = plated
+      ? "Item price must be greater than 0"
+      : "Making charges must be greater than 0";
+  }
+
+  if (!product.stock || !product.stock.trim()) {
+    newErrors.stock = "Required";
+  } else if (Number(product.stock) <= 0) {
+    newErrors.stock = "Stock must be greater than 0";
+  }
+
+  if (!product.stockBox.trim()) {
+    newErrors.stockBox = "Required";
+  }
+
+  if (!plated) {
+    if (!product.catalogue.trim()) {
+      newErrors.catalogue = "Required";
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+
+    if (!product.design.trim()) {
+      newErrors.design = "Required";
+    }
+
+    if (!product.size.trim()) {
+      newErrors.size = "Required";
+    }
+
+    if (!product.metal_weight.trim()) {
+      newErrors.metal_weight = "Required";
+    } else if (Number(product.metal_weight) <= 0) {
+      newErrors.metal_weight =
+        "Metal weight must be greater than 0";
+    }
+  }
+
+  setErrors(newErrors);
+
+  return Object.keys(newErrors).length === 0;
+};
 
   const onSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -542,53 +693,143 @@ const saveNewItemNameIfNeeded = async (metal: string, itemNameValue: string) => 
 
     await saveNewItemNameIfNeeded(product.metal, product.itemName);
 
-    const safeNum = (val: any) =>
-      val === null || val === undefined || val === "" ? 0 : Number(val);
+    const safeNum = (
+  value: string | number | null | undefined,
+): number =>
+  value === null ||
+  value === undefined ||
+  value === ""
+    ? 0
+    : Number(value);
 
-    const payload = {
-      metal: product.metal.trim(),
-      itemName: product.itemName.trim(),
-      catalogue: product.catalogue.trim(),
-      design: product.design.trim(),
-      size: product.size.trim(),
-      metal_weight: safeNum(product.metal_weight),
-      wastage: safeNum(product.wastage),
-      making_charges: safeNum(product.making_charges),
+const plated = isPlatedMetal(product.metal);
 
-      // Gems (defaults to 0 if empty)
-      stone_weight: safeNum(product.stone_weight),
-      stone_rate: safeNum(product.stone_rate),
-      stone_amount: safeNum(product.stone_amount),
+const payload = {
+  metal: product.metal.trim(),
+  itemName: product.itemName.trim(),
 
-      wax_weight: safeNum(product.wax_weight),
-      wax_rate: safeNum(product.wax_rate),
-      wax_amount: safeNum(product.wax_amount),
+  catalogue: plated
+    ? null
+    : product.catalogue.trim(),
 
-      diamond_weight: safeNum(product.diamond_weight),
-      diamond_rate: safeNum(product.diamond_rate),
-      diamond_amount: safeNum(product.diamond_amount),
+  design: plated
+    ? null
+    : product.design.trim(),
 
-      bits_weight: safeNum(product.bits_weight),
-      bits_rate: safeNum(product.bits_rate),
-      bits_amount: safeNum(product.bits_amount),
+  size: plated
+    ? null
+    : product.size.trim(),
 
-      enamel_weight: safeNum(product.enamel_weight),
-      enamel_rate: safeNum(product.enamel_rate),
-      enamel_amount: safeNum(product.enamel_amount),
+  metal_weight: plated
+    ? null
+    : safeNum(product.metal_weight),
 
-      pearls_weight: safeNum(product.pearls_weight),
-      pearls_rate: safeNum(product.pearls_rate),
-      pearls_amount: safeNum(product.pearls_amount),
+  wastage: plated
+    ? null
+    : safeNum(product.wastage),
 
-      other_weight: safeNum(product.other_weight),
-      other_rate: safeNum(product.other_rate),
-      other_amount: safeNum(product.other_amount),
+  /*
+   * For plated products this field contains
+   * the complete selling price.
+   */
+  making_charges:
+    safeNum(product.making_charges),
 
-      stock: safeNum(product.stock),
-      stockBox: product.stockBox.trim(),
-      linkWorker: product.linkWorker?.trim(),
-      gross_weight: safeNum(product.gross_weight),
-    };
+  stone_weight: plated
+    ? null
+    : safeNum(product.stone_weight),
+
+  stone_rate: plated
+    ? null
+    : safeNum(product.stone_rate),
+
+  stone_amount: plated
+    ? null
+    : safeNum(product.stone_amount),
+
+  wax_weight: plated
+    ? null
+    : safeNum(product.wax_weight),
+
+  wax_rate: plated
+    ? null
+    : safeNum(product.wax_rate),
+
+  wax_amount: plated
+    ? null
+    : safeNum(product.wax_amount),
+
+  diamond_weight: plated
+    ? null
+    : safeNum(product.diamond_weight),
+
+  diamond_rate: plated
+    ? null
+    : safeNum(product.diamond_rate),
+
+  diamond_amount: plated
+    ? null
+    : safeNum(product.diamond_amount),
+
+  bits_weight: plated
+    ? null
+    : safeNum(product.bits_weight),
+
+  bits_rate: plated
+    ? null
+    : safeNum(product.bits_rate),
+
+  bits_amount: plated
+    ? null
+    : safeNum(product.bits_amount),
+
+  enamel_weight: plated
+    ? null
+    : safeNum(product.enamel_weight),
+
+  enamel_rate: plated
+    ? null
+    : safeNum(product.enamel_rate),
+
+  enamel_amount: plated
+    ? null
+    : safeNum(product.enamel_amount),
+
+  pearls_weight: plated
+    ? null
+    : safeNum(product.pearls_weight),
+
+  pearls_rate: plated
+    ? null
+    : safeNum(product.pearls_rate),
+
+  pearls_amount: plated
+    ? null
+    : safeNum(product.pearls_amount),
+
+  other_weight: plated
+    ? null
+    : safeNum(product.other_weight),
+
+  other_rate: plated
+    ? null
+    : safeNum(product.other_rate),
+
+  other_amount: plated
+    ? null
+    : safeNum(product.other_amount),
+
+  gross_weight: plated
+    ? null
+    : safeNum(product.gross_weight),
+
+  stock: safeNum(product.stock),
+  stockBox: product.stockBox.trim(),
+
+  linkWorker: plated
+    ? null
+    : product.linkWorker?.trim(),
+};
 
     try {
       setSubmitLoading(true);
@@ -672,54 +913,83 @@ setProductItemDropdownOpen(false);
   };
 
   // --- State ---
-  const [product, setProduct] = useState<ProductForm>(initialProduct);
 
  
 
   // --- Handler for normal product fields ---
-  const onProductChange =
-    (k: keyof ProductForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
+const onProductChange =
+  (key: keyof ProductForm) =>
+  (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
 
-      setProduct((prev) => {
-        const next = { ...prev, [k]: val };
-
-        // whenever weight fields update, recalc gross weight
-        next.gross_weight = String(calcGrossWeight(next));
-        return next;
-      });
-    };
-
-  // --- Handler for materials with weight & rate ---
-  const handleMaterialChange = (
-    material:
-      | "stone"
-      | "bits"
-      | "diamond"
-      | "enamel"
-      | "pearls"
-      | "wax"
-      | "other",
-    field: "weight" | "rate",
-    value: string,
-  ) => {
     setProduct((prev) => {
-      const next = { ...prev };
+      const next: ProductForm = {
+        ...prev,
+        [key]: value,
+      };
 
-      // update weight or rate
-      next[`${material}_${field}` as keyof ProductForm] = value;
-
-      // recalc amount for that material
-      const weight = toNum(next[`${material}_weight` as keyof ProductForm]);
-      const rate = toNum(next[`${material}_rate` as keyof ProductForm]);
-      const amount = calculateAmount(weight, rate);
-
-      // recalc gross weight
-      next.gross_weight = String(calcGrossWeight(next));
+      if (!isPlatedMetal(next.metal)) {
+        next.gross_weight =
+          String(calcGrossWeight(next));
+      } else {
+        next.gross_weight = "";
+      }
 
       return next;
     });
+
+    if (errors[key]) {
+      setErrors((prev) => ({
+        ...prev,
+        [key]: "",
+      }));
+    }
   };
+
+  // --- Handler for materials with weight & rate ---
+ const handleMaterialChange = (
+  material:
+    | "stone"
+    | "bits"
+    | "diamond"
+    | "enamel"
+    | "pearls"
+    | "wax"
+    | "other",
+  field: "weight" | "rate",
+  value: string,
+) => {
+  setProduct((prev) => {
+    const next: ProductForm = {
+      ...prev,
+    };
+
+    const fieldKey =
+      `${material}_${field}` as keyof ProductForm;
+
+    const weightKey =
+      `${material}_weight` as keyof ProductForm;
+
+    const rateKey =
+      `${material}_rate` as keyof ProductForm;
+
+    const amountKey =
+      `${material}_amount` as keyof ProductForm;
+
+    next[fieldKey] = value;
+
+    const weight = toNum(next[weightKey]);
+    const rate = toNum(next[rateKey]);
+    const amount = calculateAmount(weight, rate);
+
+    next[amountKey] = String(amount);
+
+    next.gross_weight =
+      String(calcGrossWeight(next));
+
+    return next;
+  });
+};
 
   // --- Gross weight calculator ---
   const calcGrossWeight = (p: ProductForm): number => {
@@ -817,8 +1087,15 @@ useEffect(() => {
 
   const buildSmallLabelHtml = (r: StockProduct, imageSrc: string) => {
     const barcodeValue = r.barcodeValue ?? "-";
-    const grossWeight = normalizeWeight(r.gross_weight);
-    const sizeValue = r.size ?? "-";
+    const plated = isPlatedMetal(r.metal);
+
+const grossWeight = plated
+  ? "-"
+  : normalizeWeight(r.gross_weight);
+
+const sizeValue = plated
+  ? "-"
+  : (r.size ?? "-");
     return `
 <html>
 <head>
@@ -895,7 +1172,9 @@ useEffect(() => {
   <div class="label">
     ${imageSrc ? `<img class="qr" src="${imageSrc}" />` : ""}
     <div class="text">${barcodeValue}</div>
-    <div class="gw">GW: ${grossWeight}g</div>
+    <div class="gw">
+  GW: ${plated ? "-" : `${grossWeight}g`}
+</div>
     <div class="size">SZ: ${sizeValue}</div>
   </div>
 </body>
@@ -1069,7 +1348,20 @@ useEffect(() => {
               select
               label="Metal"
               value={q.metal}
-              onChange={onQChange("metal")}
+              onChange={(e) => {
+  const selectedMetal = e.target.value;
+
+  setQ((prev) => ({
+    ...initialQuery,
+    metal: selectedMetal,
+    itemName: "",
+  }));
+
+  setSearchItemInputValue("");
+  setSearchItemDropdownOpen(false);
+  setTopResults(null);
+  setTotalStock(0);
+}}
               fullWidth
               sx={prettySelectSx}
               InputLabelProps={{ shrink: true }}
@@ -1093,6 +1385,8 @@ useEffect(() => {
               <MenuItem value="22 Gold">22 Gold</MenuItem>
               <MenuItem value="999 Silver">999 Silver</MenuItem>
               <MenuItem value="995 Silver">995 Silver</MenuItem>
+              <MenuItem value="Gold Plated">Gold Plated</MenuItem>
+              <MenuItem value="Silver Plated">Silver Plated</MenuItem>
             </TextField>
           </Grid>
 
@@ -1143,6 +1437,7 @@ useEffect(() => {
               value={q.catalogue}
               onChange={onQChange("catalogue")}
               fullWidth
+            
               sx={prettySelectSx}
               InputLabelProps={{ shrink: true }}
               SelectProps={{
@@ -1335,10 +1630,23 @@ useEffect(() => {
                     <TableCell>{p.stockProductId}</TableCell>
                     <TableCell>{p.metal}</TableCell>
                     <TableCell>{p.itemName}</TableCell>
-                    <TableCell>{p.catalogue}</TableCell>
-                    <TableCell>{p.design}</TableCell>
-                    <TableCell>{p.size}</TableCell>
-                    <TableCell>{p.metal_weight}</TableCell>
+                    <TableCell>
+  {p.catalogue ?? "-"}
+</TableCell>
+
+<TableCell>
+  {p.design ?? "-"}
+</TableCell>
+
+<TableCell>
+  {p.size ?? "-"}
+</TableCell>
+
+<TableCell>
+  {isPlatedMetal(p.metal)
+    ? "-"
+    : (p.metal_weight ?? "-")}
+</TableCell>
                     <TableCell>{p.stock ?? "-"}</TableCell>
                     <TableCell>
                       {!isEditing ? (
@@ -1413,48 +1721,70 @@ useEffect(() => {
               <Grid container spacing={2}>
                 {/* Metal select */}
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    select
-                    label="Metal"
-                    value={product.metal}
-                   onChange={(e) => {
-  const selectedMetal = e.target.value;
+                 <TextField
+  select
+  label="Metal"
+  value={product.metal}
+  onChange={(e) => {
+    const selectedMetal = e.target.value;
+    const plated = isPlatedMetal(selectedMetal);
 
-  setProduct((prev) => ({
-    ...prev,
-    metal: selectedMetal,
-    itemName: "",
-  }));
+    setProduct((prev) => {
+      if (plated) {
+        return {
+          ...initialProduct,
+          metal: selectedMetal,
+          itemName: "",
+          stock: prev.stock,
+          stockBox: prev.stockBox,
+        };
+      }
 
-  setProductItemInputValue("");
-  setProductItemDropdownOpen(false);
-}}
-                    fullWidth
-                    sx={prettySelectSx}
-                    InputLabelProps={{ shrink: true }}
-                    SelectProps={{
-                      displayEmpty: true,
-                      renderValue: (val) =>
-                        val ? (
-                          (val as string)
-                        ) : (
-                          <span style={{ color: "#9aa0a6" }}>Select metal</span>
-                        ),
-                    }}
-                  >
-                    <MenuItem value="">
-                      <em>Select Metal</em>
-                    </MenuItem>
-                    <MenuItem value="24 Gold">24 Gold</MenuItem>
-                    <MenuItem value="22 Gold">22 Gold</MenuItem>
-                    <MenuItem value="999 Silver">999 Silver</MenuItem>
-                    <MenuItem value="995 Silver">995 Silver</MenuItem>
-                  </TextField>
+      return {
+        ...prev,
+        metal: selectedMetal,
+        itemName: "",
+      };
+    });
+
+    setProductItemInputValue("");
+    setProductItemDropdownOpen(false);
+    setErrors({});
+  }}
+  fullWidth
+  error={!!errors.metal}
+  helperText={errors.metal || ""}
+  sx={prettySelectSx}
+  InputLabelProps={{ shrink: true }}
+  SelectProps={{
+    displayEmpty: true,
+    renderValue: (val) =>
+      val ? (
+        val as string
+      ) : (
+        <span style={{ color: "#9aa0a6" }}>
+          Select metal
+        </span>
+      ),
+  }}
+>
+  <MenuItem value="">
+    <em>Select Metal</em>
+  </MenuItem>
+
+  <MenuItem value="24 Gold">24 Gold</MenuItem>
+  <MenuItem value="22 Gold">22 Gold</MenuItem>
+  <MenuItem value="999 Silver">999 Silver</MenuItem>
+  <MenuItem value="995 Silver">995 Silver</MenuItem>
+  <MenuItem value="Gold Plated">Gold Plated</MenuItem>
+  <MenuItem value="Silver Plated">Silver Plated</MenuItem>
+</TextField>
                 </Grid>
 
                 {/* ItemName Auto Complete */}
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                  <Autocomplete
+                 
   freeSolo
   open={productItemDropdownOpen && itemOptions.length > 0}
   onOpen={() => itemOptions.length > 0 && setProductItemDropdownOpen(true)}
@@ -1509,6 +1839,10 @@ useEffect(() => {
 />
                 </Grid>
 
+                {!platedProduct && (
+  <>
+
+
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <TextField
                     select
@@ -1516,6 +1850,8 @@ useEffect(() => {
                     value={product.catalogue}
                     onChange={onProductChange("catalogue")}
                     fullWidth
+                    error={!!errors.catalogue}
+helperText={errors.catalogue || ""}
                     sx={prettySelectSx}
                     InputLabelProps={{ shrink: true }}
                     SelectProps={{
@@ -1638,25 +1974,7 @@ useEffect(() => {
                   />
                 </Grid>
 
-                {/* Making Charges */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Making Charges"
-                    type="number"
-                    value={product.making_charges}
-                    onChange={onProductChange("making_charges")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
+              
 
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <TextField
@@ -2080,37 +2398,7 @@ useEffect(() => {
                   />
                 </Grid>
 
-                {/* Stock */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Stock"
-                    type="number"
-                    value={product.stock}
-                    onChange={onProductChange("stock")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* Stock */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Stock Box"
-                    inputProps={{ step: "any" }}
-                    value={product.stockBox}
-                    onChange={onProductChange("stockBox")}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <TextField
                     select
                     label="Link Worker"
@@ -2138,7 +2426,90 @@ useEffect(() => {
                     <MenuItem value="Yes">Yes</MenuItem>
                   </TextField>
                 </Grid>
+                </>
+                )}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+  <TextField
+    label={
+      platedProduct
+        ? "Total Item Price"
+        : "Making Charges"
+    }
+    type="number"
+    value={product.making_charges}
+   onChange={onProductChange("making_charges")}
+    inputProps={{
+      step: "any",
+      min: "0",
+      onKeyDown: (e) => {
+        if (
+          e.key === "ArrowUp" ||
+          e.key === "ArrowDown"
+        ) {
+          e.preventDefault();
+        }
+      },
+    }}
+    onWheel={(e) =>
+      (e.target as HTMLInputElement).blur()
+    }
+    fullWidth
+    error={!!errors.making_charges}
+    helperText={
+      errors.making_charges ||
+      (
+        platedProduct
+          ? "Enter the complete selling price"
+          : ""
+      )
+    }
+  />
+</Grid>
+
+                {/* Stock */}
+               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+  <TextField
+    label="Stock"
+    type="number"
+    value={product.stock}
+   onChange={onProductChange("stock")}
+    inputProps={{
+      step: "any",
+      min: "0",
+      onKeyDown: (e) => {
+        if (
+          e.key === "ArrowUp" ||
+          e.key === "ArrowDown"
+        ) {
+          e.preventDefault();
+        }
+      },
+    }}
+    onWheel={(e) =>
+      (e.target as HTMLInputElement).blur()
+    }
+    fullWidth
+    error={!!errors.stock}
+    helperText={errors.stock || ""}
+  />
+</Grid>
+
+                {/* Stock */}
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+  <TextField
+    label="Stock Box"
+    value={product.stockBox}
+    onChange={onProductChange("stockBox")}
+    fullWidth
+    error={!!errors.stockBox}
+    helperText={errors.stockBox || ""}
+  />
+</Grid>
+               
               </Grid>
+
+
+              
 
               <Box display="flex" justifyContent="flex-end" mt={4}>
                 <Button
@@ -2162,7 +2533,13 @@ useEffect(() => {
               </Box>
             </Paper>
           </Box>
-          <Box component="form" onSubmit={onSubmitProduct}>
+          <Box
+  component="form"
+  onSubmit={(e) => {
+    e.preventDefault();
+    handleWorkAdding();
+  }}
+>
             <Paper
               elevation={0}
               sx={{
@@ -2228,7 +2605,9 @@ fullWidth
                     <MenuItem value="22 Gold">22 Gold</MenuItem>
                     <MenuItem value="999 Silver">999 Silver</MenuItem>
                     <MenuItem value="995 Silver">995 Silver</MenuItem>
-                  </TextField>
+                  <MenuItem value="Gold Plated">Gold Plated</MenuItem>
+              <MenuItem value="Silver Plated">Silver Plated</MenuItem>
+            </TextField>
                 </Grid>
 
                 {/* ItemName select (depends on metal) */}
