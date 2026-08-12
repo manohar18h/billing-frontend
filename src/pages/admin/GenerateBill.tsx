@@ -24,7 +24,34 @@ const GenerateBill: React.FC = () => {
   const [discountAmount, setDiscountAmount] = useState("");
   const [discountLoading, setDiscountLoading] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState("");
+  const [schemeCouponData, setSchemeCouponData] =
+  useState<any>(null);
+
+const [schemeCouponsLoading, setSchemeCouponsLoading] =
+  useState(false);
+
+const [schemeRedeemWeight, setSchemeRedeemWeight] =
+  useState("");
+
+const [schemePreview, setSchemePreview] =
+  useState<any>(null);
+
+const [schemePreviewLoading, setSchemePreviewLoading] =
+  useState(false);
+
+
+  const isSchemeCouponSelected =
+  selectedCoupon.startsWith("SCHEME:");
+
+const isQuickBuyCouponSelected =
+  selectedCoupon.startsWith("QUICK_BUY:");
+
+
+
   const navigate = useNavigate();
+
+
+
 
   // Transaction model
   interface Transaction {
@@ -163,6 +190,308 @@ We hope to serve you again soon!
   `;
   };
 
+
+  const normalizeBillMetal = (metal?: string) => {
+  const value = String(metal || "")
+    .trim()
+    .toLowerCase();
+
+  if (
+    value.includes("plated") ||
+    value.includes("coated")
+  ) {
+    return "";
+  }
+
+  if (value.includes("gold")) {
+    return "Gold";
+  }
+
+  if (
+    value === "999 silver" ||
+    value === "kamal silver" ||
+    value === "kamal"
+  ) {
+    return "Kamal Silver";
+  }
+
+  if (
+    value === "995 silver" ||
+    value === "swastik silver" ||
+    value === "swastik" ||
+    value === "satwik silver" ||
+    value === "satwik"
+  ) {
+    return "Swastik Silver";
+  }
+
+  return "";
+};
+
+
+const billMetals = React.useMemo(() => {
+  const metals = new Set<string>();
+
+  bill?.selectedOrders?.forEach((order) => {
+    if (
+      String(order.deliveryStatus || "")
+        .toLowerCase() === "canceled"
+    ) {
+      return;
+    }
+
+    const metal =
+      normalizeBillMetal(order.metal);
+
+    if (metal) {
+      metals.add(metal);
+    }
+  });
+
+  return metals;
+}, [bill?.selectedOrders]);
+
+
+const loadSchemeCoupons = async () => {
+  if (!bill?.phoneNumber) {
+    console.error(
+      "SCHEME COUPON: Bill phone number missing"
+    );
+
+    setSchemeCouponData(null);
+    return;
+  }
+
+  const phone = String(
+    bill.phoneNumber
+  ).replace(/\D/g, "");
+
+  console.log(
+    "SCHEME COUPON: loading for phone:",
+    phone
+  );
+
+  try {
+    setSchemeCouponsLoading(true);
+
+    const response = await api.get(
+      `/scheme/redeemable/by-phone/${encodeURIComponent(
+        phone
+      )}`
+    );
+
+    console.log(
+      "SCHEME COUPON API FULL RESPONSE:",
+      response
+    );
+
+    console.log(
+      "SCHEME COUPON API DATA:",
+      response.data
+    );
+
+   console.log(
+  "SCHEME COUPONS:",
+  response.data?.schemeCoupons
+);
+
+console.log(
+  "QUICK BUY WALLETS:",
+  response.data?.quickBuyWallets
+);
+
+    setSchemeCouponData(
+      response.data || null
+    );
+
+  } catch (error: any) {
+
+    console.error(
+      "SCHEME COUPON API ERROR:",
+      error
+    );
+
+    console.error(
+      "STATUS:",
+      error?.response?.status
+    );
+
+    console.error(
+      "ERROR RESPONSE:",
+      error?.response?.data
+    );
+
+    setSchemeCouponData(null);
+
+    alert(
+      error?.response?.data?.message ||
+      error?.response?.data ||
+      "Failed to load customer scheme coupons"
+    );
+
+  } finally {
+    setSchemeCouponsLoading(false);
+  }
+};
+
+
+
+useEffect(() => {
+  if (!discountDialogOpen) return;
+
+  loadSchemeCoupons();
+}, [
+  discountDialogOpen,
+  bill?.phoneNumber,
+]);
+
+const selectedRedeemableScheme =
+  React.useMemo(() => {
+    if (!isSchemeCouponSelected) {
+      return null;
+    }
+
+    const schemeId = Number(
+      selectedCoupon.split(":")[1],
+    );
+
+    return (
+     schemeCouponData?.schemeCoupons?.find(
+        (item: any) =>
+          Number(item.schemeId) === schemeId,
+      ) || null
+    );
+  }, [
+    selectedCoupon,
+    schemeCouponData,
+  ]);
+
+  const selectedQuickBuyWallet =
+  React.useMemo(() => {
+    if (!isQuickBuyCouponSelected) {
+      return null;
+    }
+
+    const metal =
+      selectedCoupon.substring(
+        "QUICK_BUY:".length,
+      );
+
+    return (
+      schemeCouponData?.quickBuyWallets?.find(
+        (item: any) =>
+          String(item.metalName) === metal,
+      ) || null
+    );
+  }, [
+    selectedCoupon,
+    schemeCouponData,
+  ]);
+
+  const previewSchemeCoupon = async () => {
+  if (!bill?.billId) return;
+
+  const redeemWeight =
+    Number(schemeRedeemWeight || 0);
+
+  if (redeemWeight <= 0) {
+    setSchemePreview(null);
+    return;
+  }
+
+  try {
+    setSchemePreviewLoading(true);
+
+    let payload: any;
+
+    if (isSchemeCouponSelected) {
+      if (!selectedRedeemableScheme) {
+        return;
+      }
+
+      payload = {
+        couponType: "SCHEME",
+        schemeId:
+          selectedRedeemableScheme.schemeId,
+        metalName:
+          selectedRedeemableScheme.metalName,
+        redeemWeight,
+      };
+    } else if (isQuickBuyCouponSelected) {
+      if (!selectedQuickBuyWallet) {
+        return;
+      }
+
+      payload = {
+        couponType: "QUICK_BUY",
+        schemeId: null,
+        metalName:
+          selectedQuickBuyWallet.metalName,
+        redeemWeight,
+      };
+    } else {
+      return;
+    }
+
+    const response = await api.post(
+      `/scheme/admin/bill-coupon/${bill.billId}/preview`,
+      payload,
+    );
+
+    setSchemePreview(response.data);
+
+    setDiscountAmount(
+      Number(
+        response.data.discountAmount || 0,
+      ).toFixed(2),
+    );
+  } catch (error: any) {
+    setSchemePreview(null);
+    setDiscountAmount("");
+
+    alert(
+      error?.response?.data?.message ||
+        error?.response?.data ||
+        error?.message ||
+        "Scheme coupon preview failed",
+    );
+  } finally {
+    setSchemePreviewLoading(false);
+  }
+};
+
+
+useEffect(() => {
+  if (
+    !isSchemeCouponSelected &&
+    !isQuickBuyCouponSelected
+  ) {
+    return;
+  }
+
+  if (
+    !schemeRedeemWeight ||
+    Number(schemeRedeemWeight) <= 0
+  ) {
+    setSchemePreview(null);
+    setDiscountAmount("");
+    return;
+  }
+
+  const timeout =
+    window.setTimeout(() => {
+      previewSchemeCoupon();
+    }, 350);
+
+  return () =>
+    window.clearTimeout(timeout);
+}, [
+  schemeRedeemWeight,
+  selectedCoupon,
+]);
+
+
+
   // Updated copyWhatsAppMessage function
   const copyWhatsAppMessage = () => {
     if (!bill) return;
@@ -199,39 +528,172 @@ We hope to serve you again soon!
     }
   };
 
-  const handleDiscountSubmit = async () => {
-    if (!bill?.billId) return;
+const handleDiscountSubmit = async () => {
+  if (!bill?.billId) return;
 
-    if (!discountAmount || Number(discountAmount) <= 0) {
-      alert("Please enter valid discount amount");
+  /*
+   * ====================================
+   * SCHEME / QUICK BUY COUPON
+   * ====================================
+   */
+  if (
+    isSchemeCouponSelected ||
+    isQuickBuyCouponSelected
+  ) {
+    const redeemWeight =
+      Number(schemeRedeemWeight || 0);
+
+    if (redeemWeight <= 0) {
+      alert(
+        "Please enter valid redeem weight",
+      );
       return;
     }
 
     try {
       setDiscountLoading(true);
 
-      await api.post(`/admin/applyBillDiscount/${bill.billId}`, null, {
-        params: { discountAmount: Number(discountAmount) },
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      let payload: any;
 
-     await refreshBill();
+      if (isSchemeCouponSelected) {
+        if (!selectedRedeemableScheme) {
+          alert(
+            "Selected scheme not found",
+          );
+          return;
+        }
 
-setDiscountDialogOpen(false);
-setDiscountAmount("");
-setSelectedCoupon("");
+        payload = {
+          couponType: "SCHEME",
+          schemeId:
+            selectedRedeemableScheme.schemeId,
+          metalName:
+            selectedRedeemableScheme.metalName,
+          redeemWeight,
+        };
+      } else {
+        if (!selectedQuickBuyWallet) {
+          alert(
+            "Selected Quick Buy wallet not found",
+          );
+          return;
+        }
+
+        payload = {
+          couponType: "QUICK_BUY",
+          schemeId: null,
+          metalName:
+            selectedQuickBuyWallet.metalName,
+          redeemWeight,
+        };
+      }
+
+      const response = await api.post(
+        `/scheme/admin/bill-coupon/${bill.billId}/apply`,
+        payload,
+      );
+
+      await refreshBill();
+
+      /*
+       * Refresh available schemes/wallets.
+       *
+       * Fully redeemed coupon disappears.
+       * Partial redemption shows new balance.
+       */
+      await loadSchemeCoupons();
+
+      alert(
+        `${response.data.message}\n\n` +
+          `Redeemed: ${Number(
+            response.data.redeemedWeight || 0,
+          ).toFixed(3)} gm\n` +
+          `Discount: ₹${Number(
+            response.data.discountAmount || 0,
+          ).toFixed(2)}\n` +
+          `Remaining: ${Number(
+            response.data.availableWeightAfter ||
+              0,
+          ).toFixed(3)} gm`,
+      );
+
+      setDiscountDialogOpen(false);
+      setDiscountAmount("");
+      setSelectedCoupon("");
+      setSchemeRedeemWeight("");
+      setSchemePreview(null);
     } catch (error: any) {
-      console.error("Discount update failed:", error);
+      console.error(
+        "Scheme coupon failed:",
+        error,
+      );
+
       alert(
         error?.response?.data?.message ||
           error?.response?.data ||
           error?.message ||
-          "Discount update failed",
+          "Scheme coupon failed",
       );
     } finally {
       setDiscountLoading(false);
     }
-  };
+
+    return;
+  }
+
+  /*
+   * ====================================
+   * EXISTING MANUAL / ASHADAM
+   * ====================================
+   */
+
+  if (
+    !discountAmount ||
+    Number(discountAmount) <= 0
+  ) {
+    alert(
+      "Please enter valid discount amount",
+    );
+    return;
+  }
+
+  try {
+    setDiscountLoading(true);
+
+    await api.post(
+      `/admin/applyBillDiscount/${bill.billId}`,
+      null,
+      {
+        params: {
+          discountAmount:
+            Number(discountAmount),
+        },
+      },
+    );
+
+    await refreshBill();
+
+    setDiscountDialogOpen(false);
+    setDiscountAmount("");
+    setSelectedCoupon("");
+    setSchemeRedeemWeight("");
+    setSchemePreview(null);
+  } catch (error: any) {
+    console.error(
+      "Discount update failed:",
+      error,
+    );
+
+    alert(
+      error?.response?.data?.message ||
+        error?.response?.data ||
+        error?.message ||
+        "Discount update failed",
+    );
+  } finally {
+    setDiscountLoading(false);
+  }
+};
 
   const handlePaySubmit = async () => {
     if (!bill?.billId) return;
@@ -1275,18 +1737,27 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
   <select
     value={selectedCoupon}
     onChange={(e) => {
-      const selectedValue = e.target.value;
+  const selectedValue =
+    e.target.value;
 
-      setSelectedCoupon(selectedValue);
+  setSelectedCoupon(
+    selectedValue,
+  );
 
-      if (selectedValue === "ASHADAM_20_MC") {
-        setDiscountAmount(
-          offerCouponDiscount.toFixed(2),
-        );
-      } else {
-        setDiscountAmount("");
-      }
-    }}
+  setSchemeRedeemWeight("");
+  setSchemePreview(null);
+
+  if (
+    selectedValue ===
+    "ASHADAM_20_MC"
+  ) {
+    setDiscountAmount(
+      offerCouponDiscount.toFixed(2),
+    );
+  } else {
+    setDiscountAmount("");
+  }
+}}
     className="w-full border rounded-lg px-3 py-2 bg-white"
   >
     <option value="">No Coupon / Manual Discount</option>
@@ -1296,7 +1767,222 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
         Ashadam Sales – 20% Off Making Charges
       </option>
     )}
+
+    {schemeCouponData?.schemeCoupons?.some(
+  (item: any) =>
+    Number(item.remainingMetalWeight || 0) > 0 &&
+    billMetals.has(
+  normalizeBillMetal(item.metalName),
+),
+) && (
+  <optgroup label="Customer Schemes">
+    {schemeCouponData.schemeCoupons
+      .filter(
+        (item: any) =>
+          Number(
+            item.remainingMetalWeight || 0,
+          ) > 0 &&
+         billMetals.has(
+  normalizeBillMetal(item.metalName),
+),
+      )
+      .map((item: any) => (
+        <option
+          key={`SCHEME-${item.schemeId}`}
+          value={`SCHEME:${item.schemeId}`}
+        >
+          {item.schemeType === "FLEXI_11"
+            ? "Flexi 12"
+            : "Pre-Booking"}{" "}
+          #{item.schemeId} —{" "}
+          {item.metalName} —{" "}
+          {Number(
+            item.remainingMetalWeight || 0,
+          ).toFixed(3)}
+          g — {item.benefitText}
+        </option>
+      ))}
+  </optgroup>
+)}
+
+{schemeCouponData?.quickBuyWallets?.some(
+  (item: any) =>
+    Number(item.remainingWeight || 0) > 0 &&
+   billMetals.has(
+  normalizeBillMetal(item.metalName),
+),
+) && (
+  <optgroup label="Quick Buy Wallets">
+    {schemeCouponData.quickBuyWallets
+      .filter(
+        (item: any) =>
+          Number(
+            item.remainingWeight || 0,
+          ) > 0 &&
+         billMetals.has(
+  normalizeBillMetal(item.metalName),
+),
+      )
+      .map((item: any) => (
+        <option
+          key={`QUICK-${item.metalName}`}
+          value={`QUICK_BUY:${item.metalName}`}
+        >
+          Quick Buy {item.metalName} —{" "}
+          {Number(
+            item.remainingWeight || 0,
+          ).toFixed(3)}
+          g Available
+        </option>
+      ))}
+  </optgroup>
+)}
   </select>
+
+{schemeCouponsLoading && (
+  <p className="mt-2 text-xs text-gray-500">
+    Loading customer schemes...
+  </p>
+)}
+
+{!schemeCouponsLoading && schemeCouponData && (
+  <div className="mt-2 rounded-lg bg-gray-100 p-2 text-xs text-gray-700">
+    <div>
+     Scheme coupons received:{" "}
+<b>
+  {Array.isArray(
+    schemeCouponData?.schemeCoupons
+  )
+    ? schemeCouponData.schemeCoupons.length
+    : 0}
+</b>
+    </div>
+
+    <div>
+      Quick Buy wallets received:{" "}
+<b>
+  {Array.isArray(
+    schemeCouponData?.quickBuyWallets
+  )
+    ? schemeCouponData.quickBuyWallets.length
+    : 0}
+</b>
+    </div>
+
+    <div>
+      Bill metals:{" "}
+      <b>
+        {Array.from(billMetals).join(", ") || "None"}
+      </b>
+    </div>
+  </div>
+)}
+
+
+  {schemeCouponsLoading && (
+  <p className="mt-2 text-xs text-gray-500">
+    Loading customer schemes...
+  </p>
+)}
+{selectedRedeemableScheme && (
+  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+    <div className="flex justify-between">
+      <span>Scheme</span>
+
+      <strong>
+        {selectedRedeemableScheme.schemeType ===
+        "FLEXI_11"
+          ? "Flexi 12"
+          : "Pre-Booking"}{" "}
+        #{selectedRedeemableScheme.schemeId}
+      </strong>
+    </div>
+
+    <div className="mt-2 flex justify-between">
+      <span>Metal</span>
+
+      <strong>
+        {selectedRedeemableScheme.metalName}
+      </strong>
+    </div>
+
+    <div className="mt-2 flex justify-between">
+      <span>Available Weight</span>
+
+      <strong className="text-amber-700">
+        {Number(
+          selectedRedeemableScheme
+            .remainingMetalWeight || 0,
+        ).toFixed(3)}{" "}
+        gm
+      </strong>
+    </div>
+
+    <div className="mt-2 flex justify-between">
+      <span>Benefit</span>
+
+      <strong className="text-green-700">
+        {selectedRedeemableScheme
+          .benefitText || "-"}
+      </strong>
+    </div>
+  </div>
+)}
+
+{selectedQuickBuyWallet && (
+  <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm">
+    <div className="flex justify-between">
+      <span>Wallet</span>
+
+      <strong>
+        Quick Buy{" "}
+        {selectedQuickBuyWallet.metalName}
+      </strong>
+    </div>
+
+    <div className="mt-2 flex justify-between">
+      <span>Purchased</span>
+
+      <strong>
+        {Number(
+          selectedQuickBuyWallet.totalWeight ||
+            0,
+        ).toFixed(3)}{" "}
+        gm
+      </strong>
+    </div>
+
+    <div className="mt-2 flex justify-between">
+      <span>Used</span>
+
+      <strong>
+        {Number(
+          selectedQuickBuyWallet
+            .redeemedWeight || 0,
+        ).toFixed(3)}{" "}
+        gm
+      </strong>
+    </div>
+
+    <div className="mt-2 flex justify-between">
+      <span>Available</span>
+
+      <strong className="text-blue-700">
+        {Number(
+          selectedQuickBuyWallet
+            .remainingWeight || 0,
+        ).toFixed(3)}{" "}
+        gm
+      </strong>
+    </div>
+
+    <p className="mt-3 text-xs text-gray-500">
+      Quick Buy redeems metal value only.
+      No wastage benefit is applied.
+    </p>
+  </div>
+)}
+
 </div>
 
 {selectedCoupon === "ASHADAM_20_MC" && (
@@ -1318,6 +2004,106 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
     </div>
   </div>
 )}
+{(
+  isSchemeCouponSelected ||
+  isQuickBuyCouponSelected
+) && (
+  <div className="mb-4 mt-4">
+    <label className="mb-1 block text-sm font-medium">
+      Redeem Metal Weight
+    </label>
+
+    <div className="relative">
+      <input
+        type="number"
+        min="0"
+        step="0.001"
+        value={schemeRedeemWeight}
+        onChange={(e) =>
+          setSchemeRedeemWeight(
+            e.target.value,
+          )
+        }
+        className="w-full rounded-lg border px-3 py-2 pr-12"
+        placeholder="Example: 3.000"
+      />
+
+      <span className="absolute right-3 top-2.5 text-sm font-semibold text-gray-500">
+        gm
+      </span>
+    </div>
+  </div>
+)}
+
+{schemePreviewLoading && (
+  <div className="mb-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-500">
+    Calculating scheme discount...
+  </div>
+)}
+
+{schemePreview && (
+  <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm">
+    <div className="flex justify-between">
+      <span>Redeem Weight</span>
+
+      <strong>
+        {Number(
+          schemePreview.redeemedWeight || 0,
+        ).toFixed(3)}{" "}
+        gm
+      </strong>
+    </div>
+
+    <div className="mt-2 flex justify-between">
+      <span>Bill Metal Available</span>
+
+      <strong>
+        {Number(
+          schemePreview
+            .billMetalWeightAvailable || 0,
+        ).toFixed(3)}{" "}
+        gm
+      </strong>
+    </div>
+
+    <div className="mt-2 flex justify-between">
+      <span>Benefit</span>
+
+      <strong>
+        {schemePreview.benefitText}
+      </strong>
+    </div>
+
+    <div className="mt-2 flex justify-between">
+      <span>Scheme Balance After</span>
+
+      <strong>
+        {Number(
+          schemePreview
+            .availableWeightAfter || 0,
+        ).toFixed(3)}{" "}
+        gm
+      </strong>
+    </div>
+
+    <div className="mt-3 border-t border-green-200 pt-3">
+      <div className="flex justify-between text-green-800">
+        <span className="font-bold">
+          Scheme Discount
+        </span>
+
+        <strong className="text-lg">
+          ₹
+          {Number(
+            schemePreview.discountAmount ||
+              0,
+          ).toFixed(2)}
+        </strong>
+      </div>
+    </div>
+  </div>
+)}
+
            <div className="mb-4">
   <label className="block text-sm font-medium mb-1">
     Discount Amount
@@ -1328,7 +2114,12 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
     min="0"
     step="0.01"
     value={discountAmount}
+
     onChange={(e) => setDiscountAmount(e.target.value)}
+     readOnly={
+    isSchemeCouponSelected ||
+    isQuickBuyCouponSelected
+  }
     className="w-full border rounded-lg px-3 py-2"
     placeholder="Enter discount amount"
   />

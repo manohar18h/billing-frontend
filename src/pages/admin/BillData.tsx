@@ -374,51 +374,84 @@ const quickBuyTotalAmount =
     (item: any) => item.totalAmount,
   );
 
-const quickBuyGoldWeight =
-  sumSchemeValues(
-    quickBuyCards.filter((item: any) =>
-      String(item.metalName || "")
-        .toLowerCase()
-        .includes("gold"),
-    ),
-    (item: any) => item.totalWeight,
-  );
 
-const quickBuySilverWeight =
-  sumSchemeValues(
-    quickBuyCards.filter((item: any) =>
-      String(item.metalName || "")
-        .toLowerCase()
-        .includes("silver"),
-    ),
-    (item: any) => item.totalWeight,
-  );
+
+
 
 const quickBuyGoldTransactions =
   sumSchemeValues(
-    quickBuyCards.filter((item: any) =>
-      String(item.metalName || "")
-        .toLowerCase()
-        .includes("gold"),
+    quickBuyCards.filter(
+      (item: any) =>
+        String(item.metalName || "")
+          .trim()
+          .toLowerCase() === "gold"
     ),
-    (item: any) => item.transactionCount,
+    (item: any) => item.transactionCount
   );
 
-const quickBuySilverTransactions =
+const quickBuyKamalSilverTransactions =
   sumSchemeValues(
-    quickBuyCards.filter((item: any) =>
-      String(item.metalName || "")
-        .toLowerCase()
-        .includes("silver"),
+    quickBuyCards.filter(
+      (item: any) =>
+        String(item.metalName || "")
+          .trim()
+          .toLowerCase() ===
+        "kamal silver"
     ),
-    (item: any) => item.transactionCount,
+    (item: any) => item.transactionCount
+  );
+
+  const quickBuySwastikSilverTransactions =
+  sumSchemeValues(
+    quickBuyCards.filter(
+      (item: any) =>
+        String(item.metalName || "")
+          .trim()
+          .toLowerCase() ===
+        "swastik silver"
+    ),
+    (item: any) => item.transactionCount
+  );
+
+  const quickBuyGoldWeight =
+  sumSchemeValues(
+    quickBuyCards.filter(
+      (item: any) =>
+        String(item.metalName || "")
+          .trim()
+          .toLowerCase() === "gold"
+    ),
+    (item: any) => item.totalWeight
+  );
+  const quickBuyKamalSilverWeight =
+  sumSchemeValues(
+    quickBuyCards.filter(
+      (item: any) =>
+        String(item.metalName || "")
+          .trim()
+          .toLowerCase() ===
+        "kamal silver"
+    ),
+    (item: any) => item.totalWeight
+  );
+
+const quickBuySwastikSilverWeight =
+  sumSchemeValues(
+    quickBuyCards.filter(
+      (item: any) =>
+        String(item.metalName || "")
+          .trim()
+          .toLowerCase() ===
+        "swastik silver"
+    ),
+    (item: any) => item.totalWeight
   );
 
 const activeSectionTitle =
   activeSchemeSection === "PRE_BOOKING"
     ? "Pre-Booking & Exchange Schemes"
     : activeSchemeSection === "FLEXI_11"
-      ? "Flexi 11 Monthly Schemes"
+     ? "Flexi 12 Monthly Schemes"
       : "Quick Buy Transactions";
 
 const activeSectionCount =
@@ -465,7 +498,7 @@ const closeSchemeDetails = () => {
 const clickable = "clickable-ui";
 
 const [preBookingType, setPreBookingType] = useState("Advance Gold Booking");
-const [holdMonths, setHoldMonths] = useState("5");
+const [holdMonths] = useState("12");
 const [metalWeight, setMetalWeight] = useState("");
 const [metalAmount, setMetalAmount] = useState("");
 
@@ -610,6 +643,77 @@ const formatMoney = (value: any) =>
 
 const formatWeight = (value: any) =>
   `${Number(value || 0).toFixed(3)} gm`;
+
+const getQuickBuyWalletData = (
+  metalName: string
+) => {
+  const metal = String(metalName || "")
+    .trim()
+    .toLowerCase();
+
+  if (metal === "gold") {
+    const total = Number(
+      schemeDashboard?.goldWallet || 0
+    );
+
+    const used = Number(
+      schemeDashboard?.goldUsedWeight || 0
+    );
+
+    return {
+      total,
+      used,
+      remaining: Math.max(
+        0,
+        total - used
+      ),
+    };
+  }
+
+  if (metal === "kamal silver") {
+    const total = Number(
+      schemeDashboard?.kamalSilverWallet || 0
+    );
+
+    const used = Number(
+      schemeDashboard?.kamalSilverUsedWeight || 0
+    );
+
+    return {
+      total,
+      used,
+      remaining: Math.max(
+        0,
+        total - used
+      ),
+    };
+  }
+
+  if (metal === "swastik silver") {
+    const total = Number(
+      schemeDashboard?.swastikSilverWallet || 0
+    );
+
+    const used = Number(
+      schemeDashboard?.swastikSilverUsedWeight || 0
+    );
+
+    return {
+      total,
+      used,
+      remaining: Math.max(
+        0,
+        total - used
+      ),
+    };
+  }
+
+  return {
+    total: 0,
+    used: 0,
+    remaining: 0,
+  };
+};
 
 const formatDate = (value: any) =>
   value ? new Date(value).toLocaleDateString("en-IN") : "-";
@@ -1274,6 +1378,22 @@ const getPreBookingSubType = () => {
   }
 };
 
+const getPreBookingMetalName = () => {
+  if (
+    preBookingType === "Advance Kamal Silver Booking"
+  ) {
+    return "Kamal Silver";
+  }
+
+  if (
+    preBookingType === "Advance Swastik Silver Booking"
+  ) {
+    return "Swastik Silver";
+  }
+
+  return "Gold";
+};
+
 const isOldExchange =
   preBookingType === "Old Gold Exchange" ||
   preBookingType === "Old Silver Exchange";
@@ -1355,8 +1475,7 @@ const handleAdminCreatePreBooking = async () => {
       {
         customerId: customer.customerId,
         schemeSubType: getPreBookingSubType(),
-        metalName: preBookingType.includes("Silver") ? "Silver" : "Gold",
-
+        metalName: getPreBookingMetalName(),
         itemName: isOldExchange ? itemName : null,
 
         ratePerGram: isAdvanceBooking ? selectedRate / 10 : null,
@@ -1368,7 +1487,7 @@ const handleAdminCreatePreBooking = async () => {
           ? Number(metalAmount || 0)
           : Number(oldExchangeAmount || 0),
 
-        holdMonths: Number(holdMonths),
+        holdMonths: 12,
 
         oldGrossWeight: isOldExchange ? Number(oldGrossWeight || 0) : null,
         oldPurityWeight: isOldExchange ? Number(oldPurity || 0) : null,
@@ -1458,7 +1577,7 @@ const handleAdminCreateFlexi11 = async () => {
       {
         customerId: customer.customerId,
         monthlyAmount: Number(monthlyAmount),
-        durationMonths: 11,
+        durationMonths: 12,
         firstMonthRatePerGram: goldRate / 10,
         firstMonthGoldWeight: Number(monthlyAmount) / (goldRate / 10),
         paymentMethod: "ADMIN",
@@ -1470,7 +1589,7 @@ const handleAdminCreateFlexi11 = async () => {
       }
     );
 
-    alert("Flexi 11 scheme added successfully");
+    alert("Flexi 12 scheme added successfully");
    await refreshCustomerProfile();
 
 setSchemeTab("overview");
@@ -1480,7 +1599,7 @@ setShowActiveSchemes(true);
 alert(
   getApiErrorMessage(
     error,
-    "Failed to activate Flexi 11 scheme",
+    "Failed to activate Flexi 12 scheme",
   ),
 );}
 };
@@ -1590,7 +1709,7 @@ const handleAdminPayFlexiMonth = async (scheme: any) => {
 
   try {
     await api.post(
-      "/scheme/pay-flexi-month",
+     "/scheme/flexi11/pay",
       {
         schemeId: scheme.schemeId,
         paidAmount,
@@ -1889,38 +2008,93 @@ const handleSchemeTabClick = (
 
       {/* WALLET CARDS */}
       <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
-        {[
-          {
-            title: "Active Schemes",
-            value: schemeDashboard?.activeSchemes || 0,
-            used: null,
-          },
-          {
-            title: "Gold Wallet",
-            value: formatWeight(schemeDashboard?.goldWallet),
-            used: `Used: ${formatWeight(schemeDashboard?.goldUsedWeight)}`,
-          },
-          {
-            title: "Old Exchange Gold",
-            value: formatWeight(schemeDashboard?.oldExchangeGoldPurityWeight),
-            used: "Purity weight",
-          },
-          {
-            title: "Kamal Silver",
-            value: formatWeight(schemeDashboard?.kamalSilverWallet),
-            used: `Used: ${formatWeight(schemeDashboard?.kamalSilverUsedWeight)}`,
-          },
-          {
-            title: "Swastik Silver",
-            value: formatWeight(schemeDashboard?.swastikSilverWallet),
-            used: `Used: ${formatWeight(schemeDashboard?.swastikSilverUsedWeight)}`,
-          },
-          {
-            title: "Total Amount",
-            value: formatMoney(schemeDashboard?.totalSavings),
-            used: "Scheme value",
-          },
-        ].map((item) => (
+       {[
+  {
+    title: "Active Schemes",
+    value:
+      schemeDashboard?.activeSchemes || 0,
+    used: null,
+  },
+
+  {
+    title: "Pre-Booking",
+    value: preBookingCards.length,
+    used: `Active: ${preBookingActiveCount} • Completed: ${preBookingCompletedCount} • Inactive: ${preBookingInactiveCount}`,
+  },
+
+  {
+    title: "Flexi 12",
+    value: flexi11Cards.length,
+    used: `Active: ${flexiActiveCount} • Completed: ${flexiCompletedCount} • Inactive: ${flexiInactiveCount}`,
+  },
+
+  {
+    title: "Quick Buy Gold",
+    value: formatWeight(
+      Math.max(
+        0,
+        Number(
+          schemeDashboard?.goldWallet || 0
+        ) -
+          Number(
+            schemeDashboard
+              ?.goldUsedWeight || 0
+          )
+      )
+    ),
+    used: `Purchased: ${formatWeight(
+      schemeDashboard?.goldWallet
+    )} • Used: ${formatWeight(
+      schemeDashboard?.goldUsedWeight
+    )}`,
+  },
+
+  {
+    title: "Quick Buy Kamal Silver",
+    value: formatWeight(
+      Math.max(
+        0,
+        Number(
+          schemeDashboard
+            ?.kamalSilverWallet || 0
+        ) -
+          Number(
+            schemeDashboard
+              ?.kamalSilverUsedWeight || 0
+          )
+      )
+    ),
+    used: `Purchased: ${formatWeight(
+      schemeDashboard?.kamalSilverWallet
+    )} • Used: ${formatWeight(
+      schemeDashboard
+        ?.kamalSilverUsedWeight
+    )}`,
+  },
+
+  {
+    title: "Quick Buy Swastik Silver",
+    value: formatWeight(
+      Math.max(
+        0,
+        Number(
+          schemeDashboard
+            ?.swastikSilverWallet || 0
+        ) -
+          Number(
+            schemeDashboard
+              ?.swastikSilverUsedWeight || 0
+          )
+      )
+    ),
+    used: `Purchased: ${formatWeight(
+      schemeDashboard?.swastikSilverWallet
+    )} • Used: ${formatWeight(
+      schemeDashboard
+        ?.swastikSilverUsedWeight
+    )}`,
+  },
+].map((item) => (
           <div
             key={item.title}
             className={`rounded-[20px] p-4 text-center shadow ${
@@ -1950,8 +2124,8 @@ const handleSchemeTabClick = (
             </h3>
 
             {item.used && (
-              <p className="mt-1 text-[11px] font-semibold text-gray-500">
-                {item.used}
+<p className="mt-2 min-h-[32px] text-[10px] font-semibold leading-4 text-gray-500">
+                  {item.used}
               </p>
             )}
           </div>
@@ -1963,7 +2137,7 @@ const handleSchemeTabClick = (
         {[
           ["overview", "Overview"],
           ["preBooking", "Pre-Booking"],
-          ["flexi11", "Flexi 11"],
+          ["flexi11", "Flexi 12"],
           ["quickBuy", "Quick Buy"],
         ].map(([key, label]) => (
           <button
@@ -2192,7 +2366,7 @@ const handleSchemeTabClick = (
       <div className="relative">
         <div className="flex items-start justify-between gap-3">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 text-xl font-black text-white shadow">
-            11
+            12
           </div>
 
           <span
@@ -2209,7 +2383,7 @@ const handleSchemeTabClick = (
         </div>
 
         <h4 className="mt-5 font-serif text-[27px] font-bold">
-          Flexi 11 Month Plan
+          Flexi 12 Month Plan
         </h4>
 
         <p
@@ -2329,7 +2503,7 @@ const handleSchemeTabClick = (
         </div>
 
         <div className="mt-5 flex items-center justify-between rounded-full bg-emerald-500 px-5 py-3 font-bold text-white">
-          <span>View Flexi 11 Schemes</span>
+          <span>View Flexi 12 Schemes</span>
           <span className="text-xl">→</span>
         </div>
       </div>
@@ -2370,7 +2544,7 @@ const handleSchemeTabClick = (
         </div>
 
         <h4 className="mt-5 font-serif text-[27px] font-bold">
-          Quick Buy Gold & Silver
+          Quick Buy Metal Wallet
         </h4>
 
         <p
@@ -2386,41 +2560,70 @@ const handleSchemeTabClick = (
           the customer scheme wallet.
         </p>
 
-        <div className="mt-5 grid grid-cols-2 gap-2">
-          <div
-            className={`rounded-2xl p-3 text-center ${
-              activeSchemeSection ===
-                "QUICK_BUY" &&
-              showActiveSchemes
-                ? "bg-white/[0.07]"
-                : "bg-white/80"
-            }`}
-          >
-            <p className="text-[11px] uppercase text-gray-500">
-              Gold Transactions
-            </p>
-            <p className="mt-1 text-xl font-black text-[#d49c22]">
-              {quickBuyGoldTransactions}
-            </p>
-          </div>
+       <div className="mt-5 grid grid-cols-3 gap-2">
+  <div
+    className={`rounded-2xl p-3 text-center ${
+      activeSchemeSection === "QUICK_BUY" &&
+      showActiveSchemes
+        ? "bg-white/[0.07]"
+        : "bg-white/80"
+    }`}
+  >
+    <p className="text-[10px] font-bold uppercase text-gray-500">
+      Gold
+    </p>
 
-          <div
-            className={`rounded-2xl p-3 text-center ${
-              activeSchemeSection ===
-                "QUICK_BUY" &&
-              showActiveSchemes
-                ? "bg-white/[0.07]"
-                : "bg-white/80"
-            }`}
-          >
-            <p className="text-[11px] uppercase text-gray-500">
-              Silver Transactions
-            </p>
-            <p className="mt-1 text-xl font-black text-gray-500">
-              {quickBuySilverTransactions}
-            </p>
-          </div>
-        </div>
+    <p className="mt-1 text-xl font-black text-[#d49c22]">
+      {quickBuyGoldTransactions}
+    </p>
+
+    <p className="mt-1 text-[9px] text-gray-500">
+      Transactions
+    </p>
+  </div>
+
+  <div
+    className={`rounded-2xl p-3 text-center ${
+      activeSchemeSection === "QUICK_BUY" &&
+      showActiveSchemes
+        ? "bg-white/[0.07]"
+        : "bg-white/80"
+    }`}
+  >
+    <p className="text-[10px] font-bold uppercase text-gray-500">
+      Kamal Silver
+    </p>
+
+    <p className="mt-1 text-xl font-black text-gray-500">
+      {quickBuyKamalSilverTransactions}
+    </p>
+
+    <p className="mt-1 text-[9px] text-gray-500">
+      Transactions
+    </p>
+  </div>
+
+  <div
+    className={`rounded-2xl p-3 text-center ${
+      activeSchemeSection === "QUICK_BUY" &&
+      showActiveSchemes
+        ? "bg-white/[0.07]"
+        : "bg-white/80"
+    }`}
+  >
+    <p className="text-[10px] font-bold uppercase text-gray-500">
+      Swastik Silver
+    </p>
+
+    <p className="mt-1 text-xl font-black text-gray-500">
+      {quickBuySwastikSilverTransactions}
+    </p>
+
+    <p className="mt-1 text-[9px] text-gray-500">
+      Transactions
+    </p>
+  </div>
+</div>
 
         <div
           className={`mt-4 space-y-3 rounded-[22px] p-4 ${
@@ -2441,13 +2644,24 @@ const handleSchemeTabClick = (
           </div>
 
           <div className="flex justify-between gap-4 text-sm">
-            <span className="opacity-60">
-              Silver Purchased
-            </span>
-            <b>
-              {quickBuySilverWeight.toFixed(4)} gm
-            </b>
-          </div>
+  <span className="opacity-60">
+    Kamal Silver Purchased
+  </span>
+
+  <b>
+    {quickBuyKamalSilverWeight.toFixed(4)} gm
+  </b>
+</div>
+
+<div className="flex justify-between gap-4 text-sm">
+  <span className="opacity-60">
+    Swastik Silver Purchased
+  </span>
+
+  <b>
+    {quickBuySwastikSilverWeight.toFixed(4)} gm
+  </b>
+</div>
 
           <div className="flex justify-between gap-4 border-t border-current/10 pt-3 text-sm">
             <span className="opacity-60">
@@ -2666,6 +2880,43 @@ const handleSchemeTabClick = (
                             )}
 
                             <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
+    Redeemed
+  </span>
+
+  <b>
+    {formatWeight(
+      item.redeemedWeight
+    )}
+  </b>
+</div>
+
+<div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
+    Available
+  </span>
+
+  <b className="text-[#f5c542]">
+    {formatWeight(
+      item.remainingMetalWeight
+    )}
+  </b>
+</div>
+
+<div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
+    Redemption
+  </span>
+
+  <b>
+    {String(
+      item.redemptionStatus ||
+        "NOT_REDEEMED"
+    ).replaceAll("_", " ")}
+  </b>
+</div>
+
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                               <span className="text-white/50">
                                 Hold Progress
                               </span>
@@ -2720,12 +2971,12 @@ const handleSchemeTabClick = (
               {flexi11Cards.length === 0 ? (
                 <div className="rounded-[24px] bg-white/[0.07] p-10 text-center">
                   <p className="text-xl font-bold text-white">
-                    No Flexi 11 schemes
+                    No Flexi 12 schemes
                   </p>
 
                   <p className="mt-2 text-sm text-white/50">
                     This customer has not started a
-                    Flexi 11 monthly scheme.
+                    Flexi 12 monthly scheme.
                   </p>
                 </div>
               ) : (
@@ -2757,7 +3008,7 @@ const handleSchemeTabClick = (
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="text-sm font-bold text-emerald-400">
-                                Flexi 11 #{index + 1}
+                                Flexi 12 #{index + 1}
                               </p>
 
                               <h4 className="mt-2 text-[22px] font-bold">
@@ -2811,15 +3062,63 @@ const handleSchemeTabClick = (
                             </div>
 
                             <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
+    Redeemed Gold
+  </span>
+
+  <b>
+    {formatWeight(
+      item.redeemedWeight
+    )}
+  </b>
+</div>
+
+<div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
+    Available Gold
+  </span>
+
+  <b className="text-[#f5c542]">
+    {formatWeight(
+      item.remainingGoldWeight
+    )}
+  </b>
+</div>
+
+<div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
+    Redemption
+  </span>
+
+  <b>
+    {String(
+      item.redemptionStatus ||
+        "NOT_REDEEMED"
+    ).replaceAll("_", " ")}
+  </b>
+</div>
+
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                               <span className="text-white/50">
                                 Paid Months
                               </span>
                               <b>
                                 {item.paidMonths || 0}/
                                 {item.durationMonths ||
-                                  11}
+                                  12}
                               </b>
                             </div>
+
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
+    Wastage Benefit
+  </span>
+
+  <b className="text-emerald-400">
+    {item.benefitText ||
+      "0% Wastage Discount"}
+  </b>
+</div>
 
                             <div className="flex justify-between gap-4">
                               <span className="text-white/50">
@@ -2963,17 +3262,47 @@ const handleSchemeTabClick = (
                             </b>
                           </div>
 
-                          <div className="flex justify-between gap-4">
-                            <span className="text-white/50">
-                              Total Weight
-                            </span>
-                            <b>
-                              {Number(
-                                item.totalWeight || 0,
-                              ).toFixed(4)}{" "}
-                              gm
-                            </b>
-                          </div>
+                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
+    Purchased
+  </span>
+
+  <b>
+    {formatWeight(
+      getQuickBuyWalletData(
+        item.metalName
+      ).total
+    )}
+  </b>
+</div>
+
+<div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
+    Used
+  </span>
+
+  <b>
+    {formatWeight(
+      getQuickBuyWalletData(
+        item.metalName
+      ).used
+    )}
+  </b>
+</div>
+
+<div className="flex justify-between gap-4">
+  <span className="text-white/50">
+    Available
+  </span>
+
+  <b className="text-[#f5c542]">
+    {formatWeight(
+      getQuickBuyWalletData(
+        item.metalName
+      ).remaining
+    )}
+  </b>
+</div>
                         </div>
 
                         <button
@@ -3015,8 +3344,8 @@ const handleSchemeTabClick = (
                 tab: "preBooking",
               },
               {
-                title: "Flexi 11 Month Plan",
-                desc: "Pay monthly amount for 11 months and track amount + gold grams.",
+                title: "Flexi 12 Month Plan",
+                desc: "Pay monthly amount for 12 months and track amount + gold grams.",
                 action: "Start Flexi Plan",
                 tab: "flexi11",
               },
@@ -3103,22 +3432,22 @@ const handleSchemeTabClick = (
   </div>
 
   <div>
-    <label className="mb-2 block text-white/70">Hold Period</label>
-    <select
-      value={holdMonths}
-      onChange={(e) => setHoldMonths(e.target.value)}
-      className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-4 outline-none"
-    >
-      <option value="5">5 Months - 5% VA Benefit</option>
-      <option value="6">6 Months - 6% VA Benefit</option>
-      <option value="7">7 Months - 7% VA Benefit</option>
-      <option value="8">8 Months - 8% VA Benefit</option>
-      <option value="9">9 Months - 9% VA Benefit</option>
-      <option value="10">10 Months - 10% VA Benefit</option>
-      <option value="11">11 Months - Full Eligible VA Benefit</option>
-      <option value="12">12 Months - Full Eligible VA Benefit</option>
-    </select>
+  <label className="mb-2 block text-white/70">
+    Scheme Duration
+  </label>
+
+  <div className="rounded-xl border border-white/20 bg-black/40 px-4 py-4">
+    <p className="font-bold text-[#f5c542]">
+      12 Months
+    </p>
+
+    <p className="mt-1 text-sm leading-6 text-white/60">
+      Months 1–5: 0% wastage discount. Months
+      6–11: corresponding wastage discount.
+      Month 12: full eligible wastage discount.
+    </p>
   </div>
+</div>
 
   {isAdvanceBooking && (
     <>
@@ -3173,7 +3502,7 @@ const handleSchemeTabClick = (
       <div ref={flexi11Ref}>
         {schemeTab === "flexi11" && (
           <div className="mt-8 rounded-[30px] bg-[#111] p-8 text-white">
-            <h3 className="font-serif text-[38px] text-[#f5c542]">Flexi 11 Month Plan</h3>
+            <h3 className="font-serif text-[38px] text-[#f5c542]">Flexi 12 Month Plan</h3>
 
 <div className="mt-8 grid grid-cols-4 gap-5 max-md:grid-cols-2">
   {[1000, 2000, 5000, 10000, 15000, 20000, 25000, 50000].map((value) => (
@@ -3204,7 +3533,7 @@ const handleSchemeTabClick = (
       <div ref={quickBuyRef}>
         {schemeTab === "quickBuy" && (
           <div className="mt-8 rounded-[30px] bg-[#111] p-8 text-white">
-            <h3 className="font-serif text-[38px] text-[#f5c542]">Quick Buy Gold & Silver</h3>
+            <h3 className="font-serif text-[38px] text-[#f5c542]">Quick Buy Metal Wallet</h3>
 
 <div className="mt-8 grid grid-cols-3 gap-3">
   {["Gold", "Kamal Silver", "Swastik Silver"].map((metal) => (
@@ -3495,7 +3824,7 @@ const handleSchemeTabClick = (
     {selectedSchemeType === "FLEXI_11" && selectedScheme && (
   <>
     <p className="text-[13px] font-bold uppercase tracking-[4px] text-[#b98213]">
-      Flexi 11 Scheme Details
+      Flexi 12 Scheme Details
     </p>
 
     <h2 className="mt-2 font-serif text-[38px] max-md:text-[28px]">
@@ -3513,7 +3842,7 @@ const handleSchemeTabClick = (
         ],
         [
           "Paid Months",
-          `${selectedScheme.paidMonths || 0}/${selectedScheme.durationMonths || 11}`,
+          `${selectedScheme.paidMonths || 0}/${selectedScheme.durationMonths || 12}`,
         ],
         ["Remaining Months", selectedScheme.remainingMonths || 0],
         ["Next Due Date", formatDate(selectedScheme.nextDueDate)],
@@ -3544,7 +3873,7 @@ const handleSchemeTabClick = (
         </thead>
 
         <tbody>
-          {Array.from({ length: selectedScheme?.durationMonths || 11 }).map(
+          {Array.from({ length: selectedScheme?.durationMonths || 12 }).map(
             (_, index) => {
               const monthNumber = index + 1;
 
@@ -3619,28 +3948,71 @@ const handleSchemeTabClick = (
             {selectedScheme.metalName} Purchase History
           </h2>
 
-          <div className="mt-8 grid grid-cols-3 gap-5 max-md:grid-cols-2">
-            <div className="rounded-2xl bg-[#fbf7ef] p-5">
-              <p className="text-gray-500">Total Transactions</p>
-              <h4 className="mt-2 text-[20px] font-bold text-[#b98213]">
-                {selectedScheme.transactionCount}
-              </h4>
-            </div>
+         <div className="mt-8 grid grid-cols-5 gap-4 max-lg:grid-cols-3 max-md:grid-cols-2">
+  <div className="rounded-2xl bg-[#fbf7ef] p-5">
+    <p className="text-gray-500">
+      Total Transactions
+    </p>
 
-            <div className="rounded-2xl bg-[#fbf7ef] p-5">
-              <p className="text-gray-500">Total Amount</p>
-              <h4 className="mt-2 text-[20px] font-bold text-[#b98213]">
-                {formatMoney(selectedScheme.totalAmount)}
-              </h4>
-            </div>
+    <h4 className="mt-2 text-[20px] font-bold text-[#b98213]">
+      {selectedScheme.transactionCount}
+    </h4>
+  </div>
 
-            <div className="rounded-2xl bg-[#111] p-5 text-center text-white max-md:col-span-2">
-              <p className="text-white/60">Total Weight</p>
-              <h4 className="mt-2 text-[20px] font-bold text-[#f5c542]">
-                {Number(selectedScheme.totalWeight || 0).toFixed(4)} gm
-              </h4>
-            </div>
-          </div>
+  <div className="rounded-2xl bg-[#fbf7ef] p-5">
+    <p className="text-gray-500">
+      Total Amount
+    </p>
+
+    <h4 className="mt-2 text-[20px] font-bold text-[#b98213]">
+      {formatMoney(
+        selectedScheme.totalAmount
+      )}
+    </h4>
+  </div>
+
+  <div className="rounded-2xl bg-[#fbf7ef] p-5">
+    <p className="text-gray-500">
+      Purchased Weight
+    </p>
+
+    <h4 className="mt-2 text-[20px] font-bold text-[#b98213]">
+      {formatWeight(
+        getQuickBuyWalletData(
+          selectedScheme.metalName
+        ).total
+      )}
+    </h4>
+  </div>
+
+  <div className="rounded-2xl bg-[#fff5e8] p-5">
+    <p className="text-gray-500">
+      Used Weight
+    </p>
+
+    <h4 className="mt-2 text-[20px] font-bold text-orange-600">
+      {formatWeight(
+        getQuickBuyWalletData(
+          selectedScheme.metalName
+        ).used
+      )}
+    </h4>
+  </div>
+
+  <div className="rounded-2xl bg-[#111] p-5 text-white">
+    <p className="text-white/60">
+      Available Weight
+    </p>
+
+    <h4 className="mt-2 text-[20px] font-bold text-[#f5c542]">
+      {formatWeight(
+        getQuickBuyWalletData(
+          selectedScheme.metalName
+        ).remaining
+      )}
+    </h4>
+  </div>
+</div>
 
           <div className="mt-8 w-full overflow-x-auto rounded-2xl border border-[#ead7ae]">
             <table className="w-full min-w-[300px] border-collapse text-center text-[10px] md:text-[13px]">
@@ -3650,8 +4022,10 @@ const handleSchemeTabClick = (
                   <th className="px-2 py-3">Metal</th>
                   <th className="px-2 py-3">Amount</th>
                   <th className="px-2 py-3">Rate</th>
-                  <th className="px-2 py-3">Weight</th>
-                  <th className="px-2 py-3">Status</th>
+                  <th className="px-2 py-3">Purchased</th>
+                  <th className="px-2 py-3">Used</th>
+                  <th className="px-2 py-3">Remaining</th>
+                  <th className="px-2 py-3">Redemption</th>
                 </tr>
               </thead>
 
@@ -3665,7 +4039,27 @@ const handleSchemeTabClick = (
                     <td className="px-2 py-3">
                       {Number(item.metalWeight || 0).toFixed(4)} gm
                     </td>
-                    <td className="px-2 py-3">{item.status}</td>
+                    <td className="px-2 py-3">
+  {Number(
+    item.usedMetalWeight || 0
+  ).toFixed(4)}{" "}
+  gm
+</td>
+
+<td className="px-2 py-3 font-bold text-[#b98213]">
+  {Math.max(
+    0,
+    Number(item.metalWeight || 0) -
+      Number(item.usedMetalWeight || 0)
+  ).toFixed(4)}{" "}
+  gm
+</td>
+                   <td className="px-2 py-3">
+  {String(
+    item.redemptionStatus ||
+      "NOT_REDEEMED"
+  ).replaceAll("_", " ")}
+</td>
                   </tr>
                 ))}
               </tbody>
