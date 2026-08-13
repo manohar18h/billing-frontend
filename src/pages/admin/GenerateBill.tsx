@@ -228,6 +228,66 @@ We hope to serve you again soon!
   return "";
 };
 
+const normalizeSchemeMetal = (item: any) => {
+  const metalName = String(
+    item?.metalName || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const subType = String(
+    item?.schemeSubType || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  /*
+   * GOLD
+   */
+  if (
+    metalName.includes("gold") ||
+    subType === "ADVANCE_GOLD_BOOKING" ||
+    subType === "OLD_GOLD_EXCHANGE"
+  ) {
+    return "Gold";
+  }
+
+  /*
+   * KAMAL SILVER
+   */
+  if (
+    metalName.includes("kamal") ||
+    subType ===
+      "ADVANCE_KAMAL_SILVER_BOOKING" ||
+    subType ===
+      "QUICK_KAMAL_SILVER_BUY"
+  ) {
+    return "Kamal Silver";
+  }
+
+  /*
+   * SWASTIK SILVER
+   */
+  if (
+    metalName.includes("swastik") ||
+    metalName.includes("satwik") ||
+    subType ===
+      "ADVANCE_SWASTIK_SILVER_BOOKING" ||
+    subType ===
+      "QUICK_SWASTIK_SILVER_BUY"
+  ) {
+    return "Swastik Silver";
+  }
+
+  /*
+   * Fallback for values already stored
+   * with proper metal names.
+   */
+  return normalizeBillMetal(
+    item?.metalName
+  );
+};
+
 
 const billMetals = React.useMemo(() => {
   const metals = new Set<string>();
@@ -434,9 +494,15 @@ const selectedRedeemableScheme =
     }
 
     const response = await api.post(
-      `/scheme/admin/bill-coupon/${bill.billId}/preview`,
-      payload,
-    );
+  `/scheme/admin/bill-coupon/${bill.billId}/preview`,
+  payload,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  },
+);
 
     setSchemePreview(response.data);
 
@@ -588,10 +654,16 @@ const handleDiscountSubmit = async () => {
         };
       }
 
-      const response = await api.post(
-        `/scheme/admin/bill-coupon/${bill.billId}/apply`,
-        payload,
-      );
+     const response = await api.post(
+  `/scheme/admin/bill-coupon/${bill.billId}/apply`,
+  payload,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  },
+);
 
       await refreshBill();
 
@@ -1772,7 +1844,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
   (item: any) =>
     Number(item.remainingMetalWeight || 0) > 0 &&
     billMetals.has(
-  normalizeBillMetal(item.metalName),
+normalizeSchemeMetal(item),
 ),
 ) && (
   <optgroup label="Customer Schemes">
@@ -1783,7 +1855,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
             item.remainingMetalWeight || 0,
           ) > 0 &&
          billMetals.has(
-  normalizeBillMetal(item.metalName),
+ normalizeSchemeMetal(item),
 ),
       )
       .map((item: any) => (
@@ -1795,7 +1867,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
             ? "Flexi 12"
             : "Pre-Booking"}{" "}
           #{item.schemeId} —{" "}
-          {item.metalName} —{" "}
+          {normalizeSchemeMetal(item)} —{" "}
           {Number(
             item.remainingMetalWeight || 0,
           ).toFixed(3)}
@@ -1809,7 +1881,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
   (item: any) =>
     Number(item.remainingWeight || 0) > 0 &&
    billMetals.has(
-  normalizeBillMetal(item.metalName),
+ normalizeSchemeMetal(item),
 ),
 ) && (
   <optgroup label="Quick Buy Wallets">
@@ -1820,15 +1892,15 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
             item.remainingWeight || 0,
           ) > 0 &&
          billMetals.has(
-  normalizeBillMetal(item.metalName),
+  normalizeSchemeMetal(item),
 ),
       )
       .map((item: any) => (
         <option
-          key={`QUICK-${item.metalName}`}
-          value={`QUICK_BUY:${item.metalName}`}
+          key={`QUICK-${normalizeSchemeMetal(item)}`}
+          value={`QUICK_BUY:${normalizeSchemeMetal(item)}`}
         >
-          Quick Buy {item.metalName} —{" "}
+          Quick Buy {normalizeSchemeMetal(item)} —{" "}
           {Number(
             item.remainingWeight || 0,
           ).toFixed(3)}
@@ -1845,45 +1917,10 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
   </p>
 )}
 
-{!schemeCouponsLoading && schemeCouponData && (
-  <div className="mt-2 rounded-lg bg-gray-100 p-2 text-xs text-gray-700">
-    <div>
-     Scheme coupons received:{" "}
-<b>
-  {Array.isArray(
-    schemeCouponData?.schemeCoupons
-  )
-    ? schemeCouponData.schemeCoupons.length
-    : 0}
-</b>
-    </div>
-
-    <div>
-      Quick Buy wallets received:{" "}
-<b>
-  {Array.isArray(
-    schemeCouponData?.quickBuyWallets
-  )
-    ? schemeCouponData.quickBuyWallets.length
-    : 0}
-</b>
-    </div>
-
-    <div>
-      Bill metals:{" "}
-      <b>
-        {Array.from(billMetals).join(", ") || "None"}
-      </b>
-    </div>
-  </div>
-)}
 
 
-  {schemeCouponsLoading && (
-  <p className="mt-2 text-xs text-gray-500">
-    Loading customer schemes...
-  </p>
-)}
+
+
 {selectedRedeemableScheme && (
   <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
     <div className="flex justify-between">
