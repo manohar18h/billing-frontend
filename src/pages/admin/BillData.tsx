@@ -186,6 +186,10 @@ const [selectedSchemeType, setSelectedSchemeType] = useState<
 >(null);
 
 
+const [schemeRedemptions, setSchemeRedemptions] = useState<any[]>([]);
+const [redemptionLoading, setRedemptionLoading] = useState(false);
+const [redemptionError, setRedemptionError] = useState("");
+
 const schemeDashboard =
   customer?.schemeDashboard || null;
 
@@ -481,19 +485,274 @@ const openSchemeSection = (
 };
 
 
-
-const openSchemeDetails = (
+const openSchemeDetails = async (
   type: "PRE_BOOKING" | "FLEXI_11" | "QUICK_BUY",
   data: any
 ) => {
   setSelectedSchemeType(type);
   setSelectedScheme(data);
+
+  setSchemeRedemptions([]);
+  setRedemptionError("");
+
+  try {
+    setRedemptionLoading(true);
+
+    let response;
+
+    /*
+     * QUICK BUY
+     *
+     * Quick Buy card is a grouped wallet,
+     * so there is no single schemeId.
+     *
+     * Fetch using customerId + metalName.
+     */
+    if (type === "QUICK_BUY") {
+
+      const customerId =
+        customer?.customerId;
+
+      if (!customerId) {
+        throw new Error(
+          "Customer ID not found."
+        );
+      }
+
+      if (!data?.metalName) {
+        throw new Error(
+          "Quick Buy metal name not found."
+        );
+      }
+
+      response = await api.get(
+        `/scheme/admin/quick-buy-redemptions/${customerId}`,
+        {
+          params: {
+            metalName: data.metalName,
+          },
+
+          headers: {
+            Authorization:
+              `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+    } else {
+
+      /*
+       * PRE-BOOKING / FLEXI
+       */
+      if (!data?.schemeId) {
+        throw new Error(
+          "Scheme ID not found."
+        );
+      }
+
+      response = await api.get(
+        `/scheme/redemptions/${data.schemeId}`,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+    }
+
+    console.log(
+      "SCHEME REDEMPTION HISTORY:",
+      response.data
+    );
+
+    setSchemeRedemptions(
+      Array.isArray(response.data)
+        ? response.data
+        : []
+    );
+
+  } catch (error: any) {
+
+    console.error(
+      "Failed to load scheme redemption history:",
+      error
+    );
+
+    setRedemptionError(
+      getApiErrorMessage(
+        error,
+        "Failed to load redemption history."
+      )
+    );
+
+  } finally {
+    setRedemptionLoading(false);
+  }
 };
+
 
 const closeSchemeDetails = () => {
   setSelectedScheme(null);
   setSelectedSchemeType(null);
+
+  setSchemeRedemptions([]);
+  setRedemptionError("");
+  setRedemptionLoading(false);
 };
+
+const renderQuickBuyRedemptionHistory = () => (
+  <div className="mt-8 rounded-[24px] border border-blue-200 bg-blue-50/40 p-6 max-md:p-4">
+
+    <div className="flex items-center justify-between gap-4">
+
+      <div>
+        <p className="text-[12px] font-bold uppercase tracking-[3px] text-blue-600">
+          Wallet Usage
+        </p>
+
+        <h3 className="mt-1 text-[24px] font-bold text-[#1f2937]">
+          Redemption History
+        </h3>
+      </div>
+
+      {schemeRedemptions.length > 0 && (
+        <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700">
+          {schemeRedemptions.length} Redemption
+          {schemeRedemptions.length !== 1 ? "s" : ""}
+        </span>
+      )}
+
+    </div>
+
+    {redemptionLoading ? (
+
+      <div className="mt-6 flex justify-center py-8">
+        <CircularProgress size={28} />
+      </div>
+
+    ) : redemptionError ? (
+
+      <div className="mt-5 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-600">
+        {redemptionError}
+      </div>
+
+    ) : schemeRedemptions.length === 0 ? (
+
+      <div className="mt-5 rounded-2xl border border-dashed border-gray-300 bg-white p-5 text-center">
+        <p className="font-semibold text-gray-500">
+          This Quick Buy wallet has not been redeemed yet.
+        </p>
+      </div>
+
+    ) : (
+
+      <div className="mt-6 space-y-4">
+
+        {schemeRedemptions.map(
+          (redemption: any, index: number) => (
+
+            <div
+              key={
+                redemption.redemptionId ||
+                `${redemption.billId}-${index}`
+              }
+              className="rounded-2xl border border-blue-200 bg-white p-5 shadow-sm"
+            >
+
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-4">
+
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[2px] text-gray-400">
+                    Redeemed In Bill
+                  </p>
+
+                  <p className="mt-1 text-[22px] font-black text-blue-600">
+                    {redemption.billNumber || "-"}
+                  </p>
+                </div>
+
+                <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700">
+                  QUICK BUY
+                </span>
+
+              </div>
+
+              <div className="mt-5 grid grid-cols-3 gap-4 max-md:grid-cols-1">
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Redeemed Weight
+                  </p>
+
+                  <p className="mt-1 font-bold text-gray-900">
+                    {Number(
+                      redemption.redeemedWeight || 0
+                    ).toFixed(4)}{" "}
+                    gm
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Metal
+                  </p>
+
+                  <p className="mt-1 font-bold text-gray-900">
+                    {redemption.metalName || "-"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Redeemed Date
+                  </p>
+
+                  <p className="mt-1 font-bold text-gray-900">
+                    {formatDate(
+                      redemption.redeemedAt
+                    )}
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+
+                <div className="rounded-xl bg-gray-50 p-4">
+                  <p className="text-sm text-gray-500">
+                    Bill Reference
+                  </p>
+
+                  <p className="mt-1 font-bold text-gray-900">
+                    {redemption.billNumber ||
+                      (redemption.billId
+                        ? `Bill ID ${redemption.billId}`
+                        : "-")}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-blue-50 p-4">
+                  <p className="text-sm text-gray-500">
+                    Redemption Type
+                  </p>
+
+                  <p className="mt-1 font-bold text-blue-700">
+                    Quick Buy Wallet
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+          )
+        )}
+
+      </div>
+    )}
+
+  </div>
+);
 
 const clickable = "clickable-ui";
 
@@ -3111,6 +3370,17 @@ const handleSchemeTabClick = (
 
                             <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
   <span className="text-white/50">
+    Benefit Months
+  </span>
+
+  <b>
+    {item.benefitMonths || 0}/
+    {item.durationMonths || 12}
+  </b>
+</div>
+
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+  <span className="text-white/50">
     Wastage Benefit
   </span>
 
@@ -3179,10 +3449,8 @@ const handleSchemeTabClick = (
                                 }}
                                 className={`${clickable} flex h-[52px] w-full items-center justify-center rounded-xl bg-[#f5c542] px-4 font-black text-black shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#ffd85c] hover:shadow-xl active:scale-[0.98]`}
                               >
-                                Pay Due Month —{" "}
-                                {formatMoney(
-                                  item.monthlyAmount,
-                                )}
+                                Pay Next Installment —{" "}
+{formatMoney(item.monthlyAmount)}
                               </button>
                             )}
                           </div>
@@ -3818,6 +4086,138 @@ const handleSchemeTabClick = (
         </div>
       </div>
     </div>
+    {/* REDEMPTION HISTORY */}
+<div className="mt-6 rounded-[24px] border border-[#ead8ae] bg-[#fffaf0] p-6 max-md:p-4">
+  <div className="flex items-center justify-between gap-3">
+    <div>
+      <p className="text-[12px] font-bold uppercase tracking-[3px] text-[#b98213]">
+        Scheme Usage
+      </p>
+
+      <h3 className="mt-1 text-[24px] font-bold text-[#1f2937]">
+        Redemption History
+      </h3>
+    </div>
+
+    {schemeRedemptions.length > 0 && (
+      <span className="rounded-full bg-green-100 px-4 py-2 text-sm font-bold text-green-700">
+        {schemeRedemptions.length} Redemption
+        {schemeRedemptions.length !== 1 ? "s" : ""}
+      </span>
+    )}
+  </div>
+
+  {redemptionLoading ? (
+    <div className="mt-6 flex items-center justify-center py-8">
+      <CircularProgress size={28} />
+    </div>
+  ) : redemptionError ? (
+    <div className="mt-5 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-600">
+      {redemptionError}
+    </div>
+  ) : schemeRedemptions.length === 0 ? (
+    <div className="mt-5 rounded-2xl border border-dashed border-gray-300 bg-white p-5 text-center">
+      <p className="font-semibold text-gray-500">
+        This scheme has not been redeemed yet.
+      </p>
+    </div>
+  ) : (
+    <div className="mt-6 space-y-4">
+      {schemeRedemptions.map(
+        (redemption: any, index: number) => (
+          <div
+            key={
+              redemption.redemptionId ||
+              `${redemption.billId}-${index}`
+            }
+            className="rounded-2xl border border-[#ead8ae] bg-white p-5 shadow-sm"
+          >
+            <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[2px] text-gray-400">
+                  Redeemed In Bill
+                </p>
+
+                <p className="mt-1 text-[22px] font-black text-[#b98213]">
+                  {redemption.billNumber || "-"}
+                </p>
+              </div>
+
+              <span className="rounded-full bg-green-100 px-4 py-2 text-sm font-bold text-green-700">
+                REDEEMED
+              </span>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-sm text-gray-500">
+                  Redeemed Weight
+                </p>
+
+                <p className="mt-1 font-bold text-gray-900">
+                  {Number(
+                    redemption.redeemedWeight || 0
+                  ).toFixed(3)}{" "}
+                  gm
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">
+                  Metal
+                </p>
+
+                <p className="mt-1 font-bold text-gray-900">
+                  {redemption.metalName || "-"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">
+                  Redeemed Date
+                </p>
+
+                <p className="mt-1 font-bold text-gray-900">
+                  {formatDate(redemption.redeemedAt)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">
+                  Benefit Months
+                </p>
+
+                <p className="mt-1 font-bold text-gray-900">
+                  {redemption.benefitMonths ?? 0} Months
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-xl bg-green-50 p-4">
+              <p className="text-sm text-gray-500">
+                Benefit Applied
+              </p>
+
+              <p className="mt-1 font-bold text-green-700">
+                {redemption.fullWastageDiscount
+                  ? "Full Wastage Discount"
+                  : `${Number(
+                      redemption.wastageDiscountPercentage || 0
+                    )}% Wastage Discount`}
+              </p>
+            </div>
+
+            {redemption.billId && (
+              <p className="mt-3 text-right text-xs text-gray-400">
+                Bill ID: {redemption.billId}
+              </p>
+            )}
+          </div>
+        )
+      )}
+    </div>
+  )}
+</div>
   </>
 )}
 
@@ -3844,9 +4244,14 @@ const handleSchemeTabClick = (
           "Paid Months",
           `${selectedScheme.paidMonths || 0}/${selectedScheme.durationMonths || 12}`,
         ],
-        ["Remaining Months", selectedScheme.remainingMonths || 0],
-        ["Next Due Date", formatDate(selectedScheme.nextDueDate)],
+        [
+  "Benefit Months",
+  `${selectedScheme.benefitMonths || 0}/${selectedScheme.durationMonths || 12}`,
+],
+        ["Remaining Payments", selectedScheme.remainingMonths || 0],
+        ["Next Eligible Date", formatDate(selectedScheme.nextDueDate)],
         ["Status", selectedScheme.status],
+        
       ].map(([title, value]) => (
         <div key={title} className="rounded-2xl bg-[#fbf7ef] p-5">
           <p className="text-gray-500">{title}</p>
@@ -3932,8 +4337,137 @@ const handleSchemeTabClick = (
               );
             }
           )}
-        </tbody>
+             </tbody>
       </table>
+    </div>
+
+    {/* FLEXI REDEMPTION HISTORY */}
+    <div className="mt-8 rounded-[24px] border border-emerald-200 bg-emerald-50/40 p-6 max-md:p-4">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[12px] font-bold uppercase tracking-[3px] text-emerald-600">
+            Scheme Usage
+          </p>
+
+          <h3 className="mt-1 text-[24px] font-bold text-[#1f2937]">
+            Redemption History
+          </h3>
+        </div>
+
+        {schemeRedemptions.length > 0 && (
+          <span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700">
+            {schemeRedemptions.length} Redemption
+            {schemeRedemptions.length !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
+
+      {redemptionLoading ? (
+        <div className="mt-6 flex justify-center py-8">
+          <CircularProgress size={28} />
+        </div>
+      ) : redemptionError ? (
+        <div className="mt-5 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-600">
+          {redemptionError}
+        </div>
+      ) : schemeRedemptions.length === 0 ? (
+        <div className="mt-5 rounded-2xl border border-dashed border-gray-300 bg-white p-5 text-center">
+          <p className="font-semibold text-gray-500">
+            This Flexi scheme has not been redeemed yet.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          {schemeRedemptions.map(
+            (redemption: any, index: number) => (
+              <div
+                key={
+                  redemption.redemptionId ||
+                  `${redemption.billId}-${index}`
+                }
+                className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm"
+              >
+                <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[2px] text-gray-400">
+                      Redeemed In Bill
+                    </p>
+
+                    <p className="mt-1 text-[22px] font-black text-emerald-600">
+                      {redemption.billNumber || "-"}
+                    </p>
+                  </div>
+
+                  <span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700">
+                    REDEEMED
+                  </span>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      Redeemed Gold
+                    </p>
+
+                    <p className="mt-1 font-bold text-gray-900">
+                      {Number(
+                        redemption.redeemedWeight || 0
+                      ).toFixed(4)}{" "}
+                      gm
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      Bill Number
+                    </p>
+
+                    <p className="mt-1 font-bold text-gray-900">
+                      {redemption.billNumber || "-"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      Redeemed Date
+                    </p>
+
+                    <p className="mt-1 font-bold text-gray-900">
+                      {formatDate(
+                        redemption.redeemedAt
+                      )}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      Benefit Months
+                    </p>
+
+                    <p className="mt-1 font-bold text-gray-900">
+                      {redemption.benefitMonths ?? 0} Months
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl bg-emerald-50 p-4">
+                  <p className="text-sm text-gray-500">
+                    Wastage Benefit Used
+                  </p>
+
+                  <p className="mt-1 font-bold text-emerald-700">
+                    {redemption.fullWastageDiscount
+                      ? "Full Wastage Discount"
+                      : `${Number(
+                          redemption.wastageDiscountPercentage || 0
+                        )}% Wastage Discount`}
+                  </p>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
     </div>
   </>
 )}
@@ -4062,9 +4596,13 @@ const handleSchemeTabClick = (
 </td>
                   </tr>
                 ))}
-              </tbody>
+                          </tbody>
             </table>
           </div>
+
+          {/* QUICK BUY BILL / REDEMPTION HISTORY */}
+          {renderQuickBuyRedemptionHistory()}
+
         </>
       )}
     </div>

@@ -51,7 +51,16 @@ const isQuickBuyCouponSelected =
   const navigate = useNavigate();
 
 
+interface BillSchemeSummary {
+  schemeType: string;
+  schemeName: string;
+  metalName: string;
+  redeemedWeight: number;
+  discountAmount: number;
+}
 
+const [billSchemeSummary, setBillSchemeSummary] =
+  useState<BillSchemeSummary[]>([]);
 
   // Transaction model
   interface Transaction {
@@ -143,6 +152,21 @@ const isQuickBuyCouponSelected =
     selectedOrderIds: string;
     billingDate: string;
     orderDate: string;
+
+     schemeCouponType?: string | null;
+
+  schemeCouponSchemeId?: number | null;
+
+  schemeCouponName?: string | null;
+
+  schemeCouponMetal?: string | null;
+
+  schemeRedeemedWeight?: number | null;
+
+  schemeCouponDiscountAmount?: number | null;
+
+  schemeBenefitText?: string | null;
+
     selectedOrders: Order[]; // keep string since it’s coming in this format
   }
 
@@ -287,7 +311,55 @@ const normalizeSchemeMetal = (item: any) => {
     item?.metalName
   );
 };
+const loadBillSchemeSummary = async () => {
 
+  if (!bill?.billId) {
+
+    setBillSchemeSummary([]);
+
+    return;
+  }
+
+  try {
+
+    const response = await api.get<BillSchemeSummary[]>(
+      `/scheme/admin/bill-scheme-summary/${bill.billId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+
+    console.log(
+      "BILL SCHEME SUMMARY:",
+      response.data,
+    );
+
+
+    setBillSchemeSummary(
+      Array.isArray(response.data)
+        ? response.data
+        : [],
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Failed to load bill scheme summary:",
+      error,
+    );
+
+    setBillSchemeSummary([]);
+  }
+};
+
+useEffect(() => {
+  if (!bill?.billId) return;
+
+  loadBillSchemeSummary();
+}, [bill?.billId]);
 
 const billMetals = React.useMemo(() => {
   const metals = new Set<string>();
@@ -469,14 +541,18 @@ const selectedRedeemableScheme =
         return;
       }
 
-      payload = {
-        couponType: "SCHEME",
-        schemeId:
-          selectedRedeemableScheme.schemeId,
-        metalName:
-          selectedRedeemableScheme.metalName,
-        redeemWeight,
-      };
+     payload = {
+  couponType: "SCHEME",
+  schemeId:
+    selectedRedeemableScheme.schemeId,
+
+  metalName:
+    normalizeSchemeMetal(
+      selectedRedeemableScheme
+    ),
+
+  redeemWeight,
+};
     } else if (isQuickBuyCouponSelected) {
       if (!selectedQuickBuyWallet) {
         return;
@@ -630,13 +706,17 @@ const handleDiscountSubmit = async () => {
         }
 
         payload = {
-          couponType: "SCHEME",
-          schemeId:
-            selectedRedeemableScheme.schemeId,
-          metalName:
-            selectedRedeemableScheme.metalName,
-          redeemWeight,
-        };
+  couponType: "SCHEME",
+  schemeId:
+    selectedRedeemableScheme.schemeId,
+
+  metalName:
+    normalizeSchemeMetal(
+      selectedRedeemableScheme
+    ),
+
+  redeemWeight,
+};
       } else {
         if (!selectedQuickBuyWallet) {
           alert(
@@ -665,15 +745,11 @@ const handleDiscountSubmit = async () => {
   },
 );
 
-      await refreshBill();
+     await refreshBill();
 
-      /*
-       * Refresh available schemes/wallets.
-       *
-       * Fully redeemed coupon disappears.
-       * Partial redemption shows new balance.
-       */
-      await loadSchemeCoupons();
+await loadBillSchemeSummary();
+
+await loadSchemeCoupons();
 
       alert(
         `${response.data.message}\n\n` +
@@ -1448,7 +1524,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                     {item.making_charges}
                   </td>
                   <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
-                    ₹{item.total_item_amount}
+                    ₹{Math.round(Number(item.total_item_amount || 0))}
                   </td>
                   <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
                     {item.deliveryStatus}
@@ -1510,7 +1586,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                         -
                       </td>
                       <td className="border px-2 py-1  text-[#00479f] font-bold text-center align-middle text-[13px]">
-                        ₹{ex.exchange_item_amount}
+                        ₹{Math.round(Number(ex.exchange_item_amount || 0))}
                       </td>
                       <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
                         {"Exchange"}
@@ -1521,6 +1597,87 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
             </tbody>
           </table>
         </div>
+
+{billSchemeSummary.length > 0 && (
+<div className="mt-0 mb-1 rounded-xl border border-[#d8b55b] bg-[#fffaf0] px-5 pt-4 pb-1">
+   
+
+
+    {/* HEADER */}
+<div className="-mt-1 grid grid-cols-[2.3fr_0.8fr_1fr_1fr] gap-3 border-b border-[#ead7ae] pb-1 text-[12px] font-semibold text-gray-500">
+      <div>
+        Scheme / Coupon
+      </div>
+
+      <div>
+        Metal
+      </div>
+
+      <div>
+        Redeemed Weight
+      </div>
+
+      <div className="text-right">
+        Discount
+      </div>
+
+    </div>
+
+
+    {/* SUMMARY ROWS */}
+    {billSchemeSummary.map(
+      (
+        item: BillSchemeSummary,
+        index: number,
+      ) => (
+
+        <div
+          key={`${item.schemeType}-${item.metalName}-${index}`}
+          className="grid grid-cols-[2.3fr_0.8fr_1fr_1fr] gap-3 border-b border-[#f0e4c8] py-3 text-[13px] last:border-b-0"
+        >
+
+          {/* FULL COUPON NAME */}
+          <div className="font-bold text-black">
+            {item.schemeName ||
+              item.schemeType ||
+              "-"}
+          </div>
+
+
+          {/* METAL */}
+          <div className="font-bold text-black">
+            {item.metalName || "-"}
+          </div>
+
+
+          {/* WEIGHT */}
+          <div className="font-bold text-[#8a5400]">
+            {Number(
+              item.redeemedWeight || 0,
+            ).toFixed(3)}{" "}
+            gm
+          </div>
+
+
+          {/* ACTUAL DISCOUNT */}
+          <div className="text-right font-bold text-[#0b6b42]">
+
+            -₹
+            {Math.round(
+              Number(
+                item.discountAmount || 0,
+              ),
+            ).toLocaleString("en-IN")}
+
+          </div>
+
+        </div>
+
+      ),
+    )}
+
+  </div>
+)}
 
         {/* Totals */}
         <div className="flex justify-between  items-start mt-10">
@@ -1543,7 +1700,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                     Bill Total :
                   </td>
                   <td className="text-right font-bold px-3 py-2 text-[#5e2a03] text-[15px] ">
-                    ₹{bill.billTotalAmount}
+                    ₹{Math.round(Number(bill.billTotalAmount || 0))}
                   </td>
                 </tr>
                 <tr>
@@ -1551,23 +1708,27 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                     Exchange Amount :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#022754] text-[15px]">
-                    ₹{bill.exchangeAmount}
-                  </td>
+{Number(bill.exchangeAmount || 0) > 0
+  ? `-₹${Math.round(Number(bill.exchangeAmount)).toLocaleString("en-IN")}`
+  : "0"
+}                  </td>
                 </tr>
                 <tr>
                   <td className="px-3 py-2 text-black  font-bold text-[15px]">
                     Discount :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#93094e] text-[15px]">
-                    ₹{bill.billDiscountAmount}
-                  </td>
+{Number(bill.billDiscountAmount || 0) > 0
+  ? `-₹${Math.round(Number(bill.billDiscountAmount)).toLocaleString("en-IN")}`
+  : "0"
+}                  </td>
                 </tr>
                 <tr>
                   <td className="px-3 py-2 text-black  font-bold text-[15px]">
                     Total Paid :
                   </td>
                   <td className="text-right px-3 py-2 font-bold  text-[#0b4e06] text-[15px]">
-                    ₹{bill.billPaidAmount}
+                   ₹{Math.round(Number(bill.billPaidAmount || 0))}
                   </td>
                 </tr>
                 {/* ✅ Conditionally render Received row */}
@@ -1577,7 +1738,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                       Received :
                     </td>
                     <td className="text-right px-3 py-2 font-bold text-[#5f034e] text-[15px]">
-                      ₹{bill.billResAmount}
+                      ₹{Math.round(Number(bill.billResAmount || 0))}
                     </td>
                   </tr>
                 )}
@@ -1586,7 +1747,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                     Total Due:
                   </td>
                   <td className="text-right font-bold text-[#ff0000] px-3 py-2 text-[15px]">
-                    ₹{bill.billDueAmount}
+                    ₹{Math.round(Number(bill.billDueAmount || 0))}
                   </td>
                 </tr>
               </tbody>
@@ -1627,25 +1788,25 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div className="bg-white rounded-xl p-3 border">
               <div className="text-gray-600">Total Amount</div>
-              <div className="font-bold text-base">₹{bill.billTotalAmount}</div>
+              <div className="font-bold text-base">₹{Math.round(Number(bill.billTotalAmount || 0))}</div>
             </div>
 
             <div className="bg-white rounded-xl p-3 border">
               <div className="text-gray-600">Exchange Amount</div>
-              <div className="font-bold text-base">₹{bill.exchangeAmount}</div>
+              <div className="font-bold text-base">₹{Math.round(Number(bill.exchangeAmount || 0))}</div>
             </div>
 
             <div className="bg-white rounded-xl p-3 border">
               <div className="text-gray-600">Total Paid</div>
               <div className="font-bold text-base text-green-700">
-                ₹{bill.billPaidAmount}
+                ₹{Math.round(Number(bill.billPaidAmount || 0))}
               </div>
             </div>
 
             <div className="bg-white rounded-xl p-3 border">
               <div className="text-gray-600">Total Received</div>
               <div className="font-bold text-base text-purple-700">
-                ₹{bill.billResAmount}
+                ₹{Math.round(Number(bill.billResAmount || 0))}
               </div>
             </div>
 
@@ -1672,7 +1833,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
             <div className="bg-white rounded-xl p-3 border sm:col-span-2">
               <div className="text-gray-600">Total Due</div>
               <div className="font-bold text-base text-red-600">
-                ₹{bill.billDueAmount}
+                ₹{Math.round(Number(bill.billDueAmount || 0))}
               </div>
             </div>
           </div>
@@ -1939,7 +2100,9 @@ normalizeSchemeMetal(item),
       <span>Metal</span>
 
       <strong>
-        {selectedRedeemableScheme.metalName}
+        {normalizeSchemeMetal(
+  selectedRedeemableScheme
+)}
       </strong>
     </div>
 
