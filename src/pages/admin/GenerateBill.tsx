@@ -59,6 +59,36 @@ interface BillSchemeSummary {
   discountAmount: number;
 }
 
+interface SchemeCouponItem {
+  schemeId: number;
+  schemeType?: string;
+  schemeSubType?: string;
+  metalName?: string;
+  benefitMonths?: number;
+  benefitText?: string;
+  availableWeight?: number;
+  [key: string]: any;
+}
+
+interface QuickBuyWalletItem {
+  metalName: string;
+  availableWeight?: number;
+  [key: string]: any;
+}
+
+interface SchemeRedeemableResponse {
+  schemeCoupons: SchemeCouponItem[];
+  quickBuyWallets: QuickBuyWalletItem[];
+}
+
+interface SchemeCouponResult {
+  message?: string;
+  redeemedWeight?: number;
+  discountAmount?: number;
+  availableWeightAfter?: number;
+  [key: string]: any;
+}
+
 const [billSchemeSummary, setBillSchemeSummary] =
   useState<BillSchemeSummary[]>([]);
 
@@ -406,11 +436,11 @@ const loadSchemeCoupons = async () => {
   try {
     setSchemeCouponsLoading(true);
 
-    const response = await api.get(
-      `/scheme/redeemable/by-phone/${encodeURIComponent(
-        phone
-      )}`
-    );
+   const response = await api.get<SchemeRedeemableResponse>(
+  `/scheme/redeemable/by-phone/${encodeURIComponent(
+    phone
+  )}`
+);
 
     console.log(
       "SCHEME COUPON API FULL RESPONSE:",
@@ -569,7 +599,7 @@ const selectedRedeemableScheme =
       return;
     }
 
-    const response = await api.post(
+  const response = await api.post<SchemeCouponResult>(
   `/scheme/admin/bill-coupon/${bill.billId}/preview`,
   payload,
   {
@@ -734,7 +764,7 @@ const handleDiscountSubmit = async () => {
         };
       }
 
-     const response = await api.post(
+   const response = await api.post<SchemeCouponResult>(
   `/scheme/admin/bill-coupon/${bill.billId}/apply`,
   payload,
   {
