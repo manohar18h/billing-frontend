@@ -1093,11 +1093,15 @@ useEffect(() => {
 
       setCustomer(customerResponse.data);
 
-      setBillingData(
-        Array.isArray(billingResponse.data)
-          ? billingResponse.data
-          : [],
-      );
+      const validBills = Array.isArray(billingResponse.data)
+  ? billingResponse.data.filter(
+      (bill) =>
+        Array.isArray(bill.selectedOrders) &&
+        bill.selectedOrders.length > 0,
+    )
+  : [];
+
+setBillingData(validBills);
     } catch (error: any) {
       console.error(
         "Error loading customer details:",
@@ -1153,9 +1157,11 @@ if (!customer) {
 const totalOrders =
   Number(customer.numberOfOrders || 0);
 
-const totalDueAmount =
-  Number(customer.totalDueAmount || 0);
-
+const totalDueAmount = billingData.reduce(
+  (total, bill) =>
+    total + Number(bill.billDueAmount || 0),
+  0,
+);
   const normalizeCustomerName = (value: string) =>
   value
     .trim()
