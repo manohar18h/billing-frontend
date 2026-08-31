@@ -53,6 +53,9 @@ type BarcodeProduct = {
   gross_weight: number;
   stockBox: string;
   barcodeValue: string;
+
+   methodType2?: string | null;
+  sellingDate?: string | null;
 };
 
 type MetalRates = {
@@ -279,6 +282,8 @@ const handleSaveDescription = async () => {
 );
 
       const data = response.data;
+
+setShowEstimation(false);
 
       let price = 0;
       if (rates) {
@@ -603,7 +608,27 @@ if (!confirmDelete) return;
         <p><b className="text-pink-300">Bits Amount:</b> <span className="text-yellow-300 font-bold">{order.bits_amount || "—"}</span></p>
         <p><b className="text-pink-300">Gross Weight:</b> <span className="text-yellow-300 font-bold">{order.gross_weight}</span></p>
         <p><b className="text-pink-300">Stock Box:</b> <span className="text-yellow-300 font-bold">{order.stockBox || "—"}</span></p>
+<p>
+  <b className="text-pink-300">Item Status:</b>{" "}
+  {order.methodType2?.toUpperCase() === "SELL" ? (
+    <span className="font-extrabold text-red-400">
+      SOLD
+    </span>
+  ) : (
+    <span className="font-extrabold text-green-400">
+      AVAILABLE
+    </span>
+  )}
+</p>
 
+{order.methodType2?.toUpperCase() === "SELL" && (
+  <p>
+    <b className="text-pink-300">Selling Date:</b>{" "}
+    <span className="font-bold text-red-300">
+      {order.sellingDate || "—"}
+    </span>
+  </p>
+)}
         <div className="mt-6 rounded-2xl bg-white/10 p-4">
           <p className="text-pink-300 font-bold">Final Estimation Amount</p>
           <p className="text-4xl font-extrabold text-yellow-300 mt-2">
@@ -617,15 +642,22 @@ if (!confirmDelete) return;
         {order && (
           <Box mt={3} textAlign="center">
             <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => setShowEstimation(true)}
-            >
-              Generate Estimation
-            </Button>
+  variant="outlined"
+  disabled={order?.methodType2?.toUpperCase() === "SELL"}
+  onClick={() => setShowEstimation(true)}
+>
+  GENERATE ESTIMATION
+</Button>
+{order?.methodType2?.toUpperCase() === "SELL" && (
+  <div className="mt-4 rounded-xl bg-red-100 p-3 text-center font-bold text-red-700">
+    This item is already sold. Estimation cannot be generated.
+  </div>
+)}
           </Box>
         )}
-        {showEstimation && order && (
+        {showEstimation &&
+  order &&
+  order.methodType2?.toUpperCase() !== "SELL" && (
           <div id="print-section">
             <h2>ESTIMATION</h2>
             <div className="center">{new Date().toLocaleString()}</div>
@@ -869,7 +901,9 @@ if (!confirmDelete) return;
         )}
     </Paper>
 )}
-      {showEstimationSection && showEstimation && (
+      {showEstimationSection &&
+  showEstimation &&
+  order?.methodType2?.toUpperCase() !== "SELL" && (
         <div className="text-center mt-6 print:hidden">
           <button
             onClick={() => window.print()}
