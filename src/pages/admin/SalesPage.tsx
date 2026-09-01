@@ -130,7 +130,14 @@ const [pendingAction, setPendingAction] = useState<{
   box: StockDataBox;
 } | null>(null);
 
+const [restorePasswordDialog, setRestorePasswordDialog] =
+  useState(false);
 
+const [restorePassword, setRestorePassword] =
+  useState("");
+
+const [restoringItem, setRestoringItem] =
+  useState(false);
 
 const handleProtectedAction = (
   type: "edit" | "delete",
@@ -187,6 +194,108 @@ const verifyPasswordAndProceed = async () => {
       alive = false;
     };
   }, []);
+
+  const handleRestoreClick = () => {
+
+  if (!order) return;
+
+  if (
+    order.methodType2?.trim().toUpperCase()
+    !== "SELL"
+  ) {
+    alert(
+      'Item is already available. Restore not required.'
+    );
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "IMPORTANT:\n\n" +
+    "Please physically check that the barcode/RFID tag is available with this item.\n\n" +
+    "Only restore the item if the correct tag is physically present.\n\n" +
+    "Do you want to continue?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  setRestorePassword("");
+  setRestorePasswordDialog(true);
+};
+
+const handleRestoreItem = async () => {
+
+  if (!order) return;
+
+  if (!restorePassword.trim()) {
+    alert("Please enter admin password.");
+    return;
+  }
+
+  try {
+
+    setRestoringItem(true);
+
+    const response = await api.post(
+      "/admin/restore-sold-item",
+      {
+        barcodeValue: order.barcodeValue,
+        password: restorePassword,
+      },
+      {
+        headers: token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : undefined,
+      },
+    );
+
+    const message =
+      response.data?.message ||
+      "Item restored successfully.";
+
+    alert(message);
+
+    if (
+      message ===
+      "Item restored successfully."
+    ) {
+
+      // Update screen immediately.
+      setOrder((previous) =>
+        previous
+          ? {
+              ...previous,
+              methodType2: null,
+              sellingDate: null,
+            }
+          : previous,
+      );
+
+      setRestorePasswordDialog(false);
+setRestorePassword("");
+
+// Refresh stock box count / weight immediately
+await fetchStockBoxes();
+    }
+
+  } catch (error: any) {
+
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      "Failed to restore item.";
+
+    alert(message);
+
+  } finally {
+
+    setRestoringItem(false);
+  }
+};
 
   const handleUpdateChecked = async (box: StockDataBox, checked: boolean) => {
   await api.put(
@@ -630,6 +739,36 @@ if (!confirmDelete) return;
     </span>
   </p>
 )}
+{isAdmin &&
+  order.methodType2
+    ?.trim()
+    .toUpperCase() === "SELL" && (
+
+  <div className="mt-5">
+
+    <button
+      type="button"
+      onClick={handleRestoreClick}
+      disabled={restoringItem}
+      className="
+        bg-green-600
+        hover:bg-green-700
+        disabled:bg-gray-500
+        text-white
+        font-bold
+        px-6
+        py-3
+        rounded-xl
+        shadow-lg
+        transition
+      "
+    >
+      ♻️ RESTORE ITEM
+    </button>
+
+  </div>
+)}
+
         <div className="mt-6 rounded-2xl bg-white/10 p-4">
           <p className="text-pink-300 font-bold">Final Estimation Amount</p>
           <p className="text-4xl font-extrabold text-yellow-300 mt-2">
@@ -1310,6 +1449,8 @@ if (!confirmDelete) return;
   </div>
 )}
 
+
+
 {descDialog && (
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
     <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl">
@@ -1355,6 +1496,148 @@ if (!confirmDelete) return;
     </div>
   </div>
 )}
+
+
+{restorePasswordDialog && (
+
+  <div
+    className="
+      fixed inset-0
+      bg-black/50
+      flex items-center
+      justify-center
+      z-[9999]
+    "
+  >
+
+    <div
+      className="
+        bg-white
+        rounded-2xl
+        shadow-2xl
+        p-6
+        w-[420px]
+        max-w-[90vw]
+      "
+    >
+
+      <h2
+        className="
+          text-xl
+          font-bold
+          text-gray-900
+          mb-2
+        "
+      >
+        Restore Sold Item
+      </h2>
+
+      <p
+        className="
+          text-sm
+          text-red-600
+          font-semibold
+          mb-4
+        "
+      >
+        Confirm the physical barcode/RFID
+        tag is available before restoring.
+      </p>
+
+      <label
+        className="
+          block
+          font-semibold
+          text-gray-700
+          mb-2
+        "
+      >
+        Admin Password
+      </label>
+
+      <input
+        type="password"
+        value={restorePassword}
+        autoFocus
+        onChange={(e) =>
+          setRestorePassword(
+            e.target.value
+          )
+        }
+        onKeyDown={(e) => {
+          if (
+            e.key === "Enter" &&
+            !restoringItem
+          ) {
+            handleRestoreItem();
+          }
+        }}
+        placeholder="Enter admin password"
+        className="
+          w-full
+          border
+          border-gray-300
+          rounded-lg
+          px-3
+          py-2
+          mb-5
+          focus:outline-none
+          focus:ring-2
+          focus:ring-green-500
+        "
+      />
+
+      <div
+        className="
+          flex
+          justify-end
+          gap-3
+        "
+      >
+
+        <button
+          type="button"
+          disabled={restoringItem}
+          onClick={() => {
+            setRestorePasswordDialog(false);
+            setRestorePassword("");
+          }}
+          className="
+            px-4 py-2
+            border
+            rounded-lg
+            font-semibold
+          "
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          disabled={restoringItem}
+          onClick={handleRestoreItem}
+          className="
+            px-5 py-2
+            bg-green-600
+            hover:bg-green-700
+            disabled:bg-gray-500
+            text-white
+            rounded-lg
+            font-bold
+          "
+        >
+          {restoringItem
+            ? "Restoring..."
+            : "Restore"}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
+
 
     </div>
 
