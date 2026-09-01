@@ -237,21 +237,21 @@ const handleRestoreItem = async () => {
 
     setRestoringItem(true);
 
-    const response = await api.post(
-      "/admin/restore-sold-item",
-      {
-        barcodeValue: order.barcodeValue,
-        password: restorePassword,
-      },
-      {
-        headers: token
-          ? {
-              Authorization:
-                `Bearer ${token}`,
-            }
-          : undefined,
-      },
-    );
+   const response = await api.post<{
+  success: boolean;
+  message: string;
+}>(
+  "/admin/restore-sold-item",
+  {
+    barcodeValue: order.barcodeValue,
+    password: restorePassword,
+  },
+  {
+    headers: token
+      ? { Authorization: `Bearer ${token}` }
+      : undefined,
+  },
+);
 
     const message =
       response.data?.message ||
