@@ -1841,7 +1841,7 @@ const selectExistingStockBox = (
                 <div className="flex items-start justify-between">
 
                   <div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 ">
                       Assigned To
                     </div>
 
