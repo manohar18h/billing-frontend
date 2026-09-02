@@ -83,6 +83,8 @@ type StockDataBox = {
   stockBoxData: StockBoxDataEntry[];
 };
 
+
+
 type SalesPageProps = {
   mode?: "stockBox" | "estimation";
 };

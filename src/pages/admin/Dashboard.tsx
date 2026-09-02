@@ -85,6 +85,38 @@ interface LoanBill {
   loanBillingDate: string;
   checked: boolean;
 }
+
+
+interface TaggingWork {
+  taggingWorkId: number;
+  assignedTo: string;
+
+  stockBoxId: number | null;
+  stockBoxName: string;
+
+  itemName: string;
+
+  beforeTagCount: number;
+  afterTagCount: number;
+
+  remainingCount: number;
+
+  status: string;
+
+  remarks: string | null;
+
+  assignedDate: string;
+  completedDate: string | null;
+
+  archived: boolean;
+}
+
+interface StockBoxOption {
+  stockBoxId: number;
+  stockBoxName: string;
+}
+
+
 interface VillageStatsResponse {
   totalCustomers: number;
   totalVillages: number;
@@ -1078,6 +1110,1273 @@ const DueLoanAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
   );
 };
 
+
+const TaggingWorkTable: React.FC = () => {
+  const token = localStorage.getItem("token") ?? "";
+
+  const [rows, setRows] = useState<TaggingWork[]>([]);
+  const [stockBoxes, setStockBoxes] = useState<StockBoxOption[]>([]);
+
+  const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+
+  const [assignedTo, setAssignedTo] = useState("");
+  const [stockBoxId, setStockBoxId] = useState("");
+  const [stockBoxName, setStockBoxName] = useState("");
+
+  const [showBoxSuggestions, setShowBoxSuggestions] = useState(false);
+
+  const [itemName, setItemName] = useState("");
+
+  const [beforeTagCount, setBeforeTagCount] =
+    useState("");
+
+  const [afterTagCount, setAfterTagCount] =
+    useState("0");
+
+  const [remarks, setRemarks] = useState("");
+
+
+  const authHeaders = {
+    Authorization: `Bearer ${token}`,
+  };
+
+
+  const fetchTaggingWorks = async () => {
+    try {
+      const response = await api.get<TaggingWork[]>(
+        "/admin/tagging-work/active",
+        {
+          headers: authHeaders,
+        },
+      );
+
+      setRows(
+        Array.isArray(response.data)
+          ? response.data
+          : [],
+      );
+    } catch (error) {
+      console.error(
+        "Failed to fetch tagging work",
+        error,
+      );
+    }
+  };
+
+
+  const fetchStockBoxes = async () => {
+    try {
+      const response = await api.get<StockBoxOption[]>(
+        "/admin/getALlStockBox",
+        {
+          headers: authHeaders,
+        },
+      );
+
+      setStockBoxes(
+        Array.isArray(response.data)
+          ? response.data
+          : [],
+      );
+    } catch (error) {
+      console.error(
+        "Failed to load stock boxes",
+        error,
+      );
+    }
+  };
+
+
+  useEffect(() => {
+    if (!token) return;
+
+    fetchTaggingWorks();
+    fetchStockBoxes();
+  }, []);
+
+
+ const resetForm = () => {
+  setEditId(null);
+
+  setAssignedTo("");
+
+  setStockBoxId("");
+  setStockBoxName("");
+
+  setShowBoxSuggestions(false);
+
+  setItemName("");
+
+  setBeforeTagCount("");
+  setAfterTagCount("0");
+
+  setRemarks("");
+};
+
+
+  const openAdd = () => {
+    resetForm();
+    setOpen(true);
+  };
+
+
+  const openEdit = (row: TaggingWork) => {
+    setEditId(row.taggingWorkId);
+
+    setAssignedTo(row.assignedTo);
+
+    setStockBoxId(
+      row.stockBoxId
+        ? String(row.stockBoxId)
+        : "",
+    );
+
+    setStockBoxName(row.stockBoxName);
+
+    setItemName(row.itemName);
+
+    setBeforeTagCount(
+      String(row.beforeTagCount ?? 0),
+    );
+
+    setAfterTagCount(
+      String(row.afterTagCount ?? 0),
+    );
+
+    setRemarks(row.remarks ?? "");
+
+    setOpen(true);
+  };
+
+
+ const handleStockBoxTyping = (value: string) => {
+  // Whatever the user types becomes the visible box name
+  setStockBoxName(value);
+
+  /*
+   * IMPORTANT:
+   * While manually typing, remove the selected DB stockBoxId.
+   *
+   * So if user types a new temporary box name,
+   * it will NOT be linked to StockBox table.
+   */
+  setStockBoxId("");
+
+  setShowBoxSuggestions(true);
+};
+
+
+const selectExistingStockBox = (
+  box: StockBoxOption,
+) => {
+  setStockBoxId(
+    String(box.stockBoxId),
+  );
+
+  setStockBoxName(
+    box.stockBoxName,
+  );
+
+  setShowBoxSuggestions(false);
+};
+
+
+  const save = async () => {
+    if (!assignedTo.trim()) {
+      alert("Please enter assigned person");
+      return;
+    }
+
+    if (!stockBoxName.trim()) {
+      alert("Please select stock box");
+      return;
+    }
+
+    if (!itemName.trim()) {
+      alert("Please enter item name");
+      return;
+    }
+
+    if (
+      !beforeTagCount ||
+      Number(beforeTagCount) <= 0
+    ) {
+      alert(
+        "Initial pieces count must be greater than 0",
+      );
+      return;
+    }
+
+
+   const payload = {
+  assignedTo: assignedTo.trim(),
+
+  stockBoxId:
+    stockBoxId === ""
+      ? null
+      : Number(stockBoxId),
+
+  stockBoxName:
+    stockBoxName.trim(),
+
+  itemName:
+    itemName.trim(),
+
+  beforeTagCount:
+    Number(beforeTagCount),
+
+  afterTagCount:
+    Number(afterTagCount || 0),
+
+  remarks:
+    remarks.trim(),
+};
+
+
+    try {
+      if (editId !== null) {
+        await api.put(
+          `/admin/tagging-work/${editId}`,
+          payload,
+          {
+            headers: authHeaders,
+          },
+        );
+      } else {
+        await api.post(
+          "/admin/tagging-work",
+          payload,
+          {
+            headers: authHeaders,
+          },
+        );
+      }
+
+      setOpen(false);
+      resetForm();
+
+      await fetchTaggingWorks();
+    } catch (error: any) {
+      console.error(
+        "Failed saving tagging work",
+        error,
+      );
+
+      alert(
+        error.response?.data?.message ||
+          error.response?.data ||
+          "Failed to save tagging work",
+      );
+    }
+  };
+
+
+  const archiveWork = async (
+    row: TaggingWork,
+  ) => {
+    if (
+      Number(row.beforeTagCount) !==
+      Number(row.afterTagCount)
+    ) {
+      alert(
+        `Cannot complete. ${row.remainingCount} pieces are remaining.`,
+      );
+      return;
+    }
+
+
+    const confirmed = window.confirm(
+      "All pieces are tagged correctly. Complete and remove this work from active list?",
+    );
+
+    if (!confirmed) return;
+
+
+    try {
+      await api.put(
+        `/admin/tagging-work/${row.taggingWorkId}/archive`,
+        {},
+        {
+          headers: authHeaders,
+        },
+      );
+
+      await fetchTaggingWorks();
+    } catch (error: any) {
+      alert(
+        error.response?.data?.message ||
+          error.response?.data ||
+          "Unable to complete tagging work",
+      );
+    }
+  };
+
+
+  const deleteWork = async (
+    row: TaggingWork,
+  ) => {
+    const confirmed = window.confirm(
+      `Delete tagging work for ${row.itemName}?`,
+    );
+
+    if (!confirmed) return;
+
+
+    try {
+      await api.delete(
+        `/admin/tagging-work/${row.taggingWorkId}`,
+        {
+          headers: authHeaders,
+        },
+      );
+
+      await fetchTaggingWorks();
+    } catch (error) {
+      console.error(
+        "Delete tagging work failed",
+        error,
+      );
+    }
+  };
+
+
+  const getStatus = (
+    row: TaggingWork,
+  ) => {
+    const before =
+      Number(row.beforeTagCount || 0);
+
+    const after =
+      Number(row.afterTagCount || 0);
+
+
+    if (after === 0) {
+      return {
+        label: "Pending",
+        className:
+          "bg-gray-100 text-gray-700",
+      };
+    }
+
+
+    if (after < before) {
+      return {
+        label: "In Progress",
+        className:
+          "bg-yellow-100 text-yellow-700",
+      };
+    }
+
+
+    if (after === before) {
+      return {
+        label: "Matched",
+        className:
+          "bg-green-100 text-green-700",
+      };
+    }
+
+
+    return {
+      label: "Count Mismatch",
+      className:
+        "bg-red-100 text-red-700",
+    };
+  };
+
+
+  const totalGiven =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        Number(row.beforeTagCount || 0),
+      0,
+    );
+
+
+  const totalTagged =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        Number(row.afterTagCount || 0),
+      0,
+    );
+
+
+  const totalRemaining =
+    totalGiven - totalTagged;
+
+
+    const filteredStockBoxes = stockBoxes
+  .filter((box) => {
+    const search =
+      stockBoxName.trim().toLowerCase();
+
+    if (!search) {
+      return true;
+    }
+
+    return box.stockBoxName
+      .toLowerCase()
+      .includes(search);
+  })
+  .sort((a, b) => {
+    const search =
+      stockBoxName.trim().toLowerCase();
+
+    if (!search) {
+      return a.stockBoxName.localeCompare(
+        b.stockBoxName,
+      );
+    }
+
+    const aName =
+      a.stockBoxName.toLowerCase();
+
+    const bName =
+      b.stockBoxName.toLowerCase();
+
+
+    // Exact match first
+    if (aName === search && bName !== search) {
+      return -1;
+    }
+
+    if (bName === search && aName !== search) {
+      return 1;
+    }
+
+
+    // Starts-with match second
+    const aStarts =
+      aName.startsWith(search);
+
+    const bStarts =
+      bName.startsWith(search);
+
+    if (aStarts && !bStarts) {
+      return -1;
+    }
+
+    if (!aStarts && bStarts) {
+      return 1;
+    }
+
+
+    // Remaining matching values alphabetically
+    return aName.localeCompare(bName);
+  });
+
+
+  return (
+    <>
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 md:p-5">
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+
+          <div>
+            <div className="text-lg font-bold text-[#4911a9]">
+              RFID Tagging Work
+            </div>
+
+            <div className="mt-1 text-xs text-gray-500">
+              Track items given for RFID tagging
+            </div>
+          </div>
+
+
+          <button
+            onClick={openAdd}
+            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700"
+          >
+            + Assign Tagging Work
+          </button>
+        </div>
+
+
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+          <div className="rounded-xl bg-blue-50 p-3">
+            <div className="text-xs font-semibold text-blue-600">
+              Total Given
+            </div>
+
+            <div className="mt-1 text-xl font-bold text-blue-800">
+              {totalGiven}
+            </div>
+          </div>
+
+
+          <div className="rounded-xl bg-green-50 p-3">
+            <div className="text-xs font-semibold text-green-600">
+              Total Tagged
+            </div>
+
+            <div className="mt-1 text-xl font-bold text-green-800">
+              {totalTagged}
+            </div>
+          </div>
+
+
+          <div className="rounded-xl bg-orange-50 p-3">
+            <div className="text-xs font-semibold text-orange-600">
+              Remaining
+            </div>
+
+            <div className="mt-1 text-xl font-bold text-orange-800">
+              {totalRemaining}
+            </div>
+          </div>
+
+        </div>
+
+
+        {/* Desktop */}
+
+        <div className="hidden overflow-x-auto md:block">
+
+          <table className="w-full min-w-[1000px] border-collapse overflow-hidden rounded-xl border">
+
+            <thead className="bg-gray-100">
+
+              <tr>
+                <th className="border px-3 py-2">
+                  Assigned To
+                </th>
+
+                <th className="border px-3 py-2">
+                  Stock Box
+                </th>
+
+                <th className="border px-3 py-2">
+                  Item Name
+                </th>
+
+                <th className="border px-3 py-2">
+                  Given
+                </th>
+
+                <th className="border px-3 py-2">
+                  Tagged
+                </th>
+
+                <th className="border px-3 py-2">
+                  Remaining
+                </th>
+
+                <th className="border px-3 py-2">
+                  Remaks
+                </th>
+
+                <th className="border px-3 py-2">
+                  Actions
+                </th>
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              {rows.length === 0 ? (
+
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="border px-4 py-8 text-center text-sm text-gray-500"
+                  >
+                    No active RFID tagging work
+                  </td>
+                </tr>
+
+              ) : (
+
+                rows.map((row) => {
+
+                  const status =
+                    getStatus(row);
+
+                  const remaining =
+                    Number(
+                      row.beforeTagCount || 0,
+                    ) -
+                    Number(
+                      row.afterTagCount || 0,
+                    );
+
+
+                  return (
+
+                    <tr
+                      key={
+                        row.taggingWorkId
+                      }
+                      className="bg-white"
+                    >
+
+                      <td className="border px-3 py-3 text-center font-semibold">
+                        {row.assignedTo}
+                      </td>
+
+
+                      <td className="border px-3 py-3 text-center">
+                        {row.stockBoxName}
+                      </td>
+
+
+                      <td className="border px-3 py-3 text-center">
+                        {row.itemName}
+                      </td>
+
+
+                      <td className="border px-3 py-3 text-center font-bold text-blue-700">
+                        {row.beforeTagCount}
+                      </td>
+
+
+                      <td className="border px-3 py-3 text-center font-bold text-green-700">
+                        {row.afterTagCount}
+                      </td>
+
+
+                      <td
+                        className={`border px-3 py-3 text-center font-bold ${
+                          remaining === 0
+                            ? "text-green-700"
+                            : "text-orange-600"
+                        }`}
+                      >
+                        {remaining}
+                      </td>
+
+
+                      <td className="border px-3 py-3 text-center">
+  {row.remarks?.trim() ? row.remarks : "-"}
+</td>
+
+
+                      <td className="border px-3 py-3">
+
+                        <div className="flex justify-center gap-2">
+
+                          <button
+                            onClick={() =>
+                              openEdit(row)
+                            }
+                            className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                          >
+                            Edit
+                          </button>
+
+
+                          {remaining === 0 &&
+                            row.afterTagCount >
+                              0 && (
+
+                            <button
+                              onClick={() =>
+                                archiveWork(
+                                  row,
+                                )
+                              }
+                              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
+                            >
+                              ✓ Complete
+                            </button>
+
+                          )}
+
+
+                          <button
+                            onClick={() =>
+                              deleteWork(row)
+                            }
+                            className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100"
+                          >
+                            Delete
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+                  );
+                })
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+        {/* Mobile */}
+
+        <div className="space-y-3 md:hidden">
+
+          {rows.map((row) => {
+
+            const remaining =
+              Number(
+                row.beforeTagCount || 0,
+              ) -
+              Number(
+                row.afterTagCount || 0,
+              );
+
+            const status =
+              getStatus(row);
+
+
+            return (
+
+              <div
+                key={row.taggingWorkId}
+                className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
+              >
+
+                <div className="flex items-start justify-between">
+
+                  <div>
+                    <div className="text-xs text-gray-500">
+                      Assigned To
+                    </div>
+
+                    <div className="font-bold text-violet-700">
+                      {row.assignedTo}
+                    </div>
+                  </div>
+
+
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${status.className}`}
+                  >
+                    {status.label}
+                  </span>
+
+                </div>
+
+
+                <div className="mt-3 text-sm font-semibold">
+                  {row.itemName}
+                </div>
+
+
+                <div className="text-xs text-gray-500">
+                  {row.stockBoxName}
+                </div>
+
+
+                <div className="mt-3 grid grid-cols-3 gap-2">
+
+                  <div className="rounded-xl bg-white p-2 text-center">
+                    <div className="text-[10px] text-gray-500">
+                      Given
+                    </div>
+
+                    <div className="font-bold text-blue-700">
+                      {row.beforeTagCount}
+                    </div>
+                  </div>
+
+
+                  <div className="rounded-xl bg-white p-2 text-center">
+                    <div className="text-[10px] text-gray-500">
+                      Tagged
+                    </div>
+
+                    <div className="font-bold text-green-700">
+                      {row.afterTagCount}
+                    </div>
+                  </div>
+
+
+                  <div className="rounded-xl bg-white p-2 text-center">
+                    <div className="text-[10px] text-gray-500">
+                      Remaining
+                    </div>
+
+                    <div className="font-bold text-orange-600">
+                      {remaining}
+                    </div>
+                  </div>
+
+                </div>
+
+
+                <div className="mt-3 flex gap-2">
+
+                  <button
+                    onClick={() =>
+                      openEdit(row)
+                    }
+                    className="flex-1 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
+                  >
+                    Edit
+                  </button>
+
+
+                  {remaining === 0 &&
+                    row.afterTagCount > 0 && (
+
+                    <button
+                      onClick={() =>
+                        archiveWork(row)
+                      }
+                      className="flex-1 rounded-xl bg-green-600 px-3 py-2 text-xs font-bold text-white"
+                    >
+                      Complete
+                    </button>
+
+                  )}
+
+                </div>
+
+              </div>
+            );
+          })}
+
+        </div>
+
+      </div>
+
+
+      {/* Add/Edit Modal */}
+
+      {open && (
+
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+
+          <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-xl">
+
+            <div className="mb-5 flex items-center justify-between">
+
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {editId
+                    ? "Update RFID Tagging Work"
+                    : "Assign RFID Tagging Work"}
+                </h2>
+
+                <p className="text-xs text-gray-500">
+                  Enter the pieces handed over for tagging
+                </p>
+              </div>
+
+
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  resetForm();
+                }}
+                className="text-xl text-gray-500"
+              >
+                ×
+              </button>
+
+            </div>
+
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+{/* ASSIGNED TO */}
+<label className="block">
+
+  <span className="text-xs font-semibold text-gray-600">
+    Assigned To *
+  </span>
+
+  <input
+    type="text"
+    value={assignedTo}
+    onChange={(e) =>
+      setAssignedTo(e.target.value)
+    }
+    placeholder="Example: Ramesh"
+    autoComplete="off"
+    className="mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-violet-500"
+  />
+
+</label>
+            <label className="relative block">
+
+  <span className="text-xs font-semibold text-gray-600">
+    Stock Box *
+  </span>
+
+
+  <input
+    type="text"
+    value={stockBoxName}
+    onChange={(e) =>
+      handleStockBoxTyping(
+        e.target.value,
+      )
+    }
+    onFocus={() =>
+      setShowBoxSuggestions(true)
+    }
+    placeholder="Type or select Stock Box"
+    autoComplete="off"
+    className="mt-1 w-full rounded-xl border px-3 py-2 pr-10 outline-none focus:ring-2 focus:ring-violet-500"
+  />
+
+
+  {/* Dropdown arrow */}
+  <button
+    type="button"
+    onClick={() =>
+      setShowBoxSuggestions(
+        (prev) => !prev,
+      )
+    }
+    className="absolute right-3 top-[34px] text-gray-500"
+  >
+    ▼
+  </button>
+
+
+  {showBoxSuggestions && (
+
+    <div
+      className="
+        absolute
+        z-[10000]
+        mt-1
+        max-h-64
+        w-full
+        overflow-y-auto
+        rounded-xl
+        border
+        border-gray-200
+        bg-white
+        shadow-xl
+      "
+    >
+
+      {/* MANUAL NAME */}
+
+      {stockBoxName.trim() !== "" &&
+        !stockBoxes.some(
+          (box) =>
+            box.stockBoxName
+              .trim()
+              .toLowerCase() ===
+            stockBoxName
+              .trim()
+              .toLowerCase(),
+        ) && (
+
+          <button
+            type="button"
+            onMouseDown={(e) =>
+              e.preventDefault()
+            }
+            onClick={() => {
+              /*
+               * Keep manually typed name.
+               * stockBoxId remains empty.
+               *
+               * Therefore this DOES NOT create
+               * or modify StockBox table.
+               */
+              setStockBoxId("");
+
+              setShowBoxSuggestions(
+                false,
+              );
+            }}
+            className="
+              w-full
+              border-b
+              bg-violet-50
+              px-4
+              py-3
+              text-left
+              hover:bg-violet-100
+            "
+          >
+
+            <div className="text-[11px] font-semibold uppercase text-violet-500">
+              Use temporary box name
+            </div>
+
+            <div className="mt-0.5 font-bold text-violet-800">
+              {stockBoxName}
+            </div>
+
+          </button>
+
+        )}
+
+
+      {/* EXISTING BOXES */}
+
+      {filteredStockBoxes.length >
+      0 ? (
+
+        filteredStockBoxes.map(
+          (box) => {
+
+            const selected =
+              String(
+                box.stockBoxId,
+              ) === stockBoxId;
+
+            return (
+
+              <button
+                type="button"
+                key={box.stockBoxId}
+                onMouseDown={(e) =>
+                  e.preventDefault()
+                }
+                onClick={() =>
+                  selectExistingStockBox(
+                    box,
+                  )
+                }
+                className={`
+                  w-full
+                  border-b
+                  px-4
+                  py-3
+                  text-left
+                  last:border-b-0
+                  hover:bg-gray-50
+                  ${
+                    selected
+                      ? "bg-green-50"
+                      : "bg-white"
+                  }
+                `}
+              >
+
+                <div className="flex items-center justify-between gap-3">
+
+                  <span className="text-sm font-medium text-gray-800">
+                    {
+                      box.stockBoxName
+                    }
+                  </span>
+
+
+                  {selected && (
+
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                      Selected
+                    </span>
+
+                  )}
+
+                </div>
+
+              </button>
+
+            );
+          },
+        )
+
+      ) : (
+
+        stockBoxName.trim() === "" && (
+
+          <div className="px-4 py-4 text-center text-sm text-gray-400">
+            No Stock Boxes Found
+          </div>
+
+        )
+
+      )}
+
+    </div>
+
+  )}
+
+
+  {/* Show whether DB box or manual box */}
+
+  {stockBoxName.trim() !== "" && (
+
+    <div className="mt-1">
+
+      {stockBoxId ? (
+
+        <span className="text-[11px] font-semibold text-green-600">
+          ✓ Existing Stock Box
+        </span>
+
+      ) : (
+
+        <span className="text-[11px] font-semibold text-orange-500">
+          Temporary / Manual Box Name
+        </span>
+
+      )}
+
+    </div>
+
+  )}
+
+</label>
+
+              <label className="block sm:col-span-2">
+
+                <span className="text-xs font-semibold text-gray-600">
+                  Item Name *
+                </span>
+
+                <input
+                  value={itemName}
+                  onChange={(e) =>
+                    setItemName(
+                      e.target.value,
+                    )
+                  }
+                  placeholder="Example: Single Chain Small Patti"
+                  className="mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-violet-500"
+                />
+
+              </label>
+
+
+              <label className="block">
+
+                <span className="text-xs font-semibold text-gray-600">
+                  Initial Pieces Given *
+                </span>
+
+                <input
+                  type="number"
+                  min="1"
+                  value={
+                    beforeTagCount
+                  }
+                  onChange={(e) =>
+                    setBeforeTagCount(
+                      e.target.value,
+                    )
+                  }
+                  className="mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-violet-500"
+                />
+
+              </label>
+
+
+              <label className="block">
+
+                <span className="text-xs font-semibold text-gray-600">
+                  Tagged Pieces
+                </span>
+
+                <input
+                  type="number"
+                  min="0"
+                  value={
+                    afterTagCount
+                  }
+                  onChange={(e) =>
+                    setAfterTagCount(
+                      e.target.value,
+                    )
+                  }
+                  disabled={
+                    editId === null
+                  }
+                  className="mt-1 w-full rounded-xl border px-3 py-2 outline-none disabled:bg-gray-100 focus:ring-2 focus:ring-violet-500"
+                />
+
+                {editId === null && (
+                  <div className="mt-1 text-[11px] text-gray-400">
+                    Tagged count can be updated after assignment.
+                  </div>
+                )}
+
+              </label>
+
+
+              <label className="block sm:col-span-2">
+
+                <span className="text-xs font-semibold text-gray-600">
+                  Remarks
+                </span>
+
+                <textarea
+                  value={remarks}
+                  onChange={(e) =>
+                    setRemarks(
+                      e.target.value,
+                    )
+                  }
+                  placeholder="Optional remarks"
+                  className="mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-violet-500"
+                />
+
+              </label>
+
+            </div>
+
+
+            {editId !== null && (
+
+              <div className="mt-4 rounded-xl bg-orange-50 p-3">
+
+                <div className="text-xs text-orange-700">
+                  Remaining Pieces
+                </div>
+
+                <div className="text-xl font-bold text-orange-800">
+                  {Number(
+                    beforeTagCount ||
+                      0,
+                  ) -
+                    Number(
+                      afterTagCount ||
+                        0,
+                    )}
+                </div>
+
+              </div>
+
+            )}
+
+
+            <div className="mt-5 flex justify-end gap-2">
+
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  resetForm();
+                }}
+                className="rounded-xl border px-4 py-2 text-sm font-semibold text-gray-600"
+              >
+                Cancel
+              </button>
+
+
+              <button
+                onClick={save}
+                className="rounded-xl bg-violet-600 px-5 py-2 text-sm font-bold text-white hover:bg-violet-700"
+              >
+                {editId
+                  ? "Update"
+                  : "Assign Work"}
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+    </>
+  );
+};
+
 /* ---------- Latest Orders: static table ---------- */
 const LatestOrders: React.FC = () => {
   const [rows, setRows] = useState<Billing[]>([]);
@@ -2019,7 +3318,11 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Tables / Growth row */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* RFID TAGGING WORK */}
+<TaggingWorkTable />
+
+{/* Tables / Growth row */}
+<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* LEFT SIDE */}
         <div className="lg:col-span-2 space-y-5">
           <LatestOrders />
