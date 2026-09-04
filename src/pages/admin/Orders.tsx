@@ -773,7 +773,7 @@ const calculateTotals = (
     else if (metal === "995 Silver")
       price = Number(localStorage.getItem("Silver995Price")) || 0;
 
-    if (metal === "24 Gold" && itemName === "Batuvu") price += 500;
+    if (metal === "24 Gold" && itemName === "Batuvu" || itemName === "Gold 24 Biscuit" ) price += 700;
 
     return price;
   };
@@ -1428,7 +1428,9 @@ useEffect(() => {
       price = Number(localStorage.getItem("Gold22Price") || 0) - 500;
     } else if (exchange.exchange_metal === "Silver") {
       price = Number(localStorage.getItem("Silver995Price") || 0) - 15;
-    } else if (exchange.exchange_metal === "24 Gold") {
+    }  else if (exchange.exchange_metal === "Silver" &&  exchange.exchange_metal_name === "Mettelu") {
+      price = Number(localStorage.getItem("Silver999Price") || 0) ;
+    }else if (exchange.exchange_metal === "24 Gold") {
       price = Number(localStorage.getItem("Gold24Price") || 0);
     } else if (exchange.exchange_metal === "22 Gold") {
       price = Number(localStorage.getItem("Gold22Price") || 0);

@@ -207,7 +207,7 @@ const handleBulkDelete = async () => {
   <>
     {/* Mobile card view */}
     <div className="space-y-3 md:hidden">
-      {stockBox.stockBoxData.map((entry) => (
+      {stockBox.stockBoxData.map((entry, index) => (
         <div
           key={entry.stockBoxDataId}
           className="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm"
@@ -298,6 +298,9 @@ const handleBulkDelete = async () => {
     <div className="hidden overflow-x-auto md:block">
       <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">   <thead className="bg-gray-200">
               <tr>
+                 <th className="border px-3 py-2 text-center">
+    S.No
+  </th>
   {isAdmin && (
   <th className="border px-3 py-2 text-center">Select</th>
 )}
@@ -341,8 +344,27 @@ const handleBulkDelete = async () => {
   </tr>
 </thead>
             <tbody>
-              {stockBox.stockBoxData.map((entry) => (
-                <tr key={entry.stockBoxDataId} className="bg-white/90">
+              {stockBox.stockBoxData.map((entry, index) => (
+  <tr key={entry.stockBoxDataId} className="bg-white/90">
+
+    <td className="border px-3 py-2 text-center font-semibold">
+      {index + 1}
+    </td>
+
+    {isAdmin && (
+      <td className="border px-3 py-2 text-center">
+        <input
+          type="checkbox"
+          checked={selectedIds.includes(entry.stockBoxDataId)}
+          onChange={() => handleCheckOne(entry.stockBoxDataId)}
+          className="w-4 h-4"
+        />
+      </td>
+    )}
+
+    <td className="border px-3 py-2 text-center">
+      {entry.stockBoxDataId}
+    </td>
                  {isAdmin && (
   <td className="border px-3 py-2 text-center">
     <input
