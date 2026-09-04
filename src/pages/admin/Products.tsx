@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {  
+import {
   Box,
   Paper,
   Typography,
@@ -19,8 +19,6 @@ import api from "@/services/api";
 import QRCode from "qrcode";
 import { useWorkers } from "@/contexts/WorkersContext";
 import { useNavigate } from "react-router-dom";
-
-
 
 const prettySelectSx = {
   "& .MuiOutlinedInput-root": {
@@ -186,8 +184,6 @@ const initialProduct: ProductForm = {
   gross_weight: "",
 };
 
-
-
 export interface SpeclWorkRequest {
   itemName: string;
   metal: string;
@@ -201,15 +197,10 @@ export interface SpeclWorkRequest {
 
 /* ============================ Component ============================ */
 
-const isPlatedMetal = (
-  metal?: string | null,
-): boolean => {
+const isPlatedMetal = (metal?: string | null): boolean => {
   const normalized = metal?.trim().toLowerCase();
 
-  return (
-    normalized === "gold plated" ||
-    normalized === "silver plated"
-  );
+  return normalized === "gold plated" || normalized === "silver plated";
 };
 
 const Products: React.FC = () => {
@@ -217,31 +208,25 @@ const Products: React.FC = () => {
   const navigate = useNavigate();
 
   const role = localStorage.getItem("role");
-const basePath = role === "SALES" ? "/sales" : "/admin";
+  const basePath = role === "SALES" ? "/sales" : "/admin";
 
-const [itemOptions, setItemOptions] = useState<string[]>([]);
-const [searchItemInputValue, setSearchItemInputValue] = useState("");
-const [searchItemDropdownOpen, setSearchItemDropdownOpen] = useState(false);
+  const [itemOptions, setItemOptions] = useState<string[]>([]);
+  const [searchItemInputValue, setSearchItemInputValue] = useState("");
+  const [searchItemDropdownOpen, setSearchItemDropdownOpen] = useState(false);
 
-const [productItemInputValue, setProductItemInputValue] = useState("");
-const [productItemDropdownOpen, setProductItemDropdownOpen] = useState(false);
+  const [productItemInputValue, setProductItemInputValue] = useState("");
+  const [productItemDropdownOpen, setProductItemDropdownOpen] = useState(false);
 
-const [product, setProduct] =
-  useState<ProductForm>(initialProduct);
+  const [product, setProduct] = useState<ProductForm>(initialProduct);
 
-    const [q, setQ] = useState<ProductQuery>(initialQuery);
+  const [q, setQ] = useState<ProductQuery>(initialQuery);
 
+  const platedProduct = isPlatedMetal(product.metal);
 
-const platedProduct =
-  isPlatedMetal(product.metal);
+  const platedSearch = isPlatedMetal(q.metal);
 
-
-const platedSearch =
-  isPlatedMetal(q.metal);
-
-
-const [spclItemInputValue, setSpclItemInputValue] = useState("");
-const [spclItemDropdownOpen, setSpclItemDropdownOpen] = useState(false);
+  const [spclItemInputValue, setSpclItemInputValue] = useState("");
+  const [spclItemDropdownOpen, setSpclItemDropdownOpen] = useState(false);
   const [topLoading, setTopLoading] = useState(false);
   const [topResults, setTopResults] = useState<StockProduct[] | null>(null);
 
@@ -324,7 +309,7 @@ const [spclItemDropdownOpen, setSpclItemDropdownOpen] = useState(false);
       console.log("requestBody", JSON.stringify(requestBody));
 
       const res = await api.post(
-          `${basePath}/addSpeclWork/${selectedWorkerId}`,
+        `${basePath}/addSpeclWork/${selectedWorkerId}`,
         requestBody,
         {
           headers: {
@@ -352,7 +337,7 @@ const [spclItemDropdownOpen, setSpclItemDropdownOpen] = useState(false);
       });
       setSelectedWorkerId("");
       setSpclItemInputValue("");
-setSpclItemDropdownOpen(false);
+      setSpclItemDropdownOpen(false);
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Error submitting lot work:", error.message);
@@ -363,183 +348,162 @@ setSpclItemDropdownOpen(false);
     }
   };
 
- const getMetalTypeForItemApi = (metal: string) => {
-  if (metal === "24 Gold" || metal === "22 Gold") {
-    return "Gold";
-  }
-
-  if (metal === "999 Silver" || metal === "995 Silver") {
-    return "Silver";
-  }
-
-  if (metal === "Gold Plated") {
-    return "Gold Plated";
-  }
-
-  if (metal === "Silver Plated") {
-    return "Silver Plated";
-  }
-
-  return "";
-};
-
-const capitalizeWords = (text: string) => {
-  return text.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
-};
-
-const fetchItemNamesByMetal = async (metal: string) => {
-  const metalType = getMetalTypeForItemApi(metal);
-
-  if (!metalType) {
-    setItemOptions([]);
-    return;
-  }
-
-  const token = localStorage.getItem("token") ?? "";
-
- const res = await api.get<{ itemName: string }[]>(
-  `${basePath}/item-names/${encodeURIComponent(metalType)}`,
-  {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-  },
-);
-const names = res.data
-  .map((item) => item.itemName)
-  .filter((name): name is string => Boolean(name));
-  setItemOptions(names);
-};
-
-
-
-
-
-const saveNewItemNameIfNeeded = async (metal: string, itemNameValue: string) => {
-  const metalType = getMetalTypeForItemApi(metal);
-  const itemName = capitalizeWords(itemNameValue.trim());
-
-  if (!metalType || !itemName) return;
-
-  const alreadyExists = itemOptions.some(
-    (item) => item.toLowerCase() === itemName.toLowerCase(),
-  );
-
-  if (alreadyExists) return;
-
-  const token = localStorage.getItem("token") ?? "";
-
-  await api.post(
-    `${basePath}/item-names`,
-    { metalType, itemName },
-    {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    },
-  );
-
-  setItemOptions((prev) => [...prev, itemName].sort());
-};
-
- 
-const searchTop = async () => {
-  const plated = isPlatedMetal(q.metal);
-
-  if (!q.metal.trim() || !q.itemName.trim()) {
-    alert("Please select metal and item name.");
-    setTopResults(null);
-    return;
-  }
-
-  if (
-    !plated &&
-    (
-      !q.catalogue.trim() ||
-      !q.design.trim() ||
-      !q.size.trim() ||
-      !q.weightRange.trim()
-    )
-  ) {
-    alert(
-      "Please fill catalogue, design, size and weight range.",
-    );
-    setTopResults(null);
-    return;
-  }
-
-  try {
-    setTopLoading(true);
-
-    const token =
-      localStorage.getItem("token") ?? "";
-
-    let url: string;
-
-    if (plated) {
-      /*
-       * This endpoint must exist in the backend.
-       * See the backend note below.
-       */
-      url =
-        `${basePath}/getStockProduct/plated` +
-        `?metal=${encodeURIComponent(q.metal.trim())}` +
-        `&itemName=${encodeURIComponent(q.itemName.trim())}`;
-    } else {
-      const [minStr, maxStr] =
-        q.weightRange.trim().split("-");
-
-      const min = Number(minStr);
-      const max = Number(maxStr);
-
-      url = `${basePath}/getStockProduct/${encodeURIComponent(
-        q.metal.trim(),
-      )}/${encodeURIComponent(
-        q.itemName.trim(),
-      )}/${encodeURIComponent(
-        q.catalogue.trim(),
-      )}/${encodeURIComponent(
-        q.design.trim(),
-      )}/${encodeURIComponent(
-        q.size.trim(),
-      )}/${min}/${max}`;
+  const getMetalTypeForItemApi = (metal: string) => {
+    if (metal === "24 Gold" || metal === "22 Gold") {
+      return "Gold";
     }
 
-    const res =
-      await api.get<StockProductResponse>(url, {
+    if (metal === "999 Silver" || metal === "995 Silver") {
+      return "Silver";
+    }
+
+    if (metal === "Gold Plated") {
+      return "Gold Plated";
+    }
+
+    if (metal === "Silver Plated") {
+      return "Silver Plated";
+    }
+
+    return "";
+  };
+
+  const capitalizeWords = (text: string) => {
+    return text.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const fetchItemNamesByMetal = async (metal: string) => {
+    const metalType = getMetalTypeForItemApi(metal);
+
+    if (!metalType) {
+      setItemOptions([]);
+      return;
+    }
+
+    const token = localStorage.getItem("token") ?? "";
+
+    const res = await api.get<{ itemName: string }[]>(
+      `${basePath}/item-names/${encodeURIComponent(metalType)}`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      },
+    );
+    const names = res.data
+      .map((item) => item.itemName)
+      .filter((name): name is string => Boolean(name));
+    setItemOptions(names);
+  };
+
+  const saveNewItemNameIfNeeded = async (
+    metal: string,
+    itemNameValue: string,
+  ) => {
+    const metalType = getMetalTypeForItemApi(metal);
+    const itemName = capitalizeWords(itemNameValue.trim());
+
+    if (!metalType || !itemName) return;
+
+    const alreadyExists = itemOptions.some(
+      (item) => item.toLowerCase() === itemName.toLowerCase(),
+    );
+
+    if (alreadyExists) return;
+
+    const token = localStorage.getItem("token") ?? "";
+
+    await api.post(
+      `${basePath}/item-names`,
+      { metalType, itemName },
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      },
+    );
+
+    setItemOptions((prev) => [...prev, itemName].sort());
+  };
+
+  const searchTop = async () => {
+    const plated = isPlatedMetal(q.metal);
+
+    if (!q.metal.trim() || !q.itemName.trim()) {
+      alert("Please select metal and item name.");
+      setTopResults(null);
+      return;
+    }
+
+    if (
+      !plated &&
+      (!q.catalogue.trim() ||
+        !q.design.trim() ||
+        !q.size.trim() ||
+        !q.weightRange.trim())
+    ) {
+      alert("Please fill catalogue, design, size and weight range.");
+      setTopResults(null);
+      return;
+    }
+
+    try {
+      setTopLoading(true);
+
+      const token = localStorage.getItem("token") ?? "";
+
+      let url: string;
+
+      if (plated) {
+        /*
+         * This endpoint must exist in the backend.
+         * See the backend note below.
+         */
+        url =
+          `${basePath}/getStockProduct/plated` +
+          `?metal=${encodeURIComponent(q.metal.trim())}` +
+          `&itemName=${encodeURIComponent(q.itemName.trim())}`;
+      } else {
+        const [minStr, maxStr] = q.weightRange.trim().split("-");
+
+        const min = Number(minStr);
+        const max = Number(maxStr);
+
+        url = `${basePath}/getStockProduct/${encodeURIComponent(
+          q.metal.trim(),
+        )}/${encodeURIComponent(q.itemName.trim())}/${encodeURIComponent(
+          q.catalogue.trim(),
+        )}/${encodeURIComponent(q.design.trim())}/${encodeURIComponent(
+          q.size.trim(),
+        )}/${min}/${max}`;
+      }
+
+      const res = await api.get<StockProductResponse>(url, {
         headers: token
           ? {
-              Authorization:
-                `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             }
           : undefined,
       });
 
-    const data = res.data;
+      const data = res.data;
 
-    setTotalStock(data.totalStock ?? 0);
+      setTotalStock(data.totalStock ?? 0);
 
-    const list =
-      Array.isArray(data.products)
-        ? data.products
-        : [];
+      const list = Array.isArray(data.products) ? data.products : [];
 
-    if (list.length > 0) {
-      setTopResults(list);
-      setShowProductForm(false);
-    } else {
-      alert("No data found.");
+      if (list.length > 0) {
+        setTopResults(list);
+        setShowProductForm(false);
+      } else {
+        alert("No data found.");
+        setTopResults(null);
+      }
+    } catch (err) {
+      console.error("Product search failed:", err);
+
+      alert("Search failed.");
       setTopResults(null);
+    } finally {
+      setTopLoading(false);
     }
-  } catch (err) {
-    console.error(
-      "Product search failed:",
-      err,
-    );
-
-    alert("Search failed.");
-    setTopResults(null);
-  } finally {
-    setTopLoading(false);
-  }
-};
-  
+  };
 
   const saveStock = async (row: StockProduct) => {
     if (editValue.trim() === "") {
@@ -552,10 +516,9 @@ const searchTop = async () => {
       return;
     }
     if (newStock <= 0) {
-  alert("Stock to add must be greater than 0.");
-  return;
-}
-
+      alert("Stock to add must be greater than 0.");
+      return;
+    }
 
     const current = Number(row.stock ?? 0);
 
@@ -597,7 +560,6 @@ const searchTop = async () => {
 
       setTotalStock((prev) => prev + newStock);
 
-
       setEditingId(null);
       setEditValue("");
     } catch (err) {
@@ -622,67 +584,63 @@ const searchTop = async () => {
     null,
   );
 
- const validateProduct = (): boolean => {
-  const newErrors: Partial<Record<keyof ProductForm, string>> = {};
+  const validateProduct = (): boolean => {
+    const newErrors: Partial<Record<keyof ProductForm, string>> = {};
 
-  const plated = isPlatedMetal(product.metal);
+    const plated = isPlatedMetal(product.metal);
 
-  if (!product.metal.trim()) {
-    newErrors.metal = "Required";
-  }
-
-  if (!product.itemName.trim()) {
-    newErrors.itemName = "Required";
-  }
-
- if (
-  !product.making_charges ||
-  !product.making_charges.trim()
-) {
-    newErrors.making_charges = plated
-      ? "Item price is required"
-      : "Making charges are required";
-  } else if (Number(product.making_charges) <= 0) {
-    newErrors.making_charges = plated
-      ? "Item price must be greater than 0"
-      : "Making charges must be greater than 0";
-  }
-
-  if (!product.stock || !product.stock.trim()) {
-    newErrors.stock = "Required";
-  } else if (Number(product.stock) <= 0) {
-    newErrors.stock = "Stock must be greater than 0";
-  }
-
-  if (!product.stockBox.trim()) {
-    newErrors.stockBox = "Required";
-  }
-
-  if (!plated) {
-    if (!product.catalogue.trim()) {
-      newErrors.catalogue = "Required";
+    if (!product.metal.trim()) {
+      newErrors.metal = "Required";
     }
 
-    if (!product.design.trim()) {
-      newErrors.design = "Required";
+    if (!product.itemName.trim()) {
+      newErrors.itemName = "Required";
     }
 
-    if (!product.size.trim()) {
-      newErrors.size = "Required";
+    if (!product.making_charges || !product.making_charges.trim()) {
+      newErrors.making_charges = plated
+        ? "Item price is required"
+        : "Making charges are required";
+    } else if (Number(product.making_charges) <= 0) {
+      newErrors.making_charges = plated
+        ? "Item price must be greater than 0"
+        : "Making charges must be greater than 0";
     }
 
-    if (!product.metal_weight.trim()) {
-      newErrors.metal_weight = "Required";
-    } else if (Number(product.metal_weight) <= 0) {
-      newErrors.metal_weight =
-        "Metal weight must be greater than 0";
+    if (!product.stock || !product.stock.trim()) {
+      newErrors.stock = "Required";
+    } else if (Number(product.stock) <= 0) {
+      newErrors.stock = "Stock must be greater than 0";
     }
-  }
 
-  setErrors(newErrors);
+    if (!product.stockBox.trim()) {
+      newErrors.stockBox = "Required";
+    }
 
-  return Object.keys(newErrors).length === 0;
-};
+    if (!plated) {
+      if (!product.catalogue.trim()) {
+        newErrors.catalogue = "Required";
+      }
+
+      if (!product.design.trim()) {
+        newErrors.design = "Required";
+      }
+
+      if (!product.size.trim()) {
+        newErrors.size = "Required";
+      }
+
+      if (!product.metal_weight.trim()) {
+        newErrors.metal_weight = "Required";
+      } else if (Number(product.metal_weight) <= 0) {
+        newErrors.metal_weight = "Metal weight must be greater than 0";
+      }
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
 
   const onSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -693,143 +651,80 @@ const searchTop = async () => {
 
     await saveNewItemNameIfNeeded(product.metal, product.itemName);
 
-    const safeNum = (
-  value: string | number | null | undefined,
-): number =>
-  value === null ||
-  value === undefined ||
-  value === ""
-    ? 0
-    : Number(value);
+    const safeNum = (value: string | number | null | undefined): number =>
+      value === null || value === undefined || value === "" ? 0 : Number(value);
 
-const plated = isPlatedMetal(product.metal);
+    const plated = isPlatedMetal(product.metal);
 
-const payload = {
-  metal: product.metal.trim(),
-  itemName: product.itemName.trim(),
+    const payload = {
+      metal: product.metal.trim(),
+      itemName: product.itemName.trim(),
 
-  catalogue: plated
-    ? null
-    : product.catalogue.trim(),
+      catalogue: plated ? null : product.catalogue.trim(),
 
-  design: plated
-    ? null
-    : product.design.trim(),
+      design: plated ? null : product.design.trim(),
 
-  size: plated
-    ? null
-    : product.size.trim(),
+      size: plated ? null : product.size.trim(),
 
-  metal_weight: plated
-    ? null
-    : safeNum(product.metal_weight),
+      metal_weight: plated ? null : safeNum(product.metal_weight),
 
-  wastage: plated
-    ? null
-    : safeNum(product.wastage),
+      wastage: plated ? null : safeNum(product.wastage),
 
-  /*
-   * For plated products this field contains
-   * the complete selling price.
-   */
-  making_charges:
-    safeNum(product.making_charges),
+      /*
+       * For plated products this field contains
+       * the complete selling price.
+       */
+      making_charges: safeNum(product.making_charges),
 
-  stone_weight: plated
-    ? null
-    : safeNum(product.stone_weight),
+      stone_weight: plated ? null : safeNum(product.stone_weight),
 
-  stone_rate: plated
-    ? null
-    : safeNum(product.stone_rate),
+      stone_rate: plated ? null : safeNum(product.stone_rate),
 
-  stone_amount: plated
-    ? null
-    : safeNum(product.stone_amount),
+      stone_amount: plated ? null : safeNum(product.stone_amount),
 
-  wax_weight: plated
-    ? null
-    : safeNum(product.wax_weight),
+      wax_weight: plated ? null : safeNum(product.wax_weight),
 
-  wax_rate: plated
-    ? null
-    : safeNum(product.wax_rate),
+      wax_rate: plated ? null : safeNum(product.wax_rate),
 
-  wax_amount: plated
-    ? null
-    : safeNum(product.wax_amount),
+      wax_amount: plated ? null : safeNum(product.wax_amount),
 
-  diamond_weight: plated
-    ? null
-    : safeNum(product.diamond_weight),
+      diamond_weight: plated ? null : safeNum(product.diamond_weight),
 
-  diamond_rate: plated
-    ? null
-    : safeNum(product.diamond_rate),
+      diamond_rate: plated ? null : safeNum(product.diamond_rate),
 
-  diamond_amount: plated
-    ? null
-    : safeNum(product.diamond_amount),
+      diamond_amount: plated ? null : safeNum(product.diamond_amount),
 
-  bits_weight: plated
-    ? null
-    : safeNum(product.bits_weight),
+      bits_weight: plated ? null : safeNum(product.bits_weight),
 
-  bits_rate: plated
-    ? null
-    : safeNum(product.bits_rate),
+      bits_rate: plated ? null : safeNum(product.bits_rate),
 
-  bits_amount: plated
-    ? null
-    : safeNum(product.bits_amount),
+      bits_amount: plated ? null : safeNum(product.bits_amount),
 
-  enamel_weight: plated
-    ? null
-    : safeNum(product.enamel_weight),
+      enamel_weight: plated ? null : safeNum(product.enamel_weight),
 
-  enamel_rate: plated
-    ? null
-    : safeNum(product.enamel_rate),
+      enamel_rate: plated ? null : safeNum(product.enamel_rate),
 
-  enamel_amount: plated
-    ? null
-    : safeNum(product.enamel_amount),
+      enamel_amount: plated ? null : safeNum(product.enamel_amount),
 
-  pearls_weight: plated
-    ? null
-    : safeNum(product.pearls_weight),
+      pearls_weight: plated ? null : safeNum(product.pearls_weight),
 
-  pearls_rate: plated
-    ? null
-    : safeNum(product.pearls_rate),
+      pearls_rate: plated ? null : safeNum(product.pearls_rate),
 
-  pearls_amount: plated
-    ? null
-    : safeNum(product.pearls_amount),
+      pearls_amount: plated ? null : safeNum(product.pearls_amount),
 
-  other_weight: plated
-    ? null
-    : safeNum(product.other_weight),
+      other_weight: plated ? null : safeNum(product.other_weight),
 
-  other_rate: plated
-    ? null
-    : safeNum(product.other_rate),
+      other_rate: plated ? null : safeNum(product.other_rate),
 
-  other_amount: plated
-    ? null
-    : safeNum(product.other_amount),
+      other_amount: plated ? null : safeNum(product.other_amount),
 
-  gross_weight: plated
-    ? null
-    : safeNum(product.gross_weight),
+      gross_weight: plated ? null : safeNum(product.gross_weight),
 
-  stock: safeNum(product.stock),
-  stockBox: product.stockBox.trim(),
+      stock: safeNum(product.stock),
+      stockBox: product.stockBox.trim(),
 
-  linkWorker: plated
-    ? null
-    : product.linkWorker?.trim(),
-};
+      linkWorker: plated ? null : product.linkWorker?.trim(),
+    };
 
     try {
       setSubmitLoading(true);
@@ -887,7 +782,7 @@ const payload = {
 
       setProduct(initialProduct);
       setProductItemInputValue("");
-setProductItemDropdownOpen(false);
+      setProductItemDropdownOpen(false);
       setErrors({});
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -914,82 +809,73 @@ setProductItemDropdownOpen(false);
 
   // --- State ---
 
- 
-
   // --- Handler for normal product fields ---
-const onProductChange =
-  (key: keyof ProductForm) =>
-  (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  const onProductChange =
+    (key: keyof ProductForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
 
+      setProduct((prev) => {
+        const next: ProductForm = {
+          ...prev,
+          [key]: value,
+        };
+
+        if (!isPlatedMetal(next.metal)) {
+          next.gross_weight = String(calcGrossWeight(next));
+        } else {
+          next.gross_weight = "";
+        }
+
+        return next;
+      });
+
+      if (errors[key]) {
+        setErrors((prev) => ({
+          ...prev,
+          [key]: "",
+        }));
+      }
+    };
+
+  // --- Handler for materials with weight & rate ---
+  const handleMaterialChange = (
+    material:
+      | "stone"
+      | "bits"
+      | "diamond"
+      | "enamel"
+      | "pearls"
+      | "wax"
+      | "other",
+    field: "weight" | "rate",
+    value: string,
+  ) => {
     setProduct((prev) => {
       const next: ProductForm = {
         ...prev,
-        [key]: value,
       };
 
-      if (!isPlatedMetal(next.metal)) {
-        next.gross_weight =
-          String(calcGrossWeight(next));
-      } else {
-        next.gross_weight = "";
-      }
+      const fieldKey = `${material}_${field}` as keyof ProductForm;
+
+      const weightKey = `${material}_weight` as keyof ProductForm;
+
+      const rateKey = `${material}_rate` as keyof ProductForm;
+
+      const amountKey = `${material}_amount` as keyof ProductForm;
+
+      next[fieldKey] = value;
+
+      const weight = toNum(next[weightKey]);
+      const rate = toNum(next[rateKey]);
+      const amount = calculateAmount(weight, rate);
+
+      next[amountKey] = String(amount);
+
+      next.gross_weight = String(calcGrossWeight(next));
 
       return next;
     });
-
-    if (errors[key]) {
-      setErrors((prev) => ({
-        ...prev,
-        [key]: "",
-      }));
-    }
   };
-
-  // --- Handler for materials with weight & rate ---
- const handleMaterialChange = (
-  material:
-    | "stone"
-    | "bits"
-    | "diamond"
-    | "enamel"
-    | "pearls"
-    | "wax"
-    | "other",
-  field: "weight" | "rate",
-  value: string,
-) => {
-  setProduct((prev) => {
-    const next: ProductForm = {
-      ...prev,
-    };
-
-    const fieldKey =
-      `${material}_${field}` as keyof ProductForm;
-
-    const weightKey =
-      `${material}_weight` as keyof ProductForm;
-
-    const rateKey =
-      `${material}_rate` as keyof ProductForm;
-
-    const amountKey =
-      `${material}_amount` as keyof ProductForm;
-
-    next[fieldKey] = value;
-
-    const weight = toNum(next[weightKey]);
-    const rate = toNum(next[rateKey]);
-    const amount = calculateAmount(weight, rate);
-
-    next[amountKey] = String(amount);
-
-    next.gross_weight =
-      String(calcGrossWeight(next));
-
-    return next;
-  });
-};
 
   // --- Gross weight calculator ---
   const calcGrossWeight = (p: ProductForm): number => {
@@ -1065,117 +951,166 @@ const onProductChange =
     }
   };
 
+  useEffect(() => {
+    if (q.metal) {
+      fetchItemNamesByMetal(q.metal);
+    }
+  }, [q.metal]);
 
   useEffect(() => {
-  if (q.metal) {
-    fetchItemNamesByMetal(q.metal);
-  }
-}, [q.metal]);
+    if (product.metal) {
+      fetchItemNamesByMetal(product.metal);
+    }
+  }, [product.metal]);
 
-useEffect(() => {
-  if (product.metal) {
-    fetchItemNamesByMetal(product.metal);
-  }
-}, [product.metal]);
-
-useEffect(() => {
-  if (spclWork.metal) {
-    fetchItemNamesByMetal(spclWork.metal);
-  }
-}, [spclWork.metal]);
-  
+  useEffect(() => {
+    if (spclWork.metal) {
+      fetchItemNamesByMetal(spclWork.metal);
+    }
+  }, [spclWork.metal]);
 
   const buildSmallLabelHtml = (r: StockProduct, imageSrc: string) => {
     const barcodeValue = r.barcodeValue ?? "-";
     const plated = isPlatedMetal(r.metal);
 
-const grossWeight = plated
-  ? "-"
-  : normalizeWeight(r.gross_weight);
+    const grossWeight = plated ? "-" : normalizeWeight(r.gross_weight);
+    const metal_weight = plated ? "-" : normalizeWeight(r.metal_weight);
+    const sizeValue = plated ? "-" : (r.size ?? "-");
 
-const sizeValue = plated
-  ? "-"
-  : (r.size ?? "-");
     return `
 <html>
 <head>
   <style>
     @page {
-      size: 68mm 26mm;
+      size: 68mm 30.5mm;
       margin: 0;
     }
 
-    html, body {
-      margin: 0;
-      padding: 0;
+    html,
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
       width: 68mm;
-      height: 26mm;
-      overflow: hidden;
+      height: 30.5mm;
+      overflow: hidden !important;
     }
-      body {
-  page-break-after: avoid;
-  page-break-before: avoid;
-}
 
-* {
-  page-break-inside: avoid !important;
-}
+    * {
+      box-sizing: border-box;
+    }
 
     body {
-      display: flex;
-      align-items: flex-start;
-      justify-content: flex-start;
+      position: relative;
     }
 
-    .label {
-      width: 23mm;
-      height: 28mm;
-      margin-top: 7mm;
-      margin-left: 2mm;
+    /*
+      COMPLETE PRINTING DESIGN
+      Change ONLY "top" if printer needs adjustment.
+
+      More UP   = smaller/negative value
+      More DOWN = bigger value
+    */
+   .label {
+  position: absolute;
+  top: 10mm;
+  left: 2mm;
+
+  width: 23mm;
+  height: 24mm;
+
+  margin: 0 !important;
+  padding: 0 !important;
   overflow: hidden;
+}
 
-        page-break-after: avoid !important;
+.qr {
+  position: absolute;
+  top: 0.5mm;
+  left: 7mm;
 
-    }
+  width: 8mm;
+  height: 8mm;
 
-    .qr {
-      width: 8mm;
-      height: 8mm;
-      display: block;
-      margin: 0 auto;
-    }
-
- .text, .gw, .size {
-  font-family: "Arial Black", Arial, sans-serif;
-  font-size: 4.6pt;
-  font-weight: 900;
-  margin-left: 1mm;
-  white-space: nowrap;
-  line-height: 1;
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
 .text {
-  margin-top: 2mm;
+  position: absolute;
+  top: 9mm;
+  left: 1mm;
+
+  font-family: "Arial Black", Arial, sans-serif;
+  font-size: 4.6pt;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  margin: 0;
+  padding: 0;
 }
 
 .gw {
-  margin-top: 1.5mm;
+  position: absolute;
+  top: 13mm;
+  left: 1mm;
+
+  font-family: "Arial Black", Arial, sans-serif;
+  font-size: 4.6pt;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  margin: 0;
+  padding: 0;
 }
 
-.size {
-  margin-top: 0.5mm;
+.ntwt{
+  position: absolute;
+  top: 16mm;
+  left: 1mm;
+
+  font-family: "Arial Black", Arial, sans-serif;
+  font-size: 4.6pt;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  margin: 0;
+  padding: 0;
+}
+  .size {
+  position: absolute;
+  top: 19mm;
+  left: 1mm;
+
+  font-family: "Arial Black", Arial, sans-serif;
+  font-size: 4.6pt;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  margin: 0;
+  padding: 0;
 }
   </style>
 </head>
 
 <body>
   <div class="label">
+
     ${imageSrc ? `<img class="qr" src="${imageSrc}" />` : ""}
-    <div class="text">${barcodeValue}</div>
+
+    <div class="text">
+      ${barcodeValue}
+    </div>
+
     <div class="gw">
-  GW: ${plated ? "-" : `${grossWeight}g`}
-</div>
+      GW: ${plated ? "-" : `${grossWeight}g`}
+    </div>
+
+    <div class="ntwt">
+      NW: ${plated ? "-" : `${metal_weight}g`} 
+    </div>
     <div class="size">SZ: ${sizeValue}</div>
+
   </div>
 </body>
 </html>`;
@@ -1296,304 +1231,12 @@ const sizeValue = plated
 
   return (
     <div
-    className={
-      role === "SALES"
-        ? "min-h-screen bg-[#f8f5ff] px-6 py-6 lg:px-16"
-        : ""
-    }
-  >
-    <div
       className={
-        role === "SALES"
-          ? "max-w-7xl mx-auto space-y-8"
-          : ""
+        role === "SALES" ? "min-h-screen bg-[#f8f5ff] px-6 py-6 lg:px-16" : ""
       }
     >
-      {/* ---------- SEARCH STOCK PRODUCT ---------- */}
-      <Paper
-        elevation={0}
-        sx={{
-          mt: 4,
-          p: 4,
-          borderRadius: 3,
-          backgroundColor: "background.paper",
-          border: "1px solid #d0b3ff",
-          boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
-        }}
-      >
-        {role === "SALES" && (
-  <Box display="flex" justifyContent="flex-end" mb={2}>
-    <Button
-      variant="outlined"
-      color="error"
-      onClick={() => navigate("/sales")}
-      sx={{
-        borderRadius: "14px",
-        px: 3,
-        fontWeight: 700,
-      }}
-    >
-      Close
-    </Button>
-  </Box>
-)}
-        <Typography variant="h5" fontWeight={700} color="primary" mb={3}>
-          Search Stock Product
-        </Typography>
-
-        <Grid container spacing={2}>
-          {/* Metal (select) */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              select
-              label="Metal"
-              value={q.metal}
-              onChange={(e) => {
-  const selectedMetal = e.target.value;
-
-  setQ((prev) => ({
-    ...initialQuery,
-    metal: selectedMetal,
-    itemName: "",
-  }));
-
-  setSearchItemInputValue("");
-  setSearchItemDropdownOpen(false);
-  setTopResults(null);
-  setTotalStock(0);
-}}
-              fullWidth
-              sx={prettySelectSx}
-              InputLabelProps={{ shrink: true }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (val) =>
-                  val ? (
-                    (val as string)
-                  ) : (
-                    <span style={{ color: "#9aa0a6" }}>Select metal</span>
-                  ),
-                MenuProps: {
-                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>Select Metal</em>
-              </MenuItem>
-              <MenuItem value="24 Gold">24 Gold</MenuItem>
-              <MenuItem value="22 Gold">22 Gold</MenuItem>
-              <MenuItem value="999 Silver">999 Silver</MenuItem>
-              <MenuItem value="995 Silver">995 Silver</MenuItem>
-              <MenuItem value="Gold Plated">Gold Plated</MenuItem>
-              <MenuItem value="Silver Plated">Silver Plated</MenuItem>
-            </TextField>
-          </Grid>
-
-          {/* ItemName (select depends on metal) */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-           <Autocomplete
-  freeSolo
-  open={searchItemDropdownOpen && itemOptions.length > 0}
-  onOpen={() => itemOptions.length > 0 && setSearchItemDropdownOpen(true)}
-  onClose={() => setSearchItemDropdownOpen(false)}
-  options={itemOptions}
-  inputValue={searchItemInputValue}
-  value={q.itemName || ""}
-  disabled={!q.metal}
-  filterOptions={(options, state) =>
-    options.filter((option) =>
-      option.toLowerCase().includes(state.inputValue.toLowerCase()),
-    )
-  }
-  onInputChange={(_, newInputValue) => {
-    const formatted = capitalizeWords(newInputValue);
-    setSearchItemInputValue(formatted);
-    setQ((prev) => ({ ...prev, itemName: formatted }));
-    setSearchItemDropdownOpen(true);
-  }}
-  onChange={(_, newValue) => {
-    const selected = newValue || "";
-    setSearchItemInputValue(selected);
-    setQ((prev) => ({ ...prev, itemName: selected }));
-    setSearchItemDropdownOpen(false);
-  }}
-  renderInput={(params) => (
-    <TextField
-      {...params}
-      label="ItemName"
-      placeholder="Search item..."
-      fullWidth
-      InputLabelProps={{ shrink: true }}
-      sx={prettySelectSx}
-    />
-  )}
-/>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              select
-              label="catalogue"
-              value={q.catalogue}
-              onChange={onQChange("catalogue")}
-              fullWidth
-            
-              sx={prettySelectSx}
-              InputLabelProps={{ shrink: true }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (val) =>
-                  val ? (
-                    (val as string)
-                  ) : (
-                    <span style={{ color: "#9aa0a6" }}>Select Catalogue</span>
-                  ),
-                MenuProps: {
-                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>Select Catalogue</em>
-              </MenuItem>
-              <MenuItem value="Royal Gold">Royal Gold</MenuItem>
-              <MenuItem value="Star">Star</MenuItem>
-              <MenuItem value="SSP">SSP</MenuItem>
-              <MenuItem value="Navkar">Navkar</MenuItem>
-              <MenuItem value="Vardhaman">Vardhaman</MenuItem>
-              <MenuItem value="MJR">MJR</MenuItem>
-              <MenuItem value="MDC">MDC</MenuItem>
-              <MenuItem value="SWM">SWM</MenuItem>
-              <MenuItem value="OSS">OSS</MenuItem>
-              <MenuItem value="Gold Works">Gold Works</MenuItem>
-              <MenuItem value="Sri Mondal Jewels">Sri Mondal Jewels</MenuItem>
-              <MenuItem value="SK Jewels">SK Jewels</MenuItem>
-              <MenuItem value="Navratan Collection">
-                Navratan Collection
-              </MenuItem>
-              <MenuItem value="Tops Collection">Tops Collection</MenuItem>
-              <MenuItem value="Jhumkhi Collection">Tops Collection</MenuItem>
-              <MenuItem value="Royal Ringtone">Royal Ringtone</MenuItem>
-              <MenuItem value="Gold Bond">Gold Bond</MenuItem>
-              <MenuItem value="Shree Viswakarma">Shree Viswakarma</MenuItem>
-              <MenuItem value="Self">Self</MenuItem>
-            </TextField>
-          </Grid>
-
-          {/* Design */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              label="Design"
-              value={q.design}
-              onChange={onQChange("design")}
-              fullWidth
-            />
-          </Grid>
-
-          {/* Size */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              label="Size"
-              value={q.size}
-              onChange={onQChange("size")}
-              inputProps={{
-                step: "any",
-                onKeyDown: (e) => {
-                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                    e.preventDefault();
-                  }
-                },
-              }}
-              onWheel={(e) => (e.target as HTMLInputElement).blur()}
-              fullWidth
-            />
-          </Grid>
-
-          {/* Weight */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              select
-              label="Weight Range"
-              value={q.weightRange}
-              onChange={onQChange("weightRange")}
-              fullWidth
-              sx={prettySelectSx}
-              InputLabelProps={{ shrink: true }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (val) =>
-                  val ? (
-                    (val as string)
-                  ) : (
-                    <span style={{ color: "#9aa0a6" }}>
-                      Select Weight Range
-                    </span>
-                  ),
-                MenuProps: {
-                  PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>Select Weight Range</em>
-              </MenuItem>
-              <MenuItem value="0-10"> 0-10 </MenuItem>
-              <MenuItem value="10-20">10-20</MenuItem>
-              <MenuItem value="20-30">20-30</MenuItem>
-              <MenuItem value="30-40">30-40</MenuItem>
-              <MenuItem value="40-50">40-50</MenuItem>
-              <MenuItem value="50-60">50-60</MenuItem>
-              <MenuItem value="60-70">60-70</MenuItem>
-              <MenuItem value="70-80">70-80</MenuItem>
-              <MenuItem value="80-90">80-90</MenuItem>
-              <MenuItem value="90-100">90-100</MenuItem>
-            </TextField>
-          </Grid>
-
-          {totalStock > 0 && (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <TextField
-                label="Total Stock"
-                value={totalStock}
-                fullWidth
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid>
-          )}
-        </Grid>
-
-        <Box display="flex" justifyContent="flex-end" mt={3}>
-          <Button
-            variant="contained"
-            onClick={searchTop}
-            disabled={topLoading}
-            sx={{ minWidth: 120 }} // <- margin-left to add space
-          >
-            {topLoading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              "Search"
-            )}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={addProductStock}
-            disabled={topLoading}
-            sx={{ minWidth: 120, ml: 2 }}
-          >
-            {topLoading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              "Add Product"
-            )}
-          </Button>
-        </Box>
-      </Paper>
-
-      {/* ---------- TABLE A (only when search found) ---------- */}
-      {topResults && (
+      <div className={role === "SALES" ? "max-w-7xl mx-auto space-y-8" : ""}>
+        {/* ---------- SEARCH STOCK PRODUCT ---------- */}
         <Paper
           elevation={0}
           sx={{
@@ -1605,1327 +1248,1591 @@ const sizeValue = plated
             boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
           }}
         >
-          <Typography variant="h6" fontWeight={600} mb={2}>
-            Result (Search Stock Product)
-          </Typography>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Metal</TableCell>
-                <TableCell>Item</TableCell>
-                <TableCell>catalogue</TableCell>
-                <TableCell>Design</TableCell>
-                <TableCell>Size</TableCell>
-                <TableCell>Weight</TableCell>
-                <TableCell>Stock</TableCell>
-                <TableCell>View</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {topResults.map((p) => {
-                const isEditing = editingId === p.stockProductId;
-                return (
-                  <TableRow key={p.stockProductId}>
-                    <TableCell>{p.stockProductId}</TableCell>
-                    <TableCell>{p.metal}</TableCell>
-                    <TableCell>{p.itemName}</TableCell>
-                    <TableCell>
-  {p.catalogue ?? "-"}
-</TableCell>
-
-<TableCell>
-  {p.design ?? "-"}
-</TableCell>
-
-<TableCell>
-  {p.size ?? "-"}
-</TableCell>
-
-<TableCell>
-  {isPlatedMetal(p.metal)
-    ? "-"
-    : (p.metal_weight ?? "-")}
-</TableCell>
-                    <TableCell>{p.stock ?? "-"}</TableCell>
-                    <TableCell>
-                      {!isEditing ? (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            setEditingId(p.stockProductId);
-                            setEditValue(String(p.stock ?? ""));
-                          }}
-                        >
-                          Edit Stock
-                        </Button>
-                      ) : (
-                        <Box display="flex" gap={1} alignItems="center">
-                          <TextField
-                            size="small"
-                            type="number"
-                            inputProps={{ step: "any" }}
-                            placeholder="+ amount"
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            sx={{ maxWidth: 120 }}
-                          />
-                          <Button
-                            size="small"
-                            variant="contained"
-                            onClick={() => saveStock(p)}
-                            disabled={savingId === p.stockProductId}
-                          >
-                            {savingId === p.stockProductId ? "Saving…" : "Save"}
-                          </Button>
-                          <Button
-                            size="small"
-                            onClick={() => {
-                              setEditingId(null);
-                              setEditValue("");
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </Box>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Paper>
-      )}
-
-      {/* ---------- PRODUCTS FORM (shown only when search failed or fields missing) ---------- */}
-      {showProductForm && (
-        <div>
-          <Box component="form" onSubmit={onSubmitProduct}>
-            <Paper
-              elevation={0}
-              sx={{
-                mt: 4,
-                p: 4,
-                borderRadius: 3,
-                backgroundColor: "background.paper",
-                border: "1px solid #d0b3ff",
-                boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
-              }}
-            >
-              <Typography variant="h4" fontWeight={700} color="primary" mb={3}>
-                Products
-              </Typography>
-
-              <Grid container spacing={2}>
-                {/* Metal select */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                 <TextField
-  select
-  label="Metal"
-  value={product.metal}
-  onChange={(e) => {
-    const selectedMetal = e.target.value;
-    const plated = isPlatedMetal(selectedMetal);
-
-    setProduct((prev) => {
-      if (plated) {
-        return {
-          ...initialProduct,
-          metal: selectedMetal,
-          itemName: "",
-          stock: prev.stock,
-          stockBox: prev.stockBox,
-        };
-      }
-
-      return {
-        ...prev,
-        metal: selectedMetal,
-        itemName: "",
-      };
-    });
-
-    setProductItemInputValue("");
-    setProductItemDropdownOpen(false);
-    setErrors({});
-  }}
-  fullWidth
-  error={!!errors.metal}
-  helperText={errors.metal || ""}
-  sx={prettySelectSx}
-  InputLabelProps={{ shrink: true }}
-  SelectProps={{
-    displayEmpty: true,
-    renderValue: (val) =>
-      val ? (
-        val as string
-      ) : (
-        <span style={{ color: "#9aa0a6" }}>
-          Select metal
-        </span>
-      ),
-  }}
->
-  <MenuItem value="">
-    <em>Select Metal</em>
-  </MenuItem>
-
-  <MenuItem value="24 Gold">24 Gold</MenuItem>
-  <MenuItem value="22 Gold">22 Gold</MenuItem>
-  <MenuItem value="999 Silver">999 Silver</MenuItem>
-  <MenuItem value="995 Silver">995 Silver</MenuItem>
-  <MenuItem value="Gold Plated">Gold Plated</MenuItem>
-  <MenuItem value="Silver Plated">Silver Plated</MenuItem>
-</TextField>
-                </Grid>
-
-                {/* ItemName Auto Complete */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                 <Autocomplete
-                 
-  freeSolo
-  open={productItemDropdownOpen && itemOptions.length > 0}
-  onOpen={() => itemOptions.length > 0 && setProductItemDropdownOpen(true)}
-  onClose={() => setProductItemDropdownOpen(false)}
-  options={itemOptions}
-  inputValue={productItemInputValue}
-  value={product.itemName || ""}
-  disabled={!product.metal}
-  filterOptions={(options, state) =>
-    options.filter((option) =>
-      option.toLowerCase().includes(state.inputValue.toLowerCase()),
-    )
-  }
-  onInputChange={(_, newInputValue) => {
-    const formatted = capitalizeWords(newInputValue);
-
-    setProductItemInputValue(formatted);
-    setProduct((prev) => ({
-      ...prev,
-      itemName: formatted,
-    }));
-
-    setProductItemDropdownOpen(true);
-
-    if (errors.itemName) {
-      setErrors((prev) => ({ ...prev, itemName: "" }));
-    }
-  }}
-  onChange={(_, newValue) => {
-    const selected = newValue || "";
-
-    setProductItemInputValue(selected);
-    setProduct((prev) => ({
-      ...prev,
-      itemName: selected,
-    }));
-
-    setProductItemDropdownOpen(false);
-  }}
-  renderInput={(params) => (
-    <TextField
-      {...params}
-      label="ItemName"
-      placeholder="Search or add item..."
-      fullWidth
-      error={!!errors.itemName}
-      helperText={errors.itemName || ""}
-      InputLabelProps={{ shrink: true }}
-      sx={prettySelectSx}
-    />
-  )}
-/>
-                </Grid>
-
-                {!platedProduct && (
-  <>
-
-
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    select
-                    label="catalogue"
-                    value={product.catalogue}
-                    onChange={onProductChange("catalogue")}
-                    fullWidth
-                    error={!!errors.catalogue}
-helperText={errors.catalogue || ""}
-                    sx={prettySelectSx}
-                    InputLabelProps={{ shrink: true }}
-                    SelectProps={{
-                      displayEmpty: true,
-                      renderValue: (val) =>
-                        val ? (
-                          (val as string)
-                        ) : (
-                          <span style={{ color: "#9aa0a6" }}>
-                            Select Catalogue
-                          </span>
-                        ),
-                    }}
-                  >
-                    <MenuItem value="">
-                      <em>Select Catalogue</em>
-                    </MenuItem>
-                    <MenuItem value="Royal Gold">Royal Gold</MenuItem>
-                    <MenuItem value="Star">Star</MenuItem>
-                    <MenuItem value="SSP">SSP</MenuItem>
-                    <MenuItem value="Navkar">Navkar</MenuItem>
-                    <MenuItem value="Vardhaman">Vardhaman</MenuItem>
-                    <MenuItem value="MJR">MJR</MenuItem>
-                    <MenuItem value="MDC">MDC</MenuItem>
-                    <MenuItem value="SWM">SWM</MenuItem>
-                    <MenuItem value="OSS">OSS</MenuItem>
-                    <MenuItem value="Gold Works">Gold Works</MenuItem>
-                    <MenuItem value="Sri Mondal Jewels">
-                      Sri Mondal Jewels
-                    </MenuItem>
-                    <MenuItem value="SK Jewels">SK Jewels</MenuItem>
-                    <MenuItem value="Navratan Collection">
-                      Navratan Collection
-                    </MenuItem>
-                    <MenuItem value="Tops Collection">Tops Collection</MenuItem>
-                    <MenuItem value="Jhumkhi Collection">
-                      Tops Collection
-                    </MenuItem>
-                    <MenuItem value="Royal Ringtone">Royal Ringtone</MenuItem>
-                    <MenuItem value="Gold Bond">Gold Bond</MenuItem>
-                    <MenuItem value="Shree Viswakarma">
-                      Shree Viswakarma
-                    </MenuItem>
-                    <MenuItem value="Self">Self</MenuItem>
-                  </TextField>
-                </Grid>
-
-                {/* Design */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Design"
-                    value={product.design}
-                    onChange={onProductChange("design")}
-                    fullWidth
-                    error={!!errors.design}
-                    helperText={errors.design || ""}
-                  />
-                </Grid>
-
-                {/* Size */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Size"
-                    value={product.size}
-                    onChange={onProductChange("size")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                    error={!!errors.size}
-                    helperText={errors.size || ""}
-                  />
-                </Grid>
-
-                {/* Metal Weight */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Metal Weight"
-                    type="number"
-                    value={product.metal_weight}
-                    onChange={onProductChange("metal_weight")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                    error={!!errors.metal_weight}
-                    helperText={errors.metal_weight || ""}
-                  />
-                </Grid>
-
-                {/* Wastage */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Wastage"
-                    type="number"
-                    value={product.wastage}
-                    onChange={onProductChange("wastage")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-              
-
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Stone Weight"
-                    type="number"
-                    value={product.stone_weight}
-                    onChange={(e) =>
-                      handleMaterialChange("stone", "weight", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Stone Rate"
-                    type="number"
-                    value={product.stone_rate}
-                    onChange={(e) =>
-                      handleMaterialChange("stone", "rate", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Stone Amount"
-                    value={product.stone_amount}
-                    onChange={onProductChange("stone_amount")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* ---- Bits ---- */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Bits Weight"
-                    type="number"
-                    value={product.bits_weight}
-                    onChange={(e) =>
-                      handleMaterialChange("bits", "weight", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Bits Rate"
-                    type="number"
-                    value={product.bits_rate}
-                    onChange={(e) =>
-                      handleMaterialChange("bits", "rate", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Bits Amount"
-                    value={product.bits_amount}
-                    onChange={onProductChange("bits_amount")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* ---- Diamond ---- */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Diamond Weight"
-                    type="number"
-                    value={product.diamond_weight}
-                    onChange={(e) =>
-                      handleMaterialChange("diamond", "weight", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Diamond Rate"
-                    type="number"
-                    value={product.diamond_rate}
-                    onChange={(e) =>
-                      handleMaterialChange("diamond", "rate", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Diamond Amount"
-                    value={product.diamond_amount}
-                    onChange={onProductChange("diamond_amount")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* ---- Enamel ---- */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Enamel Weight"
-                    type="number"
-                    value={product.enamel_weight}
-                    onChange={(e) =>
-                      handleMaterialChange("enamel", "weight", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Enamel Rate"
-                    type="number"
-                    value={product.enamel_rate}
-                    onChange={(e) =>
-                      handleMaterialChange("enamel", "rate", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Enamel Amount"
-                    value={product.enamel_amount}
-                    onChange={onProductChange("enamel_amount")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* ---- Pearls ---- */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Pearls Weight"
-                    type="number"
-                    value={product.pearls_weight}
-                    onChange={(e) =>
-                      handleMaterialChange("pearls", "weight", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Pearls Rate"
-                    type="number"
-                    value={product.pearls_rate}
-                    onChange={(e) =>
-                      handleMaterialChange("pearls", "rate", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Pearls Amount"
-                    value={product.pearls_amount}
-                    onChange={onProductChange("pearls_amount")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* ---- Wax ---- */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Wax Weight"
-                    type="number"
-                    value={product.wax_weight}
-                    onChange={(e) =>
-                      handleMaterialChange("wax", "weight", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Wax Rate"
-                    type="number"
-                    value={product.wax_rate}
-                    onChange={(e) =>
-                      handleMaterialChange("wax", "rate", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Wax Amount"
-                    value={product.wax_amount}
-                    onChange={onProductChange("wax_amount")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* Other Weight */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Other Weight"
-                    type="number"
-                    value={product.other_weight}
-                    onChange={(e) =>
-                      handleMaterialChange("other", "weight", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Other Rate"
-                    type="number"
-                    value={product.other_rate}
-                    onChange={(e) =>
-                      handleMaterialChange("other", "rate", e.target.value)
-                    }
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Other Amount"
-                    value={product.other_amount}
-                    onChange={onProductChange("other_amount")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Gross Weight (auto)"
-                    value={product.gross_weight}
-                    InputProps={{ readOnly: true }}
-                    fullWidth
-                  />
-                </Grid>
-
-                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    select
-                    label="Link Worker"
-                    value={product.linkWorker}
-                    onChange={onProductChange("linkWorker")}
-                    fullWidth
-                    sx={prettySelectSx}
-                    InputLabelProps={{ shrink: true }}
-                    SelectProps={{
-                      displayEmpty: true,
-                      renderValue: (val) =>
-                        val ? (
-                          (val as string)
-                        ) : (
-                          <span style={{ color: "#9aa0a6" }}>
-                            Select Link Worker
-                          </span>
-                        ),
-                    }}
-                  >
-                    <MenuItem value="">
-                      <em>Select Link Worker</em>
-                    </MenuItem>
-                    <MenuItem value="No">No</MenuItem>
-                    <MenuItem value="Yes">Yes</MenuItem>
-                  </TextField>
-                </Grid>
-                </>
-                )}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-  <TextField
-    label={
-      platedProduct
-        ? "Total Item Price"
-        : "Making Charges"
-    }
-    type="number"
-    value={product.making_charges}
-   onChange={onProductChange("making_charges")}
-    inputProps={{
-      step: "any",
-      min: "0",
-      onKeyDown: (e) => {
-        if (
-          e.key === "ArrowUp" ||
-          e.key === "ArrowDown"
-        ) {
-          e.preventDefault();
-        }
-      },
-    }}
-    onWheel={(e) =>
-      (e.target as HTMLInputElement).blur()
-    }
-    fullWidth
-    error={!!errors.making_charges}
-    helperText={
-      errors.making_charges ||
-      (
-        platedProduct
-          ? "Enter the complete selling price"
-          : ""
-      )
-    }
-  />
-</Grid>
-
-                {/* Stock */}
-               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-  <TextField
-    label="Stock"
-    type="number"
-    value={product.stock}
-   onChange={onProductChange("stock")}
-    inputProps={{
-      step: "any",
-      min: "0",
-      onKeyDown: (e) => {
-        if (
-          e.key === "ArrowUp" ||
-          e.key === "ArrowDown"
-        ) {
-          e.preventDefault();
-        }
-      },
-    }}
-    onWheel={(e) =>
-      (e.target as HTMLInputElement).blur()
-    }
-    fullWidth
-    error={!!errors.stock}
-    helperText={errors.stock || ""}
-  />
-</Grid>
-
-                {/* Stock */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-  <TextField
-    label="Stock Box"
-    value={product.stockBox}
-    onChange={onProductChange("stockBox")}
-    fullWidth
-    error={!!errors.stockBox}
-    helperText={errors.stockBox || ""}
-  />
-</Grid>
-               
-              </Grid>
-
-
-              
-
-              <Box display="flex" justifyContent="flex-end" mt={4}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={submitLoading}
-                  sx={{
-                    background: "#8847FF",
-                    fontWeight: 600,
-                    textTransform: "none",
-                    "&:hover": { background: "#6c30cc" },
-                    px: 5,
-                  }}
-                >
-                  {submitLoading ? (
-                    <CircularProgress size={18} color="inherit" />
-                  ) : (
-                    "Submit"
-                  )}
-                </Button>
-              </Box>
-            </Paper>
-          </Box>
-          <Box
-  component="form"
-  onSubmit={(e) => {
-    e.preventDefault();
-    handleWorkAdding();
-  }}
->
-            <Paper
-              elevation={0}
-              sx={{
-                mt: 4,
-                p: 4,
-                borderRadius: 3,
-                backgroundColor: "background.paper",
-                border: "1px solid #d0b3ff",
-                boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
-              }}
-            >
-              <Typography variant="h4" fontWeight={700} color="primary" mb={3}>
-                Worker Spcl Work
-              </Typography>
-
-              <Grid container spacing={2}>
-                {/* Worker */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    select
-                    fullWidth
-                    label="Full Name"
-                    value={selectedWorkerId}
-                    onChange={(e) =>
-                      setSelectedWorkerId(Number(e.target.value))
-                    }
-                    required
-                    InputLabelProps={{ shrink: true }}
-                    SelectProps={{ displayEmpty: true }}
-                  >
-                    <MenuItem value="" disabled>
-                      -- Select Worker --
-                    </MenuItem>
-                    {workers.map(({ workerId, fullName }) => (
-                      <MenuItem key={workerId} value={workerId}>
-                        {fullName}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                {/* Metal select */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    select
-                    label="Metal"
-                    value={spclWork.metal}
-onChange={(e) => {
-  const selectedMetal = e.target.value;
-
-  setSpclWork((prev) => ({
-    ...prev,
-    metal: selectedMetal,
-    itemName: "",
-  }));
-
-  setSpclItemInputValue("");
-  setSpclItemDropdownOpen(false);
-}}
-fullWidth    
-              >
-                    <MenuItem value="">Select Metal</MenuItem>
-                    <MenuItem value="24 Gold">24 Gold</MenuItem>
-                    <MenuItem value="22 Gold">22 Gold</MenuItem>
-                    <MenuItem value="999 Silver">999 Silver</MenuItem>
-                    <MenuItem value="995 Silver">995 Silver</MenuItem>
-                  <MenuItem value="Gold Plated">Gold Plated</MenuItem>
-              <MenuItem value="Silver Plated">Silver Plated</MenuItem>
-            </TextField>
-                </Grid>
-
-                {/* ItemName select (depends on metal) */}
-                {/* Worker Spcl Work ItemName Auto Complete */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Autocomplete
-  freeSolo
-  open={spclItemDropdownOpen && itemOptions.length > 0}
-  onOpen={() => itemOptions.length > 0 && setSpclItemDropdownOpen(true)}
-  onClose={() => setSpclItemDropdownOpen(false)}
-  options={itemOptions}
-  inputValue={spclItemInputValue}
-  value={spclWork.itemName || ""}
-  disabled={!spclWork.metal}
-  filterOptions={(options, state) =>
-    options.filter((option) =>
-      option.toLowerCase().includes(state.inputValue.toLowerCase()),
-    )
-  }
-  onInputChange={(_, newInputValue) => {
-    const formatted = capitalizeWords(newInputValue);
-    setSpclItemInputValue(formatted);
-    setSpclWork((prev) => ({ ...prev, itemName: formatted }));
-    setSpclItemDropdownOpen(true);
-  }}
-  onChange={(_, newValue) => {
-    const selected = newValue || "";
-    setSpclItemInputValue(selected);
-    setSpclWork((prev) => ({ ...prev, itemName: selected }));
-    setSpclItemDropdownOpen(false);
-  }}
-  renderInput={(params) => (
-    <TextField
-      {...params}
-      label="Item Name"
-      placeholder="Search or add item..."
-      fullWidth
-      InputLabelProps={{ shrink: true }}
-    />
-  )}
-/>
-                </Grid>
-
-                {/* Metal Weight */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Worker Metal Weight"
-                    type="number"
-                    value={spclWork.workerMetalWeight}
-                    onChange={handleChange("workerMetalWeight")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Other Metal Name"
-                    value={spclWork.otherMetalName}
-                    onChange={handleChange("otherMetalName")}
-                    fullWidth
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Other Metal Weight"
-                    type="number"
-                    value={spclWork.otherWeight}
-                    onChange={handleChange("otherWeight")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* Wastage */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Wastage"
-                    type="number"
-                    value={spclWork.wastage}
-                    onChange={handleChange("wastage")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* Making Charges */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Amount"
-                    type="number"
-                    value={spclWork.amount}
-                    onChange={handleChange("amount")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-
-                {/* Other Weight */}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TextField
-                    label="Item Link Code"
-                    value={spclWork.itemLinkCode}
-                    onChange={handleChange("itemLinkCode")}
-                    inputProps={{
-                      step: "any",
-                      onKeyDown: (e) => {
-                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                          e.preventDefault();
-                        }
-                      },
-                    }}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    fullWidth
-                  />
-                </Grid>
-              </Grid>
-
-              <Box display="flex" justifyContent="flex-end" mt={4}>
-                <Button
-                  variant="outlined"
-                  onClick={handleWorkAdding}
-                  sx={{
-                    paddingX: 6,
-                    paddingY: 0.2,
-                    borderRadius: "12px",
-                    fontWeight: "bold",
-                    boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
-                    borderColor: "#8847FF",
-                    color: "#8847FF",
-                    transition: "all 0.3s",
-                    "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
-                  }}
-                >
-                  Submmit
-                </Button>
-              </Box>
-            </Paper>
-          </Box>
-        </div>
-      )}
-
-      <Paper
-        elevation={0}
-        sx={{
-          mt: 4,
-          p: 3,
-          borderRadius: 3,
-          backgroundColor: "background.paper",
-          border: "1px solid #d0b3ff",
-          boxShadow: "0 10px 30px rgba(136,71,255,0.12)",
-        }}
-      >
-        <Typography variant="h6" fontWeight={600} mb={2}>
-          Search by Barcode for RFID Label
-        </Typography>
-
-        <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
-          <TextField
-            label="Barcode Value"
-            value={barcodeSearch}
-            onChange={(e) => setBarcodeSearch(e.target.value)}
-            size="small"
-            sx={{ minWidth: 260 }}
-          />
-
-          <Button
-            variant="contained"
-            onClick={handleSearchByBarcode}
-            disabled={barcodeSearchLoading}
-            sx={{
-              borderRadius: 2,
-              fontWeight: 700,
-              backgroundColor: "#8847FF",
-              "&:hover": { backgroundColor: "#6f33db" },
-            }}
-          >
-            {barcodeSearchLoading ? "Searching..." : "Search"}
-          </Button>
-        </Box>
-      </Paper>
-      {selectedLabelRow && labelFlowSource === "search" && (
-        <Paper
-          elevation={0}
-          sx={{
-            mt: 4,
-            p: 3,
-            borderRadius: 3,
-            backgroundColor: "background.paper",
-            border: "1px solid #d0b3ff",
-            boxShadow: "0 10px 30px rgba(136,71,255,0.12)",
-          }}
-        >
-          <Typography variant="h6" fontWeight={600} mb={2}>
-            RFID Label Preview
-          </Typography>
-
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Box
-              sx={{
-                width: "25mm",
-                height: "26mm",
-                border: "1px solid #ddd",
-                background: "#fff",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                p: "1.2mm",
-                boxSizing: "border-box",
-              }}
-            >
-              <Box
+          {role === "SALES" && (
+            <Box display="flex" justifyContent="flex-end" mb={2}>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => navigate("/sales")}
                 sx={{
-                  width: "100%",
-                  height: "12mm",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  mt: "0.4mm",
-                }}
-              >
-                {labelImageSrc ? (
-                  <img
-                    src={labelImageSrc}
-                    alt="qr"
-                    style={{
-                      maxWidth: "12mm",
-                      maxHeight: "12mm",
-                      objectFit: "contain",
-                      display: "block",
-                    }}
-                  />
-                ) : (
-                  <Typography sx={{ fontSize: "9px" }}>No QR</Typography>
-                )}
-              </Box>
-
-              <Typography
-                sx={{
-                  mt: "1.1mm",
-                  fontSize: "9px",
+                  borderRadius: "14px",
+                  px: 3,
                   fontWeight: 700,
-                  lineHeight: 1.05,
-                  textAlign: "center",
-                  wordBreak: "break-all",
-                  width: "100%",
                 }}
               >
-                {selectedLabelRow.barcodeValue ?? "-"}
-              </Typography>
-
-              <Typography
-                sx={{
-                  mt: "0.6mm",
-                  fontSize: "9px",
-                  lineHeight: 1.05,
-                  textAlign: "center",
-                  width: "100%",
-                }}
-              >
-                GW: {normalizeWeight(selectedLabelRow.gross_weight)}g
-              </Typography>
+                Close
+              </Button>
             </Box>
+          )}
+          <Typography variant="h5" fontWeight={700} color="primary" mb={3}>
+            Search Stock Product
+          </Typography>
 
+          <Grid container spacing={2}>
+            {/* Metal (select) */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <TextField
+                select
+                label="Metal"
+                value={q.metal}
+                onChange={(e) => {
+                  const selectedMetal = e.target.value;
+
+                  setQ((prev) => ({
+                    ...initialQuery,
+                    metal: selectedMetal,
+                    itemName: "",
+                  }));
+
+                  setSearchItemInputValue("");
+                  setSearchItemDropdownOpen(false);
+                  setTopResults(null);
+                  setTotalStock(0);
+                }}
+                fullWidth
+                sx={prettySelectSx}
+                InputLabelProps={{ shrink: true }}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (val) =>
+                    val ? (
+                      (val as string)
+                    ) : (
+                      <span style={{ color: "#9aa0a6" }}>Select metal</span>
+                    ),
+                  MenuProps: {
+                    PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  <em>Select Metal</em>
+                </MenuItem>
+                <MenuItem value="24 Gold">24 Gold</MenuItem>
+                <MenuItem value="22 Gold">22 Gold</MenuItem>
+                <MenuItem value="999 Silver">999 Silver</MenuItem>
+                <MenuItem value="995 Silver">995 Silver</MenuItem>
+                <MenuItem value="Gold Plated">Gold Plated</MenuItem>
+                <MenuItem value="Silver Plated">Silver Plated</MenuItem>
+              </TextField>
+            </Grid>
+
+            {/* ItemName (select depends on metal) */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Autocomplete
+                freeSolo
+                open={searchItemDropdownOpen && itemOptions.length > 0}
+                onOpen={() =>
+                  itemOptions.length > 0 && setSearchItemDropdownOpen(true)
+                }
+                onClose={() => setSearchItemDropdownOpen(false)}
+                options={itemOptions}
+                inputValue={searchItemInputValue}
+                value={q.itemName || ""}
+                disabled={!q.metal}
+                filterOptions={(options, state) =>
+                  options.filter((option) =>
+                    option
+                      .toLowerCase()
+                      .includes(state.inputValue.toLowerCase()),
+                  )
+                }
+                onInputChange={(_, newInputValue) => {
+                  const formatted = capitalizeWords(newInputValue);
+                  setSearchItemInputValue(formatted);
+                  setQ((prev) => ({ ...prev, itemName: formatted }));
+                  setSearchItemDropdownOpen(true);
+                }}
+                onChange={(_, newValue) => {
+                  const selected = newValue || "";
+                  setSearchItemInputValue(selected);
+                  setQ((prev) => ({ ...prev, itemName: selected }));
+                  setSearchItemDropdownOpen(false);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="ItemName"
+                    placeholder="Search item..."
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                    sx={prettySelectSx}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <TextField
+                select
+                label="catalogue"
+                value={q.catalogue}
+                onChange={onQChange("catalogue")}
+                fullWidth
+                sx={prettySelectSx}
+                InputLabelProps={{ shrink: true }}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (val) =>
+                    val ? (
+                      (val as string)
+                    ) : (
+                      <span style={{ color: "#9aa0a6" }}>Select Catalogue</span>
+                    ),
+                  MenuProps: {
+                    PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  <em>Select Catalogue</em>
+                </MenuItem>
+                <MenuItem value="Royal Gold">Royal Gold</MenuItem>
+                <MenuItem value="Star">Star</MenuItem>
+                <MenuItem value="SSP">SSP</MenuItem>
+                <MenuItem value="Navkar">Navkar</MenuItem>
+                <MenuItem value="Vardhaman">Vardhaman</MenuItem>
+                <MenuItem value="MJR">MJR</MenuItem>
+                <MenuItem value="MDC">MDC</MenuItem>
+                <MenuItem value="SWM">SWM</MenuItem>
+                <MenuItem value="OSS">OSS</MenuItem>
+                <MenuItem value="Gold Works">Gold Works</MenuItem>
+                <MenuItem value="Sri Mondal Jewels">Sri Mondal Jewels</MenuItem>
+                <MenuItem value="SK Jewels">SK Jewels</MenuItem>
+                <MenuItem value="Navratan Collection">
+                  Navratan Collection
+                </MenuItem>
+                <MenuItem value="Tops Collection">Tops Collection</MenuItem>
+                <MenuItem value="Jhumkhi Collection">Tops Collection</MenuItem>
+                <MenuItem value="Royal Ringtone">Royal Ringtone</MenuItem>
+                <MenuItem value="Gold Bond">Gold Bond</MenuItem>
+                <MenuItem value="Shree Viswakarma">Shree Viswakarma</MenuItem>
+                <MenuItem value="Self">Self</MenuItem>
+              </TextField>
+            </Grid>
+
+            {/* Design */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <TextField
+                label="Design"
+                value={q.design}
+                onChange={onQChange("design")}
+                fullWidth
+              />
+            </Grid>
+
+            {/* Size */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <TextField
+                label="Size"
+                value={q.size}
+                onChange={onQChange("size")}
+                inputProps={{
+                  step: "any",
+                  onKeyDown: (e) => {
+                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                      e.preventDefault();
+                    }
+                  },
+                }}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                fullWidth
+              />
+            </Grid>
+
+            {/* Weight */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <TextField
+                select
+                label="Weight Range"
+                value={q.weightRange}
+                onChange={onQChange("weightRange")}
+                fullWidth
+                sx={prettySelectSx}
+                InputLabelProps={{ shrink: true }}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (val) =>
+                    val ? (
+                      (val as string)
+                    ) : (
+                      <span style={{ color: "#9aa0a6" }}>
+                        Select Weight Range
+                      </span>
+                    ),
+                  MenuProps: {
+                    PaperProps: { sx: { borderRadius: 2, maxHeight: 320 } },
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  <em>Select Weight Range</em>
+                </MenuItem>
+                <MenuItem value="0-10"> 0-10 </MenuItem>
+                <MenuItem value="10-20">10-20</MenuItem>
+                <MenuItem value="20-30">20-30</MenuItem>
+                <MenuItem value="30-40">30-40</MenuItem>
+                <MenuItem value="40-50">40-50</MenuItem>
+                <MenuItem value="50-60">50-60</MenuItem>
+                <MenuItem value="60-70">60-70</MenuItem>
+                <MenuItem value="70-80">70-80</MenuItem>
+                <MenuItem value="80-90">80-90</MenuItem>
+                <MenuItem value="90-100">90-100</MenuItem>
+              </TextField>
+            </Grid>
+
+            {totalStock > 0 && (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <TextField
+                  label="Total Stock"
+                  value={totalStock}
+                  fullWidth
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                />
+              </Grid>
+            )}
+          </Grid>
+
+          <Box display="flex" justifyContent="flex-end" mt={3}>
             <Button
               variant="contained"
-              onClick={() => handlePrintSmallLabel(selectedLabelRow)}
-              sx={{
-                mt: 2,
-                backgroundColor: "#8847FF",
-                "&:hover": { backgroundColor: "#6f33db" },
-              }}
+              onClick={searchTop}
+              disabled={topLoading}
+              sx={{ minWidth: 120 }} // <- margin-left to add space
             >
-              Print Label
+              {topLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "Search"
+              )}
+            </Button>
+            <Button
+              variant="contained"
+              onClick={addProductStock}
+              disabled={topLoading}
+              sx={{ minWidth: 120, ml: 2 }}
+            >
+              {topLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "Add Product"
+              )}
             </Button>
           </Box>
         </Paper>
-      )}
-      {selectedLabelRow && labelFlowSource === "search" && (
+
+        {/* ---------- TABLE A (only when search found) ---------- */}
+        {topResults && (
+          <Paper
+            elevation={0}
+            sx={{
+              mt: 4,
+              p: 4,
+              borderRadius: 3,
+              backgroundColor: "background.paper",
+              border: "1px solid #d0b3ff",
+              boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
+            }}
+          >
+            <Typography variant="h6" fontWeight={600} mb={2}>
+              Result (Search Stock Product)
+            </Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Metal</TableCell>
+                  <TableCell>Item</TableCell>
+                  <TableCell>catalogue</TableCell>
+                  <TableCell>Design</TableCell>
+                  <TableCell>Size</TableCell>
+                  <TableCell>Weight</TableCell>
+                  <TableCell>Stock</TableCell>
+                  <TableCell>View</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {topResults.map((p) => {
+                  const isEditing = editingId === p.stockProductId;
+                  return (
+                    <TableRow key={p.stockProductId}>
+                      <TableCell>{p.stockProductId}</TableCell>
+                      <TableCell>{p.metal}</TableCell>
+                      <TableCell>{p.itemName}</TableCell>
+                      <TableCell>{p.catalogue ?? "-"}</TableCell>
+
+                      <TableCell>{p.design ?? "-"}</TableCell>
+
+                      <TableCell>{p.size ?? "-"}</TableCell>
+
+                      <TableCell>
+                        {isPlatedMetal(p.metal) ? "-" : (p.metal_weight ?? "-")}
+                      </TableCell>
+                      <TableCell>{p.stock ?? "-"}</TableCell>
+                      <TableCell>
+                        {!isEditing ? (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => {
+                              setEditingId(p.stockProductId);
+                              setEditValue(String(p.stock ?? ""));
+                            }}
+                          >
+                            Edit Stock
+                          </Button>
+                        ) : (
+                          <Box display="flex" gap={1} alignItems="center">
+                            <TextField
+                              size="small"
+                              type="number"
+                              inputProps={{ step: "any" }}
+                              placeholder="+ amount"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              sx={{ maxWidth: 120 }}
+                            />
+                            <Button
+                              size="small"
+                              variant="contained"
+                              onClick={() => saveStock(p)}
+                              disabled={savingId === p.stockProductId}
+                            >
+                              {savingId === p.stockProductId
+                                ? "Saving…"
+                                : "Save"}
+                            </Button>
+                            <Button
+                              size="small"
+                              onClick={() => {
+                                setEditingId(null);
+                                setEditValue("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </Box>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Paper>
+        )}
+
+        {/* ---------- PRODUCTS FORM (shown only when search failed or fields missing) ---------- */}
+        {showProductForm && (
+          <div>
+            <Box component="form" onSubmit={onSubmitProduct}>
+              <Paper
+                elevation={0}
+                sx={{
+                  mt: 4,
+                  p: 4,
+                  borderRadius: 3,
+                  backgroundColor: "background.paper",
+                  border: "1px solid #d0b3ff",
+                  boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
+                }}
+              >
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  color="primary"
+                  mb={3}
+                >
+                  Products
+                </Typography>
+
+                <Grid container spacing={2}>
+                  {/* Metal select */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      select
+                      label="Metal"
+                      value={product.metal}
+                      onChange={(e) => {
+                        const selectedMetal = e.target.value;
+                        const plated = isPlatedMetal(selectedMetal);
+
+                        setProduct((prev) => {
+                          if (plated) {
+                            return {
+                              ...initialProduct,
+                              metal: selectedMetal,
+                              itemName: "",
+                              stock: prev.stock,
+                              stockBox: prev.stockBox,
+                            };
+                          }
+
+                          return {
+                            ...prev,
+                            metal: selectedMetal,
+                            itemName: "",
+                          };
+                        });
+
+                        setProductItemInputValue("");
+                        setProductItemDropdownOpen(false);
+                        setErrors({});
+                      }}
+                      fullWidth
+                      error={!!errors.metal}
+                      helperText={errors.metal || ""}
+                      sx={prettySelectSx}
+                      InputLabelProps={{ shrink: true }}
+                      SelectProps={{
+                        displayEmpty: true,
+                        renderValue: (val) =>
+                          val ? (
+                            (val as string)
+                          ) : (
+                            <span style={{ color: "#9aa0a6" }}>
+                              Select metal
+                            </span>
+                          ),
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>Select Metal</em>
+                      </MenuItem>
+
+                      <MenuItem value="24 Gold">24 Gold</MenuItem>
+                      <MenuItem value="22 Gold">22 Gold</MenuItem>
+                      <MenuItem value="999 Silver">999 Silver</MenuItem>
+                      <MenuItem value="995 Silver">995 Silver</MenuItem>
+                      <MenuItem value="Gold Plated">Gold Plated</MenuItem>
+                      <MenuItem value="Silver Plated">Silver Plated</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {/* ItemName Auto Complete */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Autocomplete
+                      freeSolo
+                      open={productItemDropdownOpen && itemOptions.length > 0}
+                      onOpen={() =>
+                        itemOptions.length > 0 &&
+                        setProductItemDropdownOpen(true)
+                      }
+                      onClose={() => setProductItemDropdownOpen(false)}
+                      options={itemOptions}
+                      inputValue={productItemInputValue}
+                      value={product.itemName || ""}
+                      disabled={!product.metal}
+                      filterOptions={(options, state) =>
+                        options.filter((option) =>
+                          option
+                            .toLowerCase()
+                            .includes(state.inputValue.toLowerCase()),
+                        )
+                      }
+                      onInputChange={(_, newInputValue) => {
+                        const formatted = capitalizeWords(newInputValue);
+
+                        setProductItemInputValue(formatted);
+                        setProduct((prev) => ({
+                          ...prev,
+                          itemName: formatted,
+                        }));
+
+                        setProductItemDropdownOpen(true);
+
+                        if (errors.itemName) {
+                          setErrors((prev) => ({ ...prev, itemName: "" }));
+                        }
+                      }}
+                      onChange={(_, newValue) => {
+                        const selected = newValue || "";
+
+                        setProductItemInputValue(selected);
+                        setProduct((prev) => ({
+                          ...prev,
+                          itemName: selected,
+                        }));
+
+                        setProductItemDropdownOpen(false);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="ItemName"
+                          placeholder="Search or add item..."
+                          fullWidth
+                          error={!!errors.itemName}
+                          helperText={errors.itemName || ""}
+                          InputLabelProps={{ shrink: true }}
+                          sx={prettySelectSx}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  {!platedProduct && (
+                    <>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          select
+                          label="catalogue"
+                          value={product.catalogue}
+                          onChange={onProductChange("catalogue")}
+                          fullWidth
+                          error={!!errors.catalogue}
+                          helperText={errors.catalogue || ""}
+                          sx={prettySelectSx}
+                          InputLabelProps={{ shrink: true }}
+                          SelectProps={{
+                            displayEmpty: true,
+                            renderValue: (val) =>
+                              val ? (
+                                (val as string)
+                              ) : (
+                                <span style={{ color: "#9aa0a6" }}>
+                                  Select Catalogue
+                                </span>
+                              ),
+                          }}
+                        >
+                          <MenuItem value="">
+                            <em>Select Catalogue</em>
+                          </MenuItem>
+                          <MenuItem value="Royal Gold">Royal Gold</MenuItem>
+                          <MenuItem value="Star">Star</MenuItem>
+                          <MenuItem value="SSP">SSP</MenuItem>
+                          <MenuItem value="Navkar">Navkar</MenuItem>
+                          <MenuItem value="Vardhaman">Vardhaman</MenuItem>
+                          <MenuItem value="MJR">MJR</MenuItem>
+                          <MenuItem value="MDC">MDC</MenuItem>
+                          <MenuItem value="SWM">SWM</MenuItem>
+                          <MenuItem value="OSS">OSS</MenuItem>
+                          <MenuItem value="Gold Works">Gold Works</MenuItem>
+                          <MenuItem value="Sri Mondal Jewels">
+                            Sri Mondal Jewels
+                          </MenuItem>
+                          <MenuItem value="SK Jewels">SK Jewels</MenuItem>
+                          <MenuItem value="Navratan Collection">
+                            Navratan Collection
+                          </MenuItem>
+                          <MenuItem value="Tops Collection">
+                            Tops Collection
+                          </MenuItem>
+                          <MenuItem value="Jhumkhi Collection">
+                            Tops Collection
+                          </MenuItem>
+                          <MenuItem value="Royal Ringtone">
+                            Royal Ringtone
+                          </MenuItem>
+                          <MenuItem value="Gold Bond">Gold Bond</MenuItem>
+                          <MenuItem value="Shree Viswakarma">
+                            Shree Viswakarma
+                          </MenuItem>
+                          <MenuItem value="Self">Self</MenuItem>
+                        </TextField>
+                      </Grid>
+
+                      {/* Design */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Design"
+                          value={product.design}
+                          onChange={onProductChange("design")}
+                          fullWidth
+                          error={!!errors.design}
+                          helperText={errors.design || ""}
+                        />
+                      </Grid>
+
+                      {/* Size */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Size"
+                          value={product.size}
+                          onChange={onProductChange("size")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                          error={!!errors.size}
+                          helperText={errors.size || ""}
+                        />
+                      </Grid>
+
+                      {/* Metal Weight */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Metal Weight"
+                          type="number"
+                          value={product.metal_weight}
+                          onChange={onProductChange("metal_weight")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                          error={!!errors.metal_weight}
+                          helperText={errors.metal_weight || ""}
+                        />
+                      </Grid>
+
+                      {/* Wastage */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Wastage"
+                          type="number"
+                          value={product.wastage}
+                          onChange={onProductChange("wastage")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Stone Weight"
+                          type="number"
+                          value={product.stone_weight}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "stone",
+                              "weight",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Stone Rate"
+                          type="number"
+                          value={product.stone_rate}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "stone",
+                              "rate",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Stone Amount"
+                          value={product.stone_amount}
+                          onChange={onProductChange("stone_amount")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      {/* ---- Bits ---- */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Bits Weight"
+                          type="number"
+                          value={product.bits_weight}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "bits",
+                              "weight",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Bits Rate"
+                          type="number"
+                          value={product.bits_rate}
+                          onChange={(e) =>
+                            handleMaterialChange("bits", "rate", e.target.value)
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Bits Amount"
+                          value={product.bits_amount}
+                          onChange={onProductChange("bits_amount")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      {/* ---- Diamond ---- */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Diamond Weight"
+                          type="number"
+                          value={product.diamond_weight}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "diamond",
+                              "weight",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Diamond Rate"
+                          type="number"
+                          value={product.diamond_rate}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "diamond",
+                              "rate",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Diamond Amount"
+                          value={product.diamond_amount}
+                          onChange={onProductChange("diamond_amount")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      {/* ---- Enamel ---- */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Enamel Weight"
+                          type="number"
+                          value={product.enamel_weight}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "enamel",
+                              "weight",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Enamel Rate"
+                          type="number"
+                          value={product.enamel_rate}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "enamel",
+                              "rate",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Enamel Amount"
+                          value={product.enamel_amount}
+                          onChange={onProductChange("enamel_amount")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      {/* ---- Pearls ---- */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Pearls Weight"
+                          type="number"
+                          value={product.pearls_weight}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "pearls",
+                              "weight",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Pearls Rate"
+                          type="number"
+                          value={product.pearls_rate}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "pearls",
+                              "rate",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Pearls Amount"
+                          value={product.pearls_amount}
+                          onChange={onProductChange("pearls_amount")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      {/* ---- Wax ---- */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Wax Weight"
+                          type="number"
+                          value={product.wax_weight}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "wax",
+                              "weight",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Wax Rate"
+                          type="number"
+                          value={product.wax_rate}
+                          onChange={(e) =>
+                            handleMaterialChange("wax", "rate", e.target.value)
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Wax Amount"
+                          value={product.wax_amount}
+                          onChange={onProductChange("wax_amount")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      {/* Other Weight */}
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Other Weight"
+                          type="number"
+                          value={product.other_weight}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "other",
+                              "weight",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Other Rate"
+                          type="number"
+                          value={product.other_rate}
+                          onChange={(e) =>
+                            handleMaterialChange(
+                              "other",
+                              "rate",
+                              e.target.value,
+                            )
+                          }
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Other Amount"
+                          value={product.other_amount}
+                          onChange={onProductChange("other_amount")}
+                          inputProps={{
+                            step: "any",
+                            onKeyDown: (e) => {
+                              if (
+                                e.key === "ArrowUp" ||
+                                e.key === "ArrowDown"
+                              ) {
+                                e.preventDefault();
+                              }
+                            },
+                          }}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          label="Gross Weight (auto)"
+                          value={product.gross_weight}
+                          InputProps={{ readOnly: true }}
+                          fullWidth
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                          select
+                          label="Link Worker"
+                          value={product.linkWorker}
+                          onChange={onProductChange("linkWorker")}
+                          fullWidth
+                          sx={prettySelectSx}
+                          InputLabelProps={{ shrink: true }}
+                          SelectProps={{
+                            displayEmpty: true,
+                            renderValue: (val) =>
+                              val ? (
+                                (val as string)
+                              ) : (
+                                <span style={{ color: "#9aa0a6" }}>
+                                  Select Link Worker
+                                </span>
+                              ),
+                          }}
+                        >
+                          <MenuItem value="">
+                            <em>Select Link Worker</em>
+                          </MenuItem>
+                          <MenuItem value="No">No</MenuItem>
+                          <MenuItem value="Yes">Yes</MenuItem>
+                        </TextField>
+                      </Grid>
+                    </>
+                  )}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label={
+                        platedProduct ? "Total Item Price" : "Making Charges"
+                      }
+                      type="number"
+                      value={product.making_charges}
+                      onChange={onProductChange("making_charges")}
+                      inputProps={{
+                        step: "any",
+                        min: "0",
+                        onKeyDown: (e) => {
+                          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                            e.preventDefault();
+                          }
+                        },
+                      }}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                      fullWidth
+                      error={!!errors.making_charges}
+                      helperText={
+                        errors.making_charges ||
+                        (platedProduct
+                          ? "Enter the complete selling price"
+                          : "")
+                      }
+                    />
+                  </Grid>
+
+                  {/* Stock */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label="Stock"
+                      type="number"
+                      value={product.stock}
+                      onChange={onProductChange("stock")}
+                      inputProps={{
+                        step: "any",
+                        min: "0",
+                        onKeyDown: (e) => {
+                          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                            e.preventDefault();
+                          }
+                        },
+                      }}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                      fullWidth
+                      error={!!errors.stock}
+                      helperText={errors.stock || ""}
+                    />
+                  </Grid>
+
+                  {/* Stock */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label="Stock Box"
+                      value={product.stockBox}
+                      onChange={onProductChange("stockBox")}
+                      fullWidth
+                      error={!!errors.stockBox}
+                      helperText={errors.stockBox || ""}
+                    />
+                  </Grid>
+                </Grid>
+
+                <Box display="flex" justifyContent="flex-end" mt={4}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={submitLoading}
+                    sx={{
+                      background: "#8847FF",
+                      fontWeight: 600,
+                      textTransform: "none",
+                      "&:hover": { background: "#6c30cc" },
+                      px: 5,
+                    }}
+                  >
+                    {submitLoading ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : (
+                      "Submit"
+                    )}
+                  </Button>
+                </Box>
+              </Paper>
+            </Box>
+            <Box
+              component="form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleWorkAdding();
+              }}
+            >
+              <Paper
+                elevation={0}
+                sx={{
+                  mt: 4,
+                  p: 4,
+                  borderRadius: 3,
+                  backgroundColor: "background.paper",
+                  border: "1px solid #d0b3ff",
+                  boxShadow: "0 10px 30px rgba(136,71,255,0.15)",
+                }}
+              >
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  color="primary"
+                  mb={3}
+                >
+                  Worker Spcl Work
+                </Typography>
+
+                <Grid container spacing={2}>
+                  {/* Worker */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Full Name"
+                      value={selectedWorkerId}
+                      onChange={(e) =>
+                        setSelectedWorkerId(Number(e.target.value))
+                      }
+                      required
+                      InputLabelProps={{ shrink: true }}
+                      SelectProps={{ displayEmpty: true }}
+                    >
+                      <MenuItem value="" disabled>
+                        -- Select Worker --
+                      </MenuItem>
+                      {workers.map(({ workerId, fullName }) => (
+                        <MenuItem key={workerId} value={workerId}>
+                          {fullName}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  {/* Metal select */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      select
+                      label="Metal"
+                      value={spclWork.metal}
+                      onChange={(e) => {
+                        const selectedMetal = e.target.value;
+
+                        setSpclWork((prev) => ({
+                          ...prev,
+                          metal: selectedMetal,
+                          itemName: "",
+                        }));
+
+                        setSpclItemInputValue("");
+                        setSpclItemDropdownOpen(false);
+                      }}
+                      fullWidth
+                    >
+                      <MenuItem value="">Select Metal</MenuItem>
+                      <MenuItem value="24 Gold">24 Gold</MenuItem>
+                      <MenuItem value="22 Gold">22 Gold</MenuItem>
+                      <MenuItem value="999 Silver">999 Silver</MenuItem>
+                      <MenuItem value="995 Silver">995 Silver</MenuItem>
+                      <MenuItem value="Gold Plated">Gold Plated</MenuItem>
+                      <MenuItem value="Silver Plated">Silver Plated</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {/* ItemName select (depends on metal) */}
+                  {/* Worker Spcl Work ItemName Auto Complete */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Autocomplete
+                      freeSolo
+                      open={spclItemDropdownOpen && itemOptions.length > 0}
+                      onOpen={() =>
+                        itemOptions.length > 0 && setSpclItemDropdownOpen(true)
+                      }
+                      onClose={() => setSpclItemDropdownOpen(false)}
+                      options={itemOptions}
+                      inputValue={spclItemInputValue}
+                      value={spclWork.itemName || ""}
+                      disabled={!spclWork.metal}
+                      filterOptions={(options, state) =>
+                        options.filter((option) =>
+                          option
+                            .toLowerCase()
+                            .includes(state.inputValue.toLowerCase()),
+                        )
+                      }
+                      onInputChange={(_, newInputValue) => {
+                        const formatted = capitalizeWords(newInputValue);
+                        setSpclItemInputValue(formatted);
+                        setSpclWork((prev) => ({
+                          ...prev,
+                          itemName: formatted,
+                        }));
+                        setSpclItemDropdownOpen(true);
+                      }}
+                      onChange={(_, newValue) => {
+                        const selected = newValue || "";
+                        setSpclItemInputValue(selected);
+                        setSpclWork((prev) => ({
+                          ...prev,
+                          itemName: selected,
+                        }));
+                        setSpclItemDropdownOpen(false);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Item Name"
+                          placeholder="Search or add item..."
+                          fullWidth
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  {/* Metal Weight */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label="Worker Metal Weight"
+                      type="number"
+                      value={spclWork.workerMetalWeight}
+                      onChange={handleChange("workerMetalWeight")}
+                      inputProps={{
+                        step: "any",
+                        onKeyDown: (e) => {
+                          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                            e.preventDefault();
+                          }
+                        },
+                      }}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                      fullWidth
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label="Other Metal Name"
+                      value={spclWork.otherMetalName}
+                      onChange={handleChange("otherMetalName")}
+                      fullWidth
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label="Other Metal Weight"
+                      type="number"
+                      value={spclWork.otherWeight}
+                      onChange={handleChange("otherWeight")}
+                      inputProps={{
+                        step: "any",
+                        onKeyDown: (e) => {
+                          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                            e.preventDefault();
+                          }
+                        },
+                      }}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                      fullWidth
+                    />
+                  </Grid>
+
+                  {/* Wastage */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label="Wastage"
+                      type="number"
+                      value={spclWork.wastage}
+                      onChange={handleChange("wastage")}
+                      inputProps={{
+                        step: "any",
+                        onKeyDown: (e) => {
+                          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                            e.preventDefault();
+                          }
+                        },
+                      }}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                      fullWidth
+                    />
+                  </Grid>
+
+                  {/* Making Charges */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label="Amount"
+                      type="number"
+                      value={spclWork.amount}
+                      onChange={handleChange("amount")}
+                      inputProps={{
+                        step: "any",
+                        onKeyDown: (e) => {
+                          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                            e.preventDefault();
+                          }
+                        },
+                      }}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                      fullWidth
+                    />
+                  </Grid>
+
+                  {/* Other Weight */}
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label="Item Link Code"
+                      value={spclWork.itemLinkCode}
+                      onChange={handleChange("itemLinkCode")}
+                      inputProps={{
+                        step: "any",
+                        onKeyDown: (e) => {
+                          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                            e.preventDefault();
+                          }
+                        },
+                      }}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                      fullWidth
+                    />
+                  </Grid>
+                </Grid>
+
+                <Box display="flex" justifyContent="flex-end" mt={4}>
+                  <Button
+                    variant="outlined"
+                    onClick={handleWorkAdding}
+                    sx={{
+                      paddingX: 6,
+                      paddingY: 0.2,
+                      borderRadius: "12px",
+                      fontWeight: "bold",
+                      boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
+                      borderColor: "#8847FF",
+                      color: "#8847FF",
+                      transition: "all 0.3s",
+                      "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
+                    }}
+                  >
+                    Submmit
+                  </Button>
+                </Box>
+              </Paper>
+            </Box>
+          </div>
+        )}
+
         <Paper
           elevation={0}
           sx={{
@@ -2938,62 +2845,205 @@ fullWidth
           }}
         >
           <Typography variant="h6" fontWeight={600} mb={2}>
-            EPC Mapping
+            Search by Barcode for RFID Label
           </Typography>
 
-          <Box mb={2}>
-            <Typography variant="body2">
-              <strong>Selected Barcode:</strong>{" "}
-              {selectedLabelRow.barcodeValue ?? "-"}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Gross Weight:</strong>{" "}
-              {normalizeWeight(selectedLabelRow.gross_weight)}g
-            </Typography>
-          </Box>
-
-          <Box display="flex" flexWrap="wrap" gap={2} alignItems="center">
+          <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
             <TextField
-              label="EPC Number"
-              value={epcValue}
-              onChange={(e) => setEpcValue(e.target.value)}
+              label="Barcode Value"
+              value={barcodeSearch}
+              onChange={(e) => setBarcodeSearch(e.target.value)}
               size="small"
-              sx={{ minWidth: 320 }}
+              sx={{ minWidth: 260 }}
             />
 
             <Button
               variant="contained"
-              onClick={handleScanEpc}
-              disabled={scanLoading}
+              onClick={handleSearchByBarcode}
+              disabled={barcodeSearchLoading}
               sx={{
+                borderRadius: 2,
+                fontWeight: 700,
                 backgroundColor: "#8847FF",
                 "&:hover": { backgroundColor: "#6f33db" },
               }}
             >
-              {scanLoading ? "Scanning..." : "Scan EPC"}
-            </Button>
-
-            <Button
-              variant="outlined"
-              onClick={handleSaveEpc}
-              disabled={saveEpcLoading || !epcValue.trim()}
-            >
-              {saveEpcLoading ? "Saving..." : "Save"}
+              {barcodeSearchLoading ? "Searching..." : "Search"}
             </Button>
           </Box>
-
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            display="block"
-            mt={2}
-          >
-            Keep only one RFID label near the reader before clicking Scan EPC.
-          </Typography>
         </Paper>
-      )}
-     </div>
-  </div>
+        {selectedLabelRow && labelFlowSource === "search" && (
+          <Paper
+            elevation={0}
+            sx={{
+              mt: 4,
+              p: 3,
+              borderRadius: 3,
+              backgroundColor: "background.paper",
+              border: "1px solid #d0b3ff",
+              boxShadow: "0 10px 30px rgba(136,71,255,0.12)",
+            }}
+          >
+            <Typography variant="h6" fontWeight={600} mb={2}>
+              RFID Label Preview
+            </Typography>
+
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Box
+                sx={{
+                  width: "25mm",
+                  height: "26mm",
+                  border: "1px solid #ddd",
+                  background: "#fff",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  p: "1.2mm",
+                  boxSizing: "border-box",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: "12mm",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mt: "0.4mm",
+                  }}
+                >
+                  {labelImageSrc ? (
+                    <img
+                      src={labelImageSrc}
+                      alt="qr"
+                      style={{
+                        maxWidth: "12mm",
+                        maxHeight: "12mm",
+                        objectFit: "contain",
+                        display: "block",
+                      }}
+                    />
+                  ) : (
+                    <Typography sx={{ fontSize: "9px" }}>No QR</Typography>
+                  )}
+                </Box>
+
+                <Typography
+                  sx={{
+                    mt: "1.1mm",
+                    fontSize: "9px",
+                    fontWeight: 700,
+                    lineHeight: 1.05,
+                    textAlign: "center",
+                    wordBreak: "break-all",
+                    width: "100%",
+                  }}
+                >
+                  {selectedLabelRow.barcodeValue ?? "-"}
+                </Typography>
+
+                <Typography
+                  sx={{
+                    mt: "0.6mm",
+                    fontSize: "9px",
+                    lineHeight: 1.05,
+                    textAlign: "center",
+                    width: "100%",
+                  }}
+                >
+                  GW: {normalizeWeight(selectedLabelRow.gross_weight)}g
+                </Typography>
+              </Box>
+
+              <Button
+                variant="contained"
+                onClick={() => handlePrintSmallLabel(selectedLabelRow)}
+                sx={{
+                  mt: 2,
+                  backgroundColor: "#8847FF",
+                  "&:hover": { backgroundColor: "#6f33db" },
+                }}
+              >
+                Print Label
+              </Button>
+            </Box>
+          </Paper>
+        )}
+        {selectedLabelRow && labelFlowSource === "search" && (
+          <Paper
+            elevation={0}
+            sx={{
+              mt: 4,
+              p: 3,
+              borderRadius: 3,
+              backgroundColor: "background.paper",
+              border: "1px solid #d0b3ff",
+              boxShadow: "0 10px 30px rgba(136,71,255,0.12)",
+            }}
+          >
+            <Typography variant="h6" fontWeight={600} mb={2}>
+              EPC Mapping
+            </Typography>
+
+            <Box mb={2}>
+              <Typography variant="body2">
+                <strong>Selected Barcode:</strong>{" "}
+                {selectedLabelRow.barcodeValue ?? "-"}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Gross Weight:</strong>{" "}
+                {normalizeWeight(selectedLabelRow.gross_weight)}g
+              </Typography>
+            </Box>
+
+            <Box display="flex" flexWrap="wrap" gap={2} alignItems="center">
+              <TextField
+                label="EPC Number"
+                value={epcValue}
+                onChange={(e) => setEpcValue(e.target.value)}
+                size="small"
+                sx={{ minWidth: 320 }}
+              />
+
+              <Button
+                variant="contained"
+                onClick={handleScanEpc}
+                disabled={scanLoading}
+                sx={{
+                  backgroundColor: "#8847FF",
+                  "&:hover": { backgroundColor: "#6f33db" },
+                }}
+              >
+                {scanLoading ? "Scanning..." : "Scan EPC"}
+              </Button>
+
+              <Button
+                variant="outlined"
+                onClick={handleSaveEpc}
+                disabled={saveEpcLoading || !epcValue.trim()}
+              >
+                {saveEpcLoading ? "Saving..." : "Save"}
+              </Button>
+            </Box>
+
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              mt={2}
+            >
+              Keep only one RFID label near the reader before clicking Scan EPC.
+            </Typography>
+          </Paper>
+        )}
+      </div>
+    </div>
   );
 };
 
