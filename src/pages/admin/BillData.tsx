@@ -1622,7 +1622,7 @@ alert(
 
 
 
-const goldRate = Number(rates?.gold24Rate || 0);
+const goldRate = Number(rates?.gold24Rate || 0) + 700;
 const silver999Rate = Number(rates?.silver999Rate || 0);
 const silver995Rate = Number(rates?.silver995Rate || 0);
 
