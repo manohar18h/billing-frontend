@@ -34,6 +34,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import CloseIcon from "@mui/icons-material/Close";
 
 type BarcodeProduct = {
   metal: string;
@@ -188,6 +190,8 @@ const Orders: React.FC = () => {
   }>({});
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
+const [cameraError, setCameraError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const showOrdersList = location.state?.showOrdersList || false;
@@ -1484,6 +1488,133 @@ useEffect(() => {
   "gross_weight",
 ]);
 
+
+useEffect(() => {
+  if (!qrScannerOpen) return;
+
+  let stream: MediaStream | null = null;
+  let animationFrameId: number;
+  let stopped = false;
+
+  const startScanner = async () => {
+    try {
+      setCameraError("");
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError(
+          "Camera is not supported on this device/browser."
+        );
+        return;
+      }
+
+      const video = document.getElementById(
+        "order-mobile-qr-camera"
+      ) as HTMLVideoElement | null;
+
+      if (!video) return;
+
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: {
+            ideal: "environment",
+          },
+        },
+        audio: false,
+      });
+
+      video.srcObject = stream;
+
+      await video.play();
+
+      const BarcodeDetectorClass =
+        (window as any).BarcodeDetector;
+
+      if (!BarcodeDetectorClass) {
+        setCameraError(
+          "QR scanning is not supported in this browser. Please use Chrome on Android."
+        );
+        return;
+      }
+
+      const detector = new BarcodeDetectorClass({
+        formats: ["qr_code"],
+      });
+
+      const scan = async () => {
+        if (stopped) return;
+
+        try {
+          if (video.readyState >= 2) {
+            const detectedCodes =
+              await detector.detect(video);
+
+            if (detectedCodes.length > 0) {
+              const value =
+                detectedCodes[0]?.rawValue?.trim();
+
+              if (value) {
+                setSearchQuery(value);
+
+                stopped = true;
+
+                stream
+                  ?.getTracks()
+                  .forEach((track) =>
+                    track.stop()
+                  );
+
+                setQrScannerOpen(false);
+
+                return;
+              }
+            }
+          }
+        } catch (error) {
+          console.error(
+            "QR detection error:",
+            error
+          );
+        }
+
+        animationFrameId =
+          requestAnimationFrame(scan);
+      };
+
+      scan();
+
+    } catch (error) {
+      console.error(
+        "Camera error:",
+        error
+      );
+
+      setCameraError(
+        "Unable to open camera. Please allow camera permission."
+      );
+    }
+  };
+
+  startScanner();
+
+  return () => {
+    stopped = true;
+
+    if (animationFrameId) {
+      cancelAnimationFrame(
+        animationFrameId
+      );
+    }
+
+    if (stream) {
+      stream
+        .getTracks()
+        .forEach((track) =>
+          track.stop()
+        );
+    }
+  };
+}, [qrScannerOpen]);
+
   return (
     <Box>
       <Paper
@@ -1516,49 +1647,182 @@ useEffect(() => {
             </Typography>
           </Box>
           <Box
-            display="flex"
-            flexDirection={{ xs: "column", sm: "row" }}
-            gap={2}
-            maxWidth={600}
-            width="100%"
-          >
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Search Product..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" />
-                  </InputAdornment>
-                ),
-                style: {
-                  borderRadius: "25px",
-                  backgroundColor: "#fff",
-                  paddingLeft: 8,
+  sx={{
+    width: "100%",
+    maxWidth: 600,
+  }}
+>
+  {/* Top row: Search field + Camera */}
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      gap: { xs: 1, sm: 2 },
+      width: "100%",
+    }}
+  >
+    <TextField
+      fullWidth
+      variant="outlined"
+      placeholder="Search Product / Barcode..."
+      value={searchQuery}
+      onChange={(e) =>
+        setSearchQuery(e.target.value)
+      }
+      sx={{
+        flex: 1,
+        minWidth: 0,
+        backgroundColor: "#fff",
+        borderRadius: "25px",
+
+        "& .MuiOutlinedInput-root": {
+          height: {
+            xs: 46,
+            sm: 52,
+          },
+
+          borderRadius: "25px",
+        },
+
+        "& input": {
+          fontSize: {
+            xs: "14px",
+            sm: "16px",
+          },
+        },
+      }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon
+              color="action"
+              sx={{
+                fontSize: {
+                  xs: 20,
+                  sm: 24,
                 },
               }}
             />
-            <Button
-              variant="outlined"
-              onClick={handleSearch}
-              sx={{
-                paddingX: 6,
-                paddingY: 0.2,
-                borderRadius: "12px",
-                fontWeight: "bold",
-                boxShadow: "0px 4px 10px rgba(136,71,255,0.5)",
-                borderColor: "#8847FF",
-                color: "#8847FF",
-                transition: "all 0.3s",
-                "&:hover": { backgroundColor: "#8847FF", color: "#fff" },
-              }}
+          </InputAdornment>
+        ),
+
+        endAdornment: searchQuery ? (
+          <InputAdornment position="end">
+            <IconButton
+              size="small"
+              onClick={() =>
+                setSearchQuery("")
+              }
             >
-              Search
-            </Button>
-          </Box>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </InputAdornment>
+        ) : null,
+      }}
+    />
+
+    {/* Camera */}
+    <IconButton
+      onClick={() =>
+        setQrScannerOpen(true)
+      }
+      sx={{
+        width: {
+          xs: 46,
+          sm: 52,
+        },
+
+        height: {
+          xs: 46,
+          sm: 52,
+        },
+
+        flexShrink: 0,
+
+        backgroundColor: "#8847FF",
+        color: "#fff",
+
+        "&:hover": {
+          backgroundColor: "#7137dc",
+        },
+      }}
+    >
+      <CameraAltIcon
+        sx={{
+          fontSize: {
+            xs: 22,
+            sm: 26,
+          },
+        }}
+      />
+    </IconButton>
+
+    {/* Desktop Search */}
+    <Button
+      variant="outlined"
+      onClick={handleSearch}
+      sx={{
+        display: {
+          xs: "none",
+          sm: "flex",
+        },
+
+        height: 52,
+        px: 4,
+
+        borderRadius: "12px",
+        fontWeight: "bold",
+
+        boxShadow:
+          "0px 4px 10px rgba(136,71,255,0.5)",
+
+        borderColor: "#8847FF",
+        color: "#8847FF",
+
+        flexShrink: 0,
+
+        "&:hover": {
+          backgroundColor: "#8847FF",
+          color: "#fff",
+        },
+      }}
+    >
+      Search
+    </Button>
+  </Box>
+
+  {/* Mobile Search button below */}
+  <Button
+    fullWidth
+    variant="outlined"
+    onClick={handleSearch}
+    sx={{
+      display: {
+        xs: "flex",
+        sm: "none",
+      },
+
+      mt: 1.5,
+      height: 44,
+
+      borderRadius: "12px",
+      fontWeight: "bold",
+
+      borderColor: "#8847FF",
+      color: "#8847FF",
+
+      boxShadow:
+        "0px 4px 10px rgba(136,71,255,0.3)",
+
+      "&:hover": {
+        backgroundColor: "#8847FF",
+        color: "#fff",
+      },
+    }}
+  >
+    Search
+  </Button>
+</Box>
 
           <Button
             variant="outlined"
@@ -2752,6 +3016,66 @@ ord.delivery_status === "Canceled" ? (
           </Button>
         </Box>
       )}
+
+      {qrScannerOpen && (
+  <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4">
+
+    <div className="w-full max-w-[480px] rounded-2xl bg-white p-4 shadow-2xl">
+
+      <div className="mb-3 flex items-center justify-between">
+
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">
+            Scan Jewellery QR
+          </h2>
+
+          <p className="text-sm text-gray-500">
+            Point the camera at the QR code
+          </p>
+        </div>
+
+        <IconButton
+          onClick={() =>
+            setQrScannerOpen(false)
+          }
+        >
+          <CloseIcon />
+        </IconButton>
+
+      </div>
+
+      <div className="relative overflow-hidden rounded-xl bg-black">
+
+        <video
+          id="order-mobile-qr-camera"
+          playsInline
+          autoPlay
+          muted
+          className="h-[380px] w-full object-cover"
+        />
+
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+
+          <div className="h-[220px] w-[220px] rounded-2xl border-4 border-white shadow-lg" />
+
+        </div>
+
+      </div>
+
+      {cameraError && (
+        <div className="mt-3 rounded-lg bg-red-100 p-3 text-sm font-semibold text-red-700">
+          {cameraError}
+        </div>
+      )}
+
+      <p className="mt-3 text-center text-sm text-gray-500">
+        QR will be detected automatically
+      </p>
+
+    </div>
+
+  </div>
+)}
 
       <Dialog
         open={assignDialogOpen}

@@ -737,78 +737,130 @@ if (!confirmDelete) return;
         </Button>
       )}
     </Box>
-        {/* 🔍 Search Bar */}
-        <Box
-          display="flex"
-          gap={2}
-          alignItems="center"
-          mb={4}
-          maxWidth={600}
-          mx="auto"
-        >
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Enter Barcode..."
-            value={searchQuery}
-            sx={{
-  width: { xs: "100%", md: 320 },
-  backgroundColor: "white",
-  borderRadius: "10px",
-}}
-            onChange={(e) => setSearchQuery(e.target.value)}
-           InputProps={{
-  startAdornment: (
-    <InputAdornment position="start">
-      <SearchIcon color="action" />
-    </InputAdornment>
-  ),
-
-  endAdornment: searchQuery ? (
-    <InputAdornment position="end">
-      <IconButton
-        size="small"
-        onClick={() => setSearchQuery("")}
-      >
-        <CloseIcon fontSize="small" />
-      </IconButton>
-    </InputAdornment>
-  ) : null,
-
-  style: {
-    borderRadius: "25px",
-    backgroundColor: "#fff",
-    paddingLeft: 8,
-  },
-}}
-          />
-          <IconButton
-  onClick={() => setQrScannerOpen(true)}
+       {/* 🔍 Barcode Search */}
+<Box
   sx={{
-    backgroundColor: "#7c3aed",
-    color: "white",
-    width: 48,
-    height: 48,
-
-    "&:hover": {
-      backgroundColor: "#6d28d9",
-    },
+    mb: 4,
+    maxWidth: 600,
+    mx: "auto",
+    width: "100%",
   }}
 >
-  <CameraAltIcon />
-</IconButton>
+  {/* Barcode + Camera row */}
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      gap: { xs: 1, md: 2 },
+      width: "100%",
+    }}
+  >
+    <TextField
+      fullWidth
+      variant="outlined"
+      placeholder="Enter Barcode..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      sx={{
+        flex: 1,
+        minWidth: 0,
+        backgroundColor: "white",
+        borderRadius: "10px",
 
-<Button
-  variant="contained"
-  onClick={handleSearch}
-  sx={{
-    borderRadius: "12px",
-    fontWeight: "bold",
-  }}
->
-  Search
-</Button>
-        </Box>
+        "& .MuiOutlinedInput-root": {
+          height: { xs: 46, md: 56 },
+          borderRadius: "25px",
+        },
+
+        "& input": {
+          fontSize: { xs: "14px", md: "16px" },
+          py: { xs: 1, md: 1.5 },
+        },
+      }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon
+              color="action"
+              sx={{ fontSize: { xs: 20, md: 24 } }}
+            />
+          </InputAdornment>
+        ),
+
+        endAdornment: searchQuery ? (
+          <InputAdornment position="end">
+            <IconButton
+              size="small"
+              onClick={() => setSearchQuery("")}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </InputAdornment>
+        ) : null,
+      }}
+    />
+
+    {/* Camera */}
+    <IconButton
+      onClick={() => setQrScannerOpen(true)}
+      sx={{
+        backgroundColor: "#7c3aed",
+        color: "white",
+
+        width: { xs: 46, md: 52 },
+        height: { xs: 46, md: 52 },
+
+        flexShrink: 0,
+
+        "&:hover": {
+          backgroundColor: "#6d28d9",
+        },
+      }}
+    >
+      <CameraAltIcon
+        sx={{
+          fontSize: { xs: 22, md: 26 },
+        }}
+      />
+    </IconButton>
+
+    {/* Desktop Search Button */}
+    <Button
+      variant="contained"
+      onClick={handleSearch}
+      sx={{
+        display: { xs: "none", md: "inline-flex" },
+
+        height: 52,
+        px: 3,
+        borderRadius: "12px",
+        fontWeight: "bold",
+        flexShrink: 0,
+      }}
+    >
+      Search
+    </Button>
+  </Box>
+
+  {/* Mobile Search Button */}
+  <Button
+    fullWidth
+    variant="contained"
+    onClick={handleSearch}
+    sx={{
+      display: { xs: "flex", md: "none" },
+
+      mt: 1.5,
+      height: 44,
+
+      borderRadius: "12px",
+      fontWeight: "bold",
+      fontSize: "14px",
+    }}
+  >
+    Search
+  </Button>
+</Box>
 
         {/* 📋 Show Data Only After Search */}
         {order && (
