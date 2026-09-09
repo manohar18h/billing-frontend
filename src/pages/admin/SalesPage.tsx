@@ -17,6 +17,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
 
 
 type BarcodeProduct = {
@@ -99,6 +100,10 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
 const showEstimationSection = !isSales || mode === "estimation";
 const showStockBoxSection = !isSales || mode === "stockBox";
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
+const [cameraError, setCameraError] = useState("");
+
   const [order, setOrder] = useState<BarcodeProduct | null>(null);
   const [metalPrice, setMetalPrice] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
@@ -497,6 +502,110 @@ if (!confirmDelete) return;
     );
   }, [rows, search]);
 
+
+  useEffect(() => {
+  if (!qrScannerOpen) return;
+
+  let stream: MediaStream | null = null;
+  let animationFrameId: number;
+  let stopped = false;
+
+  const startScanner = async () => {
+    try {
+      setCameraError("");
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError("Camera is not supported on this device/browser.");
+        return;
+      }
+
+      const video = document.getElementById(
+        "qr-camera-video"
+      ) as HTMLVideoElement | null;
+
+      if (!video) return;
+
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: {
+            ideal: "environment",
+          },
+        },
+        audio: false,
+      });
+
+      video.srcObject = stream;
+
+      await video.play();
+
+      const BarcodeDetectorClass = (window as any).BarcodeDetector;
+
+      if (!BarcodeDetectorClass) {
+        setCameraError(
+          "QR scanning is not supported in this browser. Please use Chrome on Android."
+        );
+        return;
+      }
+
+      const detector = new BarcodeDetectorClass({
+        formats: ["qr_code"],
+      });
+
+      const scan = async () => {
+        if (stopped) return;
+
+        try {
+          if (video.readyState >= 2) {
+            const detectedCodes = await detector.detect(video);
+
+            if (detectedCodes.length > 0) {
+              const value = detectedCodes[0]?.rawValue?.trim();
+
+              if (value) {
+                setSearchQuery(value);
+
+                stopped = true;
+
+                stream?.getTracks().forEach((track) => track.stop());
+
+                setQrScannerOpen(false);
+
+                return;
+              }
+            }
+          }
+        } catch (error) {
+          console.error("QR detection error:", error);
+        }
+
+        animationFrameId = requestAnimationFrame(scan);
+      };
+
+      scan();
+    } catch (error) {
+      console.error("Camera error:", error);
+
+      setCameraError(
+        "Unable to open camera. Please allow camera permission."
+      );
+    }
+  };
+
+  startScanner();
+
+  return () => {
+    stopped = true;
+
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
+
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+  };
+}, [qrScannerOpen]);
+
   return (
    <div className="bg-white p-3 text-black md:p-6">
       
@@ -673,13 +782,32 @@ if (!confirmDelete) return;
   },
 }}
           />
-          <Button
-            variant="contained"
-            onClick={handleSearch}
-            sx={{ borderRadius: "12px", fontWeight: "bold" }}
-          >
-            Search
-          </Button>
+          <IconButton
+  onClick={() => setQrScannerOpen(true)}
+  sx={{
+    backgroundColor: "#7c3aed",
+    color: "white",
+    width: 48,
+    height: 48,
+
+    "&:hover": {
+      backgroundColor: "#6d28d9",
+    },
+  }}
+>
+  <CameraAltIcon />
+</IconButton>
+
+<Button
+  variant="contained"
+  onClick={handleSearch}
+  sx={{
+    borderRadius: "12px",
+    fontWeight: "bold",
+  }}
+>
+  Search
+</Button>
         </Box>
 
         {/* 📋 Show Data Only After Search */}
@@ -1647,6 +1775,65 @@ if (!confirmDelete) return;
         </button>
 
       </div>
+
+    </div>
+
+  </div>
+)}
+
+
+{qrScannerOpen && (
+  <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4">
+
+    <div className="w-full max-w-[480px] rounded-2xl bg-white p-4 shadow-2xl">
+
+      <div className="mb-3 flex items-center justify-between">
+
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">
+            Scan Jewellery QR
+          </h2>
+
+          <p className="text-sm text-gray-500">
+            Point the camera at the QR code
+          </p>
+        </div>
+
+        <IconButton
+          onClick={() => setQrScannerOpen(false)}
+        >
+          <CloseIcon />
+        </IconButton>
+
+      </div>
+
+      <div className="relative overflow-hidden rounded-xl bg-black">
+
+        <video
+          id="qr-camera-video"
+          playsInline
+          autoPlay
+          muted
+          className="h-[380px] w-full object-cover"
+        />
+
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+
+          <div className="h-[220px] w-[220px] rounded-2xl border-4 border-white shadow-lg" />
+
+        </div>
+
+      </div>
+
+      {cameraError && (
+        <div className="mt-3 rounded-lg bg-red-100 p-3 text-sm font-semibold text-red-700">
+          {cameraError}
+        </div>
+      )}
+
+      <p className="mt-3 text-center text-sm text-gray-500">
+        QR will be detected automatically
+      </p>
 
     </div>
 
