@@ -710,10 +710,23 @@ if (!confirmDelete) return;
         <p><b className="text-pink-300">Stone Amount:</b> <span className="text-yellow-300 font-bold">{order.stone_amount || "—"}</span></p>
        <p><b className="text-pink-300">Wax Weight:</b> <span className="text-yellow-300 font-bold">{order.wax_weight || "—"}</span></p>
         <p><b className="text-pink-300">Wax Amount:</b> <span className="text-yellow-300 font-bold">{order.wax_amount || "—"}</span></p>
-       
+   
       </div>
 
       <div className="space-y-3 border-l border-white/20 pl-8">
+           <p>
+  <b className="text-pink-300">Pearls Weight:</b>{" "}
+  <span className="text-yellow-300 font-bold">
+    {order.pearls_weight || "—"}
+  </span>
+</p>
+
+<p>
+  <b className="text-pink-300">Pearls Amount:</b>{" "}
+  <span className="text-yellow-300 font-bold">
+    {order.pearls_amount || "—"}
+  </span>
+</p>
        <p><b className="text-pink-300">Diamond Weight:</b> <span className="text-yellow-300 font-bold">{order.diamond_weight || "—"}</span></p>
         <p><b className="text-pink-300">Diamond Amount:</b> <span className="text-yellow-300 font-bold">{order.diamond_amount || "—"}</span></p>
         <p><b className="text-pink-300">Bits Weight:</b> <span className="text-yellow-300 font-bold">{order.bits_weight || "—"}</span></p>
@@ -961,7 +974,7 @@ if (!confirmDelete) return;
               <>
                 <div className="line"></div>
                 <div className="row">
-                  <span>Stone</span>
+                  <span>Pearls</span>
                   <span>{(order.pearls_weight * 10) / 2} cts</span>
                   <span>{order.pearls_rate}</span>
                   <span>{order.pearls_amount}</span>
