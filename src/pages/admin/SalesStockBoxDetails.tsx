@@ -13,6 +13,9 @@ type StockBoxDataEntry = {
   sellingDate?: string;
   barcodeValue?: string;
   epcNumber?: string;
+
+  checked?: boolean;
+  description?: string;
 };
 
 type StockDataBox = {
@@ -31,6 +34,8 @@ const role = localStorage.getItem("role");
 
 const isAdmin = role === "ADMIN";
 
+const canEditCheck = role === "ADMIN" || role === "SALES";
+
 const basePath = role === "ADMIN" ? "/admin" : "/sales";
 
   const stored = localStorage.getItem("selectedStockBox");
@@ -42,6 +47,12 @@ const secreat_code = "HambireJ@1977";
 const [passwordDialog, setPasswordDialog] = useState(false);
 const [passwordInput, setPasswordInput] = useState("");
 const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+const [checkValues, setCheckValues] = useState<
+  Record<number, { checked: boolean; description: string }>
+>({});
+
+const [savingId, setSavingId] = useState<number | null>(null);
 
 
 
@@ -145,9 +156,97 @@ const handleBulkDelete = async () => {
   }
 };
 
+const getRowValues = (entry: StockBoxDataEntry) => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
-      <div className="w-full max-w-5xl bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-8 relative">
+    checkValues[entry.stockBoxDataId] ?? {
+      checked: entry.checked ?? false,
+      description: entry.description ?? "",
+    }
+  );
+};
+
+const handleVerifiedChange = (
+  entry: StockBoxDataEntry,
+  checked: boolean
+) => {
+  const current = getRowValues(entry);
+
+  setCheckValues((prev) => ({
+    ...prev,
+    [entry.stockBoxDataId]: {
+      ...current,
+      checked,
+    },
+  }));
+};
+
+const handleDescriptionChange = (
+  entry: StockBoxDataEntry,
+  description: string
+) => {
+  const current = getRowValues(entry);
+
+  setCheckValues((prev) => ({
+    ...prev,
+    [entry.stockBoxDataId]: {
+      ...current,
+      description,
+    },
+  }));
+};
+
+const handleSaveCheck = async (entry: StockBoxDataEntry) => {
+  const values = getRowValues(entry);
+
+  try {
+    setSavingId(entry.stockBoxDataId);
+
+    await api.patch(
+  `${basePath}/stock-box-data/${entry.stockBoxDataId}/check`,
+      {
+        checked: values.checked,
+        description: values.description,
+      },
+      {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined,
+      }
+    );
+
+    // Update local object with saved values
+   const updatedResponse = await api.get(
+  `${basePath}/stock-box/${stockBox.stockBoxId}`,
+  {
+    headers: token
+      ? { Authorization: `Bearer ${token}` }
+      : undefined,
+  }
+);
+
+localStorage.setItem(
+  "selectedStockBox",
+  JSON.stringify(updatedResponse.data)
+);
+
+setCheckValues((prev) => {
+  const updated = { ...prev };
+  delete updated[entry.stockBoxDataId];
+  return updated;
+});
+ alert("Saved Successfully");
+window.location.reload();
+  } catch (error) {
+    console.error(error);
+    alert("Failed to save");
+  } finally {
+    setSavingId(null);
+  }
+};
+
+  return (
+<div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
+  <div className="w-full max-w-[96vw] bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-6 relative">
         <button
           onClick={() => navigate(-1)}
           className="absolute top-4 right-4 bg-purple-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-purple-700"
@@ -290,133 +389,281 @@ const handleBulkDelete = async () => {
               {entry.epcNumber || "-"}
             </div>
           </div>
-        </div>
-      ))}
+          {canEditCheck && (
+  <div className="mt-4 border-t border-gray-200 pt-4">
+    <div className="flex items-center gap-3">
+      <input
+        type="checkbox"
+        checked={getRowValues(entry).checked}
+        onChange={(e) =>
+          handleVerifiedChange(entry, e.target.checked)
+        }
+        className="w-5 h-5 cursor-pointer accent-green-600"
+      />
+
+      <span className="font-semibold text-gray-700">
+        Checked
+      </span>
     </div>
 
-    {/* Desktop table view */}
-    <div className="hidden overflow-x-auto md:block">
-      <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">   <thead className="bg-gray-200">
-              <tr>
-                 <th className="border px-3 py-2 text-center">
-    S.No
-  </th>
-  {isAdmin && (
-  <th className="border px-3 py-2 text-center">Select</th>
+    <div className="mt-3">
+      <label className="text-xs font-semibold text-gray-500">
+        Description
+      </label>
+
+      <textarea
+        value={getRowValues(entry).description}
+        onChange={(e) =>
+          handleDescriptionChange(entry, e.target.value)
+        }
+        placeholder="Enter description"
+        rows={2}
+        className="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+      />
+    </div>
+
+    <button
+      type="button"
+      onClick={() => handleSaveCheck(entry)}
+      disabled={savingId === entry.stockBoxDataId}
+      className="mt-3 w-full bg-green-600 text-white rounded-xl py-2 font-semibold hover:bg-green-700 disabled:opacity-50"
+    >
+      {savingId === entry.stockBoxDataId
+        ? "Saving..."
+        : "Save"}
+    </button>
+  </div>
 )}
-                <th className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center">ID</div>
-                </th>
-                <th className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center">Pieces</div>
-                </th>
-                <th className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center">Method</div>
-                </th>
-                <th className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center">
-                    Metal Weight
-                  </div>
-                </th>
-                <th className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center">Date</div>
-                </th>
-                <th className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center">
-                    Barcode
-                  </div>
-                </th>
-                <th className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center">
-                    Method2
-                  </div>
-                </th>
-                <th className="border px-3 py-2 text-center">
-                  <div className="flex justify-center items-center">
-                    Selling Date
-                  </div>
-                </th>
-               <th className="border px-3 py-2 text-center">
-      <div className="flex justify-center items-center">
-        EPC
-      </div>
+        </div>
+
+        
+      ))}
+
+      
+    </div>
+    
+
+    {/* Desktop table view */}
+    {/* Desktop table view */}
+<div className="hidden w-full overflow-x-auto md:block">
+  <table className="w-full table-auto border-collapse border border-gray-300 rounded-xl overflow-hidden text-sm">
+
+    <thead className="bg-gray-200">
+      <tr>
+
+        <th className="border px-3 py-2 text-center">
+          S.No
+        </th>
+
+        {canEditCheck && (
+  <th className="border px-3 py-2 text-center">
+    Checked
+  </th>
+)}
+
+        <th className="border px-3 py-2 text-center">
+          ID
+        </th>
+
+        <th className="border px-3 py-2 text-center">
+          Pieces
+        </th>
+
+        <th className="border px-3 py-2 text-center">
+          Method
+        </th>
+
+        <th className="border px-3 py-2 text-center">
+          Metal Weight
+        </th>
+
+        <th className="border px-3 py-2 text-center">
+          Date
+        </th>
+
+        <th className="border px-3 py-2 text-center">
+          Barcode
+        </th>
+
+        <th className="border px-3 py-2 text-center">
+          Method2
+        </th>
+
+        <th className="border px-3 py-2 text-center">
+          Selling Date
+        </th>
+
+        <th className="border px-3 py-2 text-center">
+          EPC
+        </th>
+
+        {canEditCheck && (
+  <>
+    <th className="border px-3 py-2 text-center min-w-[170px]">
+      Description
     </th>
-  </tr>
-</thead>
-            <tbody>
-              {stockBox.stockBoxData.map((entry, index) => (
-  <tr key={entry.stockBoxDataId} className="bg-white/90">
 
-    <td className="border px-3 py-2 text-center font-semibold">
-      {index + 1}
+    <th className="border px-3 py-2 text-center">
+      Action
+    </th>
+  </>
+)}
+
+{isAdmin && (
+  <th className="border px-3 py-2 text-center">
+    Select
+  </th>
+)}
+
+      </tr>
+    </thead>
+
+    <tbody>
+      {stockBox.stockBoxData.map((entry, index) => (
+        <tr
+          key={entry.stockBoxDataId}
+          className="bg-white/90"
+        >
+
+          {/* S.No */}
+          <td className="border px-3 py-2 text-center font-semibold">
+            {index + 1}
+          </td>
+
+          {/* Checked */}
+          {canEditCheck && (
+            <td className="border px-3 py-2 text-center">
+              <input
+                type="checkbox"
+                checked={getRowValues(entry).checked}
+                onChange={(e) =>
+                  handleVerifiedChange(
+                    entry,
+                    e.target.checked
+                  )
+                }
+                className="w-5 h-5 cursor-pointer accent-green-600"
+              />
+            </td>
+          )}
+
+          {/* ID */}
+          <td className="border px-3 py-2 text-center">
+            {entry.stockBoxDataId}
+          </td>
+
+          {/* Pieces */}
+          <td className="border px-3 py-2 text-center">
+            {entry.pieces}
+          </td>
+
+          {/* Method */}
+          <td
+            className={`border px-3 py-2 font-semibold text-center ${
+              entry.methodType === "ADDED"
+                ? "text-green-600"
+                : entry.methodType === "SELL"
+                  ? "text-red-600"
+                  : "text-gray-800"
+            }`}
+          >
+            {entry.methodType}
+          </td>
+
+          {/* Metal Weight */}
+          <td className="border px-3 py-2 text-center">
+            {Number(entry.metalWeight || 0).toFixed(3)}
+          </td>
+
+          {/* Date */}
+          <td className="border px-3 py-2 text-center">
+            {formatDMY(entry.date)}
+          </td>
+
+          {/* Barcode */}
+          <td className="border px-3 py-2">
+            {entry.barcodeValue}
+          </td>
+
+          {/* Method2 */}
+          <td
+            className={`border px-3 py-2 font-semibold text-center ${
+              entry.methodType2 === "SELL"
+                ? "text-red-600"
+                : "text-gray-800"
+            }`}
+          >
+            {entry.methodType2}
+          </td>
+
+          {/* Selling Date */}
+          <td className="border px-3 py-2 text-center">
+            {formatDMY(entry.sellingDate)}
+          </td>
+
+          {/* EPC */}
+          <td className="border px-3 py-2">
+            {entry.epcNumber}
+          </td>
+
+         {canEditCheck && (
+  <>
+    {/* Description */}
+    <td className="border px-3 py-2">
+      <input
+        type="text"
+        value={getRowValues(entry).description}
+        onChange={(e) =>
+          handleDescriptionChange(
+            entry,
+            e.target.value
+          )
+        }
+        placeholder="Enter description"
+        className="w-full min-w-[160px] border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+      />
     </td>
 
-    {isAdmin && (
-      <td className="border px-3 py-2 text-center">
-        <input
-          type="checkbox"
-          checked={selectedIds.includes(entry.stockBoxDataId)}
-          onChange={() => handleCheckOne(entry.stockBoxDataId)}
-          className="w-4 h-4"
-        />
-      </td>
-    )}
-
+    {/* Action */}
     <td className="border px-3 py-2 text-center">
-      {entry.stockBoxDataId}
+      <button
+        type="button"
+        onClick={() => handleSaveCheck(entry)}
+        disabled={
+          savingId === entry.stockBoxDataId
+        }
+        className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+      >
+        {savingId === entry.stockBoxDataId
+          ? "Saving..."
+          : "Save"}
+      </button>
     </td>
-                 {isAdmin && (
+  </>
+)}
+
+{/* ADMIN ONLY - Select for Delete */}
+{isAdmin && (
   <td className="border px-3 py-2 text-center">
     <input
       type="checkbox"
-      checked={selectedIds.includes(entry.stockBoxDataId)}
-      onChange={() => handleCheckOne(entry.stockBoxDataId)}
-      className="w-4 h-4"
+      checked={selectedIds.includes(
+        entry.stockBoxDataId
+      )}
+      onChange={() =>
+        handleCheckOne(entry.stockBoxDataId)
+      }
+      className="w-4 h-4 cursor-pointer"
     />
   </td>
 )}
 
-                  <td className="border px-3 py-2 text-center">
-                    {entry.stockBoxDataId}
-                  </td>
-                  <td className="border px-3 py-2 text-center">
-                    {entry.pieces}
-                  </td>
-                  <td
-                    className={`border px-3 py-2 font-semibold ${
-                      entry.methodType === "ADDED"
-                        ? "text-green-600"
-                        : entry.methodType === "SELL"
-                          ? "text-red-600"
-                          : "text-gray-800"
-                    }`}
-                  >
-                    {entry.methodType}
-                  </td>
-                  <td className="border px-3 py-2 text-center align-middle">
-                   {Number(entry.metalWeight || 0).toFixed(3)}
-                  </td>
-                  <td className="border px-3 py-2">{formatDMY(entry.date)}</td>
-                  <td className="border px-3 py-2">{entry.barcodeValue}</td>
-                  <td
-                    className={`border px-3 py-2 font-semibold text-center align-middle ${
-                      entry.methodType2 === "SELL"
-                        ? "text-red-600"
-                        : "text-gray-800"
-                    }`}
-                  >
-                    {entry.methodType2}
-                  </td>
-                  <td className="border px-3 py-2">
-                    {formatDMY(entry.sellingDate)}
-                  </td>
-                  <td className="border px-3 py-2">{entry.epcNumber}</td>
-            
-                </tr>
-              ))}
-            </tbody>
-               </table>
-    </div>
+        </tr>
+      ))}
+    </tbody>
+
+  </table>
+</div>
   </>
         ) : (
           <p>No stock box data available</p>
