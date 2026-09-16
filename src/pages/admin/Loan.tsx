@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   TextField,
   Box,
@@ -356,34 +356,107 @@ const Loan: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const pageSize = 50;
 
+  const [filtersApplied, setFiltersApplied] = useState(false);
+
+const [appliedFromDate, setAppliedFromDate] = useState("");
+const [appliedToDate, setAppliedToDate] = useState("");
+
+const [appliedStatusFilter, setAppliedStatusFilter] = useState<
+  "all" | "delivered" | "pending"
+>("all");
+
+const [appliedVillageSearch, setAppliedVillageSearch] =
+  useState("");
+
   useEffect(() => {
-    loadAllLoanCustomers(page);
-  }, [page]);
+  loadAllLoanCustomers(page);
+}, [
+  page,
+  filtersApplied,
+  appliedFromDate,
+  appliedToDate,
+  appliedStatusFilter,
+  appliedVillageSearch,
+]);
 
-  const loadAllLoanCustomers = async (pageNumber: number = 0) => {
-    setLoading(true);
-    setErr(null);
+const loadAllLoanCustomers = async (
+  pageNumber: number = 0,
+) => {
+  setLoading(true);
+  setErr(null);
 
-    try {
-      const token = localStorage.getItem("token") ?? "";
+  try {
+    const params = new URLSearchParams();
 
-      const { data } = await api.get<PageResponse<LoanCustomer>>(
-        `/admin/getALlLoanBills?page=${pageNumber}&size=${pageSize}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        },
+    params.set("page", pageNumber.toString());
+    params.set("size", pageSize.toString());
+
+    let endpoint = "/admin/getALlLoanBills";
+
+    // Only use filtered endpoint AFTER Apply Filters
+    if (filtersApplied) {
+      endpoint = "/admin/getFilteredLoanBills";
+
+      if (appliedFromDate) {
+        params.set(
+          "fromDate",
+          appliedFromDate,
+        );
+      }
+
+      if (appliedToDate) {
+        params.set(
+          "toDate",
+          appliedToDate,
+        );
+      }
+
+      params.set(
+        "deliveryStatus",
+        appliedStatusFilter,
       );
 
-      setRows(data.content || []);
-      setTotalPages(data.totalPages || 0);
-      setPage(data.number || 0);
-    } catch (e) {
-      console.error("Failed to fetch loan bills:", e);
-      setErr("Failed to load loan billing orders.");
-    } finally {
-      setLoading(false);
+      if (appliedVillageSearch.trim()) {
+        params.set(
+          "village",
+          appliedVillageSearch.trim(),
+        );
+      }
     }
-  };
+
+    const { data } =
+      await api.get<PageResponse<LoanCustomer>>(
+        `${endpoint}?${params.toString()}`,
+      );
+
+    setRows(data.content || []);
+    setTotalPages(data.totalPages || 0);
+
+  } catch (e) {
+    console.error(
+      "Failed to fetch loan bills:",
+      e,
+    );
+
+    setErr(
+      "Failed to load loan billing orders.",
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+const applyFilters = () => {
+  setPage(0);
+
+  setAppliedFromDate(fromDate);
+  setAppliedToDate(toDate);
+  setAppliedStatusFilter(statusFilter);
+  setAppliedVillageSearch(villageSearch);
+
+  setFiltersApplied(true);
+};
+ 
 
   const handleCheckboxChange = async (loanBillId: number, checked: boolean) => {
     // optimistic update
@@ -405,7 +478,7 @@ const Loan: React.FC = () => {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         },
       );
-      loadAllLoanCustomers();
+      loadAllLoanCustomers(page);
     } catch (err) {
       console.error("Checkbox update failed", err);
 
@@ -420,34 +493,25 @@ const Loan: React.FC = () => {
     }
   };
 
-  const filteredRows = useMemo(() => {
-    const f = fromDate.trim();
-    const t = toDate.trim();
-    const v = villageSearch.trim().toLowerCase();
+ 
 
-    return rows.filter((bill) => {
-      const norm = normalizeStatus(bill.deliveryStatus);
-      if (statusFilter !== "all" && norm !== statusFilter) return false;
+ const clearFilters = () => {
+  // Visible filter controls
+  setFromDate("");
+  setToDate("");
+  setStatusFilter("all");
+  setVillageSearch("");
 
-      if (v && !bill.village?.toLowerCase().includes(v)) return false;
+  // Actually applied filters
+  setAppliedFromDate("");
+  setAppliedToDate("");
+  setAppliedStatusFilter("all");
+  setAppliedVillageSearch("");
 
-      if (!f && !t) return true;
-      const billDay = toDateOnlyYYYYMMDD(bill.loanBillingDate);
-      if (!billDay) return false;
-
-      if (f && t) return billDay >= f && billDay <= t;
-      if (f && !t) return billDay === f;
-      if (!f && t) return billDay === t;
-      return true;
-    });
-  }, [rows, fromDate, toDate, statusFilter, villageSearch]);
-
-  const clearFilters = () => {
-    setFromDate("");
-    setToDate("");
-    setStatusFilter("all"); // 👈 also reset status to ALL
-    setVillageSearch("");
-  };
+  // Return to normal pagination
+  setFiltersApplied(false);
+  setPage(0);
+};
 
   const renderStatusChip = (raw: string) => {
     const n = normalizeStatus(raw);
@@ -734,7 +798,7 @@ const Loan: React.FC = () => {
   gridTemplateColumns: {
     xs: "1fr",
     sm: "1fr 1fr",
-    md: "180px 180px 170px 200px auto",
+    md: "180px 180px 170px 200px 150px 100px",
   },
   gap: 2,
   mt: 2,
@@ -828,17 +892,29 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
               )}
             />
 
-            {/* 👇 moved to the end and clears all filters */}
+
             <Button
-              variant="outlined"
-              size="small"
-              onClick={clearFilters}
-sx={{
-  width: { xs: "100%", md: "auto" },
-  whiteSpace: "nowrap",
-}}            >
-              Clear
-            </Button>
+  variant="contained"
+  onClick={applyFilters}
+  sx={{
+    height: 45,
+    whiteSpace: "nowrap",
+  }}
+>
+  APPLY FILTERS
+</Button>
+
+            {/* 👇 moved to the end and clears all filters */}
+           <Button
+  variant="outlined"
+  onClick={clearFilters}
+  sx={{
+    height: 45,
+    whiteSpace: "nowrap",
+  }}
+>
+  CLEAR
+</Button>
           </Box>
 
 
@@ -882,14 +958,14 @@ sx={{
             </div>
           ) : err ? (
             <p className="text-red-600 py-4">{err}</p>
-          ) : filteredRows.length === 0 ? (
+          ) : rows.length === 0 ? (
             <p className="py-4">No billing orders found.</p>
           ) : (
             <div className="mt-4">
 
               {/* Mobile card view */}
 <div className="space-y-3 md:hidden">
-  {filteredRows.map((bill, index) => {
+  {rows.map((bill, index) => {
     const isDelivered =
       normalizeStatus(bill.deliveryStatus) === "delivered";
 
@@ -1062,7 +1138,7 @@ sx={{
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredRows.map((bill, index) => {
+                    {rows.map((bill, index) => {
                       const isDelivered =
                         normalizeStatus(bill.deliveryStatus) === "delivered";
                       return (

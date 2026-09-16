@@ -1,5 +1,5 @@
 // src/pages/admin/AllBillingOrders.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Paper,
@@ -97,43 +97,80 @@ const AllBillingOrders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "delivered" | "pending"
   >("all");
+  const [filtersApplied, setFiltersApplied] = useState(false);
+
   const [workFilter, setWorkFilter] = useState<"all" | "done" | "pending">(
     "all",
   );
+  // Filters actually sent to backend
+const [appliedFromDate, setAppliedFromDate] = useState("");
+const [appliedToDate, setAppliedToDate] = useState("");
+const [appliedWorkFilter, setAppliedWorkFilter] = useState<
+  "all" | "done" | "pending"
+>("all");
+
+const [appliedStatusFilter, setAppliedStatusFilter] = useState<
+  "all" | "delivered" | "pending"
+>("all");
   const navigate = useNavigate();
 
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  const fetchBillingRows = async () => {
-    localStorage.removeItem("CheckBack");
-    setLoading(true);
-    setErr(null);
+const fetchBillingRows = async () => {
+  localStorage.removeItem("CheckBack");
+  setLoading(true);
+  setErr(null);
 
-    try {
-      const token = localStorage.getItem("token") ?? "";
-      const { data } = await api.get<PageResponse<Billing>>(
-        `/admin/getALlBills?page=${page}&size=50`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        },
-      );
+  try {
+    const params = new URLSearchParams();
 
-      setRows(data.content);
-      setTotalPages(data.totalPages);
-    } catch (e) {
-      console.error("Failed to fetch Todays bills:", e);
-      setErr("Failed to load billing orders.");
-    } finally {
-      setLoading(false); // ✅ IMPORTANT
+    params.set("page", page.toString());
+    params.set("size", "50");
+
+    let endpoint = "/admin/getALlBills";
+
+    if (filtersApplied) {
+      endpoint = "/admin/getFilteredBills";
+
+      if (appliedFromDate) {
+        params.set("fromDate", appliedFromDate);
+      }
+
+      if (appliedToDate) {
+        params.set("toDate", appliedToDate);
+      }
+
+      params.set("workStatus", appliedWorkFilter);
+      params.set("deliveryStatus", appliedStatusFilter);
     }
-  };
 
+    const { data } = await api.get<PageResponse<Billing>>(
+      `${endpoint}?${params.toString()}`,
+    );
+
+    setRows(data.content);
+    setTotalPages(data.totalPages);
+
+  } catch (e) {
+    console.error("Failed to fetch billing orders:", e);
+    setErr("Failed to load billing orders.");
+  } finally {
+    setLoading(false);
+  }
+};
   const pageSize = 50;
 
-  useEffect(() => {
-    fetchBillingRows();
-  }, [page]);
+useEffect(() => {
+  fetchBillingRows();
+}, [
+  page,
+  filtersApplied,
+  appliedFromDate,
+  appliedToDate,
+  appliedWorkFilter,
+  appliedStatusFilter,
+]);
 
   const handleCheckboxChange = async (billId: number, checked: boolean) => {
     // optimistic update
@@ -168,33 +205,35 @@ const AllBillingOrders: React.FC = () => {
     }
   };
 
-  const filteredRows = useMemo(() => {
-    const f = fromDate.trim();
-    const t = toDate.trim();
-    return rows.filter((bill) => {
-      const norm = normalizeStatus(bill.deliveryStatus);
-      if (statusFilter !== "all" && norm !== statusFilter) return false;
+ const applyFilters = () => {
 
-      const workNorm = normalizeWorkStatus(bill.workStatus);
-      if (workFilter !== "all" && workNorm !== workFilter) return false;
+  setPage(0);
 
-      if (!f && !t) return true;
-      const billDay = toDateOnlyYYYYMMDD(bill.billingDate);
-      if (!billDay) return false;
+  setAppliedFromDate(fromDate);
+  setAppliedToDate(toDate);
+  setAppliedWorkFilter(workFilter);
+  setAppliedStatusFilter(statusFilter);
 
-      if (f && t) return billDay >= f && billDay <= t;
-      if (f && !t) return billDay === f;
-      if (!f && t) return billDay === t;
-      return true;
-    });
-  }, [rows, fromDate, toDate, statusFilter, workFilter]);
+  setFiltersApplied(true);
+};
 
-  const clearFilters = () => {
-    setFromDate("");
-    setToDate("");
-    setStatusFilter("all");
-    setWorkFilter("all");
-  };
+const clearFilters = () => {
+
+  setFromDate("");
+  setToDate("");
+  setStatusFilter("all");
+  setWorkFilter("all");
+
+  setAppliedFromDate("");
+  setAppliedToDate("");
+  setAppliedStatusFilter("all");
+  setAppliedWorkFilter("all");
+
+  setFiltersApplied(false);
+  setPage(0);
+};
+
+
 
   const renderStatusChip = (raw: string) => {
     const n = normalizeStatus(raw);
@@ -285,7 +324,7 @@ const AllBillingOrders: React.FC = () => {
   gridTemplateColumns: {
     xs: "1fr",
     sm: "1fr 1fr",
-    md: "180px 180px 170px 170px auto",
+    md: "180px 180px 170px 170px 130px 100px",
   },
   gap: 2,
   mt: 2,
@@ -297,7 +336,7 @@ const AllBillingOrders: React.FC = () => {
             type="date"
             size="small"
             value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
+        onChange={(e) => setFromDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
 sx={{
   width: "100%",
@@ -320,7 +359,9 @@ sx={{
             label="Work Status"
             size="small"
             value={workFilter}
-            onChange={(e) => setWorkFilter(e.target.value as any)}
+            onChange={(e) =>
+  setWorkFilter(e.target.value as "all" | "done" | "pending")
+}
 sx={{
   width: "100%",
   "& .MuiOutlinedInput-input": { py: 0.75 },
@@ -336,7 +377,11 @@ sx={{
             label="Delivery Status"
             size="small"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) =>
+  setStatusFilter(
+    e.target.value as "all" | "delivered" | "pending",
+  )
+}
 sx={{
   width: "100%",
   "& .MuiOutlinedInput-input": { py: 0.75 },
@@ -347,17 +392,32 @@ sx={{
             <MenuItem value="pending">Pending</MenuItem>
           </TextField>
 
-          {/* 👇 moved to the end and clears all filters */}
+
           <Button
-            variant="outlined"
-            size="small"
-            onClick={clearFilters}
-sx={{
-  width: { xs: "100%", md: "auto" },
-  whiteSpace: "nowrap",
-}}          >
-            Clear
-          </Button>
+  variant="contained"
+  size="small"
+  onClick={applyFilters}
+  sx={{
+    width: "100%",
+    whiteSpace: "nowrap",
+    height: "40px",
+  }}
+>
+  Apply Filters
+</Button>
+
+        <Button
+  variant="outlined"
+  size="small"
+  onClick={clearFilters}
+  sx={{
+    width: "100%",
+    whiteSpace: "nowrap",
+    height: "40px",
+  }}
+>
+  Clear
+</Button>
         </Box>
 
         <Box
@@ -402,7 +462,7 @@ sx={{
           </div>
         ) : err ? (
           <p className="text-red-600 py-4">{err}</p>
-        ) : filteredRows.length === 0 ? (
+        ) : rows.length === 0 ? (
           <p className="py-4">No billing orders found.</p>
         ) : (
           <div className="mt-4">
@@ -483,7 +543,7 @@ sx={{
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRows.map((bill, index) => {
+                  {rows.map((bill, index) => {
                     const rawStatus = (bill.deliveryStatus ?? "")
                       .toLowerCase()
                       .trim();
