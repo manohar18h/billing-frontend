@@ -96,6 +96,29 @@ function normalizeStatus(
   return "other";
 }
 
+type LoanBillingFilterState = {
+  fromDate: string;
+  toDate: string;
+  statusFilter: "all" | "delivered" | "pending";
+  villageSearch: string;
+  filtersApplied: boolean;
+  page: number;
+};
+
+const getSavedLoanFilterState = (): LoanBillingFilterState | null => {
+  try {
+    const saved = sessionStorage.getItem("loanBillingFilterState");
+
+    if (!saved) {
+      return null;
+    }
+
+    return JSON.parse(saved) as LoanBillingFilterState;
+  } catch {
+    return null;
+  }
+};
+
 const Loan: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("");
@@ -105,8 +128,9 @@ const Loan: React.FC = () => {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const [villageSearch, setVillageSearch] = useState("");
   const [deleteMessage, setDeleteMessage] = useState("");
+
+
 
   localStorage.removeItem("editBillFromBillDetails");
 
@@ -344,29 +368,71 @@ const Loan: React.FC = () => {
     }
   }, [location.state]);
 
-  const [rows, setRows] = useState<LoanCustomer[]>([]);
-  const [err, setErr] = useState<string | null>(null);
-  const [fromDate, setFromDate] = useState<string>("");
-  const [toDate, setToDate] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "delivered" | "pending"
-  >("all");
+ const savedLoanFilterState = (() => {
+  try {
+    const saved = sessionStorage.getItem("loanBillingFilterState");
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+})();
 
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 50;
 
-  const [filtersApplied, setFiltersApplied] = useState(false);
 
-const [appliedFromDate, setAppliedFromDate] = useState("");
-const [appliedToDate, setAppliedToDate] = useState("");
+const [rows, setRows] = useState<LoanCustomer[]>([]);
+const [err, setErr] = useState<string | null>(null);
+
+// Visible filter values
+const [fromDate, setFromDate] = useState<string>(
+  savedLoanFilterState?.fromDate ?? "",
+);
+
+const [toDate, setToDate] = useState<string>(
+  savedLoanFilterState?.toDate ?? "",
+);
+
+const [statusFilter, setStatusFilter] = useState<
+  "all" | "delivered" | "pending"
+>(
+  savedLoanFilterState?.statusFilter ?? "all",
+);
+
+const [villageSearch, setVillageSearch] = useState(
+  savedLoanFilterState?.villageSearch ?? "",
+);
+
+// Pagination
+const [page, setPage] = useState(
+  savedLoanFilterState?.page ?? 0,
+);
+
+const [totalPages, setTotalPages] = useState(0);
+
+const pageSize = 50;
+
+// Is filter currently applied?
+const [filtersApplied, setFiltersApplied] = useState(
+  savedLoanFilterState?.filtersApplied ?? false,
+);
+
+// Applied filter values
+const [appliedFromDate, setAppliedFromDate] = useState(
+  savedLoanFilterState?.fromDate ?? "",
+);
+
+const [appliedToDate, setAppliedToDate] = useState(
+  savedLoanFilterState?.toDate ?? "",
+);
 
 const [appliedStatusFilter, setAppliedStatusFilter] = useState<
   "all" | "delivered" | "pending"
->("all");
+>(
+  savedLoanFilterState?.statusFilter ?? "all",
+);
 
-const [appliedVillageSearch, setAppliedVillageSearch] =
-  useState("");
+const [appliedVillageSearch, setAppliedVillageSearch] = useState(
+  savedLoanFilterState?.villageSearch ?? "",
+);
 
   useEffect(() => {
   loadAllLoanCustomers(page);
@@ -446,7 +512,47 @@ const loadAllLoanCustomers = async (
   }
 };
 
+useEffect(() => {
+  const shouldReturnToBilling =
+    sessionStorage.getItem("returnToLoanBilling");
+
+  if (shouldReturnToBilling !== "true") {
+    return;
+  }
+
+  // Wait until loan billing data has finished loading
+  if (loading) {
+    return;
+  }
+
+  const timer = setTimeout(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    sessionStorage.removeItem("returnToLoanBilling");
+  }, 200);
+
+  return () => clearTimeout(timer);
+}, [loading]);
+
 const applyFilters = () => {
+  const filterState = {
+    fromDate,
+    toDate,
+    statusFilter,
+    villageSearch,
+    filtersApplied: true,
+    page: 0,
+  };
+
+  // Save filter state
+  sessionStorage.setItem(
+    "loanBillingFilterState",
+    JSON.stringify(filterState),
+  );
+
   setPage(0);
 
   setAppliedFromDate(fromDate);
@@ -496,6 +602,9 @@ const applyFilters = () => {
  
 
  const clearFilters = () => {
+
+    sessionStorage.removeItem("loanBillingFilterState");
+
   // Visible filter controls
   setFromDate("");
   setToDate("");
@@ -539,6 +648,25 @@ const applyFilters = () => {
       />
     );
   };
+
+const changePage = (newPage: number) => {
+  setPage(newPage);
+
+  const filterState = {
+    fromDate: appliedFromDate,
+    toDate: appliedToDate,
+    statusFilter: appliedStatusFilter,
+    villageSearch: appliedVillageSearch,
+    filtersApplied,
+    page: newPage,
+  };
+
+  sessionStorage.setItem(
+    "loanBillingFilterState",
+    JSON.stringify(filterState),
+  );
+};
+
 
   return (
     <div>
@@ -767,7 +895,6 @@ const applyFilters = () => {
       <div
         className="mt-10 p-3 flex flex-col items-center justify-center"
         style={{ paddingBottom: "300px" }}
-        ref={bottomRef}
       >
         <Paper
           elevation={0}
@@ -783,13 +910,15 @@ const applyFilters = () => {
           }}
         >
           <Typography
-            variant="h4"
-            fontWeight="bold"
-            color="primary"
-            gutterBottom
-          >
-            All Loan Billing Orders
-          </Typography>
+  ref={bottomRef}
+  variant="h4"
+  fontWeight="bold"
+  color="primary"
+  gutterBottom
+  sx={{ scrollMarginTop: "30px" }}
+>
+  All Loan Billing Orders
+</Typography>
 
           {/* Filters row */}
           <Box
@@ -932,7 +1061,7 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
               size="small"
               variant="outlined"
               disabled={page === 0}
-              onClick={() => setPage((prev) => prev - 1)}
+              onClick={() => changePage(page - 1)}
             >
               ◀ Prev
             </Button>
@@ -945,7 +1074,7 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
               size="small"
               variant="outlined"
               disabled={page + 1 >= totalPages}
-              onClick={() => setPage((prev) => prev + 1)}
+              onClick={() => changePage(page + 1)}
             >
               Next ▶
             </Button>
@@ -1040,13 +1169,40 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
         <div className="mt-3 flex justify-end">
           <button
             onClick={() => {
-              localStorage.removeItem("billLoanNumber");
-              localStorage.removeItem("checkBackFrom");
+  const filterState = {
+    fromDate: appliedFromDate,
+    toDate: appliedToDate,
+    statusFilter: appliedStatusFilter,
+    villageSearch: appliedVillageSearch,
+    filtersApplied,
+    page,
+  };
 
-              localStorage.setItem("billLoanNumber", bill.loanBillNumber);
-              localStorage.setItem("checkBackFrom", "Loan");
-              navigate("/admin/bill-loan-details");
-            }}
+  sessionStorage.setItem(
+    "loanBillingFilterState",
+    JSON.stringify(filterState),
+  );
+
+  sessionStorage.setItem(
+    "returnToLoanBilling",
+    "true",
+  );
+
+  localStorage.removeItem("billLoanNumber");
+  localStorage.removeItem("checkBackFrom");
+
+  localStorage.setItem(
+    "billLoanNumber",
+    bill.loanBillNumber,
+  );
+
+  localStorage.setItem(
+    "checkBackFrom",
+    "Loan",
+  );
+
+  navigate("/admin/bill-loan-details");
+}}
             className="rounded-full bg-[#85400b] px-4 py-2 text-xs font-bold text-white"
           >
             View
@@ -1237,17 +1393,43 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
                                 sx={{
                                   "&:hover": { backgroundColor: "#E0E0E0" },
                                 }}
-                                onClick={() => {
-                                  localStorage.removeItem("billLoanNumber");
-                                  localStorage.removeItem("checkBackFrom");
+                            onClick={() => {
+  // Save current page + filters
+  const filterState = {
+    fromDate: appliedFromDate,
+    toDate: appliedToDate,
+    statusFilter: appliedStatusFilter,
+    villageSearch: appliedVillageSearch,
+    filtersApplied,
+    page,
+  };
 
-                                  localStorage.setItem(
-                                    "billLoanNumber",
-                                    bill.loanBillNumber,
-                                  );
-                                  localStorage.setItem("checkBackFrom", "Loan");
-                                  navigate("/admin/bill-loan-details");
-                                }}
+  sessionStorage.setItem(
+    "loanBillingFilterState",
+    JSON.stringify(filterState),
+  );
+
+  // IMPORTANT: tells Loan page to scroll to billing orders on return
+  sessionStorage.setItem(
+    "returnToLoanBilling",
+    "true",
+  );
+
+  localStorage.removeItem("billLoanNumber");
+  localStorage.removeItem("checkBackFrom");
+
+  localStorage.setItem(
+    "billLoanNumber",
+    bill.loanBillNumber,
+  );
+
+  localStorage.setItem(
+    "checkBackFrom",
+    "Loan",
+  );
+
+  navigate("/admin/bill-loan-details");
+}}
                               >
                                 <VisibilityIcon fontSize="medium" />
                               </IconButton>
@@ -1272,7 +1454,7 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
                   size="small"
                   variant="outlined"
                   disabled={page === 0}
-                  onClick={() => setPage((prev) => prev - 1)}
+                  onClick={() => changePage(page - 1)}
                 >
                   ◀ Prev
                 </Button>
@@ -1285,7 +1467,7 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
                   size="small"
                   variant="outlined"
                   disabled={page + 1 >= totalPages}
-                  onClick={() => setPage((prev) => prev + 1)}
+                  onClick={() => changePage(page + 1)}
                 >
                   Next ▶
                 </Button>

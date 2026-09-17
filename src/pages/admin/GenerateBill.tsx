@@ -1036,6 +1036,33 @@ await loadSchemeCoupons();
 
   const nonZeroColCount = dynamicColumnCount;
 
+  // ======================================================
+// AUTO RESPONSIVE BILL TABLE SIZE
+// Base columns:
+// Name, Metal, RT, G.Wt, N.Wt, WST, MC, Total, Status = 9
+// Extra columns come from stone/wax/diamond/bits/enamel/pearls/other
+// ======================================================
+
+const totalTableColumns = 9 + dynamicColumnCount;
+
+const getInvoiceTableClass = () => {
+  if (totalTableColumns <= 10) {
+    return "invoice-table-normal";
+  }
+
+  if (totalTableColumns <= 13) {
+    return "invoice-table-compact";
+  }
+
+  if (totalTableColumns <= 16) {
+    return "invoice-table-dense";
+  }
+
+  return "invoice-table-extra-dense";
+};
+
+const invoiceTableClass = getInvoiceTableClass();
+
   const parseDDMMYYYY = (dateValue?: string): Date | null => {
   if (!dateValue) return null;
 
@@ -1131,7 +1158,6 @@ const offerCouponDiscount = React.useMemo(() => {
     width: 100% !important;
     transform: scale(1) !important;
     table-layout: fixed;
-    font-size: 10px; /* Slightly smaller text for fitting */
   }
 
   .invoice-header {
@@ -1194,16 +1220,7 @@ const offerCouponDiscount = React.useMemo(() => {
 
  
 
-  table {
-  min-width: 100% !important;
-  font-size: 13px !important; /* Bigger and clearer */
-}
-
-
-
-  th, td {
-  padding: 6px 4px !important; /* more breathing space */
-}
+ 
 }
 
 
@@ -1237,97 +1254,240 @@ const offerCouponDiscount = React.useMemo(() => {
       </style>
 
       <style>
-        {`
-     .invoice-table {
+  {`
+/* ======================================================
+   FLEXIBLE / AUTOMATIC INVOICE TABLE
+   ====================================================== */
+
+.invoice-table-wrapper {
   width: 100%;
+  overflow: hidden;
+}
+
+.invoice-table {
+  width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
   table-layout: fixed;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .invoice-table th,
 .invoice-table td {
-  padding: 4px 6px;
-  word-wrap: break-word;
-  white-space: normal;
+  border: 1px solid #ffffff;
   text-align: center;
   vertical-align: middle;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
-.invoice-table th:nth-child(1),
-.invoice-table td:nth-child(1) {
-  width: 15%; 
+
+
+/* ======================================================
+   NORMAL TABLE
+   Few columns
+   ====================================================== */
+
+.invoice-table-normal {
+  font-size: 13px;
+}
+
+.invoice-table-normal th,
+.invoice-table-normal td {
+  padding: 8px 7px !important;
+}
+
+.invoice-table-normal th:first-child,
+.invoice-table-normal td:first-child {
+  width: 19%;
+}
+
+.invoice-table-normal th:nth-child(2),
+.invoice-table-normal td:nth-child(2) {
+  width: 13%;
+}
+
+
+/* ======================================================
+   COMPACT TABLE
+   Medium number of columns
+   ====================================================== */
+
+.invoice-table-compact {
+  font-size: 12px;
+}
+
+.invoice-table-compact th,
+.invoice-table-compact td {
+  padding: 6px 4px !important;
+}
+
+.invoice-table-compact th:first-child,
+.invoice-table-compact td:first-child {
+  width: 16%;
+}
+
+.invoice-table-compact th:nth-child(2),
+.invoice-table-compact td:nth-child(2) {
+  width: 11%;
+}
+
+
+/* ======================================================
+   DENSE TABLE
+   Many columns
+   ====================================================== */
+
+.invoice-table-dense {
+  font-size: 10px;
+}
+
+.invoice-table-dense th,
+.invoice-table-dense td {
+  padding: 5px 2px !important;
+}
+
+.invoice-table-dense th:first-child,
+.invoice-table-dense td:first-child {
+  width: 14%;
+}
+
+.invoice-table-dense th:nth-child(2),
+.invoice-table-dense td:nth-child(2) {
+  width: 10%;
+}
+
+
+/* ======================================================
+   EXTRA DENSE TABLE
+   Very large number of columns
+   ====================================================== */
+
+.invoice-table-extra-dense {
+  font-size: 8px;
+}
+
+.invoice-table-extra-dense th,
+.invoice-table-extra-dense td {
+  padding: 4px 1px !important;
+  letter-spacing: -0.15px;
+}
+
+.invoice-table-extra-dense th:first-child,
+.invoice-table-extra-dense td:first-child {
+  width: 13%;
+}
+
+.invoice-table-extra-dense th:nth-child(2),
+.invoice-table-extra-dense td:nth-child(2) {
+  width: 9%;
+}
+
+
+/* ======================================================
+   IMPORTANT COLUMNS
+   Give Name/Metal more room.
+   Remaining columns divide available space automatically.
+   ====================================================== */
+
+.invoice-table th:first-child,
+.invoice-table td:first-child {
+  overflow-wrap: anywhere;
 }
 
 .invoice-table th:nth-child(2),
 .invoice-table td:nth-child(2) {
-  width: 10%; 
-}
-.invoice-table th:nth-child(3),
-.invoice-table td:nth-child(3) {
-  width: 7%; 
-}
-.invoice-table th:nth-child(4),
-.invoice-table td:nth-child(4) {
-  width: 7%; 
-}
-  .invoice-table th:nth-child(5),
-.invoice-table td:nth-child(5) {
-  width: 7%; 
-}
-   
-     .invoice-table th:nth-child(6),
-.invoice-table td:nth-child(6) {
-  width: 7%;
-}   .invoice-table th:nth-child(7),
-.invoice-table td:nth-child(7) {
-  width: 8%; 
+  overflow-wrap: anywhere;
 }
 
-  .invoice-table th:nth-last-child(3),
-.invoice-table td:nth-last-child(3) {
-  width: 8%;
-}
-    .invoice-table th:nth-last-child(4),
-.invoice-table td:nth-last-child(4) {
-  width: 8%;
-}
-  .invoice-table th:nth-last-child(2),
-.invoice-table td:nth-last-child(2) {
-  width: 8%;
-}
-.invoice-table th:last-child,
-.invoice-table td:last-child {
-  width: 8%; 
+
+/* Prevent numbers from breaking one digit per line */
+.invoice-table td:nth-child(n+3),
+.invoice-table th:nth-child(n+3) {
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
-      /* Auto-shrink on smaller screens */
-      @media (max-width: 1400px) {
-        .invoice-table {
-          transform: scale(0.9);
-        }
-      }
-      @media (max-width: 1200px) {
-        .invoice-table {
-          transform: scale(0.8);
-        }
-      }
-      @media (max-width: 1000px) {
-        .invoice-table {
-          transform: scale(0.7);
-        }
-      }
-     @media screen and (max-width: 767px) {
+
+/* ======================================================
+   MOBILE
+   Mobile can scroll instead of destroying the table.
+   ====================================================== */
+
+@media screen and (max-width: 767px) {
+
+  .invoice-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .invoice-table {
-    transform: none !important;
-    table-layout: fixed;
+    min-width: 720px;
   }
 
-  #print-section {
-    box-shadow: none;
+}
+
+
+/* ======================================================
+   PRINT
+   Always keep table inside printed bill
+   ====================================================== */
+
+@media print {
+
+  .invoice-table-wrapper {
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .invoice-table {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    transform: none !important;
+    margin: 0 auto !important;
+    table-layout: fixed !important;
+  }
+
+  .invoice-table-normal {
+    font-size: 11px !important;
+  }
+
+  .invoice-table-compact {
+    font-size: 9.5px !important;
+  }
+
+  .invoice-table-dense {
+    font-size: 8px !important;
+  }
+
+  .invoice-table-extra-dense {
+    font-size: 6.5px !important;
+  }
+
+  .invoice-table-normal th,
+  .invoice-table-normal td {
+    padding: 5px 4px !important;
+  }
+
+  .invoice-table-compact th,
+  .invoice-table-compact td {
+    padding: 4px 3px !important;
+  }
+
+  .invoice-table-dense th,
+  .invoice-table-dense td {
+    padding: 3px 2px !important;
+  }
+
+  .invoice-table-extra-dense th,
+  .invoice-table-extra-dense td {
+    padding: 2px 1px !important;
   }
 }
-    `}
-      </style>
+`}
+</style>
 
       {/* Printable Content */}
       <div
@@ -1423,30 +1583,32 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
         </div>
 
         {/* Table */}
-       <div className="w-full overflow-x-auto md:flex md:justify-center invoice-table-wrapper">
-<table className="invoice-table min-w-[900px] border border-collapse text-sm mb-6">
+<div className="invoice-table-wrapper">
+  <table
+    className={`invoice-table ${invoiceTableClass} mb-6`}
+  >
               <thead>
               <tr className="bg-[#B45309] text-[#ffffff]">
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  Name
+                <th className="border text-white font-bold text-center align-middle">
+  Name
+</th>
+<th className="border text-white font-bold text-center align-middle">
+                    Metal
                 </th>
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  Metal
+<th className="border text-white font-bold text-center align-middle">
+                    RT
                 </th>
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  RT
+<th className="border text-white font-bold text-center align-middle">
+                    G.Wt
                 </th>
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  G.Wt
-                </th>
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  N.Wt
+<th className="border text-white font-bold text-center align-middle">
+                    N.Wt
                 </th>
                 {activeWeightKeys.map((key) => (
                   <React.Fragment key={key}>
                     {/* Weight Header */}
                     {!(key === "other") && (
-                      <th className="border px-2 py-1 capitalize">
+                      <th className="border capitalize">
                         {shortLabels[key]?.weight ||
                           `${key[0].toUpperCase()}.Wt`}
                       </th>
@@ -1456,31 +1618,31 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                       bill.selectedOrders.some(
                         (item) => item.other_weight && item.other_weight > 0,
                       ) && (
-                        <th className="border px-2 py-1 capitalize">
+                        <th className="border capitalize">
                           {shortLabels[key]?.weight || "O.Wt"}
                         </th>
                       )}
 
                     {/* Amount Header */}
-                    <th className="border px-2 py-1 capitalize">
+                    <th className="border capitalize">
                       {shortLabels[key]?.amount ||
                         `${key[0].toUpperCase()}.Amt`}
                     </th>
                   </React.Fragment>
                 ))}
 
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  WST
+<th className="border text-white font-bold text-center align-middle">
+                    WST
                 </th>
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  MC
+<th className="border text-white font-bold text-center align-middle">
+                    MC
                 </th>
 
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  Total
+<th className="border text-white font-bold text-center align-middle">
+                    Total
                 </th>
-                <th className="border px-2 py-1 text-white font-bold  text-center align-middle text-xs">
-                  Status
+<th className="border text-white font-bold text-center align-middle">
+                    Status
                 </th>
               </tr>
             </thead>
@@ -1496,10 +1658,10 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                   }}
                 >
                   {" "}
-                  <td className="border px-2 py-1 text-[#361d1d] font-bold  text-center align-middle text-[14px]">
+                  <td className="border text-[#361d1d] font-bold text-center align-middle">
                     {item.itemName}
                   </td>
-                  <td className="border px-2 py-1 text-[#af0058] font-bold  text-center align-middle text-[13px]">
+                  <td className="border text-[#af0058] font-bold text-center align-middle">
                     {item.metal === "22 Gold"
                       ? "22k-916"
                       : item.metal === "24 Gold"
@@ -1514,13 +1676,13 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                             ? "Kamal 999"
                             : item.metal}
                   </td>
-                  <td className="border px-2 py-1 text-[#004848] font-bold text-center align-middle text-[13px]">
+                  <td className="border text-[#004848] font-bold text-center align-middle">
                     {item.metalPrice || "-"}
                   </td>
-                  <td className="border px-2 py-1 text-[#070065] font-bold text-center align-middle text-[13px]">
+                  <td className="border text-[#070065] font-bold text-center align-middle">
                     {item.gross_weight ?? "-"}
                   </td>
-                  <td className="border px-2 py-1 text-[#00457d] font-bold text-center align-middle text-[13px]">
+                  <td className="border text-[#00457d] font-bold text-center align-middle">
                     {item.metal_weight ?? "-"}
                   </td>
                   {activeWeightKeys.map((key) => {
@@ -1536,27 +1698,27 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                     return (
                       <React.Fragment key={key}>
                         {showWeightColumn && (
-                          <td className="border px-2 py-1 text-[#1f1f1f] font-bold text-center align-middle">
+                          <td className="border text-[#1f1f1f] font-bold text-center align-middle">
                             {weightValue > 0 ? weightValue : "-"}
                           </td>
                         )}
 
-                        <td className="border px-2 py-1 text-[#1f1f1f] font-bold text-center align-middle">
+                        <td className="border text-[#1f1f1f] font-bold text-center align-middle">
                           {amountValue > 0 ? amountValue : "-"}
                         </td>
                       </React.Fragment>
                     );
                   })}
-                  <td className="border px-2 py-1 text-[#51016c] font-bold text-center align-middle text-[13px]">
+                  <td className="border text-[#51016c] font-bold text-center align-middle">
                      {Number(item.wastage || 0)}%
                   </td>
-                  <td className="border px-2 py-1 text-[#965205] font-bold text-center align-middle text-[13px]">
+                  <td className="border text-[#965205] font-bold text-center align-middle">
                     {item.making_charges}
                   </td>
-                  <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
+                  <td className="border text-[#00479f] font-bold text-center align-middle">
                     ₹{Math.round(Number(item.total_item_amount || 0))}
                   </td>
-                  <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
+                  <td className="border text-[#00479f] font-bold text-center align-middle">
                     {item.deliveryStatus}
                   </td>
                 </tr>
@@ -1572,11 +1734,11 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                         backgroundColor: "#e7d8e2",
                       }}
                     >
-                      <td className="border px-2 py-1 text-[#361d1d] font-bold text-center align-middle text-[14px]">
+                      <td className="border text-[#361d1d] font-bold text-center align-middle">
                         {ex.exchange_metal_name}
                       </td>
 
-                      <td className="border px-2 py-1 text-[#af0058]  font-bold text-center align-middle text-[11px]">
+                      <td className="border text-[#af0058] font-bold text-center align-middle">
                         {ex.exchange_metal === "22 Gold"
                           ? "22k"
                           : ex.exchange_metal === "24 Gold"
@@ -1588,37 +1750,39 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                                 : ex.exchange_metal}
                       </td>
 
-                      <td className="border px-2 py-1 text-[#004848] font-bold text-center align-middle text-[13px]">
+                      <td className="border text-[#004848] font-bold text-center align-middle">
                         {ex.exchange_metal_price}
                       </td>
 
-                      <td className="border px-2 py-1 text-[#070065] font-bold text-center align-middle text-[13px]">
+                      <td className="border text-[#070065] font-bold text-center align-middle">
                         {ex.exchange_metal_weight}
                       </td>
 
-                      <td className="border px-2 py-1  text-[#00457d] font-bold text-center align-middle text-[13px]">
+                      <td className="border text-[#00457d] font-bold text-center align-middle">
                         {ex.exchange_purity_weight}
                       </td>
 
-                      {/* ✅ Dynamic dash cells based on parent order */}
-                      {Array.from({ length: nonZeroColCount }).map((_, i) => (
-                        <td
-                          key={`dash-${index}-${i}`}
-                          className="border px-2 py-1 text-center align-middle"
-                        >
-                          -
-                        </td>
-                      ))}
-                      <td className="border px-2 py-1 text-center align-middle">
-                        -
-                      </td>
-                      <td className="border px-2 py-1 text-center align-middle">
-                        -
-                      </td>
-                      <td className="border px-2 py-1  text-[#00479f] font-bold text-center align-middle text-[13px]">
+                    {/* Dynamic dash cells */}
+{Array.from({ length: nonZeroColCount }).map((_, i) => (
+  <td
+    key={`dash-${index}-${i}`}
+    className="border text-center align-middle"
+  >
+    -
+  </td>
+))}
+
+<td className="border text-center align-middle">
+  -
+</td>
+
+<td className="border text-center align-middle">
+  -
+</td>
+                      <td className="border text-[#00479f] font-bold text-center align-middle">
                         ₹{Math.round(Number(ex.exchange_item_amount || 0))}
                       </td>
-                      <td className="border px-2 py-1 text-[#00479f] font-bold text-center align-middle text-[13px]">
+                      <td className="border text-[#00479f] font-bold text-center align-middle">
                         {"Exchange"}
                       </td>
                     </tr>

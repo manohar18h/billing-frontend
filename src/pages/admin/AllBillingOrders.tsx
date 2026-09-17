@@ -1,5 +1,5 @@
 // src/pages/admin/AllBillingOrders.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Paper,
@@ -117,6 +117,38 @@ const [appliedStatusFilter, setAppliedStatusFilter] = useState<
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
+  const billingOrdersRef = useRef<HTMLDivElement | null>(null);
+
+const [stateRestored, setStateRestored] = useState(false);
+
+useEffect(() => {
+  const saved = sessionStorage.getItem("allBillingOrdersState");
+
+  if (saved) {
+    try {
+      const state = JSON.parse(saved);
+
+      setPage(state.page ?? 0);
+
+      setFromDate(state.fromDate ?? "");
+      setToDate(state.toDate ?? "");
+      setWorkFilter(state.workFilter ?? "all");
+      setStatusFilter(state.statusFilter ?? "all");
+
+      setAppliedFromDate(state.appliedFromDate ?? "");
+      setAppliedToDate(state.appliedToDate ?? "");
+      setAppliedWorkFilter(state.appliedWorkFilter ?? "all");
+      setAppliedStatusFilter(state.appliedStatusFilter ?? "all");
+
+      setFiltersApplied(state.filtersApplied ?? false);
+    } catch (error) {
+      console.error("Failed to restore billing state:", error);
+    }
+  }
+
+  setStateRestored(true);
+}, []);
+
 const fetchBillingRows = async () => {
   localStorage.removeItem("CheckBack");
   setLoading(true);
@@ -162,8 +194,11 @@ const fetchBillingRows = async () => {
   const pageSize = 50;
 
 useEffect(() => {
+  if (!stateRestored) return;
+
   fetchBillingRows();
 }, [
+  stateRestored,
   page,
   filtersApplied,
   appliedFromDate,
@@ -232,6 +267,27 @@ const clearFilters = () => {
   setFiltersApplied(false);
   setPage(0);
 };
+
+useEffect(() => {
+  if (!stateRestored) return;
+  if (loading) return;
+
+  const shouldScroll =
+    sessionStorage.getItem("returnToAllBillingOrders");
+
+  if (shouldScroll !== "true") return;
+
+  const timer = setTimeout(() => {
+    billingOrdersRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    sessionStorage.removeItem("returnToAllBillingOrders");
+  }, 200);
+
+  return () => clearTimeout(timer);
+}, [loading, stateRestored]);
 
 
 
@@ -307,15 +363,22 @@ const clearFilters = () => {
           boxShadow: "0 10px 30px rgba(136,71,255,0.3)",
         }}
       >
-        <Typography
-  variant="h4"
-  fontWeight="bold"
-  color="primary"
-  gutterBottom
-  sx={{ fontSize: { xs: "24px", md: "34px" } }}
+       <div
+  ref={billingOrdersRef}
+  style={{ scrollMarginTop: "30px" }}
 >
-          All Billing Orders
-        </Typography>
+  <Typography
+    variant="h4"
+    fontWeight="bold"
+    color="primary"
+    gutterBottom
+    sx={{ fontSize: { xs: "24px", md: "34px" } }}
+  >
+    All Billing Orders
+  </Typography>
+</div>
+
+
 
         {/* Filters row */}
         <Box
@@ -649,17 +712,48 @@ sx={{
                               sx={{
                                 "&:hover": { backgroundColor: "#E0E0E0" },
                               }}
-                              onClick={() => {
-                                localStorage.setItem(
-                                  "billNumber",
-                                  bill.billNumber,
-                                );
-                                localStorage.setItem(
-                                  "CheckBack",
-                                  "AllBillBack",
-                                );
-                                navigate("/admin/bill-details");
-                              }}
+                             onClick={() => {
+  const billingState = {
+    page,
+
+    // visible filter controls
+    fromDate,
+    toDate,
+    workFilter,
+    statusFilter,
+
+    // filters actually applied to backend
+    appliedFromDate,
+    appliedToDate,
+    appliedWorkFilter,
+    appliedStatusFilter,
+
+    filtersApplied,
+  };
+
+  sessionStorage.setItem(
+    "allBillingOrdersState",
+    JSON.stringify(billingState),
+  );
+
+  // We came from All Billing Orders
+  sessionStorage.setItem(
+    "returnToAllBillingOrders",
+    "true",
+  );
+
+  localStorage.setItem(
+    "billNumber",
+    bill.billNumber,
+  );
+
+  localStorage.setItem(
+    "CheckBack",
+    "AllBillBack",
+  );
+
+  navigate("/admin/bill-details");
+}}
                             >
                               <VisibilityIcon fontSize="medium" />
                             </IconButton>
