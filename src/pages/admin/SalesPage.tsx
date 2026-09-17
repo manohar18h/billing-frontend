@@ -54,7 +54,7 @@ type BarcodeProduct = {
   gross_weight: number;
   stockBox: string;
   barcodeValue: string;
-
+stock: number | null; // ✅ ADD THIS
    methodType2?: string | null;
   sellingDate?: string | null;
 };
@@ -145,6 +145,13 @@ const [restorePassword, setRestorePassword] =
 
 const [restoringItem, setRestoringItem] =
   useState(false);
+
+  const isSoldOrUnavailable =
+  !!order &&
+  (
+    Number(order.stock ?? 0) <= 0 ||
+    order.methodType2?.trim().toUpperCase() === "SELL"
+  );
 
 const handleProtectedAction = (
   type: "edit" | "delete",
@@ -915,9 +922,9 @@ if (!confirmDelete) return;
         <p><b className="text-pink-300">Stock Box:</b> <span className="text-yellow-300 font-bold">{order.stockBox || "—"}</span></p>
 <p>
   <b className="text-pink-300">Item Status:</b>{" "}
-  {order.methodType2?.toUpperCase() === "SELL" ? (
+  {isSoldOrUnavailable ? (
     <span className="font-extrabold text-red-400">
-      SOLD
+      SOLD / NOT AVAILABLE
     </span>
   ) : (
     <span className="font-extrabold text-green-400">
@@ -974,22 +981,23 @@ if (!confirmDelete) return;
     </div>
   </div>
 )}
-        {order && (
-          <Box mt={3} textAlign="center">
-            <Button
-  variant="outlined"
-  disabled={order?.methodType2?.toUpperCase() === "SELL"}
-  onClick={() => setShowEstimation(true)}
->
-  GENERATE ESTIMATION
-</Button>
-{order?.methodType2?.toUpperCase() === "SELL" && (
-  <div className="mt-4 rounded-xl bg-red-100 p-3 text-center font-bold text-red-700">
-    This item is already sold. Estimation cannot be generated.
-  </div>
+       {order && (
+  <Box mt={3} textAlign="center">
+    <Button
+      variant="outlined"
+      disabled={isSoldOrUnavailable}
+      onClick={() => setShowEstimation(true)}
+    >
+      GENERATE ESTIMATION
+    </Button>
+
+    {isSoldOrUnavailable && (
+      <div className="mt-4 rounded-xl bg-red-100 p-3 text-center font-bold text-red-700">
+        This item is sold or not available in stock. Estimation cannot be generated.
+      </div>
+    )}
+  </Box>
 )}
-          </Box>
-        )}
         {showEstimation &&
   order &&
   order.methodType2?.toUpperCase() !== "SELL" && (
