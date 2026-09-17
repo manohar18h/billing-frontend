@@ -12,6 +12,11 @@ import {
   MenuItem,
   Chip,
   IconButton,
+  Dialog,
+DialogTitle,
+DialogContent,
+DialogActions,
+Tooltip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { toast } from "react-toastify";
@@ -21,6 +26,8 @@ import debounce from "lodash/debounce";
 import { useNavigate } from "react-router-dom";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditNoteIcon from "@mui/icons-material/EditNote";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 export interface LoanCustomer {
   loanBillId: number;
@@ -45,6 +52,7 @@ export interface LoanCustomer {
   itemNames: string[];
   itemWeight: number[];
   orderDate: string | null;
+  salesNote?: string | null;
 }
 
 type PageResponse<T> = {
@@ -130,7 +138,11 @@ const Loan: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [deleteMessage, setDeleteMessage] = useState("");
 
-
+const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+const [selectedNoteBill, setSelectedNoteBill] =
+  useState<LoanCustomer | null>(null);
+const [noteText, setNoteText] = useState("");
+const [savingNote, setSavingNote] = useState(false);
 
   localStorage.removeItem("editBillFromBillDetails");
 
@@ -668,6 +680,109 @@ const changePage = (newPage: number) => {
 };
 
 
+
+const openNoteDialog = (bill: LoanCustomer) => {
+  setSelectedNoteBill(bill);
+  setNoteText(bill.salesNote || "");
+  setNoteDialogOpen(true);
+};
+
+const closeNoteDialog = () => {
+  if (savingNote) return;
+
+  setNoteDialogOpen(false);
+  setSelectedNoteBill(null);
+  setNoteText("");
+};
+
+const saveLoanNote = async () => {
+  if (!selectedNoteBill) return;
+
+  if (!noteText.trim()) {
+    toast.error("Please enter a note.");
+    return;
+  }
+
+  try {
+    setSavingNote(true);
+
+    const token = localStorage.getItem("token") ?? "";
+
+    await api.patch(
+      `/admin/loanBilling/${selectedNoteBill.loanBillId}/note`,
+      {
+        note: noteText.trim(),
+      },
+      {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined,
+      },
+    );
+
+    setRows((prev) =>
+      prev.map((row) =>
+        row.loanBillId === selectedNoteBill.loanBillId
+          ? { ...row, salesNote: noteText.trim() }
+          : row,
+      ),
+    );
+
+    toast.success("Note saved successfully.");
+    closeNoteDialog();
+  } catch (error) {
+    console.error("Failed to save note:", error);
+    toast.error("Failed to save note.");
+  } finally {
+    setSavingNote(false);
+  }
+};
+
+const deleteLoanNote = async () => {
+  if (!selectedNoteBill) return;
+
+  const confirmed = window.confirm(
+    "Are you sure you want to delete this note?",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setSavingNote(true);
+
+    const token = localStorage.getItem("token") ?? "";
+
+    await api.delete(
+      `/admin/loanBilling/${selectedNoteBill.loanBillId}/note`,
+      {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined,
+      },
+    );
+
+    setRows((prev) =>
+      prev.map((row) =>
+        row.loanBillId === selectedNoteBill.loanBillId
+          ? { ...row, salesNote: null }
+          : row,
+      ),
+    );
+
+    toast.success("Note deleted successfully.");
+
+    setNoteDialogOpen(false);
+    setSelectedNoteBill(null);
+    setNoteText("");
+  } catch (error) {
+    console.error("Failed to delete note:", error);
+    toast.error("Failed to delete note.");
+  } finally {
+    setSavingNote(false);
+  }
+};
+
+
   return (
     <div>
       <div className="mt-6 px-2 sm:mt-10 sm:p-3 flex flex-col items-center justify-center gap-6">
@@ -1166,7 +1281,21 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
           {renderStatusChip(bill.deliveryStatus)}
         </div>
 
-        <div className="mt-3 flex justify-end">
+        <div className="mt-3 flex justify-between items-center">
+
+  <Button
+    size="small"
+    startIcon={<EditNoteIcon />}
+    onClick={() => openNoteDialog(bill)}
+    sx={{
+      color: bill.salesNote?.trim()
+        ? "#16a34a"
+        : "#d97706",
+      fontWeight: 700,
+    }}
+  >
+    {bill.salesNote?.trim() ? "View Note" : "Add Note"}
+  </Button>
           <button
             onClick={() => {
   const filterState = {
@@ -1276,21 +1405,23 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
                         </div>
                       </th>
 
-                      <th className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          Total Amount
-                        </div>
-                      </th>
-                      {/* <th className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          Due Amount
-                        </div>
-                      </th> */}
-                      <th className="border px-3 py-2 text-center">
-                        <div className="flex justify-center items-center">
-                          View
-                        </div>
-                      </th>
+                     <th className="border px-3 py-2 text-center">
+  <div className="flex justify-center items-center">
+    Total Amount
+  </div>
+</th>
+
+<th className="border px-3 py-2 text-center">
+  <div className="flex justify-center items-center">
+    Note
+  </div>
+</th>
+
+<th className="border px-3 py-2 text-center">
+  <div className="flex justify-center items-center">
+    View
+  </div>
+</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1377,13 +1508,31 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
                             </div>
                           </td>
 
-                          {/* <td className="border px-3 py-2 text-center">
-                            <div className="flex justify-center items-center">
-                              {bill.dueAmount != null
-                                ? bill.dueAmount.toFixed(2)
-                                : "-"}
-                            </div>
-                          </td> */}
+                         <td className="border px-3 py-2 text-center">
+  <Tooltip
+    title={
+      bill.salesNote?.trim()
+        ? bill.salesNote
+        : "Add customer follow-up note"
+    }
+    arrow
+  >
+    <IconButton
+      size="medium"
+      onClick={() => openNoteDialog(bill)}
+      sx={{
+        color: bill.salesNote?.trim()
+          ? "#16a34a"
+          : "#d97706",
+        "&:hover": {
+          backgroundColor: "#fff7ed",
+        },
+      }}
+    >
+      <EditNoteIcon fontSize="medium" />
+    </IconButton>
+  </Tooltip>
+</td>
 
                           <td className="border px-3 py-2 text-center">
                             <div className="flex justify-center items-center">
@@ -1482,7 +1631,85 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
           {deleteMessage}
         </div>
       )}
+
+
+      <Dialog
+  open={noteDialogOpen}
+  onClose={closeNoteDialog}
+  fullWidth
+  maxWidth="sm"
+>
+  <DialogTitle sx={{ fontWeight: 700 }}>
+    Customer Follow-up Note
+  </DialogTitle>
+
+  <DialogContent>
+    {selectedNoteBill && (
+      <Box
+        sx={{
+          mb: 2,
+          mt: 0.5,
+          p: 1.5,
+          borderRadius: 2,
+          backgroundColor: "#f8fafc",
+        }}
+      >
+        <Typography fontWeight={700}>
+          {selectedNoteBill.name}
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary">
+          Bill: {selectedNoteBill.loanBillNumber}
+        </Typography>
+      </Box>
+    )}
+
+    <TextField
+      autoFocus
+      fullWidth
+      multiline
+      minRows={4}
+      maxRows={8}
+      label="Sales Follow-up Note"
+      placeholder="Example: Customer said he will pay the interest on 20/09/2026."
+      value={noteText}
+      onChange={(e) => setNoteText(e.target.value)}
+    />
+  </DialogContent>
+
+  <DialogActions sx={{ px: 3, pb: 2 }}>
+    {selectedNoteBill?.salesNote?.trim() && (
+      <Button
+        color="error"
+        startIcon={<DeleteOutlineIcon />}
+        disabled={savingNote}
+        onClick={deleteLoanNote}
+      >
+        Delete
+      </Button>
+    )}
+
+    <Box sx={{ flex: 1 }} />
+
+    <Button
+      onClick={closeNoteDialog}
+      disabled={savingNote}
+    >
+      Cancel
+    </Button>
+
+    <Button
+      variant="contained"
+      disabled={savingNote || !noteText.trim()}
+      onClick={saveLoanNote}
+    >
+      {savingNote ? "Saving..." : "Save Note"}
+    </Button>
+  </DialogActions>
+</Dialog>
     </div>
+
+
   );
 };
 
