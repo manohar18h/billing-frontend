@@ -528,7 +528,7 @@ const RevenueCard: React.FC<{
   endpoint: string;
   token: string | null;
 }> = ({ title, endpoint, token }) => {
-  const [filter, setFilter] = useState("ALL");
+  const [filter, setFilter] = useState("TODAY");
   const data = useRevenueMetric(endpoint, filter, token);
 
   const FILTER_OPTIONS = [
@@ -598,7 +598,7 @@ const RevenueCard: React.FC<{
       </div>
 
       <div className="text-2xl font-bold">
-        ₹{data ? data.currentRevenue.toLocaleString() : "..."}
+        ₹{data ? Math.round(Number(data.currentRevenue || 0)).toLocaleString("en-IN") : "..."}
       </div>
 
       <div className="flex items-center gap-2 mt-1 text-sm">
@@ -624,7 +624,7 @@ const RevenueCard: React.FC<{
 
       {data && (
         <div className="mt-2 text-xs text-gray-500">
-          Total Revenue: ₹{data.totalRevenue.toLocaleString()}
+          Total Revenue: ₹{Math.round(Number(data.totalRevenue || 0)).toLocaleString("en-IN")}
         </div>
       )}
       {data && (
@@ -634,7 +634,7 @@ const RevenueCard: React.FC<{
         Cash
       </div>
       <div className="mt-1 text-sm font-bold text-green-800">
-        ₹{Number(data.cashAmount || 0).toLocaleString("en-IN")}
+       ₹{Math.round(Number(data.cashAmount || 0)).toLocaleString("en-IN")}
       </div>
     </div>
 
@@ -643,7 +643,7 @@ const RevenueCard: React.FC<{
         Online / PhonePe
       </div>
       <div className="mt-1 text-sm font-bold text-blue-800">
-        ₹{Number(data.onlineAmount || 0).toLocaleString("en-IN")}
+       ₹{Math.round(Number(data.onlineAmount || 0)).toLocaleString("en-IN")}
       </div>
     </div>
   </div>
@@ -1100,7 +1100,9 @@ const DueLoanAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
       </div>
 
       <div className="text-2xl font-bold">
-        ₹{dueLoanAmount !== null ? dueLoanAmount.toLocaleString() : "..."}
+          ₹{dueLoanAmount !== null
+  ? Math.round(dueLoanAmount).toLocaleString("en-IN")
+  : "..."}
       </div>
 
       <div className="text-xs text-gray-500 mt-2">
