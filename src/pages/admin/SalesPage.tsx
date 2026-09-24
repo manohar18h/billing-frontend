@@ -534,16 +534,15 @@ const confirmDelete = window.confirm(
 
 if (!confirmDelete) return;
 
- await api.delete(
+await api.post(
   `/admin/stock-box/delete/${box.stockBoxId}`,
+  {
+    password: password,
+  },
   {
     headers: token
       ? { Authorization: `Bearer ${token}` }
       : undefined,
-
-    data: {
-      password: password,
-    },
   }
 );
 
