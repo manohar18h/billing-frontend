@@ -127,8 +127,9 @@ const [editCount, setEditCount] = useState("");
 const [editWeight, setEditWeight] = useState("");
 const [editStockBoxName, setEditStockBoxName] = useState("");
 
+const [verifiedEditPassword, setVerifiedEditPassword] =
+  useState("");
 
-const Secreat_code = "HambireJ@1977";
 
 const [passwordDialog, setPasswordDialog] = useState(false);
 const [passwordInput, setPasswordInput] = useState("");
@@ -163,24 +164,60 @@ const handleProtectedAction = (
 };
 
 const verifyPasswordAndProceed = async () => {
-  if (passwordInput !== Secreat_code) {
-    alert("Incorrect Password");
-    return;
-  }
 
   if (!pendingAction) return;
 
-  if (pendingAction.type === "edit") {
-    handleOpenEdit(pendingAction.box);
-  } else if (pendingAction.type === "delete") {
-    await handleDeleteStockBox(pendingAction.box);
+  if (!passwordInput.trim()) {
+    alert("Please enter admin password.");
+    return;
   }
 
-  setPasswordDialog(false);
-  setPendingAction(null);
-  setPasswordInput("");
-};
+  try {
 
+    // Verify password ONLY on backend
+    await api.post(
+      "/admin/verify-admin-action-password",
+      {
+        password: passwordInput,
+      },
+      {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined,
+      }
+    );
+
+    const action = pendingAction;
+    const verifiedPassword = passwordInput;
+
+    setPasswordDialog(false);
+    setPendingAction(null);
+    setPasswordInput("");
+
+    if (action.type === "edit") {
+
+        setVerifiedEditPassword(verifiedPassword);
+
+
+      handleOpenEdit(action.box);
+
+    } else if (action.type === "delete") {
+
+      await handleDeleteStockBox(
+        action.box,
+        verifiedPassword
+      );
+    }
+
+  } catch (error: any) {
+
+    const message =
+      error.response?.data?.message ||
+      "Incorrect admin password.";
+
+    alert(message);
+  }
+};
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -211,14 +248,13 @@ const verifyPasswordAndProceed = async () => {
 
   const handleRestoreClick = () => {
 
-  if (!order) return;
+ if (!order) return;
 
-  if (
-    order.methodType2?.trim().toUpperCase()
-    !== "SELL"
-  ) {
+  // Restore is required whenever actual stock is 0.
+  // StockBoxData may or may not exist.
+  if (Number(order.stock ?? 0) > 0) {
     alert(
-      'Item is already available. Restore not required.'
+      "Item is already available. Restore not required."
     );
     return;
   }
@@ -279,15 +315,16 @@ const handleRestoreItem = async () => {
     ) {
 
       // Update screen immediately.
-      setOrder((previous) =>
-        previous
-          ? {
-              ...previous,
-              methodType2: null,
-              sellingDate: null,
-            }
-          : previous,
-      );
+     setOrder((previous) =>
+  previous
+    ? {
+        ...previous,
+        stock: 1,
+        methodType2: null,
+        sellingDate: null,
+      }
+    : previous,
+);
 
       setRestorePasswordDialog(false);
 setRestorePassword("");
@@ -462,20 +499,25 @@ const handleUpdateStockBox = async () => {
   await api.put(
     `/admin/stock-box/update-count-weight/${editBox.stockBoxId}`,
     {
-        stockBoxName: editStockBoxName,
-      totalStockBoxCount: Number(editCount),
-      totalStockBoxWeight: Number(editWeight),
-    },
+  stockBoxName: editStockBoxName,
+  totalStockBoxCount: Number(editCount),
+  totalStockBoxWeight: Number(editWeight),
+  password: verifiedEditPassword,
+},
     {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     }
   );
 
   setEditBox(null);
-  fetchStockBoxes();
+setVerifiedEditPassword("");
+await fetchStockBoxes();
 };
 
-const handleDeleteStockBox = async (box: StockDataBox) => {
+const handleDeleteStockBox = async (
+  box: StockDataBox,
+  password: string
+) => {
   const hasData = box.stockBoxData && box.stockBoxData.length > 0;
 
   if (hasData) {
@@ -492,9 +534,18 @@ const confirmDelete = window.confirm(
 
 if (!confirmDelete) return;
 
-  await api.delete(`/admin/stock-box/delete/${box.stockBoxId}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-  });
+ await api.delete(
+  `/admin/stock-box/delete/${box.stockBoxId}`,
+  {
+    headers: token
+      ? { Authorization: `Bearer ${token}` }
+      : undefined,
+
+    data: {
+      password: password,
+    },
+  }
+);
 
   fetchStockBoxes();
 };
@@ -941,10 +992,7 @@ if (!confirmDelete) return;
     </span>
   </p>
 )}
-{isAdmin &&
-  order.methodType2
-    ?.trim()
-    .toUpperCase() === "SELL" && (
+{isAdmin && Number(order.stock ?? 0) <= 0 && (
 
   <div className="mt-5">
 

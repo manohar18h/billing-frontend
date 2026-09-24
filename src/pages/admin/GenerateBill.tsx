@@ -1138,6 +1138,22 @@ const offerCouponDiscount = React.useMemo(() => {
 
   if (!bill) return <p className="p-6">Loading Bill Summary...</p>;
 
+const formatWeight = (value: number | string | null | undefined) => {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  const num = Number(value);
+
+  if (Number.isNaN(num)) {
+    return "-";
+  }
+
+  return Number(num.toFixed(3)).toString();
+};
+
+
+
   return (
     <div className="bg-white px-2 py-4 pb-24 text-black md:p-6">
       {/* PRINT CSS */}
@@ -1680,10 +1696,10 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                     {item.metalPrice || "-"}
                   </td>
                   <td className="border text-[#070065] font-bold text-center align-middle">
-                    {item.gross_weight ?? "-"}
+                    {formatWeight(item.gross_weight)}
                   </td>
                   <td className="border text-[#00457d] font-bold text-center align-middle">
-                    {item.metal_weight ?? "-"}
+                    {formatWeight(item.metal_weight)}
                   </td>
                   {activeWeightKeys.map((key) => {
                     const showWeightColumn =
@@ -1699,7 +1715,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                       <React.Fragment key={key}>
                         {showWeightColumn && (
                           <td className="border text-[#1f1f1f] font-bold text-center align-middle">
-                            {weightValue > 0 ? weightValue : "-"}
+                            {weightValue > 0 ? formatWeight(weightValue) : "-"}
                           </td>
                         )}
 
@@ -1755,11 +1771,11 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                       </td>
 
                       <td className="border text-[#070065] font-bold text-center align-middle">
-                        {ex.exchange_metal_weight}
+                        {formatWeight(ex.exchange_metal_weight)}
                       </td>
 
                       <td className="border text-[#00457d] font-bold text-center align-middle">
-                        {ex.exchange_purity_weight}
+                        {formatWeight(ex.exchange_purity_weight)}
                       </td>
 
                     {/* Dynamic dash cells */}

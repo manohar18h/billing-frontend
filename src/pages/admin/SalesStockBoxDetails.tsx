@@ -1,5 +1,5 @@
 // src/pages/admin/StockBoxDetails.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/services/api";
 
@@ -41,12 +41,30 @@ const basePath = role === "ADMIN" ? "/admin" : "/sales";
   const stored = localStorage.getItem("selectedStockBox");
   const stockBox: StockDataBox | null = stored ? JSON.parse(stored) : null;
 
+const [transferSelectedIds, setTransferSelectedIds] =
+  useState<number[]>([]);
 
-const secreat_code = "HambireJ@1977";
 
 const [passwordDialog, setPasswordDialog] = useState(false);
 const [passwordInput, setPasswordInput] = useState("");
 const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+const [allStockBoxes, setAllStockBoxes] = useState<StockDataBox[]>([]);
+
+const [transferDialog, setTransferDialog] = useState(false);
+
+const [transferMode, setTransferMode] = useState<
+  "selected" | "all"
+>("selected");
+
+const [destinationBoxId, setDestinationBoxId] =
+  useState<number | "">("");
+
+const [transferPassword, setTransferPassword] =
+  useState("");
+
+const [transferring, setTransferring] =
+  useState(false);
 
 const [checkValues, setCheckValues] = useState<
   Record<number, { checked: boolean; description: string }>
@@ -57,19 +75,6 @@ const [savingId, setSavingId] = useState<number | null>(null);
 
 
 
-
-
-const verifyPasswordAndDelete = async () => {
-  if (passwordInput !== secreat_code) {
-    alert("Incorrect Password");
-    return;
-  }
-
-  setPasswordDialog(false);
-  setPasswordInput("");
-
-  await handleBulkDelete();
-};
 
   if (!stockBox) {
     return (
@@ -110,7 +115,7 @@ const handleSelectAllSell = () => {
   setSelectedIds(sellIds);
 };
 
-const handleBulkDelete = async () => {
+const handleBulkDelete = async (  password: string) => {
   if (selectedIds.length === 0) {
     alert("Please select at least one row");
     return;
@@ -123,10 +128,13 @@ const handleBulkDelete = async () => {
   if (!confirmDelete) return;
 
   try {
-   await api.request({
+  await api.request({
   method: "DELETE",
-  url: `${basePath}/stock-box-data/delete`,
-  data: selectedIds,
+  url: "/admin/stock-box-data/delete",
+  data: {
+    stockBoxDataIds: selectedIds,
+    password: password,
+  },
   headers: token
     ? { Authorization: `Bearer ${token}` }
     : undefined,
@@ -155,6 +163,27 @@ const handleBulkDelete = async () => {
     alert("Delete Failed");
   }
 };
+
+const handleTransferCheckOne = (
+  entry: StockBoxDataEntry
+) => {
+
+  if (!isTransferableEntry(entry)) {
+    return;
+  }
+
+  setTransferSelectedIds((prev) =>
+    prev.includes(entry.stockBoxDataId)
+      ? prev.filter(
+          (id) => id !== entry.stockBoxDataId
+        )
+      : [
+          ...prev,
+          entry.stockBoxDataId
+        ]
+  );
+};
+
 
 const getRowValues = (entry: StockBoxDataEntry) => {
   return (
@@ -195,6 +224,58 @@ const handleDescriptionChange = (
   }));
 };
 
+
+useEffect(() => {
+
+  if (!isAdmin) return;
+
+  const fetchAllStockBoxes = async () => {
+
+    try {
+
+      const response = await api.get<StockDataBox[]>(
+        "/admin/getALlStockBox",
+        {
+          headers: token
+            ? { Authorization: `Bearer ${token}` }
+            : undefined,
+        }
+      );
+
+      setAllStockBoxes(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Failed to load stock boxes:",
+        error
+      );
+
+    }
+  };
+
+  fetchAllStockBoxes();
+
+}, [isAdmin, token]);
+
+const isTransferableEntry = (
+  entry: StockBoxDataEntry
+) => {
+
+  return (
+    entry.methodType2?.trim().toUpperCase()
+    !== "SELL"
+  );
+};
+
+const transferableEntries =
+  stockBox.stockBoxData.filter(
+    isTransferableEntry
+  );
 const handleSaveCheck = async (entry: StockBoxDataEntry) => {
   const values = getRowValues(entry);
 
@@ -243,6 +324,305 @@ window.location.reload();
     setSavingId(null);
   }
 };
+
+
+const transferIds =
+  transferMode === "all"
+    ? transferableEntries.map(
+        (entry) => entry.stockBoxDataId
+      )
+    : transferSelectedIds;
+
+
+const transferEntries =
+  transferableEntries.filter((entry) =>
+    transferIds.includes(
+      entry.stockBoxDataId
+    )
+  );
+
+
+const transferCount =
+  transferEntries.reduce(
+    (sum, entry) =>
+      sum + Number(entry.pieces || 0),
+    0
+  );
+
+
+const transferWeight =
+  transferEntries.reduce(
+    (sum, entry) =>
+      sum +
+      (
+        Number(entry.metalWeight || 0) *
+        Number(entry.pieces || 0)
+      ),
+    0
+  );
+
+  const handleTransfer = async () => {
+
+  if (!stockBox) return;
+
+
+  if (!destinationBoxId) {
+
+    alert(
+      "Please select destination stock box."
+    );
+
+    return;
+  }
+
+
+  if (
+    Number(destinationBoxId) ===
+    stockBox.stockBoxId
+  ) {
+
+    alert(
+      "Source and destination stock boxes cannot be the same."
+    );
+
+    return;
+  }
+
+
+  if (transferIds.length === 0) {
+
+    alert(
+      "No stock items selected for transfer."
+    );
+
+    return;
+  }
+
+
+  if (!transferPassword.trim()) {
+
+    alert(
+      "Please enter admin password."
+    );
+
+    return;
+  }
+
+
+  const destination =
+    allStockBoxes.find(
+      (box) =>
+        box.stockBoxId ===
+        Number(destinationBoxId)
+    );
+
+
+  const confirmed =
+    window.confirm(
+      `Confirm Stock Transfer\n\n` +
+
+      `FROM: ${stockBox.stockBoxName}\n` +
+
+      `TO: ${
+        destination?.stockBoxName ||
+        "Selected Box"
+      }\n\n` +
+
+      `Items: ${transferCount}\n` +
+
+      `Weight: ${transferWeight.toFixed(3)}\n\n` +
+
+      (
+        transferMode === "all"
+          ? "All available items will be transferred."
+          : `${transferIds.length} selected row(s) will be transferred.`
+      ) +
+
+      `\n\nDo you want to continue?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  try {
+
+    setTransferring(true);
+
+
+    const response = await api.post<{
+      success: boolean;
+      message: string;
+    }>(
+      "/admin/stock-box/transfer",
+      {
+        sourceStockBoxId:
+          stockBox.stockBoxId,
+
+        destinationStockBoxId:
+          Number(destinationBoxId),
+
+        stockBoxDataIds:
+          transferIds,
+
+        password:
+          transferPassword,
+      },
+      {
+        headers: token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : undefined,
+      }
+    );
+
+
+    alert(
+      response.data?.message ||
+      "Stock transferred successfully."
+    );
+
+
+    setTransferDialog(false);
+    setTransferPassword("");
+    setDestinationBoxId("");
+    setTransferSelectedIds([]);
+
+
+    /*
+     * Reload source box.
+     *
+     * If backend deleted the source box,
+     * this GET may return 404.
+     */
+    try {
+
+      const updatedResponse =
+        await api.get<StockDataBox>(
+          `/admin/stock-box/${stockBox.stockBoxId}`,
+          {
+            headers: token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`,
+                }
+              : undefined,
+          }
+        );
+
+
+      localStorage.setItem(
+        "selectedStockBox",
+        JSON.stringify(
+          updatedResponse.data
+        )
+      );
+
+
+      window.location.reload();
+
+
+    } catch {
+
+      /*
+       * Source box was probably deleted because
+       * all available stock was transferred.
+       */
+
+      localStorage.removeItem(
+        "selectedStockBox"
+      );
+
+      navigate("/admin/sales");
+
+    }
+
+
+  } catch (error: any) {
+
+    console.error(
+      "Stock transfer failed:",
+      error
+    );
+
+
+    const message =
+      error.response?.data?.message ||
+      "Stock transfer failed.";
+
+
+    alert(message);
+
+
+  } finally {
+
+    setTransferring(false);
+
+  }
+};
+
+
+
+const verifyPasswordAndDelete = async () => {
+
+  if (!passwordInput.trim()) {
+
+    alert(
+      "Please enter admin password."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    await api.post(
+      "/admin/verify-admin-action-password",
+      {
+        password: passwordInput,
+      },
+      {
+        headers: token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : undefined,
+      }
+    );
+
+
+    setPasswordDialog(false);
+
+    const verifiedPassword =
+      passwordInput;
+
+    setPasswordInput("");
+
+
+    await handleBulkDelete(
+      verifiedPassword
+    );
+
+
+  } catch (error: any) {
+
+    const message =
+      error.response?.data?.message ||
+      "Incorrect admin password.";
+
+    alert(message);
+
+  }
+};
+
+
+
 
   return (
 <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
@@ -302,6 +682,57 @@ window.location.reload();
   </div>
 )}
 
+{isAdmin && (
+  <div className="flex flex-wrap gap-3 mb-4">
+
+    {/* TRANSFER SELECTED */}
+    <button
+      type="button"
+      onClick={() => {
+        if (transferSelectedIds.length === 0) {
+          alert(
+            "Please select at least one available item to transfer."
+          );
+          return;
+        }
+
+        setTransferMode("selected");
+        setDestinationBoxId("");
+        setTransferPassword("");
+        setTransferDialog(true);
+      }}
+      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+    >
+      ⇄ Transfer Selected
+    </button>
+
+    {/* TRANSFER ENTIRE BOX */}
+    <button
+      type="button"
+      onClick={() => {
+        if (transferableEntries.length === 0) {
+          alert(
+            "No available items exist in this stock box."
+          );
+          return;
+        }
+
+        setTransferMode("all");
+        setDestinationBoxId("");
+        setTransferPassword("");
+        setTransferDialog(true);
+      }}
+      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+    >
+      ⇄ Transfer Entire Box
+    </button>
+
+  </div>
+)}
+
+
+
+
        {stockBox.stockBoxData && stockBox.stockBoxData.length > 0 ? (
   <>
     {/* Mobile card view */}
@@ -319,14 +750,19 @@ window.location.reload();
               </div>
             </div>
 
-            {isAdmin && (
-              <input
-                type="checkbox"
-                checked={selectedIds.includes(entry.stockBoxDataId)}
-                onChange={() => handleCheckOne(entry.stockBoxDataId)}
-                className="h-5 w-5"
-              />
-            )}
+           {isAdmin && (
+  <input
+    type="checkbox"
+    checked={selectedIds.includes(entry.stockBoxDataId)}
+    disabled={
+      entry.methodType2?.trim().toUpperCase() !== "SELL"
+    }
+    onChange={() =>
+      handleCheckOne(entry.stockBoxDataId)
+    }
+    className="h-5 w-5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
+  />
+)}
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
@@ -444,7 +880,6 @@ window.location.reload();
     
 
     {/* Desktop table view */}
-    {/* Desktop table view */}
 <div className="hidden w-full overflow-x-auto md:block">
   <table className="w-full table-auto border-collapse border border-gray-300 rounded-xl overflow-hidden text-sm">
 
@@ -512,6 +947,11 @@ window.location.reload();
 {isAdmin && (
   <th className="border px-3 py-2 text-center">
     Select
+  </th>
+)}
+{isAdmin && (
+  <th className="border px-3 py-2 text-center">
+    Transfer
   </th>
 )}
 
@@ -643,20 +1083,57 @@ window.location.reload();
 )}
 
 {/* ADMIN ONLY - Select for Delete */}
+{/* ADMIN ONLY - Select SOLD row for Delete */}
 {isAdmin && (
   <td className="border px-3 py-2 text-center">
     <input
       type="checkbox"
-      checked={selectedIds.includes(
-        entry.stockBoxDataId
-      )}
+      checked={selectedIds.includes(entry.stockBoxDataId)}
+      disabled={
+        entry.methodType2?.trim().toUpperCase() !== "SELL"
+      }
       onChange={() =>
         handleCheckOne(entry.stockBoxDataId)
       }
-      className="w-4 h-4 cursor-pointer"
+      className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
     />
   </td>
 )}
+
+
+{isAdmin && (
+  <td className="border px-3 py-2 text-center">
+
+    {isTransferableEntry(entry) ? (
+
+      <input
+        type="checkbox"
+        checked={transferSelectedIds.includes(
+          entry.stockBoxDataId
+        )}
+        onChange={() =>
+          handleTransferCheckOne(entry)
+        }
+        className="
+          w-4
+          h-4
+          cursor-pointer
+          accent-blue-600
+        "
+      />
+
+    ) : (
+
+      <span className="text-xs font-bold text-red-500">
+        SOLD
+      </span>
+
+    )}
+
+  </td>
+)}
+
+
 
         </tr>
       ))}
@@ -704,6 +1181,339 @@ window.location.reload();
     </div>
   </div>
 )}
+
+{transferDialog && (
+
+  <div className="
+    fixed
+    inset-0
+    z-50
+    flex
+    items-center
+    justify-center
+    bg-black/50
+    p-4
+  ">
+
+    <div className="
+      w-full
+      max-w-lg
+      rounded-2xl
+      bg-white
+      p-6
+      shadow-2xl
+    ">
+
+      <h2 className="
+        mb-1
+        text-xl
+        font-bold
+        text-purple-700
+      ">
+        Transfer Stock
+      </h2>
+
+
+      <p className="mb-5 text-sm text-gray-500">
+        Move stock items to another existing stock box.
+      </p>
+
+
+      {/* SOURCE */}
+
+      <div className="
+        mb-4
+        rounded-xl
+        bg-purple-50
+        p-4
+      ">
+
+        <div className="text-xs text-gray-500">
+          From Stock Box
+        </div>
+
+        <div className="
+          text-lg
+          font-bold
+          text-purple-700
+        ">
+          {stockBox.stockBoxName}
+        </div>
+
+      </div>
+
+
+      {/* MODE */}
+
+      <div className="mb-4">
+
+        <div className="
+          mb-1
+          text-sm
+          font-semibold
+          text-gray-600
+        ">
+          Transfer Type
+        </div>
+
+        <div className="
+          rounded-lg
+          border
+          bg-gray-50
+          px-3
+          py-2
+          font-semibold
+        ">
+
+          {transferMode === "all"
+            ? "Entire Box"
+            : "Selected Items"}
+
+        </div>
+
+      </div>
+
+
+      {/* SUMMARY */}
+
+      <div className="
+        mb-4
+        grid
+        grid-cols-2
+        gap-3
+      ">
+
+        <div className="
+          rounded-xl
+          bg-blue-50
+          p-3
+        ">
+
+          <div className="
+            text-xs
+            text-gray-500
+          ">
+            Transfer Count
+          </div>
+
+          <div className="
+            text-lg
+            font-bold
+            text-blue-700
+          ">
+            {transferCount}
+          </div>
+
+        </div>
+
+
+        <div className="
+          rounded-xl
+          bg-blue-50
+          p-3
+        ">
+
+          <div className="
+            text-xs
+            text-gray-500
+          ">
+            Transfer Weight
+          </div>
+
+          <div className="
+            text-lg
+            font-bold
+            text-blue-700
+          ">
+            {transferWeight.toFixed(3)}
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* DESTINATION */}
+
+      <label className="
+        mb-1
+        block
+        text-sm
+        font-semibold
+        text-gray-700
+      ">
+        Move To
+      </label>
+
+
+      <select
+        value={destinationBoxId}
+        onChange={(e) =>
+          setDestinationBoxId(
+            e.target.value
+              ? Number(e.target.value)
+              : ""
+          )
+        }
+        className="
+          mb-4
+          w-full
+          rounded-lg
+          border
+          border-gray-300
+          px-3
+          py-2
+        "
+      >
+
+        <option value="">
+          Select Destination Stock Box
+        </option>
+
+
+        {allStockBoxes
+          .filter(
+            (box) =>
+              box.stockBoxId !==
+              stockBox.stockBoxId
+          )
+          .map((box) => (
+
+            <option
+              key={box.stockBoxId}
+              value={box.stockBoxId}
+            >
+              {box.stockBoxName}
+              {" — "}
+              {box.totalStockBoxCount} items
+              {" — "}
+              {Number(
+                box.totalStockBoxWeight || 0
+              ).toFixed(3)} wt
+            </option>
+
+          ))}
+
+      </select>
+
+
+      {/* PASSWORD */}
+
+      <label className="
+        mb-1
+        block
+        text-sm
+        font-semibold
+        text-gray-700
+      ">
+        Admin Password
+      </label>
+
+
+      <input
+        type="password"
+        value={transferPassword}
+        onChange={(e) =>
+          setTransferPassword(
+            e.target.value
+          )
+        }
+        placeholder="Enter admin password"
+        className="
+          mb-5
+          w-full
+          rounded-lg
+          border
+          border-gray-300
+          px-3
+          py-2
+        "
+      />
+
+
+      {transferMode === "all" && (
+
+        <div className="
+          mb-5
+          rounded-xl
+          bg-yellow-50
+          p-3
+          text-sm
+          font-semibold
+          text-yellow-800
+        ">
+
+          All available items will be moved.
+
+          If no available stock remains in this box,
+          the backend will delete the empty source box.
+
+          If StockProducts still contains available
+          stock for this box, the source box will be
+          kept for safety.
+
+        </div>
+
+      )}
+
+
+      <div className="
+        flex
+        justify-end
+        gap-3
+      ">
+
+        <button
+          type="button"
+          disabled={transferring}
+          onClick={() => {
+
+            setTransferDialog(false);
+            setTransferPassword("");
+            setDestinationBoxId("");
+
+          }}
+          className="
+            rounded-lg
+            border
+            px-4
+            py-2
+          "
+        >
+          Cancel
+        </button>
+
+
+        <button
+          type="button"
+          disabled={transferring}
+          onClick={handleTransfer}
+          className="
+            rounded-lg
+            bg-blue-600
+            px-5
+            py-2
+            font-bold
+            text-white
+            hover:bg-blue-700
+            disabled:opacity-50
+          "
+        >
+
+          {transferring
+            ? "Transferring..."
+            : "Transfer"}
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
+
 
     </div>
     
