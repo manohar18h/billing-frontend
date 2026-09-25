@@ -158,10 +158,20 @@ const handleBulkDelete = async (  password: string) => {
 
     setSelectedIds([]);
     window.location.reload();
-  } catch (error) {
-    console.error(error);
-    alert("Delete Failed");
-  }
+  } catch (error: any) {
+  console.error("Delete failed:", error);
+  console.error("Backend response:", error.response?.data);
+
+  const message =
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    (typeof error.response?.data === "string"
+      ? error.response.data
+      : null) ||
+    "Delete Failed";
+
+  alert(message);
+}
 };
 
 const handleTransferCheckOne = (
