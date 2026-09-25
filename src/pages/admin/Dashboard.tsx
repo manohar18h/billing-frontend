@@ -1758,17 +1758,14 @@ const TaggingWorkTable: React.FC = () => {
     try {
       setDeleting(true);
 
-      await api.delete(
-        `/admin/tagging-work/${deleteRow.taggingWorkId}`,
-        {
-          headers: authHeaders,
-
-          data: {
-            adminPassword:
-              deletePassword,
-          },
-        },
-      );
+     await api.request({
+  method: "DELETE",
+  url: `/admin/tagging-work/${deleteRow.taggingWorkId}`,
+  headers: authHeaders,
+  data: {
+    adminPassword: deletePassword,
+  },
+});
 
       closeDelete();
 
