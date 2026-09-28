@@ -608,42 +608,55 @@ setVerifiedEditPassword("");
 await fetchStockBoxes();
 };
 
+
 const handleDeleteStockBox = async (
   box: StockDataBox,
   password: string
 ) => {
-  const hasData = box.stockBoxData && box.stockBoxData.length > 0;
+  const hasData =
+    box.stockBoxData && box.stockBoxData.length > 0;
 
   if (hasData) {
     alert("Cannot delete. This stock box contains data.");
     return;
   }
 
-const confirmDelete = window.confirm(
-  `Are you sure want to delete?\n\n` +
-  `Stock Box Name: ${box.stockBoxName}\n` +
-  `Total Count: ${box.totalStockBoxCount}\n` +
-  `Total Weight: ${Number(box.totalStockBoxWeight || 0).toFixed(3)}`
-);
+  const confirmDelete = window.confirm(
+    `Are you sure want to delete?\n\n` +
+      `Stock Box Name: ${box.stockBoxName}\n` +
+      `Total Count: ${box.totalStockBoxCount}\n` +
+      `Total Weight: ${Number(
+        box.totalStockBoxWeight || 0
+      ).toFixed(3)}`
+  );
 
-if (!confirmDelete) return;
+  if (!confirmDelete) return;
 
-await api.delete(
-  `/admin/stock-box/delete/${box.stockBoxId}`,
-  {
-    headers: token
-      ? { Authorization: `Bearer ${token}` }
-      : undefined,
+  try {
+    await api.delete(
+      `/admin/stock-box/delete/${box.stockBoxId}?password=${encodeURIComponent(
+        password
+      )}`,
+      {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined,
+      }
+    );
 
-    data: {
-      password: password,
-    },
+    await fetchStockBoxes();
+
+  } catch (error: any) {
+    console.error("Failed to delete stock box:", error);
+
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      "Failed to delete stock box.";
+
+    alert(message);
   }
-);
-
-  fetchStockBoxes();
 };
-
 
 
  // ======================================================
