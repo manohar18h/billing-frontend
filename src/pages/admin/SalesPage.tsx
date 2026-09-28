@@ -72,6 +72,33 @@ type StockBoxDataEntry = {
   methodType: string;
   metalWeight: number;
   date: string;
+
+  methodType2?: string;
+  sellingDate?: string;
+
+  checked?: boolean;
+  description?: string;
+  checkedAt?: string;
+  checkedBy?: string;
+};
+
+type StockBoxCheckHistory = {
+  stockBoxCheckHistoryId: number;
+  stockBoxId: number;
+  stockBoxName: string;
+
+  expectedCount: number;
+  actualCount: number;
+  missingCount: number;
+
+  expectedWeight: number;
+  actualWeight: number;
+  weightDifference: number;
+
+  description?: string;
+  checkedBy?: string;
+  checkedAt?: string;
+  checkStatus?: string;
 };
 
 type StockDataBox = {
@@ -79,9 +106,24 @@ type StockDataBox = {
   stockBoxName: string;
   totalStockBoxCount: number;
   totalStockBoxWeight: number;
+
   description?: string;
   checked?: boolean;
+
   stockBoxData: StockBoxDataEntry[];
+
+  latestCheck?: StockBoxCheckHistory | null;
+  todaySoldCount?: number;
+  todaySoldWeight?: number;
+};
+
+type StockBoxInventorySummary = {
+  stockBoxId: number;
+
+  latestCheck?: StockBoxCheckHistory | null;
+
+  todaySoldCount: number;
+  todaySoldWeight: number;
 };
 
 
@@ -119,9 +161,10 @@ const [selectedDescBox, setSelectedDescBox] = useState<StockDataBox | null>(null
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const navigate = useNavigate();
-  const [search, setSearch] = useState<string>(""); // 👈 search state
-
-
+ const [showroom1Search, setShowroom1Search] = useState<string>("");
+const [showroom2Search, setShowroom2Search] = useState<string>("");
+const [selectedShowroom, setSelectedShowroom] =
+  useState<1 | 2 | null>(null);
 const [editBox, setEditBox] = useState<StockDataBox | null>(null);
 const [editCount, setEditCount] = useState("");
 const [editWeight, setEditWeight] = useState("");
@@ -130,7 +173,8 @@ const [editStockBoxName, setEditStockBoxName] = useState("");
 const [verifiedEditPassword, setVerifiedEditPassword] =
   useState("");
 
-
+const [inventorySummary, setInventorySummary] =
+  useState<Record<number, StockBoxInventorySummary>>({});
 const [passwordDialog, setPasswordDialog] = useState(false);
 const [passwordInput, setPasswordInput] = useState("");
 const [pendingAction, setPendingAction] = useState<{
@@ -218,6 +262,30 @@ const verifyPasswordAndProceed = async () => {
     alert(message);
   }
 };
+
+const fetchInventorySummary = async () => {
+  try {
+    const response = await api.get<StockBoxInventorySummary[]>(
+      `${basePath}/stock-box/inventory-summary`,
+      {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined,
+      }
+    );
+
+    const summaryMap: Record<number, StockBoxInventorySummary> = {};
+
+    (response.data || []).forEach((item) => {
+      summaryMap[item.stockBoxId] = item;
+    });
+
+    setInventorySummary(summaryMap);
+  } catch (error) {
+    console.error("Failed to load inventory summary:", error);
+  }
+};
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -231,6 +299,7 @@ const verifyPasswordAndProceed = async () => {
         );
         if (!alive) return;
         setRows(Array.isArray(data) ? data : []);
+        await fetchInventorySummary();
       } catch (e) {
         if (!alive) return;
         console.error("Failed to fetch all StockBox Data:", e);
@@ -360,22 +429,43 @@ await fetchStockBoxes();
   fetchStockBoxes();
 };
 
-const handleClearSelected = async () => {
-  const checkedRows = rows.filter((x) => x.checked === true);
+const handleClearSelected = async (showroom: 1 | 2) => {
+  const checkedRows = rows.filter((box) => {
+    if (box.checked !== true) {
+      return false;
+    }
 
-  await Promise.all(
-    checkedRows.map((box) =>
-      api.put(
-        `${basePath}/stock-box/update-checked/${box.stockBoxId}`,
-        { checked: false },
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        }
-      )
-    )
-  );
+    const belongsToShowroom2 = isShowroom2Box(box.stockBoxName);
 
-  fetchStockBoxes();
+    return showroom === 2
+      ? belongsToShowroom2
+      : !belongsToShowroom2;
+  });
+
+  if (checkedRows.length === 0) {
+    return;
+  }
+
+  try {
+    await Promise.all(
+      checkedRows.map((box) =>
+        api.put(
+          `${basePath}/stock-box/update-checked/${box.stockBoxId}`,
+          { checked: false },
+          {
+            headers: token
+              ? { Authorization: `Bearer ${token}` }
+              : undefined,
+          },
+        ),
+      ),
+    );
+
+    await fetchStockBoxes();
+  } catch (error) {
+    console.error("Failed to clear selected stock boxes:", error);
+    alert("Failed to clear selected stock boxes.");
+  }
 };
 
 const handleSaveDescription = async () => {
@@ -477,6 +567,7 @@ setShowEstimation(false);
     });
 
     setRows(Array.isArray(data) ? data : []);
+    await fetchInventorySummary();
   } catch (e) {
     console.error("Failed to fetch all StockBox Data:", e);
     setErr("Failed to load all StockBox Data.");
@@ -484,6 +575,9 @@ setShowEstimation(false);
     setLoading(false);
   }
 };
+
+
+
 
 const handleOpenEdit = (box: StockDataBox) => {
   setEditBox(box);
@@ -534,15 +628,16 @@ const confirmDelete = window.confirm(
 
 if (!confirmDelete) return;
 
-await api.post(
+await api.delete(
   `/admin/stock-box/delete/${box.stockBoxId}`,
-  {
-    password: password,
-  },
   {
     headers: token
       ? { Authorization: `Bearer ${token}` }
       : undefined,
+
+    data: {
+      password: password,
+    },
   }
 );
 
@@ -551,13 +646,53 @@ await api.post(
 
 
 
-  // 👇 Filter rows by stockBoxName
-  const filteredRows = useMemo(() => {
-    if (!search.trim()) return rows;
-    return rows.filter((box) =>
-      box.stockBoxName.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [rows, search]);
+ // ======================================================
+// SPLIT STOCK BOXES INTO 1# SHOWROOM AND 2# SHOWROOM
+// ======================================================
+
+const isShowroom2Box = (stockBoxName?: string) => {
+  const name = (stockBoxName || "").trim();
+
+  return name.startsWith("2");
+};
+
+const showroom1Rows = useMemo(() => {
+  const query = showroom1Search.trim().toLowerCase();
+
+  return rows.filter((box) => {
+    const name = (box.stockBoxName || "").trim();
+
+    // Exclude Showroom 2 stock boxes
+    if (isShowroom2Box(name)) {
+      return false;
+    }
+
+    if (!query) {
+      return true;
+    }
+
+    return name.toLowerCase().includes(query);
+  });
+}, [rows, showroom1Search]);
+
+const showroom2Rows = useMemo(() => {
+  const query = showroom2Search.trim().toLowerCase();
+
+  return rows.filter((box) => {
+    const name = (box.stockBoxName || "").trim();
+
+    // Only Showroom 2 stock boxes
+    if (!isShowroom2Box(name)) {
+      return false;
+    }
+
+    if (!query) {
+      return true;
+    }
+
+    return name.toLowerCase().includes(query);
+  });
+}, [rows, showroom2Search]);
 
 
   useEffect(() => {
@@ -662,6 +797,601 @@ await api.post(
     }
   };
 }, [qrScannerOpen]);
+
+const renderStockBoxData = (displayRows: StockDataBox[]) => {
+  if (displayRows.length === 0) {
+    return (
+      <p className="py-6 text-center text-gray-500">
+        No stock boxes found.
+      </p>
+    );
+  }
+
+const sortedDisplayRows = [...displayRows].sort((a, b) => {
+  const aSummary = inventorySummary[a.stockBoxId];
+  const bSummary = inventorySummary[b.stockBoxId];
+
+  const aLatest = aSummary?.latestCheck;
+  const bLatest = bSummary?.latestCheck;
+
+  // =====================================================
+  // PRIORITY 1: INVENTORY PROBLEMS
+  // =====================================================
+
+  const aProblem =
+    !!aLatest &&
+    aLatest.checkStatus !== "ALL_GOOD";
+
+  const bProblem =
+    !!bLatest &&
+    bLatest.checkStatus !== "ALL_GOOD";
+
+  if (aProblem && !bProblem) {
+    return -1;
+  }
+
+  if (bProblem && !aProblem) {
+    return 1;
+  }
+
+  // If both have problems, boxes with missing pieces first
+  if (aProblem && bProblem) {
+    const aMissing = Number(aLatest?.missingCount || 0);
+    const bMissing = Number(bLatest?.missingCount || 0);
+
+    if (aMissing !== bMissing) {
+      return bMissing - aMissing;
+    }
+  }
+
+  // =====================================================
+  // PRIORITY 2: TODAY'S SOLD
+  // =====================================================
+
+  const aSold = Number(aSummary?.todaySoldCount || 0);
+  const bSold = Number(bSummary?.todaySoldCount || 0);
+
+  if (aSold > 0 && bSold === 0) {
+    return -1;
+  }
+
+  if (bSold > 0 && aSold === 0) {
+    return 1;
+  }
+
+  if (
+    aSold > 0 &&
+    bSold > 0 &&
+    aSold !== bSold
+  ) {
+    return bSold - aSold;
+  }
+
+  // =====================================================
+  // PRIORITY 3: MOST RECENT INVENTORY CHECK
+  // =====================================================
+
+  const aTime =
+    aLatest?.checkedAt
+      ? new Date(aLatest.checkedAt).getTime()
+      : 0;
+
+  const bTime =
+    bLatest?.checkedAt
+      ? new Date(bLatest.checkedAt).getTime()
+      : 0;
+
+  if (aTime !== bTime) {
+    return bTime - aTime;
+  }
+
+  // =====================================================
+  // PRIORITY 4: NORMAL / NEVER CHECKED
+  // =====================================================
+
+  return a.stockBoxId - b.stockBoxId;
+});
+
+  return (
+    <div className="mt-4">
+
+      {/* ================= MOBILE VIEW ================= */}
+      <div className="space-y-3 md:hidden">
+        {sortedDisplayRows.map((box) => {
+          const summary = inventorySummary[box.stockBoxId];
+          const latest = summary?.latestCheck;
+
+          return (
+            <div
+              key={box.stockBoxId}
+              className="rounded-2xl border border-gray-100 bg-[#fffaf0] p-4 shadow-sm"
+            >
+              {/* Stock Box Name + Checkbox */}
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs text-gray-500">
+                    Stock Box
+                  </div>
+
+                  <div className="font-bold text-blue-700">
+                    {box.stockBoxName}
+                  </div>
+                </div>
+
+                <input
+                  type="checkbox"
+                  checked={box.checked === true}
+                  onChange={(e) =>
+                    handleUpdateChecked(box, e.target.checked)
+                  }
+                  className="h-5 w-5"
+                />
+              </div>
+
+              {/* Count + Weight */}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-white p-2">
+                  <div className="text-[11px] text-gray-500">
+                    Count
+                  </div>
+
+                  <div className="text-sm font-bold">
+                    {box.totalStockBoxCount}
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-white p-2">
+                  <div className="text-[11px] text-gray-500">
+                    Weight
+                  </div>
+
+                  <div className="text-sm font-bold text-[#e38111]">
+                    {Number(
+                      box.totalStockBoxWeight || 0
+                    ).toFixed(3)}{" "}
+                    g
+                  </div>
+                </div>
+              </div>
+
+              {/* Last Inventory Check */}
+              <div className="mt-3 rounded-xl bg-purple-50 p-3">
+                <div className="text-[11px] font-bold text-purple-700">
+                  LAST INVENTORY CHECK
+                </div>
+
+              {latest ? (
+  <>
+    <div
+      className={`mt-1 font-bold ${
+        latest.checkStatus === "ALL_GOOD"
+          ? "text-green-600"
+          : latest.checkStatus ===
+            "WEIGHT_ISSUE"
+          ? "text-orange-600"
+          : "text-red-600"
+      }`}
+    >
+      {latest.checkStatus === "ALL_GOOD"
+        ? "✓ All Good"
+        : latest.checkStatus ===
+          "PIECES_ISSUE"
+        ? "⚠ Pieces Issue"
+        : latest.checkStatus ===
+          "WEIGHT_ISSUE"
+        ? "⚠ Weight Issue"
+        : "⚠ Pieces & Weight Issue"}
+    </div>
+
+    {Number(latest.missingCount || 0) > 0 && (
+      <div className="text-xs text-red-600">
+        Missing: {latest.missingCount}
+      </div>
+    )}
+
+    {Math.abs(
+      Number(
+        latest.weightDifference || 0
+      )
+    ) >= 0.001 && (
+      <div className="text-xs text-orange-600">
+        Weight Diff:{" "}
+        {Number(
+          latest.weightDifference
+        ).toFixed(3)}{" "}
+        g
+      </div>
+    )}
+
+    {latest.description && (
+      <div className="mt-1 text-xs">
+        Note: {latest.description}
+      </div>
+    )}
+
+    <div className="mt-1 text-[11px] text-gray-500">
+      {latest.checkedAt
+        ? new Date(
+            latest.checkedAt
+          ).toLocaleString("en-IN")
+        : ""}
+    </div>
+  </>
+) : (
+  <div className="mt-1 text-xs text-gray-400">
+    Not Checked
+  </div>
+)}
+              </div>
+
+              {/* Today's Sold */}
+              <div className="mt-2 rounded-xl bg-red-50 p-3">
+                <div className="text-[11px] font-bold text-red-700">
+                  TODAY SOLD
+                </div>
+
+                {Number(summary?.todaySoldCount || 0) > 0 ? (
+                  <>
+                    <div className="mt-1 text-sm font-bold text-red-600">
+                      {summary?.todaySoldCount} Sold
+                    </div>
+
+                    <div className="text-xs text-gray-700">
+                      Weight:{" "}
+                      {Number(
+                        summary?.todaySoldWeight || 0
+                      ).toFixed(3)}{" "}
+                      g
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-1 text-xs text-gray-400">
+                    No sales today
+                  </div>
+                )}
+              </div>
+
+              {/* Existing Description */}
+              <div className="mt-2 rounded-xl bg-white p-3">
+                <div className="text-[11px] text-gray-500">
+                  Description
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm font-bold">
+                    {box.description || "Add"}
+                  </div>
+
+                  <IconButton
+                    size="small"
+                    color="secondary"
+                    onClick={() => {
+                      setSelectedDescBox(box);
+                      setDescriptionInput(box.description || "");
+                      setDescDialog(true);
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="mt-3 flex justify-end gap-2">
+                <IconButton
+                  size="medium"
+                  color="primary"
+                  onClick={() => {
+                    localStorage.setItem(
+                      "selectedStockBox",
+                      JSON.stringify(box)
+                    );
+
+                    navigate(
+                      isSales
+                        ? `/sales/stock-box-details/${box.stockBoxId}`
+                        : `/admin/salesStockBoxDetails/${box.stockBoxId}`
+                    );
+                  }}
+                >
+                  <VisibilityIcon fontSize="medium" />
+                </IconButton>
+
+                {isAdmin && (
+                  <>
+                    <IconButton
+                      size="medium"
+                      color="warning"
+                      onClick={() =>
+                        handleProtectedAction("edit", box)
+                      }
+                    >
+                      <EditIcon fontSize="medium" />
+                    </IconButton>
+
+                    {(!box.stockBoxData ||
+                      box.stockBoxData.length === 0) && (
+                      <IconButton
+                        size="medium"
+                        color="error"
+                        onClick={() =>
+                          handleProtectedAction("delete", box)
+                        }
+                      >
+                        <DeleteIcon fontSize="medium" />
+                      </IconButton>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ================= DESKTOP VIEW ================= */}
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full border-collapse overflow-hidden rounded-xl border border-gray-300">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border px-3 py-2 text-center">
+                Select
+              </th>
+
+              <th className="border px-3 py-2 text-center">
+                Stock Box Name
+              </th>
+
+              <th className="border px-3 py-2 text-center">
+                Count
+              </th>
+
+              <th className="border px-3 py-2 text-center">
+                Weight
+              </th>
+
+              <th className="border px-3 py-2 text-center">
+                  Inventory Status
+              </th>
+
+              <th className="border px-3 py-2 text-center">
+                Today Sold
+              </th>
+
+             
+
+              <th className="border px-3 py-2 text-center">
+                Actions
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+           {sortedDisplayRows.map((box) => {
+              const summary =
+                inventorySummary[box.stockBoxId];
+
+              const latest =
+                summary?.latestCheck;
+
+              return (
+                <tr
+                  key={box.stockBoxId}
+                  className="bg-white/90 text-center"
+                >
+                  {/* Select */}
+                  <td className="border px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={box.checked === true}
+                      onChange={(e) =>
+                        handleUpdateChecked(
+                          box,
+                          e.target.checked
+                        )
+                      }
+                      className="h-4 w-4"
+                    />
+                  </td>
+
+                  {/* Stock Box */}
+                  <td className="border px-3 py-2 font-semibold text-blue-700">
+                    {box.stockBoxName}
+                  </td>
+
+                  {/* Count */}
+                  <td className="border px-3 py-2 font-bold">
+                    {box.totalStockBoxCount}
+                  </td>
+
+                  {/* Weight */}
+                  <td className="border px-3 py-2 font-bold text-[#e38111]">
+                    {Number(
+                      box.totalStockBoxWeight || 0
+                    ).toFixed(3)}{" "}
+                    g
+                  </td>
+
+                <td className="border px-3 py-2">
+  {!latest ? (
+    <div className="text-center">
+      <div className="font-semibold text-gray-400">
+        Not Checked
+      </div>
+    </div>
+  ) : (
+    <div className="min-w-[190px] text-left">
+
+      {latest.checkStatus === "ALL_GOOD" && (
+        <div className="font-bold text-green-600">
+          ✓ All Good
+        </div>
+      )}
+
+      {latest.checkStatus ===
+        "PIECES_ISSUE" && (
+        <div className="font-bold text-red-600">
+          ⚠ Pieces Issue
+        </div>
+      )}
+
+      {latest.checkStatus ===
+        "WEIGHT_ISSUE" && (
+        <div className="font-bold text-orange-600">
+          ⚠ Weight Issue
+        </div>
+      )}
+
+      {latest.checkStatus ===
+        "PIECES_AND_WEIGHT_ISSUE" && (
+        <div className="font-bold text-red-600">
+          ⚠ Pieces & Weight Issue
+        </div>
+      )}
+
+      {Number(latest.missingCount || 0) > 0 && (
+        <div className="mt-1 text-xs font-semibold text-red-600">
+          Missing: {latest.missingCount}
+        </div>
+      )}
+
+      {Math.abs(
+        Number(
+          latest.weightDifference || 0
+        )
+      ) >= 0.001 && (
+        <div className="text-xs font-semibold text-orange-600">
+          Weight Diff:{" "}
+          {Number(
+            latest.weightDifference
+          ) > 0
+            ? "+"
+            : ""}
+          {Number(
+            latest.weightDifference
+          ).toFixed(3)}{" "}
+          g
+        </div>
+      )}
+
+      {latest.description && (
+        <div className="mt-1 text-xs text-gray-700">
+          Note: {latest.description}
+        </div>
+      )}
+
+      <div className="mt-1 text-[11px] text-gray-500">
+        {latest.checkedAt
+          ? new Date(
+              latest.checkedAt
+            ).toLocaleString("en-IN")
+          : ""}
+      </div>
+
+      <div className="text-[11px] text-gray-500">
+        By: {latest.checkedBy || "-"}
+      </div>
+
+    </div>
+  )}
+</td>
+
+
+
+                  {/* Today Sold */}
+                  <td className="border px-3 py-2">
+                    {Number(
+                      summary?.todaySoldCount || 0
+                    ) > 0 ? (
+                      <div className="min-w-[100px]">
+                        <div className="font-bold text-red-600">
+                          {summary?.todaySoldCount} Sold
+                        </div>
+
+                        <div className="text-xs text-gray-600">
+                          {Number(
+                            summary?.todaySoldWeight || 0
+                          ).toFixed(3)}{" "}
+                          g
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">
+                        -
+                      </span>
+                    )}
+                  </td>
+
+              
+
+                  {/* Actions */}
+                  <td className="border px-3 py-2">
+                    <div className="flex items-center justify-center gap-2">
+                      <IconButton
+                        size="medium"
+                        color="primary"
+                        onClick={() => {
+                          localStorage.setItem(
+                            "selectedStockBox",
+                            JSON.stringify(box)
+                          );
+
+                          navigate(
+                            isSales
+                              ? `/sales/stock-box-details/${box.stockBoxId}`
+                              : `/admin/salesStockBoxDetails/${box.stockBoxId}`
+                          );
+                        }}
+                      >
+                        <VisibilityIcon fontSize="medium" />
+                      </IconButton>
+
+                      {isAdmin && (
+                        <>
+                          <IconButton
+                            size="medium"
+                            color="warning"
+                            onClick={() =>
+                              handleProtectedAction(
+                                "edit",
+                                box
+                              )
+                            }
+                          >
+                            <EditIcon fontSize="medium" />
+                          </IconButton>
+
+                          {(!box.stockBoxData ||
+                            box.stockBoxData.length ===
+                              0) && (
+                            <IconButton
+                              size="medium"
+                              color="error"
+                              onClick={() =>
+                                handleProtectedAction(
+                                  "delete",
+                                  box
+                                )
+                              }
+                            >
+                              <DeleteIcon fontSize="medium" />
+                            </IconButton>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+
 
   return (
    <div className="bg-white p-3 text-black md:p-6">
@@ -1306,24 +2036,209 @@ await api.post(
 
 
 {showStockBoxSection && (
+  <div className="mt-10 flex flex-col items-center justify-center gap-8 p-3">
 
-      <div className="mt-10 p-3 flex flex-col items-center justify-center">
-        <Paper
-          elevation={0}
+    {/* ================================================= */}
+    {/* SHOWROOM SELECTOR - ALWAYS VISIBLE */}
+    {/* ================================================= */}
+
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: "80rem",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: { xs: 1.5, sm: 3 },
+        flexWrap: "wrap",
+      }}
+    >
+      <Button
+        variant={selectedShowroom === 1 ? "contained" : "outlined"}
+        onClick={() => {
+          setSelectedShowroom(1);
+          setShowroom2Search("");
+        }}
+        sx={{
+          minWidth: { xs: "145px", sm: "220px" },
+          height: { xs: "48px", md: "55px" },
+          borderRadius: "14px",
+          fontWeight: "bold",
+          fontSize: { xs: "14px", md: "17px" },
+        }}
+      >
+        1# SHOWROOM
+      </Button>
+
+      <Button
+        variant={selectedShowroom === 2 ? "contained" : "outlined"}
+        onClick={() => {
+          setSelectedShowroom(2);
+          setShowroom1Search("");
+        }}
+        sx={{
+          minWidth: { xs: "145px", sm: "220px" },
+          height: { xs: "48px", md: "55px" },
+          borderRadius: "14px",
+          fontWeight: "bold",
+          fontSize: { xs: "14px", md: "17px" },
+        }}
+      >
+        2# SHOWROOM
+      </Button>
+    </Box>
+
+
+    {/* ================================================= */}
+    {/* 1# SHOWROOM */}
+    {/* ================================================= */}
+
+    {selectedShowroom === 1 && (
+      <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, md: 6 },
+        width: "100%",
+        maxWidth: "80rem",
+        borderRadius: "24px",
+        backgroundColor: "rgba(255,255,255,0.75)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid #d0b3ff",
+        boxShadow: "0 10px 30px rgba(136,71,255,0.3)",
+      }}
+    >
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
+        <Typography
+          variant="h4"
+          fontWeight="bold"
+          color="primary"
+        >
+          1# Showroom Stock Box Data
+        </Typography>
+
+        {isSales && (
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => navigate("/sales")}
+            sx={{
+              borderRadius: "12px",
+              fontWeight: "bold",
+            }}
+          >
+            Close
+          </Button>
+        )}
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          mb: 3,
+          flexWrap: "wrap",
+        }}
+      >
+        <TextField
+          placeholder="Search 1# Showroom Stock Box"
+          variant="outlined"
+          size="small"
+          value={showroom1Search}
+          onChange={(e) =>
+            setShowroom1Search(e.target.value)
+          }
           sx={{
-            p: 6,
-            width: "100%",
-            maxWidth: "80rem",
-            borderRadius: "24px",
-            backgroundColor: "rgba(255,255,255,0.75)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid #d0b3ff",
-            boxShadow: "0 10px 30px rgba(136,71,255,0.3)",
+            width: 320,
+            backgroundColor: "white",
+            borderRadius: "10px",
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon color="action" />
+              </InputAdornment>
+            ),
+
+            endAdornment: showroom1Search ? (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={() =>
+                    setShowroom1Search("")
+                  }
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ) : null,
+          }}
+        />
+
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => handleClearSelected(1)}
+          sx={{
+            height: "40px",
+            fontWeight: "bold",
+            borderRadius: "10px",
+            px: 3,
           }}
         >
-         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-  <Typography variant="h4" fontWeight="bold" color="primary">
-    All Stock Box Data
+          CLEAR SELECTED
+        </Button>
+      </Box>
+
+      {loading ? (
+        <div className="flex items-center gap-3 py-6">
+          <CircularProgress size={22} />
+          <span>Loading…</span>
+        </div>
+      ) : err ? (
+        <p className="py-4 text-red-600">
+          {err}
+        </p>
+      ) : (
+        renderStockBoxData(showroom1Rows)
+      )}
+    </Paper>
+)}
+
+    {/* ================================================= */}
+    {/* 2# SHOWROOM */}
+    {/* ================================================= */}
+{selectedShowroom === 2 && (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, md: 6 },
+        width: "100%",
+        maxWidth: "80rem",
+        borderRadius: "24px",
+        backgroundColor: "rgba(255,255,255,0.75)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid #d0b3ff",
+        boxShadow: "0 10px 30px rgba(136,71,255,0.3)",
+      }}
+    >
+     <Box
+  display="flex"
+  justifyContent="space-between"
+  alignItems="center"
+  mb={3}
+>
+  <Typography
+    variant="h4"
+    fontWeight="bold"
+    color="primary"
+  >
+    2# Showroom Stock Box Data
   </Typography>
 
   {isSales && (
@@ -1331,289 +2246,93 @@ await api.post(
       variant="outlined"
       color="error"
       onClick={() => navigate("/sales")}
-      sx={{ borderRadius: "12px", fontWeight: "bold" }}
+      sx={{
+        borderRadius: "12px",
+        fontWeight: "bold",
+      }}
     >
       Close
     </Button>
   )}
 </Box>
-<Box
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    gap: 2,
-    mb: 3,
-    flexWrap: "wrap",
-  }}
->
- 
 
-  <TextField
-    placeholder="Search by Stock Box Name"
-    variant="outlined"
-    size="small"
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    sx={{
-      width: 320,
-      backgroundColor: "white",
-      borderRadius: "10px",
-    }}
-  InputProps={{
-  startAdornment: (
-    <InputAdornment position="start">
-      <SearchIcon color="action" />
-    </InputAdornment>
-  ),
-
-  endAdornment: search ? (
-    <InputAdornment position="end">
-      <IconButton
-        size="small"
-        onClick={() => setSearch("")}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          mb: 3,
+          flexWrap: "wrap",
+        }}
       >
-        <CloseIcon fontSize="small" />
-      </IconButton>
-    </InputAdornment>
-  ) : null,
-}}
-  />
-   <Button
-    variant="contained"
-    color="secondary"
-    onClick={handleClearSelected}
-    sx={{
-      height: "40px",
-      fontWeight: "bold",
-      borderRadius: "10px",
-      px: 3,
-    }}
-  >
-    CLEAR SELECTED
-  </Button>
-</Box>
+        <TextField
+          placeholder="Search 2# Showroom Stock Box"
+          variant="outlined"
+          size="small"
+          value={showroom2Search}
+          onChange={(e) =>
+            setShowroom2Search(e.target.value)
+          }
+          sx={{
+            width: 320,
+            backgroundColor: "white",
+            borderRadius: "10px",
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon color="action" />
+              </InputAdornment>
+            ),
 
-          {loading ? (
-            <div className="flex items-center gap-3 py-6">
-              <CircularProgress size={22} />
-              <span>Loading…</span>
-            </div>
-          ) : err ? (
-            <p className="text-red-600 py-4">{err}</p>
-          ) : filteredRows.length === 0 ? (
-            <p className="py-4">No stock boxes found.</p>
-          ) : (
-          <div className="mt-4">
-  {/* Mobile card view */}
-  <div className="space-y-3 md:hidden">
-    {filteredRows.map((box) => (
-      <div
-        key={box.stockBoxId}
-        className="rounded-2xl border border-gray-100 bg-[#fffaf0] p-4 shadow-sm"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-xs text-gray-500">Stock Box</div>
-            <div className="font-bold text-blue-700">
-              {box.stockBoxName}
-            </div>
-          </div>
-
-          <input
-            type="checkbox"
-            checked={box.checked === true}
-            onChange={(e) => handleUpdateChecked(box, e.target.checked)}
-            className="h-5 w-5"
-          />
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-white p-2">
-            <div className="text-[11px] text-gray-500">Count</div>
-            <div className="text-sm font-bold">
-              {box.totalStockBoxCount}
-            </div>
-          </div>
-
-          <div className="rounded-xl bg-white p-2">
-            <div className="text-[11px] text-gray-500">Weight</div>
-            <div className="text-sm font-bold text-[#e38111]">
-              {Number(box.totalStockBoxWeight || 0).toFixed(3)}
-            </div>
-          </div>
-
-          <div className="col-span-2 rounded-xl bg-white p-2">
-            <div className="text-[11px] text-gray-500">Description</div>
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-sm font-bold">
-                {box.description || "Add"}
-              </div>
-
-              <IconButton
-                size="small"
-                color="secondary"
-                onClick={() => {
-                  setSelectedDescBox(box);
-                  setDescriptionInput(box.description || "");
-                  setDescDialog(true);
-                }}
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-3 flex justify-end gap-2">
-          <IconButton
-            size="medium"
-            color="primary"
-            onClick={() => {
-              localStorage.setItem("selectedStockBox", JSON.stringify(box));
-              navigate(
-                isSales
-                  ? `/sales/stock-box-details/${box.stockBoxId}`
-                  : `/admin/salesStockBoxDetails/${box.stockBoxId}`,
-              );
-            }}
-          >
-            <VisibilityIcon fontSize="medium" />
-          </IconButton>
-
-          {isAdmin && (
-            <>
-              <IconButton
-                size="medium"
-                color="warning"
-                onClick={() => handleProtectedAction("edit", box)}
-              >
-                <EditIcon fontSize="medium" />
-              </IconButton>
-
-              {(!box.stockBoxData || box.stockBoxData.length === 0) && (
+            endAdornment: showroom2Search ? (
+              <InputAdornment position="end">
                 <IconButton
-                  size="medium"
-                  color="error"
-                  onClick={() => handleProtectedAction("delete", box)}
+                  size="small"
+                  onClick={() =>
+                    setShowroom2Search("")
+                  }
                 >
-                  <DeleteIcon fontSize="medium" />
+                  <CloseIcon fontSize="small" />
                 </IconButton>
-              )}
-            </>
-          )}
+              </InputAdornment>
+            ) : null,
+          }}
+        />
+
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => handleClearSelected(2)}
+          sx={{
+            height: "40px",
+            fontWeight: "bold",
+            borderRadius: "10px",
+            px: 3,
+          }}
+        >
+          CLEAR SELECTED
+        </Button>
+      </Box>
+
+      {loading ? (
+        <div className="flex items-center gap-3 py-6">
+          <CircularProgress size={22} />
+          <span>Loading…</span>
         </div>
-      </div>
-    ))}
-  </div>
-
-  {/* Desktop table view */}
-  <div className="hidden overflow-x-auto md:block">
-    <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
-      {/* keep your old table code here */}
-
-      <div className="hidden overflow-x-auto md:block">
-  <table className="w-full border-collapse border border-gray-300 rounded-xl overflow-hidden">
-    <thead className="bg-gray-200">
-      <tr>
-        <th className="border px-3 py-2 text-center">Select</th>
-        <th className="border px-3 py-2 text-center">Stock Box Name</th>
-        <th className="border px-3 py-2 text-center">Total Stock Box Count</th>
-        <th className="border px-3 py-2 text-center">Total Stock Box Weight</th>
-        <th className="border px-3 py-2 text-center">Description</th>
-        <th className="border px-3 py-2 text-center">Actions</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {filteredRows.map((box) => (
-        <tr key={box.stockBoxId} className="bg-white/90 text-center">
-          <td className="border px-3 py-2">
-            <input
-              type="checkbox"
-              checked={box.checked === true}
-              onChange={(e) => handleUpdateChecked(box, e.target.checked)}
-              className="h-4 w-4"
-            />
-          </td>
-
-          <td className="border px-3 py-2">{box.stockBoxName}</td>
-
-          <td className="border px-3 py-2">{box.totalStockBoxCount}</td>
-
-          <td className="border px-3 py-2">
-            {Number(box.totalStockBoxWeight || 0).toFixed(3)}
-          </td>
-
-          <td className="border px-3 py-2">
-            <div className="flex items-center justify-center gap-2">
-              <span>{box.description || "Add"}</span>
-
-              <IconButton
-                size="small"
-                color="secondary"
-                onClick={() => {
-                  setSelectedDescBox(box);
-                  setDescriptionInput(box.description || "");
-                  setDescDialog(true);
-                }}
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </div>
-          </td>
-
-          <td className="border px-3 py-2">
-            <div className="flex items-center justify-center gap-2">
-              <IconButton
-                size="medium"
-                color="primary"
-                onClick={() => {
-                  localStorage.setItem("selectedStockBox", JSON.stringify(box));
-                  navigate(
-                    isSales
-                      ? `/sales/stock-box-details/${box.stockBoxId}`
-                      : `/admin/salesStockBoxDetails/${box.stockBoxId}`,
-                  );
-                }}
-              >
-                <VisibilityIcon fontSize="medium" />
-              </IconButton>
-
-              {isAdmin && (
-                <>
-                  <IconButton
-                    size="medium"
-                    color="warning"
-                    onClick={() => handleProtectedAction("edit", box)}
-                  >
-                    <EditIcon fontSize="medium" />
-                  </IconButton>
-
-                  {(!box.stockBoxData || box.stockBoxData.length === 0) && (
-                    <IconButton
-                      size="medium"
-                      color="error"
-                      onClick={() => handleProtectedAction("delete", box)}
-                    >
-                      <DeleteIcon fontSize="medium" />
-                    </IconButton>
-                  )}
-                </>
-              )}
-            </div>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-    </table>
-  </div>
-</div>
-          )}
-        </Paper>
-      </div>
+      ) : err ? (
+        <p className="py-4 text-red-600">
+          {err}
+        </p>
+      ) : (
+        renderStockBoxData(showroom2Rows)
+      )}
+    </Paper>
 )}
+  </div>
+)}
+
+
 
 {editBox && (
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

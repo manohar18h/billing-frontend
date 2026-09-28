@@ -9,13 +9,40 @@ type StockBoxDataEntry = {
   methodType: string;
   metalWeight: number;
   date: string;
+
   methodType2?: string;
   sellingDate?: string;
+
   barcodeValue?: string;
   epcNumber?: string;
 
   checked?: boolean;
   description?: string;
+
+  checkedAt?: string;
+  checkedBy?: string;
+};
+
+type StockBoxCheckHistory = {
+  stockBoxCheckHistoryId: number;
+
+  stockBoxId: number;
+  stockBoxName: string;
+
+  expectedCount: number;
+  actualCount: number;
+  missingCount: number;
+
+  expectedWeight: number;
+  actualWeight: number;
+  weightDifference: number;
+
+  description?: string;
+
+  checkedBy?: string;
+  checkedAt?: string;
+  updatedAt?: string;
+  checkStatus?: string;
 };
 
 type StockDataBox = {
@@ -35,6 +62,7 @@ const role = localStorage.getItem("role");
 const isAdmin = role === "ADMIN";
 
 const canEditCheck = role === "ADMIN" || role === "SALES";
+const canManageCheckHistory = role === "ADMIN";
 
 const basePath = role === "ADMIN" ? "/admin" : "/sales";
 
@@ -72,7 +100,25 @@ const [checkValues, setCheckValues] = useState<
 
 const [savingId, setSavingId] = useState<number | null>(null);
 
+const [checkHistory, setCheckHistory] =
+  useState<StockBoxCheckHistory[]>([]);
 
+const [todaySold, setTodaySold] =
+  useState<StockBoxDataEntry[]>([]);
+
+const [actualWeight, setActualWeight] =
+  useState("");
+
+ 
+
+const [boxCheckDescription, setBoxCheckDescription] =
+  useState("");
+
+const [savingBoxCheck, setSavingBoxCheck] =
+  useState(false);
+
+
+  
 
 
 
@@ -89,6 +135,13 @@ const [savingId, setSavingId] = useState<number | null>(null);
       </div>
     );
   }
+
+   const [actualCountInput, setActualCountInput] =
+  useState(
+    String(
+      Number(stockBox.totalStockBoxCount || 0)
+    )
+  );
 
   const formatDMY = (date?: string) => {
     if (!date) return "";
@@ -576,6 +629,120 @@ const transferWeight =
 };
 
 
+const availableEntries = stockBox.stockBoxData.filter(
+  (entry) =>
+    entry.methodType2?.trim().toUpperCase() !== "SELL"
+);
+
+const checkedEntries = availableEntries.filter(
+  (entry) => entry.checked === true
+);
+
+
+
+
+const expectedCount =
+  Number(stockBox.totalStockBoxCount || 0);
+
+const expectedWeight =
+  Number(stockBox.totalStockBoxWeight || 0);
+
+const actualCount =
+  actualCountInput.trim() === ""
+    ? expectedCount
+    : Number(actualCountInput);
+
+const enteredActualWeight =
+  actualWeight.trim() === ""
+    ? null
+    : Number(actualWeight);
+
+const piecesDifference =
+  actualCount - expectedCount;
+
+const missingCount =
+  Math.max(
+    0,
+    expectedCount - actualCount
+  );
+
+const extraCount =
+  Math.max(
+    0,
+    actualCount - expectedCount
+  );
+
+const weightDifference =
+  enteredActualWeight === null
+    ? null
+    : Number(
+        (
+          enteredActualWeight -
+          expectedWeight
+        ).toFixed(3)
+      );
+
+const hasPiecesIssue =
+  actualCount !== expectedCount;
+
+const hasWeightIssue =
+  weightDifference !== null &&
+  Math.abs(weightDifference) >= 0.001;
+
+const currentCheckStatus =
+  enteredActualWeight === null
+    ? "PENDING"
+    : hasPiecesIssue && hasWeightIssue
+    ? "PIECES_AND_WEIGHT_ISSUE"
+    : hasPiecesIssue
+    ? "PIECES_ISSUE"
+    : hasWeightIssue
+    ? "WEIGHT_ISSUE"
+    : "ALL_GOOD";
+
+  const sortedStockBoxData = [
+  ...stockBox.stockBoxData
+].sort((a, b) => {
+
+  const aChecked =
+    a.checked === true;
+
+  const bChecked =
+    b.checked === true;
+
+  // checked rows first
+  if (aChecked && !bChecked) {
+    return -1;
+  }
+
+  if (!aChecked && bChecked) {
+    return 1;
+  }
+
+  // among checked rows:
+  // latest checkedAt first
+  if (aChecked && bChecked) {
+
+    const aTime =
+      a.checkedAt
+        ? new Date(a.checkedAt).getTime()
+        : 0;
+
+    const bTime =
+      b.checkedAt
+        ? new Date(b.checkedAt).getTime()
+        : 0;
+
+    return bTime - aTime;
+  }
+
+  // unchecked keep normal order
+  return (
+    a.stockBoxDataId -
+    b.stockBoxDataId
+  );
+});
+
 
 const verifyPasswordAndDelete = async () => {
 
@@ -631,7 +798,213 @@ const verifyPasswordAndDelete = async () => {
   }
 };
 
+const fetchInventoryExtraData = async () => {
 
+  if (!stockBox) return;
+
+  try {
+
+    const [historyResponse, soldResponse] =
+      await Promise.all([
+
+        api.get(
+          `${basePath}/stock-box/${stockBox.stockBoxId}/check-history`,
+          {
+            headers: token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`,
+                }
+              : undefined,
+          }
+        ),
+
+        api.get(
+          `${basePath}/stock-box/${stockBox.stockBoxId}/today-sold`,
+          {
+            headers: token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`,
+                }
+              : undefined,
+          }
+        ),
+      ]);
+
+    setCheckHistory(
+      Array.isArray(historyResponse.data)
+        ? historyResponse.data
+        : []
+    );
+
+    setTodaySold(
+      Array.isArray(soldResponse.data)
+        ? soldResponse.data
+        : []
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Failed to load stock check data:",
+      error
+    );
+  }
+};
+
+useEffect(() => {
+  fetchInventoryExtraData();
+}, [stockBox.stockBoxId]);
+
+const handleCompleteInventoryCheck =
+  async () => {
+
+    if (
+      actualCountInput.trim() === "" ||
+      Number.isNaN(Number(actualCountInput)) ||
+      Number(actualCountInput) < 0
+    ) {
+      alert(
+        "Please enter a valid actual pieces count."
+      );
+      return;
+    }
+
+    if (
+      actualWeight.trim() === "" ||
+      Number.isNaN(Number(actualWeight)) ||
+      Number(actualWeight) < 0
+    ) {
+      alert(
+        "Please enter a valid actual box weight."
+      );
+      return;
+    }
+
+    const finalActualCount =
+      Number(actualCountInput);
+
+    const finalActualWeight =
+      Number(actualWeight);
+
+    const finalMissing =
+      Math.max(
+        0,
+        expectedCount - finalActualCount
+      );
+
+    const finalWeightDifference =
+      Number(
+        (
+          finalActualWeight -
+          expectedWeight
+        ).toFixed(3)
+      );
+
+    const piecesProblem =
+      finalActualCount !== expectedCount;
+
+    const weightProblem =
+      Math.abs(finalWeightDifference) >=
+      0.001;
+
+    let statusText = "ALL GOOD";
+
+    if (piecesProblem && weightProblem) {
+      statusText =
+        "PIECES & WEIGHT ISSUE";
+    } else if (piecesProblem) {
+      statusText =
+        "PIECES ISSUE";
+    } else if (weightProblem) {
+      statusText =
+        "WEIGHT ISSUE";
+    }
+
+    const confirmed =
+      window.confirm(
+        `Complete inventory check?\n\n` +
+        `Expected Pieces: ${expectedCount}\n` +
+        `Actual Pieces: ${finalActualCount}\n` +
+        `Missing Pieces: ${finalMissing}\n\n` +
+        `Expected Weight: ${expectedWeight.toFixed(
+          3
+        )} g\n` +
+        `Actual Weight: ${finalActualWeight.toFixed(
+          3
+        )} g\n` +
+        `Weight Difference: ${
+          finalWeightDifference > 0
+            ? "+"
+            : ""
+        }${finalWeightDifference.toFixed(
+          3
+        )} g\n\n` +
+        `STATUS: ${statusText}`
+      );
+
+    if (!confirmed) return;
+
+    try {
+      setSavingBoxCheck(true);
+
+      await api.post(
+        `${basePath}/stock-box/${stockBox.stockBoxId}/check-history`,
+        {
+          actualCount:
+            finalActualCount,
+
+          actualWeight:
+            finalActualWeight,
+
+          description:
+            boxCheckDescription.trim(),
+        },
+        {
+          headers: token
+            ? {
+                Authorization:
+                  `Bearer ${token}`,
+              }
+            : undefined,
+        }
+      );
+
+      alert(
+        "Inventory check saved successfully."
+      );
+
+      /*
+       * Reset next physical check to
+       * expected/system values.
+       */
+      setActualCountInput(
+        String(expectedCount)
+      );
+
+      setActualWeight("");
+
+      setBoxCheckDescription("");
+
+      await fetchInventoryExtraData();
+
+    } catch (error: any) {
+      console.error(
+        "Failed to save inventory check:",
+        error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          error.response?.data ||
+          "Failed to save inventory check."
+      );
+
+    } finally {
+      setSavingBoxCheck(false);
+    }
+  };
 
 
   return (
@@ -664,6 +1037,225 @@ const verifyPasswordAndDelete = async () => {
       </span>
     </div>
   </div>
+</div>
+
+<div className="mb-6 flex flex-wrap gap-4">
+
+  <div className="rounded-xl bg-gray-100 px-4 py-3">
+    <div className="text-sm text-gray-500">
+      Expected Pieces
+    </div>
+
+    <div className="text-xl font-bold">
+      {expectedCount}
+    </div>
+  </div>
+
+  {checkHistory.length > 0 && (
+    <div className="rounded-xl bg-blue-50 px-4 py-3">
+      <div className="text-sm text-gray-500">
+        Last Inventory Check
+      </div>
+
+      <div className="font-semibold">
+        {checkHistory[0].checkedAt
+          ? new Date(
+              checkHistory[0].checkedAt
+            ).toLocaleString("en-IN")
+          : "-"}
+      </div>
+
+      <div className="text-sm">
+        By: {checkHistory[0].checkedBy || "-"}
+      </div>
+    </div>
+  )}
+
+</div>
+
+
+<div className="mb-6 rounded-2xl border bg-white p-5">
+
+  <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+
+    <div>
+      <h2 className="text-xl font-bold">
+        Physical Inventory Check
+      </h2>
+
+      <p className="mt-1 text-sm text-gray-500">
+        Enter the pieces and total physical box weight you counted.
+      </p>
+    </div>
+
+    {enteredActualWeight !== null && (
+      <div
+        className={`rounded-full px-4 py-2 text-sm font-bold ${
+          currentCheckStatus === "ALL_GOOD"
+            ? "bg-green-100 text-green-700"
+            : currentCheckStatus ===
+              "PIECES_ISSUE"
+            ? "bg-red-100 text-red-700"
+            : currentCheckStatus ===
+              "WEIGHT_ISSUE"
+            ? "bg-orange-100 text-orange-700"
+            : "bg-red-100 text-red-700"
+        }`}
+      >
+        {currentCheckStatus === "ALL_GOOD"
+          ? "✓ All Good"
+          : currentCheckStatus ===
+            "PIECES_ISSUE"
+          ? "⚠ Pieces Issue"
+          : currentCheckStatus ===
+            "WEIGHT_ISSUE"
+          ? "⚠ Weight Issue"
+          : "⚠ Pieces & Weight Issue"}
+      </div>
+    )}
+
+  </div>
+
+  {/* PIECES */}
+  <div className="grid gap-4 md:grid-cols-3">
+
+    <div>
+      <label className="text-sm font-semibold">
+        Expected Pieces
+      </label>
+
+      <input
+        disabled
+        value={expectedCount}
+        className="mt-1 w-full rounded-lg border bg-gray-100 p-3"
+      />
+    </div>
+
+    <div>
+      <label className="text-sm font-semibold">
+        Actual Pieces
+      </label>
+
+      <input
+        type="number"
+        min="0"
+        step="1"
+        value={actualCountInput}
+        onChange={(e) =>
+          setActualCountInput(e.target.value)
+        }
+        className="mt-1 w-full rounded-lg border p-3"
+      />
+    </div>
+
+    <div>
+      <label className="text-sm font-semibold">
+        Pieces Result
+      </label>
+
+      <div
+        className={`mt-1 rounded-lg border p-3 font-bold ${
+          !hasPiecesIssue
+            ? "bg-green-50 text-green-700"
+            : "bg-red-50 text-red-700"
+        }`}
+      >
+        {!hasPiecesIssue
+          ? "✓ Pieces Correct"
+          : missingCount > 0
+          ? `${missingCount} Missing`
+          : `${extraCount} Extra`}
+      </div>
+    </div>
+
+  </div>
+
+  {/* WEIGHT */}
+  <div className="mt-5 grid gap-4 md:grid-cols-3">
+
+    <div>
+      <label className="text-sm font-semibold">
+        Expected Box Weight
+      </label>
+
+      <input
+        disabled
+        value={`${expectedWeight.toFixed(3)} g`}
+        className="mt-1 w-full rounded-lg border bg-gray-100 p-3"
+      />
+    </div>
+
+    <div>
+      <label className="text-sm font-semibold">
+        Actual Box Weight
+      </label>
+
+      <input
+        type="number"
+        min="0"
+        step="0.001"
+        value={actualWeight}
+        onChange={(e) =>
+          setActualWeight(e.target.value)
+        }
+        placeholder="Enter actual box weight"
+        className="mt-1 w-full rounded-lg border p-3"
+      />
+    </div>
+
+    <div>
+      <label className="text-sm font-semibold">
+        Weight Result
+      </label>
+
+      <div
+        className={`mt-1 rounded-lg border p-3 font-bold ${
+          weightDifference === null
+            ? "bg-gray-50 text-gray-500"
+            : !hasWeightIssue
+            ? "bg-green-50 text-green-700"
+            : "bg-orange-50 text-orange-700"
+        }`}
+      >
+        {weightDifference === null
+          ? "Enter actual weight"
+          : !hasWeightIssue
+          ? "✓ Weight Correct"
+          : `${
+              weightDifference > 0 ? "+" : ""
+            }${weightDifference.toFixed(3)} g`}
+      </div>
+    </div>
+
+  </div>
+
+  {/* REMARKS */}
+  <div className="mt-5">
+    <label className="text-sm font-semibold">
+      Remarks / Note
+    </label>
+
+    <textarea
+      value={boxCheckDescription}
+      onChange={(e) =>
+        setBoxCheckDescription(e.target.value)
+      }
+      placeholder="Optional note about missing pieces or weight difference"
+      className="mt-1 w-full rounded-lg border p-3"
+      rows={3}
+    />
+  </div>
+
+  <button
+    onClick={handleCompleteInventoryCheck}
+    disabled={savingBoxCheck}
+    className="mt-5 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white disabled:opacity-50"
+  >
+    {savingBoxCheck
+      ? "Saving..."
+      : "Complete Inventory Check"}
+  </button>
+
 </div>
 
 {isAdmin && (
@@ -740,14 +1332,11 @@ const verifyPasswordAndDelete = async () => {
   </div>
 )}
 
-
-
-
        {stockBox.stockBoxData && stockBox.stockBoxData.length > 0 ? (
   <>
     {/* Mobile card view */}
     <div className="space-y-3 md:hidden">
-      {stockBox.stockBoxData.map((entry, index) => (
+      {sortedStockBoxData.map((entry, index) => (
         <div
           key={entry.stockBoxDataId}
           className="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm"
@@ -969,7 +1558,7 @@ const verifyPasswordAndDelete = async () => {
     </thead>
 
     <tbody>
-      {stockBox.stockBoxData.map((entry, index) => (
+      {sortedStockBoxData.map((entry, index) => (
         <tr
           key={entry.stockBoxDataId}
           className="bg-white/90"

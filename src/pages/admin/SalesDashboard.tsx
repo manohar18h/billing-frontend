@@ -9,20 +9,28 @@ type TaggingWork = {
   taggingWorkId: number;
 
   assignedTo: string;
+  givenBy: string | null;
 
   stockBoxId: number | null;
   stockBoxName: string;
-
   itemName: string;
 
   beforeTagCount: number;
   afterTagCount: number;
-
+  missingCount: number | null;
   remainingCount: number;
 
   remarks: string | null;
 
+  status: string | null;
+
+  verificationStatus: string | null;
+  verifiedBy: string | null;
+  verificationRemarks: string | null;
+
   assignedDate: string;
+  returnedDate: string | null;
+  verifiedDate: string | null;
   completedDate: string | null;
 
   archived: boolean;
@@ -40,6 +48,9 @@ const [taggingWorks, setTaggingWorks] =
 
 const [taggingLoading, setTaggingLoading] =
   useState(true);
+
+const [selectedTaggingWork, setSelectedTaggingWork] =
+  useState<TaggingWork | null>(null);
 
 
 useEffect(() => {
@@ -119,6 +130,26 @@ const totalTagged =
 
 const totalRemaining =
   totalGiven - totalTagged;
+
+
+  const formatDateTime = (value: string | null | undefined) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#fff7ed] via-white to-[#f4f0ff] p-6">
@@ -267,6 +298,10 @@ const totalRemaining =
                 Remarks
               </th>
 
+              <th className="border px-3 py-3 text-center">
+  Actions
+</th>
+
             </tr>
 
           </thead>
@@ -332,6 +367,16 @@ const totalRemaining =
                       ? row.remarks
                       : "-"}
                   </td>
+
+                  <td className="border px-3 py-3 text-center">
+  <button
+    type="button"
+    onClick={() => setSelectedTaggingWork(row)}
+    className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-200"
+  >
+    View
+  </button>
+</td>
 
                 </tr>
               );
@@ -482,6 +527,14 @@ const totalRemaining =
                     : "-"}
                 </div>
 
+                <button
+  type="button"
+  onClick={() => setSelectedTaggingWork(row)}
+  className="mt-3 w-full rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-gray-800"
+>
+  View Details
+</button>
+
               </div>
 
             </div>
@@ -510,6 +563,192 @@ const totalRemaining =
             Logout
           </Button>
         </Box>
+      </div>
+{selectedTaggingWork && (
+  <div
+    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4"
+    onClick={() => setSelectedTaggingWork(null)}
+  >
+    <div
+      className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between border-b px-6 py-5">
+        <div>
+          <h2 className="text-2xl font-extrabold text-gray-900">
+            RFID Tagging Work Details
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Complete assignment and return history
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setSelectedTaggingWork(null)}
+          className="text-2xl text-gray-400 hover:text-gray-700"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="space-y-5 p-6">
+
+        {/* Assignment */}
+        <div className="rounded-2xl border border-gray-200 p-5">
+          <h3 className="mb-5 text-lg font-extrabold text-violet-700">
+            Assignment
+          </h3>
+
+          <div className="grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-2">
+
+            <DetailItem
+              label="Assigned To"
+              value={selectedTaggingWork.assignedTo}
+            />
+
+            <DetailItem
+              label="Given By"
+              value={selectedTaggingWork.givenBy || "-"}
+            />
+
+            <DetailItem
+              label="Assigned Date & Time"
+              value={formatDateTime(
+                selectedTaggingWork.assignedDate
+              )}
+            />
+
+            <DetailItem
+              label="Stock Box"
+              value={selectedTaggingWork.stockBoxName}
+            />
+
+            <DetailItem
+              label="Item Name"
+              value={selectedTaggingWork.itemName}
+            />
+
+            <DetailItem
+              label="Given Count"
+              value={selectedTaggingWork.beforeTagCount}
+            />
+
+            <div className="md:col-span-2">
+              <DetailItem
+                label="Assignment Remarks"
+                value={
+                  selectedTaggingWork.remarks?.trim()
+                    ? selectedTaggingWork.remarks
+                    : "-"
+                }
+              />
+            </div>
+
+          </div>
+        </div>
+
+        {/* Return */}
+        <div className="rounded-2xl border border-gray-200 p-5">
+          <h3 className="mb-5 text-lg font-extrabold text-green-700">
+            Return & Verification
+          </h3>
+
+          <div className="grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-2">
+
+            <DetailItem
+              label="Returned Count"
+              value={selectedTaggingWork.afterTagCount ?? 0}
+            />
+
+            <DetailItem
+              label="Missing Count"
+              value={selectedTaggingWork.missingCount ?? 0}
+            />
+
+            <DetailItem
+              label="Verification Result"
+              value={
+                selectedTaggingWork.verificationStatus ||
+                "Not verified"
+              }
+            />
+
+            <DetailItem
+              label="Verified By"
+              value={selectedTaggingWork.verifiedBy || "-"}
+            />
+
+            <DetailItem
+              label="Returned Date & Time"
+              value={formatDateTime(
+                selectedTaggingWork.returnedDate
+              )}
+            />
+
+            <DetailItem
+              label="Verified Date & Time"
+              value={formatDateTime(
+                selectedTaggingWork.verifiedDate
+              )}
+            />
+
+            <DetailItem
+              label="Verification Remarks"
+              value={
+                selectedTaggingWork.verificationRemarks?.trim()
+                  ? selectedTaggingWork.verificationRemarks
+                  : "-"
+              }
+            />
+
+            <DetailItem
+              label="Status"
+              value={selectedTaggingWork.status || "-"}
+            />
+
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setSelectedTaggingWork(null)}
+            className="rounded-xl bg-gray-900 px-6 py-3 font-bold text-white transition hover:bg-gray-800"
+          >
+            Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
+      
+    </div>
+
+    
+  );
+};
+
+const DetailItem = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) => {
+  return (
+    <div>
+      <div className="text-sm text-gray-500">
+        {label}
+      </div>
+
+      <div className="mt-1 font-semibold text-gray-900">
+        {value ?? "-"}
       </div>
     </div>
   );
