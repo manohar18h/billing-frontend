@@ -162,7 +162,7 @@ const totalRemaining =
           </p>
         </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
   <Paper onClick={() => navigate("/sales/products")} className="cursor-pointer p-6 rounded-3xl hover:shadow-xl transition">
     <div className="text-4xl mb-3">📦</div>
     <Typography variant="h6" fontWeight={800}>Products</Typography>
@@ -180,6 +180,20 @@ const totalRemaining =
     <Typography variant="h6" fontWeight={800}>Estimation</Typography>
     <p className="text-sm text-gray-500 mt-1">Search barcode and print estimation.</p>
   </Paper>
+  <Paper
+  onClick={() => navigate("/sales/loan-followup")}
+  className="cursor-pointer p-6 rounded-3xl hover:shadow-xl transition"
+>
+  <div className="text-4xl mb-3">📞</div>
+
+  <Typography variant="h6" fontWeight={800}>
+    Loan Follow-up
+  </Typography>
+
+  <p className="text-sm text-gray-500 mt-1">
+    Pending loans, reminders and customer follow-ups.
+  </p>
+</Paper>
 </div>
 
 {/* RFID TAGGING WORK - READ ONLY */}

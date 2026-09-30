@@ -15,6 +15,7 @@ import WorkerProfile from "./pages/admin/WorkerProfile";
 import SalesDashboard from "./pages/admin/SalesDashboard";
 import Products from "./pages/admin/Products";
 import { isTokenExpired, logout } from "./utils/auth";
+import LoanFollowUp from "./pages/admin/LoanFollowUp";
 
 const App = () => {
   useEffect(() => {
@@ -43,7 +44,10 @@ const App = () => {
         <Route path="/sales/products" element={<Products />} />
         <Route path="/sales/stock-box" element={<SalesPage mode="stockBox" />} />
         <Route path="/sales/estimation" element={<SalesPage mode="estimation" />} />
-
+<Route
+  path="/sales/loan-followup"
+  element={<LoanFollowUp />}
+/>
         <Route
           path="/sales/stock-box-details/:stockBoxId"
           element={<SalesStockBoxDetails />}
