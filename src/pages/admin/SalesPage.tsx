@@ -164,7 +164,22 @@ const [selectedDescBox, setSelectedDescBox] = useState<StockDataBox | null>(null
  const [showroom1Search, setShowroom1Search] = useState<string>("");
 const [showroom2Search, setShowroom2Search] = useState<string>("");
 const [selectedShowroom, setSelectedShowroom] =
-  useState<1 | 2 | null>(null);
+  useState<1 | 2 | null>(() => {
+    const saved = sessionStorage.getItem("selectedSalesShowroom");
+
+    if (saved === "1") return 1;
+    if (saved === "2") return 2;
+
+    return null;
+  });
+useEffect(() => {
+  if (selectedShowroom !== null) {
+    sessionStorage.setItem(
+      "selectedSalesShowroom",
+      String(selectedShowroom)
+    );
+  }
+}, [selectedShowroom]);
 const [editBox, setEditBox] = useState<StockDataBox | null>(null);
 const [editCount, setEditCount] = useState("");
 const [editWeight, setEditWeight] = useState("");
@@ -1094,18 +1109,27 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
                 <IconButton
                   size="medium"
                   color="primary"
-                  onClick={() => {
-                    localStorage.setItem(
-                      "selectedStockBox",
-                      JSON.stringify(box)
-                    );
+                 onClick={() => {
+  // Remember which showroom is currently open
+  if (selectedShowroom) {
+    sessionStorage.setItem(
+      "selectedSalesShowroom",
+      String(selectedShowroom)
+    );
+  }
 
-                    navigate(
-                      isSales
-                        ? `/sales/stock-box-details/${box.stockBoxId}`
-                        : `/admin/salesStockBoxDetails/${box.stockBoxId}`
-                    );
-                  }}
+  // Remember selected stock box
+  localStorage.setItem(
+    "selectedStockBox",
+    JSON.stringify(box)
+  );
+
+  navigate(
+    isSales
+      ? `/sales/stock-box-details/${box.stockBoxId}`
+      : `/admin/salesStockBoxDetails/${box.stockBoxId}`
+  );
+}}
                 >
                   <VisibilityIcon fontSize="medium" />
                 </IconButton>
@@ -1340,24 +1364,31 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
                   {/* Actions */}
                   <td className="border px-3 py-2">
                     <div className="flex items-center justify-center gap-2">
-                      <IconButton
-                        size="medium"
-                        color="primary"
-                        onClick={() => {
-                          localStorage.setItem(
-                            "selectedStockBox",
-                            JSON.stringify(box)
-                          );
+                     <IconButton
+  size="medium"
+  color="primary"
+  onClick={() => {
+    if (selectedShowroom) {
+      sessionStorage.setItem(
+        "selectedSalesShowroom",
+        String(selectedShowroom)
+      );
+    }
 
-                          navigate(
-                            isSales
-                              ? `/sales/stock-box-details/${box.stockBoxId}`
-                              : `/admin/salesStockBoxDetails/${box.stockBoxId}`
-                          );
-                        }}
-                      >
-                        <VisibilityIcon fontSize="medium" />
-                      </IconButton>
+    localStorage.setItem(
+      "selectedStockBox",
+      JSON.stringify(box)
+    );
+
+    navigate(
+      isSales
+        ? `/sales/stock-box-details/${box.stockBoxId}`
+        : `/admin/salesStockBoxDetails/${box.stockBoxId}`
+    );
+  }}
+>
+  <VisibilityIcon fontSize="medium" />
+</IconButton>
 
                       {isAdmin && (
                         <>

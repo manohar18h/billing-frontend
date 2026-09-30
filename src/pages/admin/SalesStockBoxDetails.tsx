@@ -1010,12 +1010,12 @@ const handleCompleteInventoryCheck =
   return (
 <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
   <div className="w-full max-w-[96vw] bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-6 relative">
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-4 right-4 bg-purple-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-purple-700"
-        >
-          Close
-        </button>
+   <button
+  onClick={() => navigate(-1)}
+  className="absolute top-4 right-4 bg-purple-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-purple-700"
+>
+  Close
+</button>
 
         <div className="mb-6">
   <h1 className="text-2xl font-bold text-purple-700 dark:text-purple-300">
