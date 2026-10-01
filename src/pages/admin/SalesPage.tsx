@@ -1721,11 +1721,7 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
         <p><b className="text-pink-300">Stone Amount:</b> <span className="text-yellow-300 font-bold">{order.stone_amount || "—"}</span></p>
        <p><b className="text-pink-300">Wax Weight:</b> <span className="text-yellow-300 font-bold">{order.wax_weight || "—"}</span></p>
         <p><b className="text-pink-300">Wax Amount:</b> <span className="text-yellow-300 font-bold">{order.wax_amount || "—"}</span></p>
-   
-      </div>
-
-      <div className="space-y-3 border-l border-white/20 pl-8">
-           <p>
+          <p>
   <b className="text-pink-300">Pearls Weight:</b>{" "}
   <span className="text-yellow-300 font-bold">
     {order.pearls_weight || "—"}
@@ -1738,12 +1734,48 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
     {order.pearls_amount || "—"}
   </span>
 </p>
+      </div>
+
+      <div className="space-y-3 border-l border-white/20 pl-8">
+    
        <p><b className="text-pink-300">Diamond Weight:</b> <span className="text-yellow-300 font-bold">{order.diamond_weight || "—"}</span></p>
         <p><b className="text-pink-300">Diamond Amount:</b> <span className="text-yellow-300 font-bold">{order.diamond_amount || "—"}</span></p>
-        <p><b className="text-pink-300">Bits Weight:</b> <span className="text-yellow-300 font-bold">{order.bits_weight || "—"}</span></p>
-        <p><b className="text-pink-300">Bits Amount:</b> <span className="text-yellow-300 font-bold">{order.bits_amount || "—"}</span></p>
-        <p><b className="text-pink-300">Gross Weight:</b> <span className="text-yellow-300 font-bold">{order.gross_weight}</span></p>
-        <p><b className="text-pink-300">Stock Box:</b> <span className="text-yellow-300 font-bold">{order.stockBox || "—"}</span></p>
+      <p>
+  <b className="text-pink-300">Bits Weight:</b>{" "}
+  <span className="text-yellow-300 font-bold">
+    {order.bits_weight || "—"}
+  </span>
+</p>
+
+<p>
+  <b className="text-pink-300">Bits Amount:</b>{" "}
+  <span className="text-yellow-300 font-bold">
+    {order.bits_amount || "—"}
+  </span>
+</p>
+
+{/* OTHER */}
+<p>
+  <b className="text-pink-300">Other Weight:</b>{" "}
+  <span className="text-yellow-300 font-bold">
+    {order.other_weight || "—"}
+  </span>
+</p>
+
+<p>
+  <b className="text-pink-300">Other Amount:</b>{" "}
+  <span className="text-yellow-300 font-bold">
+    {order.other_amount || "—"}
+  </span>
+</p>
+
+<p>
+  <b className="text-pink-300">Gross Weight:</b>{" "}
+  <span className="text-yellow-300 font-bold">
+    {order.gross_weight}
+  </span>
+</p>
+ <p><b className="text-pink-300">Stock Box:</b> <span className="text-yellow-300 font-bold">{order.stockBox || "—"}</span></p>
 <p>
   <b className="text-pink-300">Item Status:</b>{" "}
   {isSoldOrUnavailable ? (
