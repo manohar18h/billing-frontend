@@ -60,6 +60,18 @@ interface FollowUpCustomer {
   pendingItems: PendingLoanItem[];
 }
 
+interface PendingPageResponse {
+  content: FollowUpCustomer[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  numberOfElements: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
 interface SearchResult {
   customerLoanId: number;
   customerName: string;
@@ -102,7 +114,11 @@ const LoanFollowUp: React.FC = () => {
   const [today, setToday] = useState<FollowUpCustomer[]>([]);
   const [retry, setRetry] = useState<FollowUpCustomer[]>([]);
   const [upcoming, setUpcoming] = useState<FollowUpCustomer[]>([]);
+const PAGE_SIZE = 25;
 
+const [pendingPage, setPendingPage] = useState(0);
+const [pendingTotalElements, setPendingTotalElements] = useState(0);
+const [pendingTotalPages, setPendingTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -169,10 +185,10 @@ const [transactionError, setTransactionError] =
         retryResponse,
         upcomingResponse,
       ] = await Promise.all([
-        api.get(
-          "/sales/loan-followup/pending",
-          authConfig
-        ),
+    api.get<PendingPageResponse>(
+  `/sales/loan-followup/pending?page=${pendingPage}&size=${PAGE_SIZE}`,
+  authConfig
+),
 
         api.get(
           "/sales/loan-followup/reminders/today",
@@ -190,11 +206,19 @@ const [transactionError, setTransactionError] =
         ),
       ]);
 
-      setPending(
-        Array.isArray(pendingResponse.data)
-          ? pendingResponse.data
-          : []
-      );
+     setPending(
+  Array.isArray(pendingResponse.data?.content)
+    ? pendingResponse.data.content
+    : []
+);
+
+setPendingTotalElements(
+  Number(pendingResponse.data?.totalElements || 0)
+);
+
+setPendingTotalPages(
+  Number(pendingResponse.data?.totalPages || 0)
+);
 
       setToday(
         Array.isArray(todayResponse.data)
@@ -225,7 +249,7 @@ const [transactionError, setTransactionError] =
     } finally {
       setLoading(false);
     }
-  }, [token]);
+ }, [token, pendingPage]);
 
   useEffect(() => {
     if (role !== "SALES" || !token) {
@@ -987,7 +1011,7 @@ const closeTransactions = () => {
 
           <CountCard
             label="Pending"
-            value={pending.length}
+            value={pendingTotalElements}
             active={activeTab === "PENDING"}
             onClick={() =>
               setActiveTab("PENDING")
@@ -1063,20 +1087,125 @@ const closeTransactions = () => {
           ) : (
             <div className="space-y-4">
 
-              {currentList().map((customer) => (
+              {activeTab === "PENDING" && pendingTotalPages > 0 && (
+  <div className="mt-6 border-t border-gray-200 pt-5">
 
-                <div
-                  key={customer.customerLoanId}
-                  className="rounded-2xl border border-gray-200 p-4 transition hover:shadow-md md:p-5"
-                >
+    <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+
+      {/* RECORD COUNT */}
+      <div className="text-sm font-semibold text-gray-500">
+        Showing{" "}
+        <span className="font-extrabold text-gray-900">
+          {pendingPage * PAGE_SIZE + 1}
+        </span>
+        {" - "}
+        <span className="font-extrabold text-gray-900">
+          {Math.min(
+            (pendingPage + 1) * PAGE_SIZE,
+            pendingTotalElements
+          )}
+        </span>
+        {" of "}
+        <span className="font-extrabold text-gray-900">
+          {pendingTotalElements}
+        </span>
+      </div>
+
+      {/* PAGINATION */}
+      <div className="flex items-center gap-3">
+
+        <button
+          type="button"
+          disabled={pendingPage === 0 || loading}
+          onClick={() => {
+            setPendingPage((page) => Math.max(0, page - 1));
+
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            });
+          }}
+          className="rounded-xl bg-gray-100 px-5 py-3 font-bold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ← Previous
+        </button>
+
+        <div className="rounded-xl bg-gray-950 px-5 py-3 font-extrabold text-white">
+          Page {pendingPage + 1} of {pendingTotalPages}
+        </div>
+
+        <button
+          type="button"
+          disabled={
+            pendingPage >= pendingTotalPages - 1 ||
+            loading
+          }
+          onClick={() => {
+            setPendingPage((page) =>
+              Math.min(
+                pendingTotalPages - 1,
+                page + 1
+              )
+            );
+
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            });
+          }}
+          className="rounded-xl bg-amber-600 px-5 py-3 font-bold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Next →
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
+
+             {currentList().map((customer, index) => {
+
+  const serialNumber =
+    activeTab === "PENDING"
+      ? pendingPage * PAGE_SIZE + index + 1
+      : index + 1;
+
+  return (
+    <div
+      key={customer.customerLoanId}
+      className="rounded-2xl border border-gray-200 p-4 transition hover:shadow-md md:p-5"
+    >
 
                   <div className="flex flex-col justify-between gap-4 md:flex-row">
 
                     <div>
 
-                      <h3 className="text-xl font-extrabold text-gray-900">
-                        {customer.customerName}
-                      </h3>
+                     <div className="flex items-start gap-4">
+
+  <div className="flex h-10 min-w-10 items-center justify-center rounded-xl bg-gray-950 px-2 font-extrabold text-white">
+    {serialNumber}
+  </div>
+
+  <div>
+    <h3 className="text-xl font-extrabold text-gray-900">
+      {customer.customerName}
+    </h3>
+
+    <div className="mt-1 text-sm text-gray-500">
+      {customer.village || "-"}
+    </div>
+
+    <a
+      href={`tel:${customer.phoneNumber}`}
+      className="mt-2 inline-block font-bold text-green-700"
+    >
+      📞 {customer.phoneNumber}
+    </a>
+  </div>
+
+</div>
 
                       <div className="mt-1 text-sm text-gray-500">
                         {customer.village || "-"}
@@ -1245,8 +1374,9 @@ const closeTransactions = () => {
 
                   </div>
 
-                </div>
-              ))}
+             </div>
+  );
+})}
 
             </div>
           )}
