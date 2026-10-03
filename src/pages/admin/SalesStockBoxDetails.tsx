@@ -1,6 +1,6 @@
 // src/pages/admin/StockBoxDetails.tsx
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "@/services/api";
 
 type StockBoxDataEntry = {
@@ -66,8 +66,62 @@ const canManageCheckHistory = role === "ADMIN";
 
 const basePath = role === "ADMIN" ? "/admin" : "/sales";
 
-  const stored = localStorage.getItem("selectedStockBox");
-  const stockBox: StockDataBox | null = stored ? JSON.parse(stored) : null;
+const { stockBoxId } = useParams<{ stockBoxId: string }>();
+
+const [stockBox, setStockBox] = useState<StockDataBox | null>(null);
+const [stockBoxLoading, setStockBoxLoading] = useState(true);
+const safeStockBox: StockDataBox = stockBox ?? {
+  stockBoxId: 0,
+  stockBoxName: "",
+  totalStockBoxCount: 0,
+  totalStockBoxWeight: 0,
+  stockBoxData: [],
+};
+useEffect(() => {
+  const fetchStockBoxDetails = async () => {
+    if (!stockBoxId) {
+      setStockBoxLoading(false);
+      return;
+    }
+
+    try {
+      setStockBoxLoading(true);
+
+      const response = await api.get<StockDataBox>(
+        `${basePath}/stock-box/${stockBoxId}`,
+        {
+          headers: token
+            ? { Authorization: `Bearer ${token}` }
+            : undefined,
+        }
+      );
+
+      const fullStockBox: StockDataBox = {
+        ...response.data,
+        stockBoxData: Array.isArray(response.data?.stockBoxData)
+          ? response.data.stockBoxData
+          : [],
+      };
+
+      setStockBox(fullStockBox);
+
+      localStorage.setItem(
+        "selectedStockBox",
+        JSON.stringify(fullStockBox)
+      );
+    } catch (error) {
+      console.error("Failed to load stock box details:", error);
+      setStockBox(null);
+    } finally {
+      setStockBoxLoading(false);
+    }
+  };
+
+  fetchStockBoxDetails();
+}, [stockBoxId, basePath, token]);
+
+
+
 
 const [transferSelectedIds, setTransferSelectedIds] =
   useState<number[]>([]);
@@ -118,30 +172,18 @@ const [savingBoxCheck, setSavingBoxCheck] =
   useState(false);
 
 
-  
 
 
+ const [actualCountInput, setActualCountInput] =
+  useState("");
 
-  if (!stockBox) {
-    return (
-      <div className="p-6 text-center">
-        <p className="text-red-600">No stock box selected</p>
-        <button
-          onClick={() => navigate("/sales")}
-          className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg"
-        >
-          Back
-        </button>
-      </div>
-    );
-  }
+  useEffect(() => {
+  if (!stockBox) return;
 
-   const [actualCountInput, setActualCountInput] =
-  useState(
-    String(
-      Number(stockBox.totalStockBoxCount || 0)
-    )
+  setActualCountInput(
+    String(Number(stockBox.totalStockBoxCount || 0))
   );
+}, [stockBox]);
 
   const formatDMY = (date?: string) => {
     if (!date) return "";
@@ -161,9 +203,9 @@ const handleCheckOne = (id: number) => {
 };
 
 const handleSelectAllSell = () => {
-  const sellIds = stockBox.stockBoxData
-    .filter((x) => x.methodType2?.toUpperCase() === "SELL")
-    .map((x) => x.stockBoxDataId);
+ const sellIds = (stockBox?.stockBoxData ?? [])
+  .filter((x) => x.methodType2?.toUpperCase() === "SELL")
+  .map((x) => x.stockBoxDataId);
 
   setSelectedIds(sellIds);
 };
@@ -196,7 +238,7 @@ const handleBulkDelete = async (  password: string) => {
     alert("Deleted Successfully");
 
     const updatedResponse = await api.get(
-      `${basePath}/stock-box/${stockBox.stockBoxId}`,
+      `${basePath}/stock-box/${safeStockBox.stockBoxId}`,
       {
         headers: token
           ? { Authorization: `Bearer ${token}` }
@@ -336,7 +378,7 @@ const isTransferableEntry = (
 };
 
 const transferableEntries =
-  stockBox.stockBoxData.filter(
+  safeStockBox.stockBoxData.filter(
     isTransferableEntry
   );
 const handleSaveCheck = async (entry: StockBoxDataEntry) => {
@@ -360,7 +402,7 @@ const handleSaveCheck = async (entry: StockBoxDataEntry) => {
 
     // Update local object with saved values
    const updatedResponse = await api.get(
-  `${basePath}/stock-box/${stockBox.stockBoxId}`,
+  `${basePath}/stock-box/${safeStockBox.stockBoxId}`,
   {
     headers: token
       ? { Authorization: `Bearer ${token}` }
@@ -629,7 +671,7 @@ const transferWeight =
 };
 
 
-const availableEntries = stockBox.stockBoxData.filter(
+const availableEntries = (stockBox?.stockBoxData ?? []).filter(
   (entry) =>
     entry.methodType2?.trim().toUpperCase() !== "SELL"
 );
@@ -642,10 +684,10 @@ const checkedEntries = availableEntries.filter(
 
 
 const expectedCount =
-  Number(stockBox.totalStockBoxCount || 0);
+  Number(stockBox?.totalStockBoxCount || 0);
 
 const expectedWeight =
-  Number(stockBox.totalStockBoxWeight || 0);
+  Number(stockBox?.totalStockBoxWeight || 0);
 
 const actualCount =
   actualCountInput.trim() === ""
@@ -701,7 +743,7 @@ const currentCheckStatus =
     : "ALL_GOOD";
 
   const sortedStockBoxData = [
-  ...stockBox.stockBoxData
+  ...safeStockBox.stockBoxData
 ].sort((a, b) => {
 
   const aChecked =
@@ -854,8 +896,10 @@ const fetchInventoryExtraData = async () => {
 };
 
 useEffect(() => {
+  if (!stockBox) return;
+
   fetchInventoryExtraData();
-}, [stockBox.stockBoxId]);
+}, [stockBox?.stockBoxId]);
 
 const handleCompleteInventoryCheck =
   async () => {
@@ -950,7 +994,7 @@ const handleCompleteInventoryCheck =
       setSavingBoxCheck(true);
 
       await api.post(
-        `${basePath}/stock-box/${stockBox.stockBoxId}/check-history`,
+        `${basePath}/stock-box/${safeStockBox.stockBoxId}/check-history`,
         {
           actualCount:
             finalActualCount,
@@ -1005,6 +1049,35 @@ const handleCompleteInventoryCheck =
       setSavingBoxCheck(false);
     }
   };
+
+  if (stockBoxLoading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-lg font-semibold text-purple-700">
+        Loading Stock Box...
+      </div>
+    </div>
+  );
+}
+
+if (!stockBox) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-red-600 font-semibold">
+          Stock box not found
+        </p>
+
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg"
+        >
+          Back
+        </button>
+      </div>
+    </div>
+  );
+}
 
 
   return (

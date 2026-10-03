@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TextField,
   Box,
@@ -110,21 +110,32 @@ type StockDataBox = {
   description?: string;
   checked?: boolean;
 
-  stockBoxData: StockBoxDataEntry[];
-
-  latestCheck?: StockBoxCheckHistory | null;
-  todaySoldCount?: number;
-  todaySoldWeight?: number;
-};
-
-type StockBoxInventorySummary = {
-  stockBoxId: number;
-
   latestCheck?: StockBoxCheckHistory | null;
 
-  todaySoldCount: number;
-  todaySoldWeight: number;
+todaySoldCount?: number;
+todaySoldWeight?: number;
+
+// Latest sale TODAY
+latestSoldAt?: string | null;
+
+// Latest sale across ALL dates
+lastRecentSoldAt?: string | null;
+
+// Returned by paginated backend for delete protection
+hasStockBoxData?: boolean;
 };
+
+type StockBoxPageResponse = {
+  content: StockDataBox[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+};
+
 
 
 
@@ -163,6 +174,14 @@ const [selectedDescBox, setSelectedDescBox] = useState<StockDataBox | null>(null
   const navigate = useNavigate();
  const [showroom1Search, setShowroom1Search] = useState<string>("");
 const [showroom2Search, setShowroom2Search] = useState<string>("");
+const STOCK_BOX_PAGE_SIZE = 25;
+
+const [showroom1Page, setShowroom1Page] = useState(0);
+const [showroom2Page, setShowroom2Page] = useState(0);
+
+const [totalPages, setTotalPages] = useState(0);
+const [totalElements, setTotalElements] = useState(0);
+
 const [selectedShowroom, setSelectedShowroom] =
   useState<1 | 2 | null>(() => {
     const saved = sessionStorage.getItem("selectedSalesShowroom");
@@ -188,8 +207,7 @@ const [editStockBoxName, setEditStockBoxName] = useState("");
 const [verifiedEditPassword, setVerifiedEditPassword] =
   useState("");
 
-const [inventorySummary, setInventorySummary] =
-  useState<Record<number, StockBoxInventorySummary>>({});
+
 const [passwordDialog, setPasswordDialog] = useState(false);
 const [passwordInput, setPasswordInput] = useState("");
 const [pendingAction, setPendingAction] = useState<{
@@ -278,57 +296,105 @@ const verifyPasswordAndProceed = async () => {
   }
 };
 
-const fetchInventorySummary = async () => {
+const fetchStockBoxes = async (
+  showroomOverride?: 1 | 2,
+  pageOverride?: number,
+  searchOverride?: string
+) => {
+  const showroom = showroomOverride ?? selectedShowroom;
+
+  if (!showroom) {
+    setRows([]);
+    return;
+  }
+
+  const currentPage =
+    pageOverride ??
+    (showroom === 1 ? showroom1Page : showroom2Page);
+
+  const currentSearch =
+    searchOverride ??
+    (showroom === 1 ? showroom1Search : showroom2Search);
+
+  setLoading(true);
+  setErr(null);
+
   try {
-    const response = await api.get<StockBoxInventorySummary[]>(
-      `${basePath}/stock-box/inventory-summary`,
+    const response = await api.get<StockBoxPageResponse>(
+      `${basePath}/stock-box/page`,
       {
+        params: {
+          showroom,
+          page: currentPage,
+          size: STOCK_BOX_PAGE_SIZE,
+          search: currentSearch.trim(),
+        },
+
         headers: token
           ? { Authorization: `Bearer ${token}` }
           : undefined,
       }
     );
 
-    const summaryMap: Record<number, StockBoxInventorySummary> = {};
+    const data = response.data;
 
-    (response.data || []).forEach((item) => {
-      summaryMap[item.stockBoxId] = item;
-    });
+    setRows(Array.isArray(data?.content) ? data.content : []);
 
-    setInventorySummary(summaryMap);
+    setTotalPages(Number(data?.totalPages || 0));
+    setTotalElements(Number(data?.totalElements || 0));
+
   } catch (error) {
-    console.error("Failed to load inventory summary:", error);
+    console.error("Failed to fetch stock boxes:", error);
+
+    setRows([]);
+    setTotalPages(0);
+    setTotalElements(0);
+
+    setErr("Failed to load Stock Box Data.");
+  } finally {
+    setLoading(false);
   }
 };
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      setErr(null);
-      try {
-        const { data } = await api.get<StockDataBox[]>(`${basePath}/getALlStockBox`,
-          {
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          },
-        );
-        if (!alive) return;
-        setRows(Array.isArray(data) ? data : []);
-        await fetchInventorySummary();
-      } catch (e) {
-        if (!alive) return;
-        console.error("Failed to fetch all StockBox Data:", e);
-        setErr("Failed to load all StockBox Data.");
-      } finally {
-        if (alive) {
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
+useEffect(() => {
+  if (!selectedShowroom) {
+  setRows([]);
+  setTotalPages(0);
+  setTotalElements(0);
+  setLoading(false);
+  return;
+}
+
+  const currentPage =
+    selectedShowroom === 1
+      ? showroom1Page
+      : showroom2Page;
+
+  const search =
+    selectedShowroom === 1
+      ? showroom1Search
+      : showroom2Search;
+
+  const timer = window.setTimeout(() => {
+    fetchStockBoxes(
+      selectedShowroom,
+      currentPage,
+      search
+    );
+  }, 350);
+
+  return () => {
+    window.clearTimeout(timer);
+  };
+}, [
+  selectedShowroom,
+  showroom1Page,
+  showroom2Page,
+  showroom1Search,
+  showroom2Search,
+]);
+
+
 
   const handleRestoreClick = () => {
 
@@ -444,18 +510,10 @@ await fetchStockBoxes();
   fetchStockBoxes();
 };
 
-const handleClearSelected = async (showroom: 1 | 2) => {
-  const checkedRows = rows.filter((box) => {
-    if (box.checked !== true) {
-      return false;
-    }
-
-    const belongsToShowroom2 = isShowroom2Box(box.stockBoxName);
-
-    return showroom === 2
-      ? belongsToShowroom2
-      : !belongsToShowroom2;
-  });
+const handleClearSelected = async (_showroom: 1 | 2) => {
+  const checkedRows = rows.filter(
+    (box) => box.checked === true
+  );
 
   if (checkedRows.length === 0) {
     return;
@@ -471,14 +529,19 @@ const handleClearSelected = async (showroom: 1 | 2) => {
             headers: token
               ? { Authorization: `Bearer ${token}` }
               : undefined,
-          },
-        ),
-      ),
+          }
+        )
+      )
     );
 
     await fetchStockBoxes();
+
   } catch (error) {
-    console.error("Failed to clear selected stock boxes:", error);
+    console.error(
+      "Failed to clear selected stock boxes:",
+      error
+    );
+
     alert("Failed to clear selected stock boxes.");
   }
 };
@@ -572,24 +635,7 @@ setShowEstimation(false);
     }
   };
 
-  const fetchStockBoxes = async () => {
-  setLoading(true);
-  setErr(null);
 
-  try {
-    const { data } = await api.get<StockDataBox[]>(`${basePath}/getALlStockBox`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
-
-    setRows(Array.isArray(data) ? data : []);
-    await fetchInventorySummary();
-  } catch (e) {
-    console.error("Failed to fetch all StockBox Data:", e);
-    setErr("Failed to load all StockBox Data.");
-  } finally {
-    setLoading(false);
-  }
-};
 
 
 
@@ -628,8 +674,7 @@ const handleDeleteStockBox = async (
   box: StockDataBox,
   password: string
 ) => {
-  const hasData =
-    box.stockBoxData && box.stockBoxData.length > 0;
+  const hasData = box.hasStockBoxData === true;
 
   if (hasData) {
     alert("Cannot delete. This stock box contains data.");
@@ -678,49 +723,11 @@ const handleDeleteStockBox = async (
 // SPLIT STOCK BOXES INTO 1# SHOWROOM AND 2# SHOWROOM
 // ======================================================
 
-const isShowroom2Box = (stockBoxName?: string) => {
-  const name = (stockBoxName || "").trim();
 
-  return name.startsWith("2");
-};
 
-const showroom1Rows = useMemo(() => {
-  const query = showroom1Search.trim().toLowerCase();
 
-  return rows.filter((box) => {
-    const name = (box.stockBoxName || "").trim();
 
-    // Exclude Showroom 2 stock boxes
-    if (isShowroom2Box(name)) {
-      return false;
-    }
 
-    if (!query) {
-      return true;
-    }
-
-    return name.toLowerCase().includes(query);
-  });
-}, [rows, showroom1Search]);
-
-const showroom2Rows = useMemo(() => {
-  const query = showroom2Search.trim().toLowerCase();
-
-  return rows.filter((box) => {
-    const name = (box.stockBoxName || "").trim();
-
-    // Only Showroom 2 stock boxes
-    if (!isShowroom2Box(name)) {
-      return false;
-    }
-
-    if (!query) {
-      return true;
-    }
-
-    return name.toLowerCase().includes(query);
-  });
-}, [rows, showroom2Search]);
 
 
   useEffect(() => {
@@ -826,7 +833,53 @@ const showroom2Rows = useMemo(() => {
   };
 }, [qrScannerOpen]);
 
-const renderStockBoxData = (displayRows: StockDataBox[]) => {
+const formatSoldTime = (
+  value?: string | null
+): string => {
+  if (!value) return "";
+
+  // Backend LocalDateTime:
+  // 2026-10-03T13:24:30
+  const match = value.match(
+    /T(\d{2}):(\d{2})/
+  );
+
+  if (!match) return "";
+
+  let hour = Number(match[1]);
+  const minute = match[2];
+
+  const period = hour >= 12 ? "PM" : "AM";
+
+  hour = hour % 12 || 12;
+
+  return `${hour}:${minute} ${period}`;
+};
+
+const formatSoldDate = (
+  value?: string | null
+): string => {
+  if (!value) return "";
+
+  // Backend LocalDateTime:
+  // 2026-10-03T13:24:30
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})/
+  );
+
+  if (!match) return "";
+
+  const year = match[1];
+  const month = match[2];
+  const day = match[3];
+
+  return `${day}/${month}/${year}`;
+};
+
+const renderStockBoxData = (
+  displayRows: StockDataBox[],
+  currentPage: number
+) => {
   if (displayRows.length === 0) {
     return (
       <p className="py-6 text-center text-gray-500">
@@ -835,105 +888,29 @@ const renderStockBoxData = (displayRows: StockDataBox[]) => {
     );
   }
 
-const sortedDisplayRows = [...displayRows].sort((a, b) => {
-  const aSummary = inventorySummary[a.stockBoxId];
-  const bSummary = inventorySummary[b.stockBoxId];
-
-  const aLatest = aSummary?.latestCheck;
-  const bLatest = bSummary?.latestCheck;
-
-  // =====================================================
-  // PRIORITY 1: INVENTORY PROBLEMS
-  // =====================================================
-
-  const aProblem =
-    !!aLatest &&
-    aLatest.checkStatus !== "ALL_GOOD";
-
-  const bProblem =
-    !!bLatest &&
-    bLatest.checkStatus !== "ALL_GOOD";
-
-  if (aProblem && !bProblem) {
-    return -1;
-  }
-
-  if (bProblem && !aProblem) {
-    return 1;
-  }
-
-  // If both have problems, boxes with missing pieces first
-  if (aProblem && bProblem) {
-    const aMissing = Number(aLatest?.missingCount || 0);
-    const bMissing = Number(bLatest?.missingCount || 0);
-
-    if (aMissing !== bMissing) {
-      return bMissing - aMissing;
-    }
-  }
-
-  // =====================================================
-  // PRIORITY 2: TODAY'S SOLD
-  // =====================================================
-
-  const aSold = Number(aSummary?.todaySoldCount || 0);
-  const bSold = Number(bSummary?.todaySoldCount || 0);
-
-  if (aSold > 0 && bSold === 0) {
-    return -1;
-  }
-
-  if (bSold > 0 && aSold === 0) {
-    return 1;
-  }
-
-  if (
-    aSold > 0 &&
-    bSold > 0 &&
-    aSold !== bSold
-  ) {
-    return bSold - aSold;
-  }
-
-  // =====================================================
-  // PRIORITY 3: MOST RECENT INVENTORY CHECK
-  // =====================================================
-
-  const aTime =
-    aLatest?.checkedAt
-      ? new Date(aLatest.checkedAt).getTime()
-      : 0;
-
-  const bTime =
-    bLatest?.checkedAt
-      ? new Date(bLatest.checkedAt).getTime()
-      : 0;
-
-  if (aTime !== bTime) {
-    return bTime - aTime;
-  }
-
-  // =====================================================
-  // PRIORITY 4: NORMAL / NEVER CHECKED
-  // =====================================================
-
-  return a.stockBoxId - b.stockBoxId;
-});
+const sortedDisplayRows = displayRows;
 
   return (
     <div className="mt-4">
 
       {/* ================= MOBILE VIEW ================= */}
       <div className="space-y-3 md:hidden">
-        {sortedDisplayRows.map((box) => {
-          const summary = inventorySummary[box.stockBoxId];
-          const latest = summary?.latestCheck;
+        {sortedDisplayRows.map((box, index) => {
+  const latest = box.latestCheck;
+
+  const serialNumber =
+    currentPage * STOCK_BOX_PAGE_SIZE +
+    index +
+    1;
 
           return (
             <div
               key={box.stockBoxId}
               className="rounded-2xl border border-gray-100 bg-[#fffaf0] p-4 shadow-sm"
             >
+              <div className="text-[11px] font-bold text-gray-500">
+  S.No: {serialNumber}
+</div>
               {/* Stock Box Name + Checkbox */}
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -1052,57 +1029,61 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
 )}
               </div>
 
-              {/* Today's Sold */}
-              <div className="mt-2 rounded-xl bg-red-50 p-3">
-                <div className="text-[11px] font-bold text-red-700">
-                  TODAY SOLD
-                </div>
+             {/* Today's Sold */}
+<div className="mt-2 rounded-xl bg-red-50 p-3">
+  <div className="text-[11px] font-bold text-red-700">
+    TODAY SOLD
+  </div>
 
-                {Number(summary?.todaySoldCount || 0) > 0 ? (
-                  <>
-                    <div className="mt-1 text-sm font-bold text-red-600">
-                      {summary?.todaySoldCount} Sold
-                    </div>
+  {Number(box.todaySoldCount || 0) > 0 ? (
+    <>
+      <div className="mt-1 text-sm font-bold text-red-600">
+        {box.todaySoldCount} Sold
+      </div>
 
-                    <div className="text-xs text-gray-700">
-                      Weight:{" "}
-                      {Number(
-                        summary?.todaySoldWeight || 0
-                      ).toFixed(3)}{" "}
-                      g
-                    </div>
-                  </>
-                ) : (
-                  <div className="mt-1 text-xs text-gray-400">
-                    No sales today
-                  </div>
-                )}
-              </div>
+      <div className="text-xs text-gray-700">
+        Weight:{" "}
+        {Number(
+          box.todaySoldWeight || 0
+        ).toFixed(3)}{" "}
+        g
+      </div>
 
-              {/* Existing Description */}
-              <div className="mt-2 rounded-xl bg-white p-3">
-                <div className="text-[11px] text-gray-500">
-                  Description
-                </div>
+      {box.latestSoldAt && (
+        <div className="mt-1 text-[11px] font-semibold text-red-500">
+          Last Sold: {formatSoldTime(box.latestSoldAt)}
+        </div>
+      )}
+    </>
+  ) : (
+    <div className="mt-1 text-xs text-gray-400">
+      No sales today
+    </div>
+  )}
+</div>
 
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-bold">
-                    {box.description || "Add"}
-                  </div>
+        {/* Last Recent Sold */}
+<div className="mt-2 rounded-xl bg-blue-50 p-3">
+  <div className="text-[11px] font-bold text-blue-700">
+    LAST RECENT SOLD
+  </div>
 
-                  <IconButton
-                    size="small"
-                    color="secondary"
-                    onClick={() => {
-                      setSelectedDescBox(box);
-                      setDescriptionInput(box.description || "");
-                      setDescDialog(true);
-                    }}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </div>
-              </div>
+  {box.lastRecentSoldAt ? (
+    <>
+      <div className="mt-1 text-sm font-bold text-blue-700">
+        {formatSoldDate(box.lastRecentSoldAt)}
+      </div>
+
+      <div className="text-xs font-semibold text-gray-600">
+        {formatSoldTime(box.lastRecentSoldAt)}
+      </div>
+    </>
+  ) : (
+    <div className="mt-1 text-xs text-gray-400">
+      No previous sale
+    </div>
+  )}
+</div>
 
               {/* Actions */}
               <div className="mt-3 flex justify-end gap-2">
@@ -1146,8 +1127,7 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
                       <EditIcon fontSize="medium" />
                     </IconButton>
 
-                    {(!box.stockBoxData ||
-                      box.stockBoxData.length === 0) && (
+                    {box.hasStockBoxData !== true && (
                       <IconButton
                         size="medium"
                         color="error"
@@ -1172,6 +1152,9 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
           <thead className="bg-gray-200">
             <tr>
               <th className="border px-3 py-2 text-center">
+  S.No
+</th>
+              <th className="border px-3 py-2 text-center">
                 Select
               </th>
 
@@ -1191,31 +1174,37 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
                   Inventory Status
               </th>
 
-              <th className="border px-3 py-2 text-center">
-                Today Sold
-              </th>
+             <th className="border px-3 py-2 text-center">
+  Today Sold
+</th>
 
-             
+<th className="border px-3 py-2 text-center">
+  Last Recent Sold
+</th>
 
-              <th className="border px-3 py-2 text-center">
-                Actions
-              </th>
+<th className="border px-3 py-2 text-center">
+  Actions
+</th>
             </tr>
           </thead>
 
           <tbody>
-           {sortedDisplayRows.map((box) => {
-              const summary =
-                inventorySummary[box.stockBoxId];
+          {sortedDisplayRows.map((box, index) => {
+  const latest = box.latestCheck;
 
-              const latest =
-                summary?.latestCheck;
+  const serialNumber =
+    currentPage * STOCK_BOX_PAGE_SIZE +
+    index +
+    1;
 
               return (
                 <tr
                   key={box.stockBoxId}
                   className="bg-white/90 text-center"
                 >
+                  <td className="border px-3 py-2 font-bold text-gray-600">
+  {serialNumber}
+</td>
                   {/* Select */}
                   <td className="border px-3 py-2">
                     <input
@@ -1335,29 +1324,56 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
 
 
 
-                  {/* Today Sold */}
-                  <td className="border px-3 py-2">
-                    {Number(
-                      summary?.todaySoldCount || 0
-                    ) > 0 ? (
-                      <div className="min-w-[100px]">
-                        <div className="font-bold text-red-600">
-                          {summary?.todaySoldCount} Sold
-                        </div>
+               {/* Today Sold */}
+<td className="border px-3 py-2">
+  {Number(box.todaySoldCount || 0) > 0 ? (
+    <div className="min-w-[120px]">
 
-                        <div className="text-xs text-gray-600">
-                          {Number(
-                            summary?.todaySoldWeight || 0
-                          ).toFixed(3)}{" "}
-                          g
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">
-                        -
-                      </span>
-                    )}
-                  </td>
+      <div className="font-bold text-red-600">
+        {box.todaySoldCount} Sold
+      </div>
+
+      <div className="text-xs text-gray-600">
+        {Number(
+          box.todaySoldWeight || 0
+        ).toFixed(3)}{" "}
+        g
+      </div>
+
+      {box.latestSoldAt && (
+        <div className="mt-1 text-[11px] font-semibold text-red-500">
+          Last Sold: {formatSoldTime(box.latestSoldAt)}
+        </div>
+      )}
+
+    </div>
+  ) : (
+    <span className="text-gray-400">
+      -
+    </span>
+  )}
+</td>
+
+{/* Last Recent Sold */}
+<td className="border px-3 py-2">
+  {box.lastRecentSoldAt ? (
+    <div className="min-w-[120px] text-center">
+
+      <div className="font-bold text-blue-700">
+        {formatSoldDate(box.lastRecentSoldAt)}
+      </div>
+
+      <div className="mt-1 text-xs font-semibold text-gray-600">
+        {formatSoldTime(box.lastRecentSoldAt)}
+      </div>
+
+    </div>
+  ) : (
+    <span className="text-gray-400">
+      -
+    </span>
+  )}
+</td>
 
               
 
@@ -1405,9 +1421,7 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
                             <EditIcon fontSize="medium" />
                           </IconButton>
 
-                          {(!box.stockBoxData ||
-                            box.stockBoxData.length ===
-                              0) && (
+                         {box.hasStockBoxData !== true && (
                             <IconButton
                               size="medium"
                               color="error"
@@ -2129,39 +2143,41 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
         flexWrap: "wrap",
       }}
     >
-      <Button
-        variant={selectedShowroom === 1 ? "contained" : "outlined"}
-        onClick={() => {
-          setSelectedShowroom(1);
-          setShowroom2Search("");
-        }}
-        sx={{
-          minWidth: { xs: "145px", sm: "220px" },
-          height: { xs: "48px", md: "55px" },
-          borderRadius: "14px",
-          fontWeight: "bold",
-          fontSize: { xs: "14px", md: "17px" },
-        }}
-      >
-        1# SHOWROOM
-      </Button>
+     <Button
+  variant={selectedShowroom === 1 ? "contained" : "outlined"}
+  onClick={() => {
+    setSelectedShowroom(1);
+    setShowroom1Page(0);
+    setShowroom2Search("");
+  }}
+  sx={{
+    minWidth: { xs: "145px", sm: "220px" },
+    height: { xs: "48px", md: "55px" },
+    borderRadius: "14px",
+    fontWeight: "bold",
+    fontSize: { xs: "14px", md: "17px" },
+  }}
+>
+  1# SHOWROOM
+</Button>
 
-      <Button
-        variant={selectedShowroom === 2 ? "contained" : "outlined"}
-        onClick={() => {
-          setSelectedShowroom(2);
-          setShowroom1Search("");
-        }}
-        sx={{
-          minWidth: { xs: "145px", sm: "220px" },
-          height: { xs: "48px", md: "55px" },
-          borderRadius: "14px",
-          fontWeight: "bold",
-          fontSize: { xs: "14px", md: "17px" },
-        }}
-      >
-        2# SHOWROOM
-      </Button>
+<Button
+  variant={selectedShowroom === 2 ? "contained" : "outlined"}
+  onClick={() => {
+    setSelectedShowroom(2);
+    setShowroom2Page(0);
+    setShowroom1Search("");
+  }}
+  sx={{
+    minWidth: { xs: "145px", sm: "220px" },
+    height: { xs: "48px", md: "55px" },
+    borderRadius: "14px",
+    fontWeight: "bold",
+    fontSize: { xs: "14px", md: "17px" },
+  }}
+>
+  2# SHOWROOM
+</Button>
     </Box>
 
 
@@ -2226,9 +2242,10 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
           variant="outlined"
           size="small"
           value={showroom1Search}
-          onChange={(e) =>
-            setShowroom1Search(e.target.value)
-          }
+          onChange={(e) => {
+  setShowroom1Search(e.target.value);
+  setShowroom1Page(0);
+}}
           sx={{
             width: 320,
             backgroundColor: "white",
@@ -2245,9 +2262,10 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
               <InputAdornment position="end">
                 <IconButton
                   size="small"
-                  onClick={() =>
-                    setShowroom1Search("")
-                  }
+                  onClick={() => {
+  setShowroom1Search("");
+  setShowroom1Page(0);
+}}
                 >
                   <CloseIcon fontSize="small" />
                 </IconButton>
@@ -2259,7 +2277,7 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
         <Button
           variant="contained"
           color="secondary"
-          onClick={() => handleClearSelected(1)}
+      onClick={() => handleClearSelected(1)}
           sx={{
             height: "40px",
             fontWeight: "bold",
@@ -2281,8 +2299,58 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
           {err}
         </p>
       ) : (
-        renderStockBoxData(showroom1Rows)
+        renderStockBoxData(rows, showroom1Page)
       )}
+
+      {!loading && !err && totalPages > 0 && (
+  <Box
+    sx={{
+      mt: 3,
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 2,
+      flexWrap: "wrap",
+    }}
+  >
+    <Button
+      variant="outlined"
+      disabled={showroom1Page === 0}
+      onClick={() =>
+        setShowroom1Page((prev) =>
+          Math.max(0, prev - 1)
+        )
+      }
+    >
+      Previous
+    </Button>
+
+    <Typography fontWeight="bold">
+      Page {showroom1Page + 1} of {totalPages}
+    </Typography>
+
+    <Button
+      variant="outlined"
+      disabled={
+        showroom1Page >= totalPages - 1
+      }
+      onClick={() =>
+        setShowroom1Page((prev) =>
+          prev + 1
+        )
+      }
+    >
+      Next
+    </Button>
+
+    <Typography
+      variant="body2"
+      color="text.secondary"
+    >
+      Total: {totalElements} Stock Boxes
+    </Typography>
+  </Box>
+)}
     </Paper>
 )}
 
@@ -2346,9 +2414,10 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
           variant="outlined"
           size="small"
           value={showroom2Search}
-          onChange={(e) =>
-            setShowroom2Search(e.target.value)
-          }
+         onChange={(e) => {
+  setShowroom2Search(e.target.value);
+  setShowroom2Page(0);
+}}
           sx={{
             width: 320,
             backgroundColor: "white",
@@ -2365,9 +2434,10 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
               <InputAdornment position="end">
                 <IconButton
                   size="small"
-                  onClick={() =>
-                    setShowroom2Search("")
-                  }
+                  onClick={() => {
+  setShowroom2Search("");
+  setShowroom2Page(0);
+}}
                 >
                   <CloseIcon fontSize="small" />
                 </IconButton>
@@ -2379,7 +2449,7 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
         <Button
           variant="contained"
           color="secondary"
-          onClick={() => handleClearSelected(2)}
+     onClick={() => handleClearSelected(2)}
           sx={{
             height: "40px",
             fontWeight: "bold",
@@ -2401,8 +2471,57 @@ const sortedDisplayRows = [...displayRows].sort((a, b) => {
           {err}
         </p>
       ) : (
-        renderStockBoxData(showroom2Rows)
+        renderStockBoxData(rows, showroom2Page)
       )}
+      {!loading && !err && totalPages > 0 && (
+  <Box
+    sx={{
+      mt: 3,
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 2,
+      flexWrap: "wrap",
+    }}
+  >
+    <Button
+      variant="outlined"
+      disabled={showroom2Page === 0}
+      onClick={() =>
+        setShowroom2Page((prev) =>
+          Math.max(0, prev - 1)
+        )
+      }
+    >
+      Previous
+    </Button>
+
+    <Typography fontWeight="bold">
+      Page {showroom2Page + 1} of {totalPages}
+    </Typography>
+
+    <Button
+      variant="outlined"
+      disabled={
+        showroom2Page >= totalPages - 1
+      }
+      onClick={() =>
+        setShowroom2Page((prev) =>
+          prev + 1
+        )
+      }
+    >
+      Next
+    </Button>
+
+    <Typography
+      variant="body2"
+      color="text.secondary"
+    >
+      Total: {totalElements} Stock Boxes
+    </Typography>
+  </Box>
+)}
     </Paper>
 )}
   </div>
