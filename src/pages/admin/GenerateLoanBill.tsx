@@ -211,15 +211,27 @@ We hope to serve you again soon!
           setLoanData(response.data);
           SetMsgTitle(`Your Item Updated Successfully`);
         }
-      } catch (error) {
-        console.error("Error fetching bill summary/update:", error);
-      }
+      } catch (error: any) {
+  console.error("Error fetching bill summary/update:", error);
+
+  console.error("STATUS:", error.response?.status);
+  console.error("BACKEND ERROR:", error.response?.data);
+
+  const message =
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    (typeof error.response?.data === "string"
+      ? error.response.data
+      : "Failed to generate loan bill");
+
+  alert(message);
+}
     };
 
     fetchLoanBillSummary();
   }, [selectedItems, token]);
 
-  if (!loanData) return <div>Loading...</div>;
+  if (!loanData) return <div>BACKEND ERROR: ...</div>;
 
   return (
    <div className="bg-white px-2 py-4 pb-24 text-black md:p-6">
