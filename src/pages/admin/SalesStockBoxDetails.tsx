@@ -57,133 +57,109 @@ const SalesStockBoxDetails: React.FC = () => {
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
-const role = localStorage.getItem("role");
+  const role = localStorage.getItem("role");
 
-const isAdmin = role === "ADMIN";
+  const isAdmin = role === "ADMIN";
 
-const canEditCheck = role === "ADMIN" || role === "SALES";
-const canManageCheckHistory = role === "ADMIN";
+  const canEditCheck = role === "ADMIN" || role === "SALES";
+  const canManageCheckHistory = role === "ADMIN";
 
-const basePath = role === "ADMIN" ? "/admin" : "/sales";
+  const basePath = role === "ADMIN" ? "/admin" : "/sales";
 
-const { stockBoxId } = useParams<{ stockBoxId: string }>();
+  const { stockBoxId } = useParams<{ stockBoxId: string }>();
 
-const [stockBox, setStockBox] = useState<StockDataBox | null>(null);
-const [stockBoxLoading, setStockBoxLoading] = useState(true);
-const safeStockBox: StockDataBox = stockBox ?? {
-  stockBoxId: 0,
-  stockBoxName: "",
-  totalStockBoxCount: 0,
-  totalStockBoxWeight: 0,
-  stockBoxData: [],
-};
-useEffect(() => {
-  const fetchStockBoxDetails = async () => {
-    if (!stockBoxId) {
-      setStockBoxLoading(false);
-      return;
-    }
-
-    try {
-      setStockBoxLoading(true);
-
-      const response = await api.get<StockDataBox>(
-        `${basePath}/stock-box/${stockBoxId}`,
-        {
-          headers: token
-            ? { Authorization: `Bearer ${token}` }
-            : undefined,
-        }
-      );
-
-      const fullStockBox: StockDataBox = {
-        ...response.data,
-        stockBoxData: Array.isArray(response.data?.stockBoxData)
-          ? response.data.stockBoxData
-          : [],
-      };
-
-      setStockBox(fullStockBox);
-
-      localStorage.setItem(
-        "selectedStockBox",
-        JSON.stringify(fullStockBox)
-      );
-    } catch (error) {
-      console.error("Failed to load stock box details:", error);
-      setStockBox(null);
-    } finally {
-      setStockBoxLoading(false);
-    }
+  const [stockBox, setStockBox] = useState<StockDataBox | null>(null);
+  const [stockBoxLoading, setStockBoxLoading] = useState(true);
+  const safeStockBox: StockDataBox = stockBox ?? {
+    stockBoxId: 0,
+    stockBoxName: "",
+    totalStockBoxCount: 0,
+    totalStockBoxWeight: 0,
+    stockBoxData: [],
   };
+  useEffect(() => {
+    const fetchStockBoxDetails = async () => {
+      if (!stockBoxId) {
+        setStockBoxLoading(false);
+        return;
+      }
 
-  fetchStockBoxDetails();
-}, [stockBoxId, basePath, token]);
+      try {
+        setStockBoxLoading(true);
 
+        const response = await api.get<StockDataBox>(
+          `${basePath}/stock-box/${stockBoxId}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          },
+        );
 
+        const fullStockBox: StockDataBox = {
+          ...response.data,
+          stockBoxData: Array.isArray(response.data?.stockBoxData)
+            ? response.data.stockBoxData
+            : [],
+        };
 
+        setStockBox(fullStockBox);
 
-const [transferSelectedIds, setTransferSelectedIds] =
-  useState<number[]>([]);
+        localStorage.setItem("selectedStockBox", JSON.stringify(fullStockBox));
+      } catch (error) {
+        console.error("Failed to load stock box details:", error);
+        setStockBox(null);
+      } finally {
+        setStockBoxLoading(false);
+      }
+    };
 
+    fetchStockBoxDetails();
+  }, [stockBoxId, basePath, token]);
 
-const [passwordDialog, setPasswordDialog] = useState(false);
-const [passwordInput, setPasswordInput] = useState("");
-const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [transferSelectedIds, setTransferSelectedIds] = useState<number[]>([]);
 
-const [allStockBoxes, setAllStockBoxes] = useState<StockDataBox[]>([]);
+  const [passwordDialog, setPasswordDialog] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-const [transferDialog, setTransferDialog] = useState(false);
+  const [allStockBoxes, setAllStockBoxes] = useState<StockDataBox[]>([]);
 
-const [transferMode, setTransferMode] = useState<
-  "selected" | "all"
->("selected");
+  const [transferDialog, setTransferDialog] = useState(false);
 
-const [destinationBoxId, setDestinationBoxId] =
-  useState<number | "">("");
+  const [transferMode, setTransferMode] = useState<"selected" | "all">(
+    "selected",
+  );
 
-const [transferPassword, setTransferPassword] =
-  useState("");
+  const [destinationBoxId, setDestinationBoxId] = useState<number | "">("");
 
-const [transferring, setTransferring] =
-  useState(false);
+  const [destinationBoxSearch, setDestinationBoxSearch] = useState("");
+  const [destinationDropdownOpen, setDestinationDropdownOpen] = useState(false);
+  const [transferPassword, setTransferPassword] = useState("");
 
-const [checkValues, setCheckValues] = useState<
-  Record<number, { checked: boolean; description: string }>
->({});
+  const [transferring, setTransferring] = useState(false);
 
-const [savingId, setSavingId] = useState<number | null>(null);
+  const [checkValues, setCheckValues] = useState<
+    Record<number, { checked: boolean; description: string }>
+  >({});
 
-const [checkHistory, setCheckHistory] =
-  useState<StockBoxCheckHistory[]>([]);
+  const [savingId, setSavingId] = useState<number | null>(null);
 
-const [todaySold, setTodaySold] =
-  useState<StockBoxDataEntry[]>([]);
+  const [checkHistory, setCheckHistory] = useState<StockBoxCheckHistory[]>([]);
 
-const [actualWeight, setActualWeight] =
-  useState("");
+  const [todaySold, setTodaySold] = useState<StockBoxDataEntry[]>([]);
 
- 
+  const [actualWeight, setActualWeight] = useState("");
 
-const [boxCheckDescription, setBoxCheckDescription] =
-  useState("");
+  const [boxCheckDescription, setBoxCheckDescription] = useState("");
 
-const [savingBoxCheck, setSavingBoxCheck] =
-  useState(false);
+  const [savingBoxCheck, setSavingBoxCheck] = useState(false);
 
-
-
-
- const [actualCountInput, setActualCountInput] =
-  useState("");
+  const [actualCountInput, setActualCountInput] = useState("");
 
   useEffect(() => {
-  if (!stockBox) return;
+    if (!stockBox) return;
 
-  setActualCountInput(
-    String(Number(stockBox.totalStockBoxCount || 0))
-  );
-}, [stockBox]);
+    setActualCountInput(String(Number(stockBox.totalStockBoxCount || 0)));
+  }, [stockBox]);
 
   const formatDMY = (date?: string) => {
     if (!date) return "";
@@ -192,726 +168,506 @@ const [savingBoxCheck, setSavingBoxCheck] =
     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
   };
 
- 
-
-const handleCheckOne = (id: number) => {
-  setSelectedIds((prev) =>
-    prev.includes(id)
-      ? prev.filter((x) => x !== id)
-      : [...prev, id]
-  );
-};
-
-const handleSelectAllSell = () => {
- const sellIds = (stockBox?.stockBoxData ?? [])
-  .filter((x) => x.methodType2?.toUpperCase() === "SELL")
-  .map((x) => x.stockBoxDataId);
-
-  setSelectedIds(sellIds);
-};
-
-const handleBulkDelete = async (  password: string) => {
-  if (selectedIds.length === 0) {
-    alert("Please select at least one row");
-    return;
-  }
-
-  const confirmDelete = window.confirm(
-    `Are you sure want to delete ${selectedIds.length} selected rows?`
-  );
-
-  if (!confirmDelete) return;
-
-  try {
-  await api.request({
-  method: "DELETE",
-  url: "/admin/stock-box-data/delete",
-  data: {
-    stockBoxDataIds: selectedIds,
-    password: password,
-  },
-  headers: token
-    ? { Authorization: `Bearer ${token}` }
-    : undefined,
-});
-
-    alert("Deleted Successfully");
-
-    const updatedResponse = await api.get(
-      `${basePath}/stock-box/${safeStockBox.stockBoxId}`,
-      {
-        headers: token
-          ? { Authorization: `Bearer ${token}` }
-          : undefined,
-      }
+  const handleCheckOne = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
+  };
 
-    localStorage.setItem(
-      "selectedStockBox",
-      JSON.stringify(updatedResponse.data)
-    );
+  const handleSelectAllSell = () => {
+    const sellIds = (stockBox?.stockBoxData ?? [])
+      .filter((x) => x.methodType2?.toUpperCase() === "SELL")
+      .map((x) => x.stockBoxDataId);
 
-    setSelectedIds([]);
-    window.location.reload();
-  } catch (error: any) {
-  console.error("Delete failed:", error);
-  console.error("Backend response:", error.response?.data);
+    setSelectedIds(sellIds);
+  };
 
-  const message =
-    error.response?.data?.message ||
-    error.response?.data?.error ||
-    (typeof error.response?.data === "string"
-      ? error.response.data
-      : null) ||
-    "Delete Failed";
-
-  alert(message);
-}
-};
-
-const handleTransferCheckOne = (
-  entry: StockBoxDataEntry
-) => {
-
-  if (!isTransferableEntry(entry)) {
-    return;
-  }
-
-  setTransferSelectedIds((prev) =>
-    prev.includes(entry.stockBoxDataId)
-      ? prev.filter(
-          (id) => id !== entry.stockBoxDataId
-        )
-      : [
-          ...prev,
-          entry.stockBoxDataId
-        ]
-  );
-};
-
-
-const getRowValues = (entry: StockBoxDataEntry) => {
-  return (
-    checkValues[entry.stockBoxDataId] ?? {
-      checked: entry.checked ?? false,
-      description: entry.description ?? "",
+  const handleBulkDelete = async (password: string) => {
+    if (selectedIds.length === 0) {
+      alert("Please select at least one row");
+      return;
     }
-  );
-};
 
-const handleVerifiedChange = (
-  entry: StockBoxDataEntry,
-  checked: boolean
-) => {
-  const current = getRowValues(entry);
+    const confirmDelete = window.confirm(
+      `Are you sure want to delete ${selectedIds.length} selected rows?`,
+    );
 
-  setCheckValues((prev) => ({
-    ...prev,
-    [entry.stockBoxDataId]: {
-      ...current,
-      checked,
-    },
-  }));
-};
-
-const handleDescriptionChange = (
-  entry: StockBoxDataEntry,
-  description: string
-) => {
-  const current = getRowValues(entry);
-
-  setCheckValues((prev) => ({
-    ...prev,
-    [entry.stockBoxDataId]: {
-      ...current,
-      description,
-    },
-  }));
-};
-
-
-useEffect(() => {
-
-  if (!isAdmin) return;
-
-  const fetchAllStockBoxes = async () => {
+    if (!confirmDelete) return;
 
     try {
+      await api.request({
+        method: "DELETE",
+        url: "/admin/stock-box-data/delete",
+        data: {
+          stockBoxDataIds: selectedIds,
+          password: password,
+        },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
 
-      const response = await api.get<StockDataBox[]>(
-        "/admin/getALlStockBox",
+      alert("Deleted Successfully");
+
+      const updatedResponse = await api.get(
+        `${basePath}/stock-box/${safeStockBox.stockBoxId}`,
         {
-          headers: token
-            ? { Authorization: `Bearer ${token}` }
-            : undefined,
-        }
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
       );
 
-      setAllStockBoxes(
-        Array.isArray(response.data)
-          ? response.data
-          : []
+      localStorage.setItem(
+        "selectedStockBox",
+        JSON.stringify(updatedResponse.data),
       );
 
-    } catch (error) {
+      setSelectedIds([]);
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Delete failed:", error);
+      console.error("Backend response:", error.response?.data);
 
-      console.error(
-        "Failed to load stock boxes:",
-        error
-      );
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        (typeof error.response?.data === "string"
+          ? error.response.data
+          : null) ||
+        "Delete Failed";
 
+      alert(message);
     }
   };
 
-  fetchAllStockBoxes();
+  const handleTransferCheckOne = (entry: StockBoxDataEntry) => {
+    if (!isTransferableEntry(entry)) {
+      return;
+    }
 
-}, [isAdmin, token]);
+    setTransferSelectedIds((prev) =>
+      prev.includes(entry.stockBoxDataId)
+        ? prev.filter((id) => id !== entry.stockBoxDataId)
+        : [...prev, entry.stockBoxDataId],
+    );
+  };
 
-const isTransferableEntry = (
-  entry: StockBoxDataEntry
-) => {
-
-  return (
-    entry.methodType2?.trim().toUpperCase()
-    !== "SELL"
-  );
-};
-
-const transferableEntries =
-  safeStockBox.stockBoxData.filter(
-    isTransferableEntry
-  );
-const handleSaveCheck = async (entry: StockBoxDataEntry) => {
-  const values = getRowValues(entry);
-
-  try {
-    setSavingId(entry.stockBoxDataId);
-
-    await api.patch(
-  `${basePath}/stock-box-data/${entry.stockBoxDataId}/check`,
-      {
-        checked: values.checked,
-        description: values.description,
-      },
-      {
-        headers: token
-          ? { Authorization: `Bearer ${token}` }
-          : undefined,
+  const getRowValues = (entry: StockBoxDataEntry) => {
+    return (
+      checkValues[entry.stockBoxDataId] ?? {
+        checked: entry.checked ?? false,
+        description: entry.description ?? "",
       }
     );
+  };
 
-    // Update local object with saved values
-   const updatedResponse = await api.get(
-  `${basePath}/stock-box/${safeStockBox.stockBoxId}`,
-  {
-    headers: token
-      ? { Authorization: `Bearer ${token}` }
-      : undefined,
-  }
-);
+  const handleVerifiedChange = (entry: StockBoxDataEntry, checked: boolean) => {
+    const current = getRowValues(entry);
 
-localStorage.setItem(
-  "selectedStockBox",
-  JSON.stringify(updatedResponse.data)
-);
+    setCheckValues((prev) => ({
+      ...prev,
+      [entry.stockBoxDataId]: {
+        ...current,
+        checked,
+      },
+    }));
+  };
 
-setCheckValues((prev) => {
-  const updated = { ...prev };
-  delete updated[entry.stockBoxDataId];
-  return updated;
-});
- alert("Saved Successfully");
-window.location.reload();
-  } catch (error) {
-    console.error(error);
-    alert("Failed to save");
-  } finally {
-    setSavingId(null);
-  }
-};
+  const handleDescriptionChange = (
+    entry: StockBoxDataEntry,
+    description: string,
+  ) => {
+    const current = getRowValues(entry);
 
+    setCheckValues((prev) => ({
+      ...prev,
+      [entry.stockBoxDataId]: {
+        ...current,
+        description,
+      },
+    }));
+  };
 
-const transferIds =
-  transferMode === "all"
-    ? transferableEntries.map(
-        (entry) => entry.stockBoxDataId
-      )
-    : transferSelectedIds;
+  useEffect(() => {
+    if (!isAdmin) return;
 
+    const fetchAllStockBoxes = async () => {
+      try {
+        const response = await api.get<StockDataBox[]>(
+          "/admin/getALlStockBox",
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          },
+        );
 
-const transferEntries =
-  transferableEntries.filter((entry) =>
-    transferIds.includes(
-      entry.stockBoxDataId
+        setAllStockBoxes(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error("Failed to load stock boxes:", error);
+      }
+    };
+
+    fetchAllStockBoxes();
+  }, [isAdmin, token]);
+
+  const isTransferableEntry = (entry: StockBoxDataEntry) => {
+    return entry.methodType2?.trim().toUpperCase() !== "SELL";
+  };
+
+  const transferableEntries =
+    safeStockBox.stockBoxData.filter(isTransferableEntry);
+  const handleSaveCheck = async (entry: StockBoxDataEntry) => {
+    const values = getRowValues(entry);
+
+    try {
+      setSavingId(entry.stockBoxDataId);
+
+      await api.patch(
+        `${basePath}/stock-box-data/${entry.stockBoxDataId}/check`,
+        {
+          checked: values.checked,
+          description: values.description,
+        },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+
+      // Update local object with saved values
+      const updatedResponse = await api.get(
+        `${basePath}/stock-box/${safeStockBox.stockBoxId}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+
+      localStorage.setItem(
+        "selectedStockBox",
+        JSON.stringify(updatedResponse.data),
+      );
+
+      setCheckValues((prev) => {
+        const updated = { ...prev };
+        delete updated[entry.stockBoxDataId];
+        return updated;
+      });
+      alert("Saved Successfully");
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const transferIds =
+    transferMode === "all"
+      ? transferableEntries.map((entry) => entry.stockBoxDataId)
+      : transferSelectedIds;
+
+  const transferEntries = transferableEntries.filter((entry) =>
+    transferIds.includes(entry.stockBoxDataId),
+  );
+
+  const transferCount = transferEntries.reduce(
+    (sum, entry) => sum + Number(entry.pieces || 0),
+    0,
+  );
+
+  const transferWeight = transferEntries.reduce(
+    (sum, entry) =>
+      sum + Number(entry.metalWeight || 0) * Number(entry.pieces || 0),
+    0,
+  );
+
+  const filteredDestinationBoxes = allStockBoxes
+    .filter((box) => box.stockBoxId !== safeStockBox.stockBoxId)
+    .filter((box) =>
+      box.stockBoxName
+        .toLowerCase()
+        .includes(destinationBoxSearch.trim().toLowerCase()),
     )
-  );
-
-
-const transferCount =
-  transferEntries.reduce(
-    (sum, entry) =>
-      sum + Number(entry.pieces || 0),
-    0
-  );
-
-
-const transferWeight =
-  transferEntries.reduce(
-    (sum, entry) =>
-      sum +
-      (
-        Number(entry.metalWeight || 0) *
-        Number(entry.pieces || 0)
-      ),
-    0
-  );
+    .sort((a, b) => a.stockBoxName.localeCompare(b.stockBoxName));
 
   const handleTransfer = async () => {
+    if (!stockBox) return;
 
-  if (!stockBox) return;
+    if (!destinationBoxId) {
+      alert("Please select destination stock box.");
 
+      return;
+    }
 
-  if (!destinationBoxId) {
+    if (Number(destinationBoxId) === stockBox.stockBoxId) {
+      alert("Source and destination stock boxes cannot be the same.");
 
-    alert(
-      "Please select destination stock box."
+      return;
+    }
+
+    if (transferIds.length === 0) {
+      alert("No stock items selected for transfer.");
+
+      return;
+    }
+
+    if (!transferPassword.trim()) {
+      alert("Please enter admin password.");
+
+      return;
+    }
+
+    const destination = allStockBoxes.find(
+      (box) => box.stockBoxId === Number(destinationBoxId),
     );
 
-    return;
-  }
-
-
-  if (
-    Number(destinationBoxId) ===
-    stockBox.stockBoxId
-  ) {
-
-    alert(
-      "Source and destination stock boxes cannot be the same."
-    );
-
-    return;
-  }
-
-
-  if (transferIds.length === 0) {
-
-    alert(
-      "No stock items selected for transfer."
-    );
-
-    return;
-  }
-
-
-  if (!transferPassword.trim()) {
-
-    alert(
-      "Please enter admin password."
-    );
-
-    return;
-  }
-
-
-  const destination =
-    allStockBoxes.find(
-      (box) =>
-        box.stockBoxId ===
-        Number(destinationBoxId)
-    );
-
-
-  const confirmed =
-    window.confirm(
+    const confirmed = window.confirm(
       `Confirm Stock Transfer\n\n` +
-
-      `FROM: ${stockBox.stockBoxName}\n` +
-
-      `TO: ${
-        destination?.stockBoxName ||
-        "Selected Box"
-      }\n\n` +
-
-      `Items: ${transferCount}\n` +
-
-      `Weight: ${transferWeight.toFixed(3)}\n\n` +
-
-      (
-        transferMode === "all"
+        `FROM: ${stockBox.stockBoxName}\n` +
+        `TO: ${destination?.stockBoxName || "Selected Box"}\n\n` +
+        `Items: ${transferCount}\n` +
+        `Weight: ${transferWeight.toFixed(3)}\n\n` +
+        (transferMode === "all"
           ? "All available items will be transferred."
-          : `${transferIds.length} selected row(s) will be transferred.`
-      ) +
-
-      `\n\nDo you want to continue?`
+          : `${transferIds.length} selected row(s) will be transferred.`) +
+        `\n\nDo you want to continue?`,
     );
 
+    if (!confirmed) {
+      return;
+    }
 
-  if (!confirmed) {
-    return;
-  }
-
-
-  try {
-
-    setTransferring(true);
-
-
-    const response = await api.post<{
-      success: boolean;
-      message: string;
-    }>(
-      "/admin/stock-box/transfer",
-      {
-        sourceStockBoxId:
-          stockBox.stockBoxId,
-
-        destinationStockBoxId:
-          Number(destinationBoxId),
-
-        stockBoxDataIds:
-          transferIds,
-
-        password:
-          transferPassword,
-      },
-      {
-        headers: token
-          ? {
-              Authorization:
-                `Bearer ${token}`,
-            }
-          : undefined,
-      }
-    );
-
-
-    alert(
-      response.data?.message ||
-      "Stock transferred successfully."
-    );
-
-
-    setTransferDialog(false);
-    setTransferPassword("");
-    setDestinationBoxId("");
-    setTransferSelectedIds([]);
-
-
-    /*
-     * Reload source box.
-     *
-     * If backend deleted the source box,
-     * this GET may return 404.
-     */
     try {
+      setTransferring(true);
 
-      const updatedResponse =
-        await api.get<StockDataBox>(
+      const response = await api.post<{
+        success: boolean;
+        message: string;
+      }>(
+        "/admin/stock-box/transfer",
+        {
+          sourceStockBoxId: stockBox.stockBoxId,
+
+          destinationStockBoxId: Number(destinationBoxId),
+
+          stockBoxDataIds: transferIds,
+
+          password: transferPassword,
+        },
+        {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : undefined,
+        },
+      );
+
+      alert(response.data?.message || "Stock transferred successfully.");
+
+      setTransferDialog(false);
+      setTransferPassword("");
+      setDestinationBoxId("");
+      setTransferSelectedIds([]);
+      setDestinationBoxSearch("");
+      setDestinationDropdownOpen(false);
+
+      /*
+       * Reload source box.
+       *
+       * If backend deleted the source box,
+       * this GET may return 404.
+       */
+      try {
+        const updatedResponse = await api.get<StockDataBox>(
           `/admin/stock-box/${stockBox.stockBoxId}`,
           {
             headers: token
               ? {
-                  Authorization:
-                    `Bearer ${token}`,
+                  Authorization: `Bearer ${token}`,
                 }
               : undefined,
-          }
+          },
         );
 
+        localStorage.setItem(
+          "selectedStockBox",
+          JSON.stringify(updatedResponse.data),
+        );
 
-      localStorage.setItem(
-        "selectedStockBox",
-        JSON.stringify(
-          updatedResponse.data
-        )
-      );
+        window.location.reload();
+      } catch {
+        /*
+         * Source box was probably deleted because
+         * all available stock was transferred.
+         */
 
+        localStorage.removeItem("selectedStockBox");
 
-      window.location.reload();
+        navigate("/admin/sales");
+      }
+    } catch (error: any) {
+      console.error("Stock transfer failed:", error);
 
+      const message = error.response?.data?.message || "Stock transfer failed.";
 
-    } catch {
+      alert(message);
+    } finally {
+      setTransferring(false);
+    }
+  };
 
-      /*
-       * Source box was probably deleted because
-       * all available stock was transferred.
-       */
+  const availableEntries = (stockBox?.stockBoxData ?? []).filter(
+    (entry) => entry.methodType2?.trim().toUpperCase() !== "SELL",
+  );
 
-      localStorage.removeItem(
-        "selectedStockBox"
-      );
+  const checkedEntries = availableEntries.filter(
+    (entry) => entry.checked === true,
+  );
 
-      navigate("/admin/sales");
+  const expectedCount = Number(stockBox?.totalStockBoxCount || 0);
 
+  const expectedWeight = Number(stockBox?.totalStockBoxWeight || 0);
+
+  const actualCount =
+    actualCountInput.trim() === "" ? expectedCount : Number(actualCountInput);
+
+  const enteredActualWeight =
+    actualWeight.trim() === "" ? null : Number(actualWeight);
+
+  const piecesDifference = actualCount - expectedCount;
+
+  const missingCount = Math.max(0, expectedCount - actualCount);
+
+  const extraCount = Math.max(0, actualCount - expectedCount);
+
+  const weightDifference =
+    enteredActualWeight === null
+      ? null
+      : Number((enteredActualWeight - expectedWeight).toFixed(3));
+
+  const hasPiecesIssue = actualCount !== expectedCount;
+
+  const hasWeightIssue =
+    weightDifference !== null && Math.abs(weightDifference) >= 0.001;
+
+  const currentCheckStatus =
+    enteredActualWeight === null
+      ? "PENDING"
+      : hasPiecesIssue && hasWeightIssue
+        ? "PIECES_AND_WEIGHT_ISSUE"
+        : hasPiecesIssue
+          ? "PIECES_ISSUE"
+          : hasWeightIssue
+            ? "WEIGHT_ISSUE"
+            : "ALL_GOOD";
+
+  const sortedStockBoxData = [...safeStockBox.stockBoxData].sort((a, b) => {
+    const aChecked = a.checked === true;
+
+    const bChecked = b.checked === true;
+
+    // checked rows first
+    if (aChecked && !bChecked) {
+      return -1;
     }
 
+    if (!aChecked && bChecked) {
+      return 1;
+    }
 
-  } catch (error: any) {
+    // among checked rows:
+    // latest checkedAt first
+    if (aChecked && bChecked) {
+      const aTime = a.checkedAt ? new Date(a.checkedAt).getTime() : 0;
 
-    console.error(
-      "Stock transfer failed:",
-      error
-    );
+      const bTime = b.checkedAt ? new Date(b.checkedAt).getTime() : 0;
 
+      return bTime - aTime;
+    }
 
-    const message =
-      error.response?.data?.message ||
-      "Stock transfer failed.";
+    // unchecked keep normal order
+    return a.stockBoxDataId - b.stockBoxDataId;
+  });
 
+  const verifyPasswordAndDelete = async () => {
+    if (!passwordInput.trim()) {
+      alert("Please enter admin password.");
 
-    alert(message);
+      return;
+    }
 
-
-  } finally {
-
-    setTransferring(false);
-
-  }
-};
-
-
-const availableEntries = (stockBox?.stockBoxData ?? []).filter(
-  (entry) =>
-    entry.methodType2?.trim().toUpperCase() !== "SELL"
-);
-
-const checkedEntries = availableEntries.filter(
-  (entry) => entry.checked === true
-);
-
-
-
-
-const expectedCount =
-  Number(stockBox?.totalStockBoxCount || 0);
-
-const expectedWeight =
-  Number(stockBox?.totalStockBoxWeight || 0);
-
-const actualCount =
-  actualCountInput.trim() === ""
-    ? expectedCount
-    : Number(actualCountInput);
-
-const enteredActualWeight =
-  actualWeight.trim() === ""
-    ? null
-    : Number(actualWeight);
-
-const piecesDifference =
-  actualCount - expectedCount;
-
-const missingCount =
-  Math.max(
-    0,
-    expectedCount - actualCount
-  );
-
-const extraCount =
-  Math.max(
-    0,
-    actualCount - expectedCount
-  );
-
-const weightDifference =
-  enteredActualWeight === null
-    ? null
-    : Number(
-        (
-          enteredActualWeight -
-          expectedWeight
-        ).toFixed(3)
+    try {
+      await api.post(
+        "/admin/verify-admin-action-password",
+        {
+          password: passwordInput,
+        },
+        {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : undefined,
+        },
       );
 
-const hasPiecesIssue =
-  actualCount !== expectedCount;
+      setPasswordDialog(false);
 
-const hasWeightIssue =
-  weightDifference !== null &&
-  Math.abs(weightDifference) >= 0.001;
+      const verifiedPassword = passwordInput;
 
-const currentCheckStatus =
-  enteredActualWeight === null
-    ? "PENDING"
-    : hasPiecesIssue && hasWeightIssue
-    ? "PIECES_AND_WEIGHT_ISSUE"
-    : hasPiecesIssue
-    ? "PIECES_ISSUE"
-    : hasWeightIssue
-    ? "WEIGHT_ISSUE"
-    : "ALL_GOOD";
+      setPasswordInput("");
 
-  const sortedStockBoxData = [
-  ...safeStockBox.stockBoxData
-].sort((a, b) => {
+      await handleBulkDelete(verifiedPassword);
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Incorrect admin password.";
 
-  const aChecked =
-    a.checked === true;
+      alert(message);
+    }
+  };
 
-  const bChecked =
-    b.checked === true;
+  const fetchInventoryExtraData = async () => {
+    if (!stockBox) return;
 
-  // checked rows first
-  if (aChecked && !bChecked) {
-    return -1;
-  }
+    try {
+      const [historyResponse, soldResponse] = await Promise.all([
+        api.get(`${basePath}/stock-box/${stockBox.stockBoxId}/check-history`, {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : undefined,
+        }),
 
-  if (!aChecked && bChecked) {
-    return 1;
-  }
-
-  // among checked rows:
-  // latest checkedAt first
-  if (aChecked && bChecked) {
-
-    const aTime =
-      a.checkedAt
-        ? new Date(a.checkedAt).getTime()
-        : 0;
-
-    const bTime =
-      b.checkedAt
-        ? new Date(b.checkedAt).getTime()
-        : 0;
-
-    return bTime - aTime;
-  }
-
-  // unchecked keep normal order
-  return (
-    a.stockBoxDataId -
-    b.stockBoxDataId
-  );
-});
-
-
-const verifyPasswordAndDelete = async () => {
-
-  if (!passwordInput.trim()) {
-
-    alert(
-      "Please enter admin password."
-    );
-
-    return;
-  }
-
-
-  try {
-
-    await api.post(
-      "/admin/verify-admin-action-password",
-      {
-        password: passwordInput,
-      },
-      {
-        headers: token
-          ? {
-              Authorization:
-                `Bearer ${token}`,
-            }
-          : undefined,
-      }
-    );
-
-
-    setPasswordDialog(false);
-
-    const verifiedPassword =
-      passwordInput;
-
-    setPasswordInput("");
-
-
-    await handleBulkDelete(
-      verifiedPassword
-    );
-
-
-  } catch (error: any) {
-
-    const message =
-      error.response?.data?.message ||
-      "Incorrect admin password.";
-
-    alert(message);
-
-  }
-};
-
-const fetchInventoryExtraData = async () => {
-
-  if (!stockBox) return;
-
-  try {
-
-    const [historyResponse, soldResponse] =
-      await Promise.all([
-
-        api.get(
-          `${basePath}/stock-box/${stockBox.stockBoxId}/check-history`,
-          {
-            headers: token
-              ? {
-                  Authorization:
-                    `Bearer ${token}`,
-                }
-              : undefined,
-          }
-        ),
-
-        api.get(
-          `${basePath}/stock-box/${stockBox.stockBoxId}/today-sold`,
-          {
-            headers: token
-              ? {
-                  Authorization:
-                    `Bearer ${token}`,
-                }
-              : undefined,
-          }
-        ),
+        api.get(`${basePath}/stock-box/${stockBox.stockBoxId}/today-sold`, {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : undefined,
+        }),
       ]);
 
-    setCheckHistory(
-      Array.isArray(historyResponse.data)
-        ? historyResponse.data
-        : []
-    );
+      setCheckHistory(
+        Array.isArray(historyResponse.data) ? historyResponse.data : [],
+      );
 
-    setTodaySold(
-      Array.isArray(soldResponse.data)
-        ? soldResponse.data
-        : []
-    );
+      setTodaySold(Array.isArray(soldResponse.data) ? soldResponse.data : []);
+    } catch (error) {
+      console.error("Failed to load stock check data:", error);
+    }
+  };
 
-  } catch (error) {
+  useEffect(() => {
+    if (!stockBox) return;
 
-    console.error(
-      "Failed to load stock check data:",
-      error
-    );
-  }
-};
+    fetchInventoryExtraData();
+  }, [stockBox?.stockBoxId]);
 
-useEffect(() => {
-  if (!stockBox) return;
-
-  fetchInventoryExtraData();
-}, [stockBox?.stockBoxId]);
-
-const handleCompleteInventoryCheck =
-  async () => {
-
+  const handleCompleteInventoryCheck = async () => {
     if (
       actualCountInput.trim() === "" ||
       Number.isNaN(Number(actualCountInput)) ||
       Number(actualCountInput) < 0
     ) {
-      alert(
-        "Please enter a valid actual pieces count."
-      );
+      alert("Please enter a valid actual pieces count.");
       return;
     }
 
@@ -920,73 +676,46 @@ const handleCompleteInventoryCheck =
       Number.isNaN(Number(actualWeight)) ||
       Number(actualWeight) < 0
     ) {
-      alert(
-        "Please enter a valid actual box weight."
-      );
+      alert("Please enter a valid actual box weight.");
       return;
     }
 
-    const finalActualCount =
-      Number(actualCountInput);
+    const finalActualCount = Number(actualCountInput);
 
-    const finalActualWeight =
-      Number(actualWeight);
+    const finalActualWeight = Number(actualWeight);
 
-    const finalMissing =
-      Math.max(
-        0,
-        expectedCount - finalActualCount
-      );
+    const finalMissing = Math.max(0, expectedCount - finalActualCount);
 
-    const finalWeightDifference =
-      Number(
-        (
-          finalActualWeight -
-          expectedWeight
-        ).toFixed(3)
-      );
+    const finalWeightDifference = Number(
+      (finalActualWeight - expectedWeight).toFixed(3),
+    );
 
-    const piecesProblem =
-      finalActualCount !== expectedCount;
+    const piecesProblem = finalActualCount !== expectedCount;
 
-    const weightProblem =
-      Math.abs(finalWeightDifference) >=
-      0.001;
+    const weightProblem = Math.abs(finalWeightDifference) >= 0.001;
 
     let statusText = "ALL GOOD";
 
     if (piecesProblem && weightProblem) {
-      statusText =
-        "PIECES & WEIGHT ISSUE";
+      statusText = "PIECES & WEIGHT ISSUE";
     } else if (piecesProblem) {
-      statusText =
-        "PIECES ISSUE";
+      statusText = "PIECES ISSUE";
     } else if (weightProblem) {
-      statusText =
-        "WEIGHT ISSUE";
+      statusText = "WEIGHT ISSUE";
     }
 
-    const confirmed =
-      window.confirm(
-        `Complete inventory check?\n\n` +
+    const confirmed = window.confirm(
+      `Complete inventory check?\n\n` +
         `Expected Pieces: ${expectedCount}\n` +
         `Actual Pieces: ${finalActualCount}\n` +
         `Missing Pieces: ${finalMissing}\n\n` +
-        `Expected Weight: ${expectedWeight.toFixed(
-          3
-        )} g\n` +
-        `Actual Weight: ${finalActualWeight.toFixed(
-          3
-        )} g\n` +
+        `Expected Weight: ${expectedWeight.toFixed(3)} g\n` +
+        `Actual Weight: ${finalActualWeight.toFixed(3)} g\n` +
         `Weight Difference: ${
-          finalWeightDifference > 0
-            ? "+"
-            : ""
-        }${finalWeightDifference.toFixed(
-          3
-        )} g\n\n` +
-        `STATUS: ${statusText}`
-      );
+          finalWeightDifference > 0 ? "+" : ""
+        }${finalWeightDifference.toFixed(3)} g\n\n` +
+        `STATUS: ${statusText}`,
+    );
 
     if (!confirmed) return;
 
@@ -996,1102 +725,1009 @@ const handleCompleteInventoryCheck =
       await api.post(
         `${basePath}/stock-box/${safeStockBox.stockBoxId}/check-history`,
         {
-          actualCount:
-            finalActualCount,
+          actualCount: finalActualCount,
 
-          actualWeight:
-            finalActualWeight,
+          actualWeight: finalActualWeight,
 
-          description:
-            boxCheckDescription.trim(),
+          description: boxCheckDescription.trim(),
         },
         {
           headers: token
             ? {
-                Authorization:
-                  `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
               }
             : undefined,
-        }
+        },
       );
 
-      alert(
-        "Inventory check saved successfully."
-      );
+      alert("Inventory check saved successfully.");
 
       /*
        * Reset next physical check to
        * expected/system values.
        */
-      setActualCountInput(
-        String(expectedCount)
-      );
+      setActualCountInput(String(expectedCount));
 
       setActualWeight("");
 
       setBoxCheckDescription("");
 
       await fetchInventoryExtraData();
-
     } catch (error: any) {
-      console.error(
-        "Failed to save inventory check:",
-        error
-      );
+      console.error("Failed to save inventory check:", error);
 
       alert(
         error.response?.data?.message ||
           error.response?.data ||
-          "Failed to save inventory check."
+          "Failed to save inventory check.",
       );
-
     } finally {
       setSavingBoxCheck(false);
     }
   };
 
   if (stockBoxLoading) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-lg font-semibold text-purple-700">
-        Loading Stock Box...
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg font-semibold text-purple-700">
+          Loading Stock Box...
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-if (!stockBox) {
+  if (!stockBox) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-semibold">Stock box not found</p>
+
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-red-600 font-semibold">
-          Stock box not found
-        </p>
-
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
+      <div className="w-full max-w-[96vw] bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-6 relative">
         <button
           onClick={() => navigate(-1)}
-          className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg"
+          className="absolute top-4 right-4 bg-purple-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-purple-700"
         >
-          Back
+          Close
         </button>
-      </div>
-    </div>
-  );
-}
-
-
-  return (
-<div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f5f5f5] dark:bg-[#1a1b1f]">
-  <div className="w-full max-w-[96vw] bg-white/90 dark:bg-[#222] backdrop-blur-lg border border-purple-300/50 rounded-3xl shadow-2xl p-6 relative">
-   <button
-  onClick={() => navigate(-1)}
-  className="absolute top-4 right-4 bg-purple-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-purple-700"
->
-  Close
-</button>
 
         <div className="mb-6">
-  <h1 className="text-2xl font-bold text-purple-700 dark:text-purple-300">
-    Stock Box Data ({stockBox.stockBoxName})
-  </h1>
+          <h1 className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+            Stock Box Data ({stockBox.stockBoxName})
+          </h1>
 
-  <div className="flex gap-6 mt-3 text-lg font-semibold text-gray-700">
-    <div>
-      Total Count:
-      <span className="text-purple-700 ml-2">
-        {stockBox.totalStockBoxCount}
-      </span>
-    </div>
-
-    <div>
-      Total Weight:
-      <span className="text-purple-700 ml-2">
-        {Number(stockBox.totalStockBoxWeight || 0).toFixed(3)}
-      </span>
-    </div>
-  </div>
-</div>
-
-<div className="mb-6 flex flex-wrap gap-4">
-
-  <div className="rounded-xl bg-gray-100 px-4 py-3">
-    <div className="text-sm text-gray-500">
-      Expected Pieces
-    </div>
-
-    <div className="text-xl font-bold">
-      {expectedCount}
-    </div>
-  </div>
-
-  {checkHistory.length > 0 && (
-    <div className="rounded-xl bg-blue-50 px-4 py-3">
-      <div className="text-sm text-gray-500">
-        Last Inventory Check
-      </div>
-
-      <div className="font-semibold">
-        {checkHistory[0].checkedAt
-          ? new Date(
-              checkHistory[0].checkedAt
-            ).toLocaleString("en-IN")
-          : "-"}
-      </div>
-
-      <div className="text-sm">
-        By: {checkHistory[0].checkedBy || "-"}
-      </div>
-    </div>
-  )}
-
-</div>
-
-
-<div className="mb-6 rounded-2xl border bg-white p-5">
-
-  <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-
-    <div>
-      <h2 className="text-xl font-bold">
-        Physical Inventory Check
-      </h2>
-
-      <p className="mt-1 text-sm text-gray-500">
-        Enter the pieces and total physical box weight you counted.
-      </p>
-    </div>
-
-    {enteredActualWeight !== null && (
-      <div
-        className={`rounded-full px-4 py-2 text-sm font-bold ${
-          currentCheckStatus === "ALL_GOOD"
-            ? "bg-green-100 text-green-700"
-            : currentCheckStatus ===
-              "PIECES_ISSUE"
-            ? "bg-red-100 text-red-700"
-            : currentCheckStatus ===
-              "WEIGHT_ISSUE"
-            ? "bg-orange-100 text-orange-700"
-            : "bg-red-100 text-red-700"
-        }`}
-      >
-        {currentCheckStatus === "ALL_GOOD"
-          ? "✓ All Good"
-          : currentCheckStatus ===
-            "PIECES_ISSUE"
-          ? "⚠ Pieces Issue"
-          : currentCheckStatus ===
-            "WEIGHT_ISSUE"
-          ? "⚠ Weight Issue"
-          : "⚠ Pieces & Weight Issue"}
-      </div>
-    )}
-
-  </div>
-
-  {/* PIECES */}
-  <div className="grid gap-4 md:grid-cols-3">
-
-    <div>
-      <label className="text-sm font-semibold">
-        Expected Pieces
-      </label>
-
-      <input
-        disabled
-        value={expectedCount}
-        className="mt-1 w-full rounded-lg border bg-gray-100 p-3"
-      />
-    </div>
-
-    <div>
-      <label className="text-sm font-semibold">
-        Actual Pieces
-      </label>
-
-      <input
-        type="number"
-        min="0"
-        step="1"
-        value={actualCountInput}
-        onChange={(e) =>
-          setActualCountInput(e.target.value)
-        }
-        className="mt-1 w-full rounded-lg border p-3"
-      />
-    </div>
-
-    <div>
-      <label className="text-sm font-semibold">
-        Pieces Result
-      </label>
-
-      <div
-        className={`mt-1 rounded-lg border p-3 font-bold ${
-          !hasPiecesIssue
-            ? "bg-green-50 text-green-700"
-            : "bg-red-50 text-red-700"
-        }`}
-      >
-        {!hasPiecesIssue
-          ? "✓ Pieces Correct"
-          : missingCount > 0
-          ? `${missingCount} Missing`
-          : `${extraCount} Extra`}
-      </div>
-    </div>
-
-  </div>
-
-  {/* WEIGHT */}
-  <div className="mt-5 grid gap-4 md:grid-cols-3">
-
-    <div>
-      <label className="text-sm font-semibold">
-        Expected Box Weight
-      </label>
-
-      <input
-        disabled
-        value={`${expectedWeight.toFixed(3)} g`}
-        className="mt-1 w-full rounded-lg border bg-gray-100 p-3"
-      />
-    </div>
-
-    <div>
-      <label className="text-sm font-semibold">
-        Actual Box Weight
-      </label>
-
-      <input
-        type="number"
-        min="0"
-        step="0.001"
-        value={actualWeight}
-        onChange={(e) =>
-          setActualWeight(e.target.value)
-        }
-        placeholder="Enter actual box weight"
-        className="mt-1 w-full rounded-lg border p-3"
-      />
-    </div>
-
-    <div>
-      <label className="text-sm font-semibold">
-        Weight Result
-      </label>
-
-      <div
-        className={`mt-1 rounded-lg border p-3 font-bold ${
-          weightDifference === null
-            ? "bg-gray-50 text-gray-500"
-            : !hasWeightIssue
-            ? "bg-green-50 text-green-700"
-            : "bg-orange-50 text-orange-700"
-        }`}
-      >
-        {weightDifference === null
-          ? "Enter actual weight"
-          : !hasWeightIssue
-          ? "✓ Weight Correct"
-          : `${
-              weightDifference > 0 ? "+" : ""
-            }${weightDifference.toFixed(3)} g`}
-      </div>
-    </div>
-
-  </div>
-
-  {/* REMARKS */}
-  <div className="mt-5">
-    <label className="text-sm font-semibold">
-      Remarks / Note
-    </label>
-
-    <textarea
-      value={boxCheckDescription}
-      onChange={(e) =>
-        setBoxCheckDescription(e.target.value)
-      }
-      placeholder="Optional note about missing pieces or weight difference"
-      className="mt-1 w-full rounded-lg border p-3"
-      rows={3}
-    />
-  </div>
-
-  <button
-    onClick={handleCompleteInventoryCheck}
-    disabled={savingBoxCheck}
-    className="mt-5 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white disabled:opacity-50"
-  >
-    {savingBoxCheck
-      ? "Saving..."
-      : "Complete Inventory Check"}
-  </button>
-
-</div>
-
-{isAdmin && (
-  <div className="flex gap-3 mb-4">
-    <button
-      onClick={handleSelectAllSell}
-      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-    >
-      Select All SELL
-    </button>
-
-   <button
-  onClick={() => {
-    if (selectedIds.length === 0) {
-      alert("Please select at least one row");
-      return;
-    }
-
-    setPasswordInput("");
-    setPasswordDialog(true);
-  }}
-  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
->
-  Delete Selected
-</button>
-  </div>
-)}
-
-{isAdmin && (
-  <div className="flex flex-wrap gap-3 mb-4">
-
-    {/* TRANSFER SELECTED */}
-    <button
-      type="button"
-      onClick={() => {
-        if (transferSelectedIds.length === 0) {
-          alert(
-            "Please select at least one available item to transfer."
-          );
-          return;
-        }
-
-        setTransferMode("selected");
-        setDestinationBoxId("");
-        setTransferPassword("");
-        setTransferDialog(true);
-      }}
-      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-    >
-      ⇄ Transfer Selected
-    </button>
-
-    {/* TRANSFER ENTIRE BOX */}
-    <button
-      type="button"
-      onClick={() => {
-        if (transferableEntries.length === 0) {
-          alert(
-            "No available items exist in this stock box."
-          );
-          return;
-        }
-
-        setTransferMode("all");
-        setDestinationBoxId("");
-        setTransferPassword("");
-        setTransferDialog(true);
-      }}
-      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-    >
-      ⇄ Transfer Entire Box
-    </button>
-
-  </div>
-)}
-
-       {stockBox.stockBoxData && stockBox.stockBoxData.length > 0 ? (
-  <>
-    {/* Mobile card view */}
-    <div className="space-y-3 md:hidden">
-      {sortedStockBoxData.map((entry, index) => (
-        <div
-          key={entry.stockBoxDataId}
-          className="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm"
-        >
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex gap-6 mt-3 text-lg font-semibold text-gray-700">
             <div>
-              <div className="text-xs text-gray-500">ID</div>
-              <div className="font-bold text-purple-700">
-                #{entry.stockBoxDataId}
-              </div>
+              Total Count:
+              <span className="text-purple-700 ml-2">
+                {stockBox.totalStockBoxCount}
+              </span>
             </div>
 
-           {isAdmin && (
-  <input
-    type="checkbox"
-    checked={selectedIds.includes(entry.stockBoxDataId)}
-    disabled={
-      entry.methodType2?.trim().toUpperCase() !== "SELL"
-    }
-    onChange={() =>
-      handleCheckOne(entry.stockBoxDataId)
-    }
-    className="h-5 w-5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
-  />
-)}
-          </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-            <div className="rounded-xl bg-purple-50 p-2">
-              <div className="text-[11px] text-gray-500">Pieces</div>
-              <div className="font-bold">{entry.pieces}</div>
-            </div>
-
-            <div className="rounded-xl bg-purple-50 p-2">
-              <div className="text-[11px] text-gray-500">Weight</div>
-              <div className="font-bold">
-                {Number(entry.metalWeight || 0).toFixed(3)}
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-purple-50 p-2">
-              <div className="text-[11px] text-gray-500">Method</div>
-              <div
-                className={`font-bold ${
-                  entry.methodType === "ADDED"
-                    ? "text-green-600"
-                    : entry.methodType === "SELL"
-                      ? "text-red-600"
-                      : "text-gray-800"
-                }`}
-              >
-                {entry.methodType || "-"}
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-purple-50 p-2">
-              <div className="text-[11px] text-gray-500">Method2</div>
-              <div
-                className={`font-bold ${
-                  entry.methodType2 === "SELL"
-                    ? "text-red-600"
-                    : "text-gray-800"
-                }`}
-              >
-                {entry.methodType2 || "-"}
-              </div>
+            <div>
+              Total Weight:
+              <span className="text-purple-700 ml-2">
+                {Number(stockBox.totalStockBoxWeight || 0).toFixed(3)}
+              </span>
             </div>
           </div>
-
-          <div className="mt-3 space-y-1 text-sm">
-            <div>
-              <span className="font-semibold text-gray-500">Date: </span>
-              {formatDMY(entry.date) || "-"}
-            </div>
-            <div>
-              <span className="font-semibold text-gray-500">Selling Date: </span>
-              {formatDMY(entry.sellingDate) || "-"}
-            </div>
-            <div>
-              <span className="font-semibold text-gray-500">Barcode: </span>
-              {entry.barcodeValue || "-"}
-            </div>
-            <div className="break-all">
-              <span className="font-semibold text-gray-500">EPC: </span>
-              {entry.epcNumber || "-"}
-            </div>
-          </div>
-          {canEditCheck && (
-  <div className="mt-4 border-t border-gray-200 pt-4">
-    <div className="flex items-center gap-3">
-      <input
-        type="checkbox"
-        checked={getRowValues(entry).checked}
-        onChange={(e) =>
-          handleVerifiedChange(entry, e.target.checked)
-        }
-        className="w-5 h-5 cursor-pointer accent-green-600"
-      />
-
-      <span className="font-semibold text-gray-700">
-        Checked
-      </span>
-    </div>
-
-    <div className="mt-3">
-      <label className="text-xs font-semibold text-gray-500">
-        Description
-      </label>
-
-      <textarea
-        value={getRowValues(entry).description}
-        onChange={(e) =>
-          handleDescriptionChange(entry, e.target.value)
-        }
-        placeholder="Enter description"
-        rows={2}
-        className="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-      />
-    </div>
-
-    <button
-      type="button"
-      onClick={() => handleSaveCheck(entry)}
-      disabled={savingId === entry.stockBoxDataId}
-      className="mt-3 w-full bg-green-600 text-white rounded-xl py-2 font-semibold hover:bg-green-700 disabled:opacity-50"
-    >
-      {savingId === entry.stockBoxDataId
-        ? "Saving..."
-        : "Save"}
-    </button>
-  </div>
-)}
         </div>
 
-        
-      ))}
+        <div className="mb-6 flex flex-wrap gap-4">
+          <div className="rounded-xl bg-gray-100 px-4 py-3">
+            <div className="text-sm text-gray-500">Expected Pieces</div>
 
-      
-    </div>
-    
+            <div className="text-xl font-bold">{expectedCount}</div>
+          </div>
 
-    {/* Desktop table view */}
-<div className="hidden w-full overflow-x-auto md:block">
-  <table className="w-full table-auto border-collapse border border-gray-300 rounded-xl overflow-hidden text-sm">
+          {checkHistory.length > 0 && (
+            <div className="rounded-xl bg-blue-50 px-4 py-3">
+              <div className="text-sm text-gray-500">Last Inventory Check</div>
 
-    <thead className="bg-gray-200">
-      <tr>
+              <div className="font-semibold">
+                {checkHistory[0].checkedAt
+                  ? new Date(checkHistory[0].checkedAt).toLocaleString("en-IN")
+                  : "-"}
+              </div>
 
-        <th className="border px-3 py-2 text-center">
-          S.No
-        </th>
-
-        {canEditCheck && (
-  <th className="border px-3 py-2 text-center">
-    Checked
-  </th>
-)}
-
-        <th className="border px-3 py-2 text-center">
-          ID
-        </th>
-
-        <th className="border px-3 py-2 text-center">
-          Pieces
-        </th>
-
-        <th className="border px-3 py-2 text-center">
-          Method
-        </th>
-
-        <th className="border px-3 py-2 text-center">
-          Metal Weight
-        </th>
-
-        <th className="border px-3 py-2 text-center">
-          Date
-        </th>
-
-        <th className="border px-3 py-2 text-center">
-          Barcode
-        </th>
-
-        <th className="border px-3 py-2 text-center">
-          Method2
-        </th>
-
-        <th className="border px-3 py-2 text-center">
-          Selling Date
-        </th>
-
-        <th className="border px-3 py-2 text-center">
-          EPC
-        </th>
-
-        {canEditCheck && (
-  <>
-    <th className="border px-3 py-2 text-center min-w-[170px]">
-      Description
-    </th>
-
-    <th className="border px-3 py-2 text-center">
-      Action
-    </th>
-  </>
-)}
-
-{isAdmin && (
-  <th className="border px-3 py-2 text-center">
-    Select
-  </th>
-)}
-{isAdmin && (
-  <th className="border px-3 py-2 text-center">
-    Transfer
-  </th>
-)}
-
-      </tr>
-    </thead>
-
-    <tbody>
-      {sortedStockBoxData.map((entry, index) => (
-        <tr
-          key={entry.stockBoxDataId}
-          className="bg-white/90"
-        >
-
-          {/* S.No */}
-          <td className="border px-3 py-2 text-center font-semibold">
-            {index + 1}
-          </td>
-
-          {/* Checked */}
-          {canEditCheck && (
-            <td className="border px-3 py-2 text-center">
-              <input
-                type="checkbox"
-                checked={getRowValues(entry).checked}
-                onChange={(e) =>
-                  handleVerifiedChange(
-                    entry,
-                    e.target.checked
-                  )
-                }
-                className="w-5 h-5 cursor-pointer accent-green-600"
-              />
-            </td>
+              <div className="text-sm">
+                By: {checkHistory[0].checkedBy || "-"}
+              </div>
+            </div>
           )}
+        </div>
 
-          {/* ID */}
-          <td className="border px-3 py-2 text-center">
-            {entry.stockBoxDataId}
-          </td>
+        <div className="mb-6 rounded-2xl border bg-white p-5">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold">Physical Inventory Check</h2>
 
-          {/* Pieces */}
-          <td className="border px-3 py-2 text-center">
-            {entry.pieces}
-          </td>
+              <p className="mt-1 text-sm text-gray-500">
+                Enter the pieces and total physical box weight you counted.
+              </p>
+            </div>
 
-          {/* Method */}
-          <td
-            className={`border px-3 py-2 font-semibold text-center ${
-              entry.methodType === "ADDED"
-                ? "text-green-600"
-                : entry.methodType === "SELL"
-                  ? "text-red-600"
-                  : "text-gray-800"
-            }`}
+            {enteredActualWeight !== null && (
+              <div
+                className={`rounded-full px-4 py-2 text-sm font-bold ${
+                  currentCheckStatus === "ALL_GOOD"
+                    ? "bg-green-100 text-green-700"
+                    : currentCheckStatus === "PIECES_ISSUE"
+                      ? "bg-red-100 text-red-700"
+                      : currentCheckStatus === "WEIGHT_ISSUE"
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-red-100 text-red-700"
+                }`}
+              >
+                {currentCheckStatus === "ALL_GOOD"
+                  ? "✓ All Good"
+                  : currentCheckStatus === "PIECES_ISSUE"
+                    ? "⚠ Pieces Issue"
+                    : currentCheckStatus === "WEIGHT_ISSUE"
+                      ? "⚠ Weight Issue"
+                      : "⚠ Pieces & Weight Issue"}
+              </div>
+            )}
+          </div>
+
+          {/* PIECES */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="text-sm font-semibold">Expected Pieces</label>
+
+              <input
+                disabled
+                value={expectedCount}
+                className="mt-1 w-full rounded-lg border bg-gray-100 p-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Actual Pieces</label>
+
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={actualCountInput}
+                onChange={(e) => setActualCountInput(e.target.value)}
+                className="mt-1 w-full rounded-lg border p-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Pieces Result</label>
+
+              <div
+                className={`mt-1 rounded-lg border p-3 font-bold ${
+                  !hasPiecesIssue
+                    ? "bg-green-50 text-green-700"
+                    : "bg-red-50 text-red-700"
+                }`}
+              >
+                {!hasPiecesIssue
+                  ? "✓ Pieces Correct"
+                  : missingCount > 0
+                    ? `${missingCount} Missing`
+                    : `${extraCount} Extra`}
+              </div>
+            </div>
+          </div>
+
+          {/* WEIGHT */}
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="text-sm font-semibold">
+                Expected Box Weight
+              </label>
+
+              <input
+                disabled
+                value={`${expectedWeight.toFixed(3)} g`}
+                className="mt-1 w-full rounded-lg border bg-gray-100 p-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Actual Box Weight</label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.001"
+                value={actualWeight}
+                onChange={(e) => setActualWeight(e.target.value)}
+                placeholder="Enter actual box weight"
+                className="mt-1 w-full rounded-lg border p-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Weight Result</label>
+
+              <div
+                className={`mt-1 rounded-lg border p-3 font-bold ${
+                  weightDifference === null
+                    ? "bg-gray-50 text-gray-500"
+                    : !hasWeightIssue
+                      ? "bg-green-50 text-green-700"
+                      : "bg-orange-50 text-orange-700"
+                }`}
+              >
+                {weightDifference === null
+                  ? "Enter actual weight"
+                  : !hasWeightIssue
+                    ? "✓ Weight Correct"
+                    : `${
+                        weightDifference > 0 ? "+" : ""
+                      }${weightDifference.toFixed(3)} g`}
+              </div>
+            </div>
+          </div>
+
+          {/* REMARKS */}
+          <div className="mt-5">
+            <label className="text-sm font-semibold">Remarks / Note</label>
+
+            <textarea
+              value={boxCheckDescription}
+              onChange={(e) => setBoxCheckDescription(e.target.value)}
+              placeholder="Optional note about missing pieces or weight difference"
+              className="mt-1 w-full rounded-lg border p-3"
+              rows={3}
+            />
+          </div>
+
+          <button
+            onClick={handleCompleteInventoryCheck}
+            disabled={savingBoxCheck}
+            className="mt-5 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white disabled:opacity-50"
           >
-            {entry.methodType}
-          </td>
+            {savingBoxCheck ? "Saving..." : "Complete Inventory Check"}
+          </button>
+        </div>
 
-          {/* Metal Weight */}
-          <td className="border px-3 py-2 text-center">
-            {Number(entry.metalWeight || 0).toFixed(3)}
-          </td>
+        {isAdmin && (
+          <div className="flex gap-3 mb-4">
+            <button
+              onClick={handleSelectAllSell}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Select All SELL
+            </button>
 
-          {/* Date */}
-          <td className="border px-3 py-2 text-center">
-            {formatDMY(entry.date)}
-          </td>
+            <button
+              onClick={() => {
+                if (selectedIds.length === 0) {
+                  alert("Please select at least one row");
+                  return;
+                }
 
-          {/* Barcode */}
-          <td className="border px-3 py-2">
-            {entry.barcodeValue}
-          </td>
-
-          {/* Method2 */}
-          <td
-            className={`border px-3 py-2 font-semibold text-center ${
-              entry.methodType2 === "SELL"
-                ? "text-red-600"
-                : "text-gray-800"
-            }`}
-          >
-            {entry.methodType2}
-          </td>
-
-          {/* Selling Date */}
-          <td className="border px-3 py-2 text-center">
-            {formatDMY(entry.sellingDate)}
-          </td>
-
-          {/* EPC */}
-          <td className="border px-3 py-2">
-            {entry.epcNumber}
-          </td>
-
-         {canEditCheck && (
-  <>
-    {/* Description */}
-    <td className="border px-3 py-2">
-      <input
-        type="text"
-        value={getRowValues(entry).description}
-        onChange={(e) =>
-          handleDescriptionChange(
-            entry,
-            e.target.value
-          )
-        }
-        placeholder="Enter description"
-        className="w-full min-w-[160px] border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-      />
-    </td>
-
-    {/* Action */}
-    <td className="border px-3 py-2 text-center">
-      <button
-        type="button"
-        onClick={() => handleSaveCheck(entry)}
-        disabled={
-          savingId === entry.stockBoxDataId
-        }
-        className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
-      >
-        {savingId === entry.stockBoxDataId
-          ? "Saving..."
-          : "Save"}
-      </button>
-    </td>
-  </>
-)}
-
-{/* ADMIN ONLY - Select for Delete */}
-{/* ADMIN ONLY - Select SOLD row for Delete */}
-{isAdmin && (
-  <td className="border px-3 py-2 text-center">
-    <input
-      type="checkbox"
-      checked={selectedIds.includes(entry.stockBoxDataId)}
-      disabled={
-        entry.methodType2?.trim().toUpperCase() !== "SELL"
-      }
-      onChange={() =>
-        handleCheckOne(entry.stockBoxDataId)
-      }
-      className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
-    />
-  </td>
-)}
-
-
-{isAdmin && (
-  <td className="border px-3 py-2 text-center">
-
-    {isTransferableEntry(entry) ? (
-
-      <input
-        type="checkbox"
-        checked={transferSelectedIds.includes(
-          entry.stockBoxDataId
+                setPasswordInput("");
+                setPasswordDialog(true);
+              }}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              Delete Selected
+            </button>
+          </div>
         )}
-        onChange={() =>
-          handleTransferCheckOne(entry)
-        }
-        className="
+
+        {isAdmin && (
+          <div className="flex flex-wrap gap-3 mb-4">
+            {/* TRANSFER SELECTED */}
+            <button
+              type="button"
+              onClick={() => {
+                if (transferSelectedIds.length === 0) {
+                  alert(
+                    "Please select at least one available item to transfer.",
+                  );
+                  return;
+                }
+
+                setTransferMode("selected");
+                setDestinationBoxId("");
+                setDestinationBoxSearch("");
+                setDestinationDropdownOpen(false);
+                setTransferPassword("");
+                setTransferDialog(true);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              ⇄ Transfer Selected
+            </button>
+
+            {/* TRANSFER ENTIRE BOX */}
+            <button
+              type="button"
+              onClick={() => {
+                if (transferableEntries.length === 0) {
+                  alert("No available items exist in this stock box.");
+                  return;
+                }
+
+                setTransferMode("all");
+                setDestinationBoxId("");
+                setDestinationBoxSearch("");
+                setDestinationDropdownOpen(false);
+                setTransferPassword("");
+                setTransferDialog(true);
+              }}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              ⇄ Transfer Entire Box
+            </button>
+          </div>
+        )}
+
+        {stockBox.stockBoxData && stockBox.stockBoxData.length > 0 ? (
+          <>
+            {/* Mobile card view */}
+            <div className="space-y-3 md:hidden">
+              {sortedStockBoxData.map((entry, index) => (
+                <div
+                  key={entry.stockBoxDataId}
+                  className="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs text-gray-500">ID</div>
+                      <div className="font-bold text-purple-700">
+                        #{entry.stockBoxDataId}
+                      </div>
+                    </div>
+
+                    {isAdmin && (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(entry.stockBoxDataId)}
+                        disabled={
+                          entry.methodType2?.trim().toUpperCase() !== "SELL"
+                        }
+                        onChange={() => handleCheckOne(entry.stockBoxDataId)}
+                        className="h-5 w-5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
+                      />
+                    )}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                    <div className="rounded-xl bg-purple-50 p-2">
+                      <div className="text-[11px] text-gray-500">Pieces</div>
+                      <div className="font-bold">{entry.pieces}</div>
+                    </div>
+
+                    <div className="rounded-xl bg-purple-50 p-2">
+                      <div className="text-[11px] text-gray-500">Weight</div>
+                      <div className="font-bold">
+                        {Number(entry.metalWeight || 0).toFixed(3)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-purple-50 p-2">
+                      <div className="text-[11px] text-gray-500">Method</div>
+                      <div
+                        className={`font-bold ${
+                          entry.methodType === "ADDED"
+                            ? "text-green-600"
+                            : entry.methodType === "SELL"
+                              ? "text-red-600"
+                              : "text-gray-800"
+                        }`}
+                      >
+                        {entry.methodType || "-"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-purple-50 p-2">
+                      <div className="text-[11px] text-gray-500">Method2</div>
+                      <div
+                        className={`font-bold ${
+                          entry.methodType2 === "SELL"
+                            ? "text-red-600"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        {entry.methodType2 || "-"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 space-y-1 text-sm">
+                    <div>
+                      <span className="font-semibold text-gray-500">
+                        Date:{" "}
+                      </span>
+                      {formatDMY(entry.date) || "-"}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-500">
+                        Selling Date:{" "}
+                      </span>
+                      {formatDMY(entry.sellingDate) || "-"}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-500">
+                        Barcode:{" "}
+                      </span>
+                      {entry.barcodeValue || "-"}
+                    </div>
+                    <div className="break-all">
+                      <span className="font-semibold text-gray-500">EPC: </span>
+                      {entry.epcNumber || "-"}
+                    </div>
+                  </div>
+                  {canEditCheck && (
+                    <div className="mt-4 border-t border-gray-200 pt-4">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={getRowValues(entry).checked}
+                          onChange={(e) =>
+                            handleVerifiedChange(entry, e.target.checked)
+                          }
+                          className="w-5 h-5 cursor-pointer accent-green-600"
+                        />
+
+                        <span className="font-semibold text-gray-700">
+                          Checked
+                        </span>
+                      </div>
+
+                      <div className="mt-3">
+                        <label className="text-xs font-semibold text-gray-500">
+                          Description
+                        </label>
+
+                        <textarea
+                          value={getRowValues(entry).description}
+                          onChange={(e) =>
+                            handleDescriptionChange(entry, e.target.value)
+                          }
+                          placeholder="Enter description"
+                          rows={2}
+                          className="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSaveCheck(entry)}
+                        disabled={savingId === entry.stockBoxDataId}
+                        className="mt-3 w-full bg-green-600 text-white rounded-xl py-2 font-semibold hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {savingId === entry.stockBoxDataId
+                          ? "Saving..."
+                          : "Save"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table view */}
+            <div className="hidden w-full overflow-x-auto md:block">
+              <table className="w-full table-auto border-collapse border border-gray-300 rounded-xl overflow-hidden text-sm">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="border px-3 py-2 text-center">S.No</th>
+
+                    {canEditCheck && (
+                      <th className="border px-3 py-2 text-center">Checked</th>
+                    )}
+
+                    <th className="border px-3 py-2 text-center">ID</th>
+
+                    <th className="border px-3 py-2 text-center">Pieces</th>
+
+                    <th className="border px-3 py-2 text-center">Method</th>
+
+                    <th className="border px-3 py-2 text-center">
+                      Metal Weight
+                    </th>
+
+                    <th className="border px-3 py-2 text-center">Date</th>
+
+                    <th className="border px-3 py-2 text-center">Barcode</th>
+
+                    <th className="border px-3 py-2 text-center">Method2</th>
+
+                    <th className="border px-3 py-2 text-center">
+                      Selling Date
+                    </th>
+
+                    <th className="border px-3 py-2 text-center">EPC</th>
+
+                    {canEditCheck && (
+                      <>
+                        <th className="border px-3 py-2 text-center min-w-[170px]">
+                          Description
+                        </th>
+
+                        <th className="border px-3 py-2 text-center">Action</th>
+                      </>
+                    )}
+
+                    {isAdmin && (
+                      <th className="border px-3 py-2 text-center">Select</th>
+                    )}
+                    {isAdmin && (
+                      <th className="border px-3 py-2 text-center">Transfer</th>
+                    )}
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {sortedStockBoxData.map((entry, index) => (
+                    <tr key={entry.stockBoxDataId} className="bg-white/90">
+                      {/* S.No */}
+                      <td className="border px-3 py-2 text-center font-semibold">
+                        {index + 1}
+                      </td>
+
+                      {/* Checked */}
+                      {canEditCheck && (
+                        <td className="border px-3 py-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={getRowValues(entry).checked}
+                            onChange={(e) =>
+                              handleVerifiedChange(entry, e.target.checked)
+                            }
+                            className="w-5 h-5 cursor-pointer accent-green-600"
+                          />
+                        </td>
+                      )}
+
+                      {/* ID */}
+                      <td className="border px-3 py-2 text-center">
+                        {entry.stockBoxDataId}
+                      </td>
+
+                      {/* Pieces */}
+                      <td className="border px-3 py-2 text-center">
+                        {entry.pieces}
+                      </td>
+
+                      {/* Method */}
+                      <td
+                        className={`border px-3 py-2 font-semibold text-center ${
+                          entry.methodType === "ADDED"
+                            ? "text-green-600"
+                            : entry.methodType === "SELL"
+                              ? "text-red-600"
+                              : "text-gray-800"
+                        }`}
+                      >
+                        {entry.methodType}
+                      </td>
+
+                      {/* Metal Weight */}
+                      <td className="border px-3 py-2 text-center">
+                        {Number(entry.metalWeight || 0).toFixed(3)}
+                      </td>
+
+                      {/* Date */}
+                      <td className="border px-3 py-2 text-center">
+                        {formatDMY(entry.date)}
+                      </td>
+
+                      {/* Barcode */}
+                      <td className="border px-3 py-2">{entry.barcodeValue}</td>
+
+                      {/* Method2 */}
+                      <td
+                        className={`border px-3 py-2 font-semibold text-center ${
+                          entry.methodType2 === "SELL"
+                            ? "text-red-600"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        {entry.methodType2}
+                      </td>
+
+                      {/* Selling Date */}
+                      <td className="border px-3 py-2 text-center">
+                        {formatDMY(entry.sellingDate)}
+                      </td>
+
+                      {/* EPC */}
+                      <td className="border px-3 py-2">{entry.epcNumber}</td>
+
+                      {canEditCheck && (
+                        <>
+                          {/* Description */}
+                          <td className="border px-3 py-2">
+                            <input
+                              type="text"
+                              value={getRowValues(entry).description}
+                              onChange={(e) =>
+                                handleDescriptionChange(entry, e.target.value)
+                              }
+                              placeholder="Enter description"
+                              className="w-full min-w-[160px] border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            />
+                          </td>
+
+                          {/* Action */}
+                          <td className="border px-3 py-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveCheck(entry)}
+                              disabled={savingId === entry.stockBoxDataId}
+                              className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {savingId === entry.stockBoxDataId
+                                ? "Saving..."
+                                : "Save"}
+                            </button>
+                          </td>
+                        </>
+                      )}
+
+                      {/* ADMIN ONLY - Select for Delete */}
+                      {/* ADMIN ONLY - Select SOLD row for Delete */}
+                      {isAdmin && (
+                        <td className="border px-3 py-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(entry.stockBoxDataId)}
+                            disabled={
+                              entry.methodType2?.trim().toUpperCase() !== "SELL"
+                            }
+                            onChange={() =>
+                              handleCheckOne(entry.stockBoxDataId)
+                            }
+                            className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
+                          />
+                        </td>
+                      )}
+
+                      {isAdmin && (
+                        <td className="border px-3 py-2 text-center">
+                          {isTransferableEntry(entry) ? (
+                            <input
+                              type="checkbox"
+                              checked={transferSelectedIds.includes(
+                                entry.stockBoxDataId,
+                              )}
+                              onChange={() => handleTransferCheckOne(entry)}
+                              className="
           w-4
           h-4
           cursor-pointer
           accent-blue-600
         "
-      />
-
-    ) : (
-
-      <span className="text-xs font-bold text-red-500">
-        SOLD
-      </span>
-
-    )}
-
-  </td>
-)}
-
-
-
-        </tr>
-      ))}
-    </tbody>
-
-  </table>
-</div>
-  </>
+                            />
+                          ) : (
+                            <span className="text-xs font-bold text-red-500">
+                              SOLD
+                            </span>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <p>No stock box data available</p>
         )}
       </div>
 
-{passwordDialog && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl">
-      <h2 className="text-xl font-bold mb-4">Enter Admin Password</h2>
+      {passwordDialog && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl">
+            <h2 className="text-xl font-bold mb-4">Enter Admin Password</h2>
 
-      <input
-        type="password"
-        value={passwordInput}
-        onChange={(e) => setPasswordInput(e.target.value)}
-        placeholder="Enter password"
-        className="w-full border rounded-lg px-3 py-2 mb-4"
-      />
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="Enter password"
+              className="w-full border rounded-lg px-3 py-2 mb-4"
+            />
 
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={() => {
-            setPasswordDialog(false);
-            setPasswordInput("");
-          }}
-          className="px-4 py-2 border rounded-lg"
-        >
-          Cancel
-        </button>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setPasswordDialog(false);
+                  setPasswordInput("");
+                }}
+                className="px-4 py-2 border rounded-lg"
+              >
+                Cancel
+              </button>
 
-        <button
-          onClick={verifyPasswordAndDelete}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg"
-        >
-          Verify
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+              <button
+                onClick={verifyPasswordAndDelete}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg"
+              >
+                Verify
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-{transferDialog && (
-
-  <div className="
-    fixed
-    inset-0
-    z-50
-    flex
-    items-center
-    justify-center
-    bg-black/50
-    p-4
-  ">
-
-    <div className="
-      w-full
-      max-w-lg
-      rounded-2xl
-      bg-white
-      p-6
-      shadow-2xl
-    ">
-
-      <h2 className="
+      {transferDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 sm:p-6 shadow-2xl">
+            <h2
+              className="
         mb-1
         text-xl
         font-bold
         text-purple-700
-      ">
-        Transfer Stock
-      </h2>
+      "
+            >
+              Transfer Stock
+            </h2>
 
+            <p className="mb-5 text-sm text-gray-500">
+              Move stock items to another existing stock box.
+            </p>
 
-      <p className="mb-5 text-sm text-gray-500">
-        Move stock items to another existing stock box.
-      </p>
+            {/* SOURCE */}
 
-
-      {/* SOURCE */}
-
-      <div className="
+            <div
+              className="
         mb-4
         rounded-xl
         bg-purple-50
         p-4
-      ">
+      "
+            >
+              <div className="text-xs text-gray-500">From Stock Box</div>
 
-        <div className="text-xs text-gray-500">
-          From Stock Box
-        </div>
-
-        <div className="
+              <div
+                className="
           text-lg
           font-bold
           text-purple-700
-        ">
-          {stockBox.stockBoxName}
-        </div>
+        "
+              >
+                {stockBox.stockBoxName}
+              </div>
+            </div>
 
-      </div>
+            {/* MODE */}
 
-
-      {/* MODE */}
-
-      <div className="mb-4">
-
-        <div className="
+            <div className="mb-4">
+              <div
+                className="
           mb-1
           text-sm
           font-semibold
           text-gray-600
-        ">
-          Transfer Type
-        </div>
+        "
+              >
+                Transfer Type
+              </div>
 
-        <div className="
+              <div
+                className="
           rounded-lg
           border
           bg-gray-50
           px-3
           py-2
           font-semibold
-        ">
+        "
+              >
+                {transferMode === "all" ? "Entire Box" : "Selected Items"}
+              </div>
+            </div>
 
-          {transferMode === "all"
-            ? "Entire Box"
-            : "Selected Items"}
+            {/* SUMMARY */}
 
-        </div>
-
-      </div>
-
-
-      {/* SUMMARY */}
-
-      <div className="
+            <div
+              className="
         mb-4
         grid
         grid-cols-2
         gap-3
-      ">
-
-        <div className="
-          rounded-xl
-          bg-blue-50
-          p-3
-        ">
-
-          <div className="
-            text-xs
-            text-gray-500
-          ">
-            Transfer Count
-          </div>
-
-          <div className="
-            text-lg
-            font-bold
-            text-blue-700
-          ">
-            {transferCount}
-          </div>
-
-        </div>
-
-
-        <div className="
-          rounded-xl
-          bg-blue-50
-          p-3
-        ">
-
-          <div className="
-            text-xs
-            text-gray-500
-          ">
-            Transfer Weight
-          </div>
-
-          <div className="
-            text-lg
-            font-bold
-            text-blue-700
-          ">
-            {transferWeight.toFixed(3)}
-          </div>
-
-        </div>
-
-      </div>
-
-
-      {/* DESTINATION */}
-
-      <label className="
-        mb-1
-        block
-        text-sm
-        font-semibold
-        text-gray-700
-      ">
-        Move To
-      </label>
-
-
-      <select
-        value={destinationBoxId}
-        onChange={(e) =>
-          setDestinationBoxId(
-            e.target.value
-              ? Number(e.target.value)
-              : ""
-          )
-        }
-        className="
-          mb-4
-          w-full
-          rounded-lg
-          border
-          border-gray-300
-          px-3
-          py-2
-        "
-      >
-
-        <option value="">
-          Select Destination Stock Box
-        </option>
-
-
-        {allStockBoxes
-          .filter(
-            (box) =>
-              box.stockBoxId !==
-              stockBox.stockBoxId
-          )
-          .map((box) => (
-
-            <option
-              key={box.stockBoxId}
-              value={box.stockBoxId}
+      "
             >
-              {box.stockBoxName}
-              {" — "}
-              {box.totalStockBoxCount} items
-              {" — "}
-              {Number(
-                box.totalStockBoxWeight || 0
-              ).toFixed(3)} wt
-            </option>
+              <div
+                className="
+          rounded-xl
+          bg-blue-50
+          p-3
+        "
+              >
+                <div
+                  className="
+            text-xs
+            text-gray-500
+          "
+                >
+                  Transfer Count
+                </div>
 
-          ))}
+                <div
+                  className="
+            text-lg
+            font-bold
+            text-blue-700
+          "
+                >
+                  {transferCount}
+                </div>
+              </div>
 
-      </select>
+              <div
+                className="
+          rounded-xl
+          bg-blue-50
+          p-3
+        "
+              >
+                <div
+                  className="
+            text-xs
+            text-gray-500
+          "
+                >
+                  Transfer Weight
+                </div>
 
+                <div
+                  className="
+            text-lg
+            font-bold
+            text-blue-700
+          "
+                >
+                  {transferWeight.toFixed(3)}
+                </div>
+              </div>
+            </div>
 
-      {/* PASSWORD */}
+            {/* DESTINATION */}
 
-      <label className="
+            <label
+              className="
         mb-1
         block
         text-sm
         font-semibold
         text-gray-700
-      ">
-        Admin Password
-      </label>
+      "
+            >
+              Move To
+            </label>
 
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Destination Stock Box
+              </label>
 
-      <input
-        type="password"
-        value={transferPassword}
-        onChange={(e) =>
-          setTransferPassword(
-            e.target.value
-          )
-        }
-        placeholder="Enter admin password"
-        className="
+              <input
+                type="text"
+                value={destinationBoxSearch}
+                onFocus={() => setDestinationDropdownOpen(true)}
+                onChange={(e) => {
+                  setDestinationBoxSearch(e.target.value);
+                  setDestinationBoxId("");
+                  setDestinationDropdownOpen(true);
+                }}
+                placeholder="Search stock box name..."
+                className="w-full rounded-lg border border-gray-300 px-3 py-3
+               focus:border-purple-500 focus:outline-none"
+              />
+
+              {destinationDropdownOpen && (
+                <div className="mt-2 max-h-52 overflow-y-auto rounded-lg border border-gray-200">
+                  {filteredDestinationBoxes.length > 0 ? (
+                    filteredDestinationBoxes.map((box) => (
+                      <button
+                        key={box.stockBoxId}
+                        type="button"
+                        onClick={() => {
+                          setDestinationBoxId(box.stockBoxId);
+                          setDestinationBoxSearch(box.stockBoxName);
+                          setDestinationDropdownOpen(false);
+                        }}
+                        className={`block w-full border-b px-4 py-3 text-left
+      hover:bg-purple-50 ${
+        destinationBoxId === box.stockBoxId
+          ? "bg-purple-100 font-semibold text-purple-700"
+          : "text-gray-700"
+      }`}
+                      >
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="font-semibold">
+                            {box.stockBoxName}
+                          </span>
+
+                          <span className="text-sm text-blue-700">
+                            — {Number(box.totalStockBoxCount || 0)} items
+                          </span>
+
+                          <span className="text-sm text-gray-600">
+                            — {Number(box.totalStockBoxWeight || 0).toFixed(3)}{" "}
+                            wt
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-sm text-gray-500">
+                      No matching stock boxes found
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {destinationBoxId !== "" &&
+                (() => {
+                  const selectedBox = allStockBoxes.find(
+                    (box) => box.stockBoxId === Number(destinationBoxId),
+                  );
+
+                  if (!selectedBox) return null;
+
+                  return (
+                    <div className="mt-3 rounded-lg border border-green-200 bg-green-50 p-3">
+                      <p className="font-semibold text-green-700">
+                        ✓ Selected: {selectedBox.stockBoxName}
+                      </p>
+
+                      <div className="mt-2 flex flex-wrap gap-4 text-sm">
+                        <span className="font-semibold text-blue-700">
+                          Total Items:{" "}
+                          {Number(selectedBox.totalStockBoxCount || 0)}
+                        </span>
+
+                        <span className="font-semibold text-purple-700">
+                          Total Weight:{" "}
+                          {Number(selectedBox.totalStockBoxWeight || 0).toFixed(
+                            3,
+                          )}{" "}
+                          wt
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+            </div>
+
+            {/* PASSWORD */}
+
+            <label
+              className="
+        mb-1
+        block
+        text-sm
+        font-semibold
+        text-gray-700
+      "
+            >
+              Admin Password
+            </label>
+
+            <input
+              type="password"
+              value={transferPassword}
+              onChange={(e) => setTransferPassword(e.target.value)}
+              placeholder="Enter admin password"
+              className="
           mb-5
           w-full
           rounded-lg
@@ -2100,12 +1736,11 @@ if (!stockBox) {
           px-3
           py-2
         "
-      />
+            />
 
-
-      {transferMode === "all" && (
-
-        <div className="
+            {transferMode === "all" && (
+              <div
+                className="
           mb-5
           rounded-xl
           bg-yellow-50
@@ -2113,54 +1748,47 @@ if (!stockBox) {
           text-sm
           font-semibold
           text-yellow-800
-        ">
+        "
+              >
+                All available items will be moved. If no available stock remains
+                in this box, the backend will delete the empty source box. If
+                StockProducts still contains available stock for this box, the
+                source box will be kept for safety.
+              </div>
+            )}
 
-          All available items will be moved.
-
-          If no available stock remains in this box,
-          the backend will delete the empty source box.
-
-          If StockProducts still contains available
-          stock for this box, the source box will be
-          kept for safety.
-
-        </div>
-
-      )}
-
-
-      <div className="
+            <div
+              className="
         flex
         justify-end
         gap-3
-      ">
-
-        <button
-          type="button"
-          disabled={transferring}
-          onClick={() => {
-
-            setTransferDialog(false);
-            setTransferPassword("");
-            setDestinationBoxId("");
-
-          }}
-          className="
+      "
+            >
+              <button
+                type="button"
+                disabled={transferring}
+                onClick={() => {
+                  setTransferDialog(false);
+                  setTransferPassword("");
+                  setDestinationDropdownOpen(false);
+                  setDestinationBoxSearch("");
+                  setDestinationBoxId("");
+                }}
+                className="
             rounded-lg
             border
             px-4
             py-2
           "
-        >
-          Cancel
-        </button>
+              >
+                Cancel
+              </button>
 
-
-        <button
-          type="button"
-          disabled={transferring}
-          onClick={handleTransfer}
-          className="
+              <button
+                type="button"
+                disabled={transferring}
+                onClick={handleTransfer}
+                className="
             rounded-lg
             bg-blue-600
             px-5
@@ -2170,25 +1798,14 @@ if (!stockBox) {
             hover:bg-blue-700
             disabled:opacity-50
           "
-        >
-
-          {transferring
-            ? "Transferring..."
-            : "Transfer"}
-
-        </button>
-
-      </div>
-
+              >
+                {transferring ? "Transferring..." : "Transfer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-
-  </div>
-
-)}
-
-
-    </div>
-    
   );
 };
 
