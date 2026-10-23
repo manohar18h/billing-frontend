@@ -380,7 +380,7 @@ const MetalPricesCard: React.FC = () => {
                 <span className="text-xs text-gray-500">24 Gold (₹)</span>
                 <input
                   type="number"
-                  value={g24Draft}
+                  value={g24Draft}   
                   onChange={(e) => {
                     const value = e.target.value;
                     setG24Draft(value);

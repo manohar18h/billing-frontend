@@ -2,7 +2,12 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/services/api";
 
-type TabType = "PENDING" | "TODAY" | "RETRY" | "UPCOMING";
+type TabType =
+  | "PENDING"
+  | "TODAY"
+  | "MISSED"
+  | "RETRY"
+  | "UPCOMING";
 type SearchType = "BILL" | "PHONE";
 
 type CallResultType =
@@ -112,6 +117,7 @@ const LoanFollowUp: React.FC = () => {
 
   const [pending, setPending] = useState<FollowUpCustomer[]>([]);
   const [today, setToday] = useState<FollowUpCustomer[]>([]);
+  const [missed, setMissed] = useState<FollowUpCustomer[]>([]);
   const [retry, setRetry] = useState<FollowUpCustomer[]>([]);
   const [upcoming, setUpcoming] = useState<FollowUpCustomer[]>([]);
 const PAGE_SIZE = 25;
@@ -179,32 +185,38 @@ const [transactionError, setTransactionError] =
       setLoading(true);
       setError("");
 
-      const [
-        pendingResponse,
-        todayResponse,
-        retryResponse,
-        upcomingResponse,
-      ] = await Promise.all([
-    api.get<PendingPageResponse>(
-  `/sales/loan-followup/pending?page=${pendingPage}&size=${PAGE_SIZE}`,
-  authConfig
-),
+    const [
+  pendingResponse,
+  todayResponse,
+  missedResponse,
+  retryResponse,
+  upcomingResponse,
+] = await Promise.all([
+  api.get<PendingPageResponse>(
+    `/sales/loan-followup/pending?page=${pendingPage}&size=${PAGE_SIZE}`,
+    authConfig
+  ),
 
-        api.get(
-          "/sales/loan-followup/reminders/today",
-          authConfig
-        ),
+  api.get<FollowUpCustomer[]>(
+    "/sales/loan-followup/reminders/today",
+    authConfig
+  ),
 
-        api.get(
-          "/sales/loan-followup/retry",
-          authConfig
-        ),
+  api.get<FollowUpCustomer[]>(
+    "/sales/loan-followup/reminders/missed",
+    authConfig
+  ),
 
-        api.get(
-          "/sales/loan-followup/reminders/upcoming",
-          authConfig
-        ),
-      ]);
+  api.get<FollowUpCustomer[]>(
+    "/sales/loan-followup/retry",
+    authConfig
+  ),
+
+  api.get<FollowUpCustomer[]>(
+    "/sales/loan-followup/reminders/upcoming",
+    authConfig
+  ),
+]);
 
      setPending(
   Array.isArray(pendingResponse.data?.content)
@@ -225,6 +237,12 @@ setPendingTotalPages(
           ? todayResponse.data
           : []
       );
+
+      setMissed(
+  Array.isArray(missedResponse.data)
+    ? missedResponse.data
+    : []
+);
 
       setRetry(
         Array.isArray(retryResponse.data)
@@ -572,6 +590,9 @@ const closeTransactions = () => {
     switch (activeTab) {
       case "TODAY":
         return today;
+
+        case "MISSED":
+  return missed;
 
       case "RETRY":
         return retry;
@@ -1007,7 +1028,7 @@ const closeTransactions = () => {
         )}
 
         {/* COUNTS */}
-        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
 
           <CountCard
             label="Pending"
@@ -1026,6 +1047,13 @@ const closeTransactions = () => {
               setActiveTab("TODAY")
             }
           />
+
+          <CountCard
+  label="Missed Calls"
+  value={missed.length}
+  active={activeTab === "MISSED"}
+  onClick={() => setActiveTab("MISSED")}
+/>
 
           <CountCard
             label="Retry"
@@ -2010,6 +2038,9 @@ const getTabTitle = (tab: TabType) => {
   switch (tab) {
     case "TODAY":
       return "Today's Reminders";
+
+      case "MISSED":
+  return "Missed Follow-up Calls";
 
     case "RETRY":
       return "Retry Calls";

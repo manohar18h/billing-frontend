@@ -16,6 +16,9 @@ import {
   CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
@@ -286,6 +289,25 @@ const handleOpenExistingCustomer = () => {
   navigate("/admin/bill-Data", {
     replace: true,
   });
+};
+
+
+const handleViewVillageCustomer = (phoneNumber: string) => {
+  const phone = String(phoneNumber || "").trim();
+
+  if (!/^\d{10}$/.test(phone)) {
+    toast.error("Invalid customer phone number.");
+    return;
+  }
+
+  localStorage.removeItem("customerId");
+  localStorage.removeItem("CusDetailsCustomerId");
+  localStorage.removeItem("from");
+  localStorage.removeItem("billNumber");
+
+  localStorage.setItem("bill-phnNumber", phone);
+
+  navigate("/admin/bill-Data");
 };
 
 
@@ -867,6 +889,22 @@ const handleAddCustomer = async () => {
 
           <div className="mt-2 text-xs text-gray-500">Phone Number</div>
           <div className="font-bold text-[#85400b]">{c.phoneNumber}</div>
+        <div className="mt-3 flex justify-end">
+  <Tooltip title="View Customer Details">
+    <IconButton
+      onClick={() => handleViewVillageCustomer(c.phoneNumber)}
+      sx={{
+        color: "#8847FF",
+        backgroundColor: "#ede9fe",
+        "&:hover": {
+          backgroundColor: "#ddd6fe",
+        },
+      }}
+    >
+      <VisibilityIcon />
+    </IconButton>
+  </Tooltip>
+</div>
         </div>
       ))
     ) : (
@@ -881,7 +919,8 @@ const handleAddCustomer = async () => {
     <thead className="sticky top-0 z-10 bg-purple-200">
       <tr>
         <th className="p-3 text-left font-bold">Name</th>
-        <th className="p-3 text-left font-bold">Phone Number</th>
+<th className="p-3 text-left font-bold">Phone Number</th>
+<th className="p-3 text-center font-bold">View</th>
       </tr>
     </thead>
 
@@ -890,13 +929,30 @@ const handleAddCustomer = async () => {
         filteredVillageCustomers.map((c: any, index) => (
           <tr key={index} className="border-b transition-all hover:bg-purple-50">
             <td className="p-3">{c.name}</td>
-            <td className="p-3">{c.phoneNumber}</td>
+
+<td className="p-3">{c.phoneNumber}</td>
+
+<td className="p-3 text-center">
+  <Tooltip title="View Customer Details">
+    <IconButton
+      onClick={() => handleViewVillageCustomer(c.phoneNumber)}
+      sx={{
+        color: "#8847FF",
+        "&:hover": {
+          backgroundColor: "#f3e8ff",
+          color: "#6d28d9",
+        },
+      }}
+    >
+      <VisibilityIcon />
+    </IconButton>
+  </Tooltip>
+</td>
           </tr>
         ))
       ) : (
         <tr>
-          <td colSpan={2} className="p-4 text-center text-gray-500">
-            No customer found
+<td colSpan={3} className="p-4 text-center text-gray-500">            No customer found
           </td>
         </tr>
       )}

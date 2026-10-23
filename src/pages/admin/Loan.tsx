@@ -137,6 +137,22 @@ const Loan: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [deleteMessage, setDeleteMessage] = useState("");
+  interface VillageLoanCustomer {
+  name: string;
+  phoneNumber: string;
+  village?: string;
+}
+
+const [villageLoanCustomers, setVillageLoanCustomers] =
+  useState<VillageLoanCustomer[]>([]);
+
+const [loanCustomerNameSearch, setLoanCustomerNameSearch] =
+  useState("");
+
+const [villageLoanLoading, setVillageLoanLoading] =
+  useState(false);
+
+const villageLoanRef = useRef<HTMLDivElement | null>(null);
 
 const [noteDialogOpen, setNoteDialogOpen] = useState(false);
 const [selectedNoteBill, setSelectedNoteBill] =
@@ -284,7 +300,51 @@ const [savingNote, setSavingNote] = useState(false);
       localStorage.setItem("bill-loan-phnNumber", trimmedQuery);
       localStorage.setItem("checkBackFrom", "Phn-Number");
       navigate("/admin/bill-loan-data");
-    } else if (searchType === "Delete Phone Number") {
+      } else if (searchType === "Village") {
+  try {
+    setVillageLoanLoading(true);
+    setVillageLoanCustomers([]);
+    setLoanCustomerNameSearch("");
+
+    const token = localStorage.getItem("token");
+
+    const res = await api.get<VillageLoanCustomer[]>(
+      "/admin/loan-customers/by-village",
+      {
+        params: {
+          village: trimmedQuery,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const customers = Array.isArray(res.data)
+      ? res.data
+      : [];
+
+    setVillageLoanCustomers(customers);
+
+    if (customers.length === 0) {
+      toast.info("No loan customers found in this village.");
+    } else {
+      setTimeout(() => {
+        villageLoanRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 150);
+    }
+  } catch (error) {
+    console.error("Failed to fetch village loan customers:", error);
+    toast.error("Failed to fetch loan customers.");
+  } finally {
+    setVillageLoanLoading(false);
+  }
+    } 
+    
+    else if (searchType === "Delete Phone Number") {
       try {
         const token = localStorage.getItem("token");
 
@@ -305,6 +365,26 @@ const [savingNote, setSavingNote] = useState(false);
       }
     }
   };
+
+  const handleViewVillageLoanCustomer = (phoneNumber: string) => {
+  const phone = String(phoneNumber || "").trim();
+
+  if (!/^\d{10}$/.test(phone)) {
+    toast.error("Invalid loan customer phone number.");
+    return;
+  }
+
+  localStorage.removeItem("billLoanNumber");
+  localStorage.removeItem("bill-loan-phnNumber");
+  localStorage.removeItem("checkBackFrom");
+  localStorage.removeItem("loanCustomerId");
+  localStorage.removeItem("loanCusDetailsCustomerId");
+
+  localStorage.setItem("bill-loan-phnNumber", phone);
+  localStorage.setItem("checkBackFrom", "Phn-Number");
+
+  navigate("/admin/bill-loan-data");
+};
 
   const handleAddCustomer = async () => {
     localStorage.removeItem("loanItemsFrom");
@@ -809,12 +889,13 @@ const deleteLoanNote = async () => {
               select
               label="Search Type"
               value={searchType}
-              onChange={(e) => {
-                setSearchType(e.target.value);
-                if (e.target.value === "ALL") {
-                  setSearchQuery("");
-                }
-              }}
+             onChange={(e) => {
+  setSearchType(e.target.value);
+  setSearchQuery("");
+  setSearch("");
+  setVillageLoanCustomers([]);
+  setLoanCustomerNameSearch("");
+}}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -823,14 +904,50 @@ const deleteLoanNote = async () => {
               <MenuItem value="">
                 <em>Select Search Type</em>
               </MenuItem>
-              <MenuItem value="Bill Number">Bill Number</MenuItem>
-              <MenuItem value="Phone Number">Phone Number</MenuItem>
-              <MenuItem value="Delete Phone Number">
-                Delete Phone Number
-              </MenuItem>
+             <MenuItem value="Bill Number">Bill Number</MenuItem>
+<MenuItem value="Phone Number">Phone Number</MenuItem>
+<MenuItem value="Village">Village</MenuItem>
+<MenuItem value="Delete Phone Number">
+  Delete Phone Number
+</MenuItem>
             </TextField>
-
-            <TextField
+            {searchType === "Village" ? (
+  <Autocomplete
+    freeSolo
+    options={results || []}
+    loading={loading}
+    value={searchQuery}
+    onInputChange={(_, newValue) => {
+      setSearchQuery(newValue);
+      setSearch(newValue);
+    }}
+    onChange={(_, newValue) => {
+      setSearchQuery(newValue || "");
+    }}
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        fullWidth
+        placeholder="Type village name..."
+        InputProps={{
+          ...params.InputProps,
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon color="action" />
+            </InputAdornment>
+          ),
+          endAdornment: (
+            <>
+              {loading && <CircularProgress size={18} />}
+              {params.InputProps.endAdornment}
+            </>
+          ),
+        }}
+      />
+    )}
+  />
+) : (
+  <TextField
               sx={{ width: "100%" }}
               variant="outlined"
               placeholder="Search customers..."
@@ -850,6 +967,9 @@ const deleteLoanNote = async () => {
                 },
               }}
             />
+)}
+
+           
 
             <Button
               variant="outlined"
@@ -872,6 +992,125 @@ const deleteLoanNote = async () => {
           </Box>
         </Paper>
       </div>
+
+
+      {searchType === "Village" &&
+  (villageLoanLoading || villageLoanCustomers.length > 0) && (
+  <div
+    ref={villageLoanRef}
+    className="mt-8 flex justify-center px-3"
+  >
+    <Paper
+      elevation={4}
+      sx={{
+        width: "100%",
+        maxWidth: "950px",
+        p: { xs: 2, md: 3 },
+        borderRadius: "20px",
+      }}
+    >
+      <Typography
+        variant="h5"
+        fontWeight="bold"
+        color="primary"
+        mb={2}
+      >
+        Loan Customers in Village
+      </Typography>
+
+      <TextField
+        fullWidth
+        placeholder="Search customer name or phone number..."
+        value={loanCustomerNameSearch}
+        onChange={(e) =>
+          setLoanCustomerNameSearch(e.target.value)
+        }
+        sx={{ mb: 2 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      {villageLoanLoading ? (
+        <Box display="flex" justifyContent="center" p={3}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <div className="max-h-[600px] overflow-auto rounded-lg border">
+          <table className="w-full min-w-[480px] border-collapse">
+            <thead className="sticky top-0 bg-purple-200">
+              <tr>
+                <th className="p-3 text-left">Name</th>
+                <th className="p-3 text-left">Phone Number</th>
+                <th className="p-3 text-center">View</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {villageLoanCustomers
+                .filter((c) => {
+                  const query =
+                    loanCustomerNameSearch.toLowerCase().trim();
+
+                  return (
+                    c.name.toLowerCase().includes(query) ||
+                    String(c.phoneNumber).includes(query)
+                  );
+                })
+                .map((c, index) => (
+                  <tr
+                    key={`${c.phoneNumber}-${index}`}
+                    className="border-b hover:bg-purple-50"
+                  >
+                    <td className="p-3">{c.name}</td>
+
+                    <td className="p-3">
+                      {c.phoneNumber}
+                    </td>
+
+                    <td className="p-3 text-center">
+                      <Tooltip title="View Loan Customer">
+                        <IconButton
+                          onClick={() =>
+                            handleViewVillageLoanCustomer(
+                              String(c.phoneNumber)
+                            )
+                          }
+                          sx={{
+                            color: "#8847FF",
+                            "&:hover": {
+                              backgroundColor: "#f3e8ff",
+                            },
+                          }}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </td>
+                  </tr>
+                ))}
+
+              {villageLoanCustomers.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={3}
+                    className="p-5 text-center text-gray-500"
+                  >
+                    No loan customers found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Paper>
+  </div>
+)}
 
 <div className="mt-6 px-2 md:mt-10 md:p-3 flex flex-col items-center justify-center gap-6">
           <Paper
@@ -1708,6 +1947,8 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
   </DialogActions>
 </Dialog>
     </div>
+
+
 
 
   );
