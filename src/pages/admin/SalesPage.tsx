@@ -174,6 +174,11 @@ const [selectedDescBox, setSelectedDescBox] = useState<StockDataBox | null>(null
   const navigate = useNavigate();
  const [showroom1Search, setShowroom1Search] = useState<string>("");
 const [showroom2Search, setShowroom2Search] = useState<string>("");
+const [showroom1CountFilter, setShowroom1CountFilter] =
+  useState<string>("");
+
+const [showroom2CountFilter, setShowroom2CountFilter] =
+  useState<string>("");
 const STOCK_BOX_PAGE_SIZE = 25;
 
 const [showroom1Page, setShowroom1Page] = useState(0);
@@ -313,10 +318,17 @@ const fetchStockBoxes = async (
     (showroom === 1 ? showroom1Page : showroom2Page);
 
   const currentSearch =
-    searchOverride ??
-    (showroom === 1 ? showroom1Search : showroom2Search);
+  searchOverride ??
+  (showroom === 1 ? showroom1Search : showroom2Search);
 
-  setLoading(true);
+const currentCountFilter =
+  showroom === 1
+    ? showroom1CountFilter
+    : showroom2CountFilter;
+
+setLoading(true);
+
+
   setErr(null);
 
   try {
@@ -324,11 +336,14 @@ const fetchStockBoxes = async (
       `${basePath}/stock-box/page`,
       {
         params: {
-          showroom,
-          page: currentPage,
-          size: STOCK_BOX_PAGE_SIZE,
-          search: currentSearch.trim(),
-        },
+  showroom,
+  page: currentPage,
+  size: STOCK_BOX_PAGE_SIZE,
+  search: currentSearch.trim(),
+  ...(currentCountFilter !== ""
+    ? { countFilter: Number(currentCountFilter) }
+    : {}),
+},
 
         headers: token
           ? { Authorization: `Bearer ${token}` }
@@ -392,6 +407,8 @@ useEffect(() => {
   showroom2Page,
   showroom1Search,
   showroom2Search,
+  showroom1CountFilter,
+  showroom2CountFilter,
 ]);
 
 
@@ -2274,6 +2291,33 @@ const sortedDisplayRows = displayRows;
           }}
         />
 
+        <TextField
+  select
+  label="Stock Count Filter"
+  size="small"
+  value={showroom1CountFilter}
+  onChange={(e) => {
+    setShowroom1CountFilter(e.target.value);
+    setShowroom1Page(0);
+  }}
+  SelectProps={{ native: true }}
+  InputLabelProps={{ shrink: true }}
+  sx={{
+    width: 200,
+    backgroundColor: "white",
+    borderRadius: "10px",
+  }}
+>
+  <option value="">All Counts</option>
+  <option value="0">0 Count</option>
+  <option value="1">1 or Less</option>
+  <option value="2">2 or Less</option>
+  <option value="3">3 or Less</option>
+  <option value="5">5 or Less</option>
+  <option value="10">10 or Less</option>
+  <option value="20">20 or Less</option>
+</TextField>
+
         <Button
           variant="contained"
           color="secondary"
@@ -2445,6 +2489,33 @@ const sortedDisplayRows = displayRows;
             ) : null,
           }}
         />
+
+        <TextField
+  select
+  label="Stock Count Filter"
+  size="small"
+  value={showroom2CountFilter}
+  onChange={(e) => {
+    setShowroom2CountFilter(e.target.value);
+    setShowroom2Page(0);
+  }}
+  SelectProps={{ native: true }}
+  InputLabelProps={{ shrink: true }}
+  sx={{
+    width: 200,
+    backgroundColor: "white",
+    borderRadius: "10px",
+  }}
+>
+  <option value="">All Counts</option>
+  <option value="0">0 Count</option>
+  <option value="1">1 or Less</option>
+  <option value="2">2 or Less</option>
+  <option value="3">3 or Less</option>
+  <option value="5">5 or Less</option>
+  <option value="10">10 or Less</option>
+  <option value="20">20 or Less</option>
+</TextField>
 
         <Button
           variant="contained"
