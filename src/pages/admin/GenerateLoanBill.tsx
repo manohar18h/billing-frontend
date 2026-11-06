@@ -489,12 +489,7 @@ className="mx-auto mt-4 max-w-[800px] rounded-md bg-white p-3 shadow-2xl md:mt-1
                 {loanData.loanDate}
               </span>
             </p>
-            <p>
-              <strong className="text-[#B45309]">Aadhar Card : </strong>
-              <span className="text-[#000000] font-semibold">
-                {loanData.aadharCard}
-              </span>
-            </p>
+           
           </div>
         </div>
         {/* Table */}

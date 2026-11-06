@@ -36,6 +36,8 @@ interface selectedItems {
   paid_interest_amount: number;
   due_interest_amount: number;
   active_month_count: number;
+  rate_of_interest: number;
+version: number;
 }
 
 export interface LoanCustomer {
@@ -78,6 +80,9 @@ const BillLoanDetails: React.FC = () => {
   const [loanCustomerId, setLoanCustomerId] = useState<number | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [confirmAddingOpen, setConfirmAddingOpen] = useState(false);
+  const [confirmPaymentOpen, setConfirmPaymentOpen] = useState(false);
+const [paymentSaving, setPaymentSaving] = useState(false);
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState("");
   const [payType, setPayType] = useState("");
@@ -240,12 +245,127 @@ const [payDescription, setPayDescription] = useState("");
   const asNumber = (v: string | number | null | undefined): number =>
     v == null || v === "" ? 0 : Number(v);
 
+
+
+  const selectedLoanItem = items.find(
+  (item) => item.loanId === selectedItemId
+);
+
+const additionalPrincipal = Number(payAmount);
+const paymentAmount = Number(payAmount);
+
+const currentPrincipalPaid = asNumber(selectedLoanItem?.paid_amount);
+const currentPrincipalDue = asNumber(selectedLoanItem?.due_amount);
+
+const currentInterestPaid = asNumber(
+  selectedLoanItem?.paid_interest_amount
+);
+
+const currentInterestDue = asNumber(
+  selectedLoanItem?.due_interest_amount
+);
+
+const newPrincipalPaid =
+  payType === "Paying Principle"
+    ? currentPrincipalPaid + paymentAmount
+    : currentPrincipalPaid;
+
+const newPrincipalDue =
+  payType === "Paying Principle"
+    ? currentPrincipalDue - paymentAmount
+    : currentPrincipalDue;
+
+const newInterestPaid =
+  payType === "Paying Interest"
+    ? currentInterestPaid + paymentAmount
+    : currentInterestPaid;
+
+const newInterestDue =
+  payType === "Paying Interest"
+    ? currentInterestDue - paymentAmount
+    : currentInterestDue;
+
+const loanInterestRate = selectedLoanItem?.rate_of_interest;
+
+const additionalInterest =
+  loanInterestRate != null &&
+  Number.isFinite(loanInterestRate) &&
+  Number.isFinite(additionalPrincipal)
+    ? Math.round(additionalPrincipal * loanInterestRate / 100)
+    : 0;
+
+const money = (value: number) =>
+  value.toLocaleString("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+
+
+
   const formatMoney = (v: string | number | null | undefined): string =>
     asNumber(v).toLocaleString("en-IN", {
       maximumFractionDigits: 0, // no decimals
     });
 
-  if (!loanCustomer) return null;
+
+  
+const submitLoanPayment = async () => {
+  if (!selectedItemId || paymentSaving) return;
+
+  setPaymentSaving(true);
+
+  try {
+    const url =
+      `/admin/loanTransaction/${selectedItemId}/` +
+      `${encodeURIComponent(payMethod)}/` +
+      `${encodeURIComponent(payType)}/` +
+      `${encodeURIComponent(payAmount)}`;
+
+    await api.post(
+      url,
+      { description: payDescription },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Reload updated balances from backend.
+    await fetchLoanCustomerDetails();
+
+    setPayDialogOpen(false);
+setConfirmAddingOpen(false);
+setConfirmPaymentOpen(false);
+
+    setPayAmount("");
+    setPayMethod("");
+    setPayType("");
+    setPayDescription("");
+
+    alert("Loan payment saved successfully");
+  } catch (err: any) {
+    console.error("Payment failed:", err);
+
+    const message =
+      err.response?.data?.message ||
+      err.response?.data?.error ||
+      "Unable to save loan payment";
+
+    alert(
+      typeof message === "string"
+        ? message
+        : "Unable to save loan payment"
+    );
+  } finally {
+    setPaymentSaving(false);
+  }
+};
+
+if (!loanCustomer) return null;
+
 
   return (
     <div>
@@ -513,7 +633,7 @@ const [payDescription, setPayDescription] = useState("");
                           color: "#ca8a04",
                         }}
                       >
-                        {item.total_amount.toFixed(2)}
+                        {formatMoney(item.total_amount)}
                       </TableCell>
 
                       <TableCell
@@ -531,15 +651,14 @@ const [payDescription, setPayDescription] = useState("");
                           color: "#15803d",
                         }}
                       >
-                        {item.due_interest_amount}
+                        {formatMoney(item.due_interest_amount)}
                       </TableCell>
                       <TableCell
                         className="border px-3 py-2 text-center"
                         sx={{ fontSize: "0.95rem" }}
                       >
                         <div className="flex justify-center items-center">
-                          {asNumber(item.due_amount) !== 0 ||
-                          asNumber(item.due_interest_amount) !== 0 ? (
+                          {item.deliveryStatus !== "Canceled" ? (
                             <IconButton
                               size="medium"
                               sx={{
@@ -547,10 +666,13 @@ const [payDescription, setPayDescription] = useState("");
                                 "&:hover": { backgroundColor: "#E0E0E0" },
                               }}
                               onClick={() => {
-                                setSelectedItemId(item.loanId);
-                                setPayAmount("");
-                                setPayDialogOpen(true);
-                              }}
+  setSelectedItemId(item.loanId);
+  setPayAmount("");
+  setPayMethod("");
+  setPayType("");
+  setPayDescription("");
+  setPayDialogOpen(true);
+}}
                             >
                               <CurrencyRupeeIcon fontSize="medium" />
                             </IconButton>
@@ -697,83 +819,48 @@ const [payDescription, setPayDescription] = useState("");
           <Button onClick={() => setPayDialogOpen(false)} color="secondary">
             Cancel
           </Button>
-          <Button
-            onClick={async () => {
-              if (!selectedItemId || !payAmount) return;
+         
+<Button
+  color="primary"
+  variant="contained"
+  disabled={paymentSaving}
+  onClick={() => {
+    const amount = Number(payAmount);
 
-              console.log("pay Item Id:", selectedItemId);
-              console.log("payMethod:", payMethod);
-              console.log("payType:", payType);
-              console.log("payAmount:", payAmount);
+    if (
+      !selectedItemId ||
+      !payMethod ||
+      !payType ||
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
+      alert("Please enter valid payment details");
+      return;
+    }
 
-              try {
-                const url = `/admin/loanTransaction/${selectedItemId}/${payMethod}/${payType}/${payAmount}`;
+    if (payType === "Adding Principle") {
+      if (
+        !selectedLoanItem ||
+        loanInterestRate == null ||
+        !Number.isFinite(loanInterestRate) ||
+        loanInterestRate < 0
+      ) {
+        alert("Loan interest rate is unavailable");
+        return;
+      }
 
-                console.log("🔥 API URL:", url);
-                await api.post(
-                  url,
-                  { description: payDescription },
-                  { headers: { Authorization: `Bearer ${token}` } },
-                );
+      setPayDialogOpen(false);
+      setConfirmAddingOpen(true);
+      return;
+    }
 
-                const updatedItems = items.map((o) => {
-                  if (o.loanId !== selectedItemId) return o;
+    setPayDialogOpen(false);
+setConfirmPaymentOpen(true);
+  }}
+>
+  {paymentSaving ? "Saving..." : "Pay Now"}
+</Button>
 
-                  const paid = Number(payAmount);
-
-                  let newTotal = o.total_amount ?? 0;
-                  let newExistDue = o.due_amount ?? 0;
-                  let newPaid = o.paid_amount ?? 0;
-                  let newExistInterestDue = o.due_interest_amount ?? 0;
-                  let newPaidInterestAmount = o.paid_interest_amount ?? 0;
-
-                  if (payType === "Paying Interest") {
-                    newPaidInterestAmount += paid;
-                    newExistInterestDue = newExistInterestDue - paid;
-                  } else if (payType === "Paying Principle") {
-                    newExistDue = newExistDue - paid;
-                    newPaid += paid;
-                  } else if (payType === "Adding Principle") {
-                    newTotal += paid;
-                    newExistDue += paid;
-                  }
-
-                  // rounding safety
-                  if (Math.abs(newTotal) < 0.01) newTotal = 0;
-                  if (Math.abs(newExistDue) < 0.01) newExistDue = 0;
-                  if (Math.abs(newExistInterestDue) < 0.01)
-                    newExistInterestDue = 0;
-
-                  return {
-                    ...o,
-                    total_amount: newTotal,
-                    paid_amount: newPaid,
-                    due_amount: newExistDue,
-                    paid_interest_amount: newPaidInterestAmount,
-                    due_interest_amount: newExistInterestDue,
-                  };
-                });
-
-                setItems(updatedItems);
-                setPayDescription("");
-
-                sessionStorage.setItem(
-                  "itemsState",
-                  JSON.stringify({
-                    itemsList: updatedItems,
-                  }),
-                );
-                setPayDialogOpen(false);
-             } catch (err: any) {
-  console.error("Payment failed:", err.response?.data || err);
-  alert(err.response?.data?.error || err.response?.data || "Payment failed");
-}
-            }}
-            color="primary"
-            variant="contained"
-          >
-            Pay Now
-          </Button>
         </DialogActions>
       </Dialog>
 
@@ -849,6 +936,195 @@ const [payDescription, setPayDescription] = useState("");
           </Button>
         </DialogActions>
       </Dialog>
+      
+<Dialog
+  open={confirmAddingOpen}
+  onClose={() => {
+    if (!paymentSaving) setConfirmAddingOpen(false);
+  }}
+  fullWidth
+  maxWidth="sm"
+>
+  <DialogTitle>
+    Confirm Additional Principal & Interest
+  </DialogTitle>
+
+  <DialogContent dividers>
+    {selectedLoanItem && (
+      <Box display="flex" flexDirection="column" gap={2}>
+        <p>Loan Item ID: {selectedLoanItem.loanId}</p>
+
+        <p>
+          Existing Principal:{" "}
+          {money(selectedLoanItem.total_amount ?? 0)}
+        </p>
+
+        <p>
+          Existing Principal Due:{" "}
+          {money(selectedLoanItem.due_amount ?? 0)}
+        </p>
+
+        <p>
+          Interest Rate: {loanInterestRate}%
+        </p>
+
+        <p>
+          Additional Principal: {money(additionalPrincipal)}
+        </p>
+
+        <p>
+          Additional Interest: {money(additionalInterest)}
+        </p>
+
+        <hr />
+
+        <strong>
+          New Total Principal:{" "}
+          {money(
+            asNumber(selectedLoanItem.total_amount) + additionalPrincipal
+          )}
+        </strong>
+
+        <strong>
+          New Principal Due:{" "}
+          {money(
+            asNumber(selectedLoanItem.due_amount) +
+              additionalPrincipal
+          )}
+        </strong>
+
+        <strong>
+          New Interest Due:{" "}
+          {money(
+            asNumber(selectedLoanItem.due_interest_amount) +
+              additionalInterest
+          )}
+        </strong>
+      </Box>
+    )}
+  </DialogContent>
+
+  <DialogActions>
+    <Button
+      disabled={paymentSaving}
+      onClick={() => {
+  setConfirmAddingOpen(false);
+  setPayDialogOpen(true);
+}}
+    >
+      Cancel
+    </Button>
+
+    <Button
+      variant="contained"
+      disabled={paymentSaving}
+     onClick={() => {
+  void submitLoanPayment();
+}}
+    >
+      Confirm & Save
+    </Button>
+  </DialogActions>
+</Dialog>
+
+<Dialog
+  open={confirmPaymentOpen}
+  onClose={() => {
+    if (!paymentSaving) setConfirmPaymentOpen(false);
+  }}
+  fullWidth
+  maxWidth="sm"
+>
+  <DialogTitle>
+    Confirm {payType === "Paying Principle"
+      ? "Principal Payment"
+      : "Interest Payment"}
+  </DialogTitle>
+
+  <DialogContent dividers>
+    {selectedLoanItem && (
+      <Box display="flex" flexDirection="column" gap={2}>
+
+        <p>
+          <strong>Loan Item ID:</strong> {selectedLoanItem.loanId}
+        </p>
+
+        <p>
+          <strong>Payment Type:</strong> {payType}
+        </p>
+
+        <p>
+          <strong>Payment Method:</strong> {payMethod}
+        </p>
+
+        <p>
+          <strong>Payment Amount:</strong> {money(paymentAmount)}
+        </p>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 1,
+            p: 2,
+            borderRadius: 2,
+            bgcolor: "#f8fafc",
+            color: "#0f172a",
+          }}
+        >
+          <strong>Balance</strong>
+          <strong>Before</strong>
+          <strong>After</strong>
+
+          <span>Principal Paid</span>
+          <span>{money(currentPrincipalPaid)}</span>
+          <strong>{money(newPrincipalPaid)}</strong>
+
+          <span>Principal Due</span>
+          <span>{money(currentPrincipalDue)}</span>
+          <strong>{money(newPrincipalDue)}</strong>
+
+          <span>Interest Paid</span>
+          <span>{money(currentInterestPaid)}</span>
+          <strong>{money(newInterestPaid)}</strong>
+
+          <span>Interest Due</span>
+          <span>{money(currentInterestDue)}</span>
+          <strong>{money(newInterestDue)}</strong>
+        </Box>
+
+        <p style={{ fontSize: "13px", color: "#64748b" }}>
+          Please verify the payment and updated balances
+          before saving.
+        </p>
+
+      </Box>
+    )}
+  </DialogContent>
+
+  <DialogActions>
+    <Button
+      disabled={paymentSaving}
+      onClick={() => {
+        setConfirmPaymentOpen(false);
+        setPayDialogOpen(true);
+      }}
+    >
+      Back
+    </Button>
+
+    <Button
+      variant="contained"
+      disabled={paymentSaving || !selectedLoanItem}
+      onClick={() => {
+        void submitLoanPayment();
+      }}
+    >
+      {paymentSaving ? "Saving..." : "Confirm & Save"}
+    </Button>
+  </DialogActions>
+</Dialog>
+
     </div>
   );
 };

@@ -54,43 +54,128 @@ const LoanItemDetails: React.FC = () => {
   const [item, setItem] = useState<LoanItem | null>(null);
   const [loading, setLoading] = useState(true);
 
+const [editingTx, setEditingTx] =
+  useState<LoanTotalAmtHistory | null>(null);
+
+const [editAmount, setEditAmount] = useState("");
+
+const [saving, setSaving] = useState(false);
+
   // Assuming you already have an Order interface
   // interface Order { ... }
 
-  useEffect(() => {
-    const fetchItemDetails = async () => {
-      try {
-        if (!numericItemId) return;
 
-        const token = localStorage.getItem("token");
 
-        const response = await api.get<LoanItem>(
-          `/admin/getLoanItemByLoanId/${numericItemId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+const handleEditTransaction = async () => {
+  if (!editingTx || !item || saving) return;
 
-        setItem(response.data); // ✅ now TypeScript knows response.data is Order
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          console.error("Error fetching order details:", err.message);
-        } else {
-          console.error("Unexpected error:", err);
-        }
-      } finally {
-        setLoading(false);
+  const amount = Number(editAmount);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    alert("Enter a valid amount greater than zero");
+    return;
+  }
+
+  setSaving(true);
+
+  try {
+    await api.put(
+      `/admin/loan-transactions/${editingTx.amountHistoryId}`,
+      {
+        amount,
+        loanVersion: item.version,
       }
-    };
+    );
 
-    fetchItemDetails();
-  }, [numericItemId]);
+    alert("Transaction updated successfully");
+    setEditingTx(null);
+    await fetchItemDetails();
+
+  } catch (error: any) {
+    alert(
+      error.response?.data?.message ||
+      "Unable to update transaction. Refresh and try again."
+    );
+  } finally {
+    setSaving(false);
+  }
+};
+
+const handleDeleteTransaction = async (
+  tx: LoanTotalAmtHistory
+) => {
+  if (!item || saving) return;
+
+  const confirmed = window.confirm(
+    `Delete the ${tx.paymentType} transaction of ₹${tx.amount}?`
+  );
+
+  if (!confirmed) return;
+
+  setSaving(true);
+  console.log("DELETE DEBUG:", {
+  transactionId: tx.amountHistoryId,
+  loanId: item.loanId,
+  loanVersion: item.version,
+});
+
+  try {
+    await api.delete(
+      `/admin/loan-transactions/${tx.amountHistoryId}`,
+      {
+        params: { loanVersion: item.version },
+      }
+    );
+
+    alert("Transaction deleted successfully");
+    await fetchItemDetails();
+
+  } catch (error: any) {
+    alert(
+      error.response?.data?.message ||
+      "Unable to delete transaction. Refresh and try again."
+    );
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+const fetchItemDetails = async () => {
+  try {
+    if (!numericItemId) return;
+
+    const token = localStorage.getItem("token");
+
+    const response = await api.get<LoanItem>(
+      `/admin/getLoanItemByLoanId/${numericItemId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setItem(response.data);
+
+  } catch (err) {
+    console.error("Error fetching loan item:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  void fetchItemDetails();
+}, [numericItemId]);
+
+
 
   if (loading) return <div className="p-6 text-center">Loading...</div>;
   if (!item) return <div className="p-6 text-center">Item not found</div>;
 
+
+  
   const displayField = (
     label: string,
     value: string | number | boolean | null | undefined,
@@ -214,9 +299,34 @@ const LoanItemDetails: React.FC = () => {
 <div className="mt-1 text-xs text-gray-300">
   Payment Date: {new Date(tx.paymentDate).toLocaleDateString("en-GB")}
 </div>
+
+<div className="mt-4 flex gap-3">
+  <button
+    type="button"
+    disabled={saving}
+    onClick={() => {
+      setEditingTx(tx);
+      setEditAmount(String(tx.amount));
+    }}
+    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+  >
+    ✏️ Edit
+  </button>
+
+  <button
+    type="button"
+    disabled={saving}
+    onClick={() => handleDeleteTransaction(tx)}
+    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+  >
+    🗑 Delete
+  </button>
+</div>
+
               </div>
             ))}
           </div>
+          
 
           <ul className="mb-10 hidden list-disc space-y-2 pl-5 md:block">
             {item.loanTotalAmtHistories.map((tx) => (
@@ -259,15 +369,100 @@ const LoanItemDetails: React.FC = () => {
       </span>{" "}
       {new Date(tx.paymentDate).toLocaleDateString("en-GB")}
     </div>
+    
+<div className="col-span-2 mt-3 flex gap-3">
+  <button
+    type="button"
+    disabled={saving}
+    onClick={() => {
+      setEditingTx(tx);
+      setEditAmount(String(tx.amount));
+    }}
+    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+  >
+    ✏️ Edit
+  </button>
+
+  <button
+    type="button"
+    disabled={saving}
+    onClick={() => handleDeleteTransaction(tx)}
+    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+  >
+    🗑 Delete
+  </button>
+</div>
+
 
   </div>
 </li>
             ))}
+         
           </ul>
         </div>
       )}
+
+      {/* EDIT TRANSACTION POPUP */}
+      {editingTx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 text-gray-900 shadow-2xl">
+
+            <h2 className="mb-4 text-xl font-bold">
+              Edit Loan Transaction
+            </h2>
+
+            <p className="mb-2 text-sm">
+              Transaction ID: {editingTx.amountHistoryId}
+            </p>
+
+            <p className="mb-2 text-sm">
+              Payment Type: {editingTx.paymentType}
+            </p>
+
+            <p className="mb-4 text-sm">
+              Previous Amount: ₹{editingTx.amount}
+            </p>
+
+            <label className="mb-2 block font-semibold">
+              New Amount
+            </label>
+
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={editAmount}
+              onChange={(e) => setEditAmount(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-3"
+            />
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setEditingTx(null)}
+                className="rounded-lg bg-gray-200 px-4 py-2"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={saving}
+                onClick={handleEditTransaction}
+                className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   </div>
 );
 };
+
 export default LoanItemDetails;
+
