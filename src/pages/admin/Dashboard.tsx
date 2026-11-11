@@ -159,6 +159,8 @@ type RevenueMetric = {
   cashAmount: number;
   onlineAmount: number;
   makingCharges: number;
+  paidInterestAmount: number;
+mcPlusInterest: number;
 };
 
 interface OrderStat {
@@ -641,42 +643,70 @@ const RevenueCard: React.FC<{
           Total Revenue: ₹{Math.round(Number(data.totalRevenue || 0)).toLocaleString("en-IN")}
         </div>
       )}
-      {data && (
-  <div className="mt-3 grid grid-cols-2 gap-2">
-    <div className="rounded-xl bg-green-50 px-3 py-2">
-      <div className="text-[11px] font-semibold text-green-700">
-        Cash
-      </div>
-      <div className="mt-1 text-sm font-bold text-green-800">
-       ₹{Math.round(Number(data.cashAmount || 0)).toLocaleString("en-IN")}
-      </div>
-    </div>
-
-    <div className="rounded-xl bg-blue-50 px-3 py-2">
-      <div className="text-[11px] font-semibold text-blue-700">
-        Online / PhonePe
-      </div>
-      <div className="mt-1 text-sm font-bold text-blue-800">
-       ₹{Math.round(Number(data.onlineAmount || 0)).toLocaleString("en-IN")}
-      </div>
-    </div>
     
-  </div>
-)}
+
 
 {data && (
-  <div className="mt-3 rounded-xl bg-violet-50 px-3 py-3">
-    <div className="text-xs font-semibold text-violet-700">
-      Total Making Charges
+ <div className="mt-3 grid grid-cols-2 gap-2">
+
+    {/* CASH */}
+    <div className="rounded-xl border border-green-100 bg-green-50 p-4">
+      <div className="text-xs font-semibold text-green-700">
+        Cash
+      </div>
+      <div className="mt-2 text-xl font-bold text-green-900">
+        ₹{Math.round(Number(data.cashAmount ?? 0))
+          .toLocaleString("en-IN")}
+      </div>
     </div>
 
-    <div className="mt-1 text-xl font-bold text-violet-900">
-      ₹{Math.round(
-        Number(data.makingCharges ?? 0)
-      ).toLocaleString("en-IN")}
+    {/* PHONEPE */}
+    <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+      <div className="text-xs font-semibold text-blue-700">
+        Online / PhonePe
+      </div>
+      <div className="mt-2 text-xl font-bold text-blue-900">
+        ₹{Math.round(Number(data.onlineAmount ?? 0))
+          .toLocaleString("en-IN")}
+      </div>
+    </div>
+
+    {/* MC + INTEREST */}
+    <div className="col-span-2 rounded-xl border border-violet-100 bg-violet-50 p-3">
+      <div className="text-xs font-semibold text-violet-700">
+        MC + I
+      </div>
+
+      <div className="mt-2 text-xl font-bold text-violet-900">
+        ₹{Math.round(Number(data.mcPlusInterest ?? 0))
+          .toLocaleString("en-IN")}
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-violet-200 pt-3">
+        <div>
+          <div className="text-[11px] text-gray-500">
+            Making Charges
+          </div>
+          <div className="font-bold text-violet-800">
+            ₹{Math.round(Number(data.makingCharges ?? 0))
+              .toLocaleString("en-IN")}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[11px] text-gray-500">
+            Paid Interest
+          </div>
+          <div className="font-bold text-violet-800">
+            ₹{Math.round(Number(data.paidInterestAmount ?? 0))
+              .toLocaleString("en-IN")}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 )}
+
     </div>
   );
 };
@@ -782,7 +812,12 @@ const TargetCard: React.FC<{ token?: string | null }> = ({ token }) => {
 
       {/* Gauge */}
       <div className="flex items-center justify-center">
-        <svg width="420" height="220" viewBox="0 0 420 220">
+        <svg
+  width="100%"
+  height="190"
+  viewBox="0 0 420 220"
+  preserveAspectRatio="xMidYMid meet"
+>
           {/* Base arc */}
           <path
             d="M50 200 A160 160 0 0 1 370 200"
@@ -1171,6 +1206,91 @@ const DueLoanAmountCard: React.FC<{
     </div>
   );
 };
+
+
+const CombinedDueAmountCard: React.FC<{
+  token: string | null;
+}> = ({ token }) => {
+  const [orderDue, setOrderDue] = useState<number | null>(null);
+  const [loanDue, setLoanDue] = useState<LoanDueBreakdown | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+
+    Promise.all([
+      api.get<number>("/admin/getTotalDueAmount", { headers }),
+      api.get<LoanDueBreakdown>("/admin/loanDueBreakdown", { headers }),
+    ])
+      .then(([orderRes, loanRes]) => {
+        setOrderDue(orderRes.data);
+        setLoanDue(loanRes.data);
+      })
+      .catch((err) => console.error("Due amounts failed:", err));
+  }, [token]);
+
+  const money = (value: number) =>
+    `₹${Math.round(Number(value || 0)).toLocaleString("en-IN")}`;
+
+  const totalDue =
+    orderDue !== null && loanDue !== null
+      ? Number(orderDue) + Number(loanDue.totalDue)
+      : null;
+
+  return (
+    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5 h-full">
+      <div className="text-sm font-medium text-gray-500">
+        Total Outstanding Due
+      </div>
+
+      <div className="mt-2 text-2xl font-bold text-gray-900">
+        {totalDue !== null ? money(totalDue) : "..."}
+      </div>
+
+      <div className="mt-4 rounded-xl border border-gray-100 p-3">
+        <div className="text-xs text-gray-500">
+          Total Order Due
+        </div>
+        <div className="mt-1 text-xl font-bold">
+          {orderDue !== null ? money(orderDue) : "..."}
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-xl border border-gray-100 p-3">
+        <div className="text-xs text-gray-500">
+          Total Loan Due
+        </div>
+        <div className="mt-1 text-xl font-bold">
+          {loanDue ? money(loanDue.totalDue) : "..."}
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-lg bg-blue-50 p-2">
+            <div className="text-[11px] text-blue-700">
+              Principal Due
+            </div>
+            <div className="mt-1 font-bold text-blue-900">
+              {loanDue ? money(loanDue.principalDue) : "..."}
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-amber-50 p-2">
+            <div className="text-[11px] text-amber-700">
+              Interest Due
+            </div>
+            <div className="mt-1 font-bold text-amber-900">
+              {loanDue ? money(loanDue.interestDue) : "..."}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const TaggingWorkTable: React.FC = () => {
   const token = localStorage.getItem("token") ?? "";
@@ -4193,45 +4313,56 @@ const Dashboard: React.FC = () => {
   return (
     <div className="mt-4 space-y-4 px-1 md:mt-6 md:space-y-6 md:px-0">
       {/* KPI row (first tile = Metal Prices) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetalPricesCard />
-        <MetricCard
-          title="Total Orders"
-          endpoint="/admin/ordersCount"
-          token={token}
-        />
-        <MetricCard
-          title="Delivered Orders"
-          endpoint="/admin/deliveredOrders"
-          token={token}
-        />
-        <MetricCard
-          title="Pending Orders"
-          endpoint="/admin/pendingOrders"
-          token={token}
-        />
-        <MetricCard
-          title="Canceled Orders"
-          endpoint="/admin/canceledOrders"
-          token={token}
-        />
-        <RevenueCard
-          title="Total Revenue"
-          endpoint="/admin/revenueStats"
-          token={token}
-        />
-        <DueAmountCard token={token} />
-        <DueLoanAmountCard token={token} />
-      </div>
+      {/* ROW 1 — MAIN KPI CARDS */}
+<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <MetalPricesCard />
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <TargetCard token={token} />
+  <MetricCard
+    title="Total Orders"
+    endpoint="/admin/ordersCount"
+    token={token}
+  />
 
-        <div className="xl:col-span-2">
-          <StatisticCard />
-        </div>
-      </div>
+  <MetricCard
+    title="Delivered Orders"
+    endpoint="/admin/deliveredOrders"
+    token={token}
+  />
+
+  <MetricCard
+    title="Pending Orders"
+    endpoint="/admin/pendingOrders"
+    token={token}
+  />
+</div>
+
+
+
+
+{/* SECOND ROW */}
+<div className="grid grid-cols-1 gap-4 xl:grid-cols-3 items-stretch">
+
+  <RevenueCard
+    title="Total Revenue"
+    endpoint="/admin/revenueStats"
+    token={token}
+  />
+
+  <CombinedDueAmountCard token={token} />
+
+  <TargetCard token={token} />
+
+</div>
+
+
+
+
+     
+{/* THIRD ROW — FULL WIDTH MONTHLY STATISTICS */}
+<div className="w-full">
+  <StatisticCard />
+</div>
+
 
       {/* Tables / Growth row */}
       {/* RFID TAGGING WORK */}
