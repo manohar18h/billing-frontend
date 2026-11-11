@@ -158,6 +158,7 @@ type RevenueMetric = {
   percentageChange: number;
   cashAmount: number;
   onlineAmount: number;
+  makingCharges: number;
 };
 
 interface OrderStat {
@@ -659,6 +660,21 @@ const RevenueCard: React.FC<{
        ₹{Math.round(Number(data.onlineAmount || 0)).toLocaleString("en-IN")}
       </div>
     </div>
+    
+  </div>
+)}
+
+{data && (
+  <div className="mt-3 rounded-xl bg-violet-50 px-3 py-3">
+    <div className="text-xs font-semibold text-violet-700">
+      Total Making Charges
+    </div>
+
+    <div className="mt-1 text-xl font-bold text-violet-900">
+      ₹{Math.round(
+        Number(data.makingCharges ?? 0)
+      ).toLocaleString("en-IN")}
+    </div>
   </div>
 )}
     </div>
@@ -1086,40 +1102,71 @@ const DueAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
   );
 };
 
-const DueLoanAmountCard: React.FC<{ token: string | null }> = ({ token }) => {
-  const [dueLoanAmount, setDueLoanAmount] = useState<number | null>(null);
+type LoanDueBreakdown = {
+  totalDue: number;
+  principalDue: number;
+  interestDue: number;
+};
+
+const DueLoanAmountCard: React.FC<{
+  token: string | null;
+}> = ({ token }) => {
+  const [data, setData] =
+    useState<LoanDueBreakdown | null>(null);
 
   useEffect(() => {
-    const fetchDueLoanAmount = async () => {
-      try {
-        const response = await api.get<number>("/admin/getTotalLoanDueAmount", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setDueLoanAmount(response.data);
-      } catch (error) {
-        console.error("Error fetching due amount:", error);
-      }
-    };
+    if (!token) return;
 
-    if (token) fetchDueLoanAmount();
+    api.get<LoanDueBreakdown>(
+      "/admin/loanDueBreakdown",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+    .then((res) => setData(res.data))
+    .catch((err) =>
+      console.error("Loan due breakdown failed:", err)
+    );
   }, [token]);
+
+  const formatAmount = (value: number) =>
+    Math.round(value).toLocaleString("en-IN");
 
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-sm text-gray-500 font-medium">Total Loan Due Amount</div>
+      <div className="text-sm text-gray-500 font-medium">
+        Total Loan Due Amount
       </div>
 
-      <div className="text-2xl font-bold">
-          ₹{dueLoanAmount !== null
-  ? Math.round(dueLoanAmount).toLocaleString("en-IN")
-  : "..."}
+      <div className="mt-3 text-2xl font-bold">
+        {data ? `₹${formatAmount(data.totalDue)}` : "..."}
       </div>
 
-      <div className="text-xs text-gray-500 mt-2">
-        Total outstanding Loan due amount from all Loan Customers
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="rounded-xl bg-blue-50 p-3">
+          <div className="text-xs text-blue-700">
+            Principal Due
+          </div>
+          <div className="mt-1 text-lg font-bold">
+            {data ? `₹${formatAmount(data.principalDue)}` : "..."}
+          </div>
+        </div>
+
+        <div className="rounded-xl bg-amber-50 p-3">
+          <div className="text-xs text-amber-700">
+            Interest Due
+          </div>
+          <div className="mt-1 text-lg font-bold">
+            {data ? `₹${formatAmount(data.interestDue)}` : "..."}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 text-xs text-gray-500">
+        Total outstanding principal and interest
+        from all loan customers
       </div>
     </div>
   );
