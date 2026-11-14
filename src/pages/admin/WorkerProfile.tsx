@@ -242,7 +242,13 @@ const toDateRef = useRef<HTMLInputElement | null>(null);
 
     try {
       const data = await fetchWorkerProfile();
-      setWorker(data);
+
+console.log("WORKER PROFILE API RESPONSE:", data);
+console.log("Earned Wastage:", data.earnedWastage);
+console.log("Received Wastage:", data.receivedWastage);
+console.log("Pending Wastage:", data.pendingWastage);
+
+setWorker(data);
     } catch (error) {
       const message = getErrorMessage(error);
       setProfileError(message);
@@ -440,7 +446,10 @@ const applyDateFilter = () => {
       </div>
     );
   }
-
+const pendingWastage =
+  Number(worker.earnedWastage ?? 0) -
+  Number(worker.receivedWastage ?? 0);
+  
   const renderHistoryRecord = (
     record: HistoryRecord,
     index: number,
@@ -826,9 +835,11 @@ const applyDateFilter = () => {
             description="995 silver stock"
           />
         </section>
+        
 
         {/* Wastage summary */}
         <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          
           <SummaryCard
             title="Earned Wastage"
             value={`${formatDecimal(
@@ -846,12 +857,10 @@ const applyDateFilter = () => {
           />
 
           <SummaryCard
-            title="Pending Wastage"
-            value={`${formatDecimal(
-              worker.pendingWastage,
-            )} g`}
-            description="Remaining wastage balance"
-          />
+  title="Pending Wastage"
+  value={`${formatDecimal(pendingWastage)} g`}
+  description="Remaining wastage balance"
+/>
         </section>
 
         {/* History section */}
