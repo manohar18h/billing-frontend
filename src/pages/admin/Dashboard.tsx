@@ -4,7 +4,9 @@ import api from "@/services/api"; // make sure this import path is correct
 import { MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "../../App.css";
-
+import LiveMetalStock from "@/components/LiveMetalStock";
+import StockDataIssues from "@/components/StockDataIssues";
+import StockMetalGraphs from "@/components/StockMetalGraphs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -4232,7 +4234,7 @@ const BusinessGrowth: React.FC = () => {
   );
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-5">
+    <div className="flex h-full min-h-0 flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
       <div className="flex items-center justify-between mb-3">
         <div>
           <div className="font-semibold text-gray-800">Business Growth</div>
@@ -4263,7 +4265,7 @@ const BusinessGrowth: React.FC = () => {
       {loading ? (
         <div className="text-sm text-gray-500">Loading...</div>
       ) : (
-        <div className="max-h-[560px] overflow-y-auto pr-2 space-y-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
           {filteredVillages.length > 0 ? (
             filteredVillages.map((item) => (
               <div
@@ -4358,7 +4360,12 @@ const Dashboard: React.FC = () => {
 
 
      
-{/* THIRD ROW — FULL WIDTH MONTHLY STATISTICS */}
+{/* THIRD ROW — LIVE GOLD & SILVER STOCK */}
+<div className="w-full">
+  <LiveMetalStock token={token} />
+</div>
+
+{/* FOURTH ROW — FULL WIDTH MONTHLY STATISTICS */}
 <div className="w-full">
   <StatisticCard />
 </div>
@@ -4369,19 +4376,28 @@ const Dashboard: React.FC = () => {
 <TaggingWorkTable />
 
 {/* Tables / Growth row */}
-<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* LEFT SIDE */}
-        <div className="lg:col-span-2 space-y-5">
+<div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-4">
+        {/* LEFT SIDE — 75% width */}
+        <div className="min-w-0 space-y-5 lg:col-span-3">
           <LatestOrders />
           <LatestLoanOrders />
           <TodayOldExchangeTable />
         </div>
 
-        {/* RIGHT SIDE */}
-        <div className="lg:col-span-1">
-          <BusinessGrowth />
+               <div className="relative min-h-0 min-w-0 lg:col-span-1">
+          <div className="lg:absolute lg:inset-0">
+            <BusinessGrowth />
+          </div>
         </div>
       </div>
+
+      {/* STOCK DATA ISSUES — BOTTOM OF DASHBOARD */}
+      <div className="w-full">
+        <StockMetalGraphs token={token} />
+        <StockDataIssues token={token} />
+
+      </div>
+
     </div>
   );
 };
