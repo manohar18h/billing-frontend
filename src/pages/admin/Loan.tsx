@@ -24,6 +24,14 @@ import { useLocation } from "react-router-dom";
 import api from "@/services/api";
 import debounce from "lodash/debounce";
 import { useNavigate } from "react-router-dom";
+import {
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+} from "firebase/auth";
+
+import type { ConfirmationResult } from "firebase/auth";
+
+import { auth } from "@/services/firebase";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditNoteIcon from "@mui/icons-material/EditNote";
@@ -53,6 +61,7 @@ export interface LoanCustomer {
   itemWeight: number[];
   orderDate: string | null;
   salesNote?: string | null;
+  mobileVerified?: boolean;
 }
 
 type PageResponse<T> = {
@@ -142,6 +151,23 @@ const Loan: React.FC = () => {
   phoneNumber: string;
   village?: string;
 }
+const [loanOtp, setLoanOtp] = useState("");
+
+const [loanConfirmationResult, setLoanConfirmationResult] =
+  useState<ConfirmationResult | null>(null);
+
+const [loanRecaptchaVerified, setLoanRecaptchaVerified] =
+  useState(false);
+const loanRecaptchaSolvedRef = useRef(false);
+const [sendingLoanOtp, setSendingLoanOtp] = useState(false);
+
+const [verifyingLoanOtp, setVerifyingLoanOtp] = useState(false);
+
+const [loanFirebaseIdToken, setLoanFirebaseIdToken] =
+  useState<string | null>(null);
+
+const loanRecaptchaRef = useRef<RecaptchaVerifier | null>(null);
+
 
 const [villageLoanCustomers, setVillageLoanCustomers] =
   useState<VillageLoanCustomer[]>([]);
@@ -259,6 +285,15 @@ const [savingNote, setSavingNote] = useState(false);
         )
         .join(" ");
     }
+
+    if (
+  field === "phoneNumber" &&
+  String(value) !== customer.phoneNumber
+) {
+  setLoanOtp("");
+  setLoanConfirmationResult(null);
+  setLoanFirebaseIdToken(null);
+}
 
     setCustomer((prev) => ({
       ...prev,
@@ -424,6 +459,34 @@ const [savingNote, setSavingNote] = useState(false);
       const result = response.data;
 
       if (result?.loanCusId) {
+        // Complete backend verification only if OTP was verified.
+if (loanFirebaseIdToken) {
+  try {
+    await api.post(
+      `/admin/loan-customer/${result.loanCusId}/verify-mobile`,
+      {
+        firebaseIdToken: loanFirebaseIdToken,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    toast.success("Loan customer mobile verified successfully.");
+
+  } catch (verificationError: any) {
+    console.error(
+      "Loan customer mobile verification failed:",
+      verificationError
+    );
+
+    toast.error(
+      "Customer saved, but mobile verification could not be completed."
+    );
+  }
+}
         localStorage.setItem("loanCustomerId", result.loanCusId);
         console.log(" Loan customerId in customer:", result.loanCusId);
 
@@ -602,6 +665,197 @@ const loadAllLoanCustomers = async (
   } finally {
     setLoading(false);
   }
+};
+
+
+useEffect(() => {
+  let cancelled = false;
+
+  const timer = window.setTimeout(async () => {
+    const container = document.getElementById(
+      "loan-recaptcha-container"
+    );
+
+    if (!container) {
+      console.error("Loan reCAPTCHA container not found");
+      return;
+    }
+
+    if (loanRecaptchaRef.current) {
+      return;
+    }
+
+    loanRecaptchaSolvedRef.current = false;
+    setLoanRecaptchaVerified(false);
+
+    const verifier = new RecaptchaVerifier(
+      auth,
+      container,
+      {
+        size: "normal",
+
+        callback: () => {
+          console.log("Loan CAPTCHA completed");
+
+          loanRecaptchaSolvedRef.current = true;
+          setLoanRecaptchaVerified(true);
+        },
+
+        "expired-callback": () => {
+          console.log("Loan CAPTCHA expired");
+
+          loanRecaptchaSolvedRef.current = false;
+          setLoanRecaptchaVerified(false);
+          setLoanConfirmationResult(null);
+        },
+      }
+    );
+
+    loanRecaptchaRef.current = verifier;
+
+    try {
+      await verifier.render();
+
+      if (cancelled) {
+        verifier.clear();
+
+        if (loanRecaptchaRef.current === verifier) {
+          loanRecaptchaRef.current = null;
+        }
+
+        return;
+      }
+
+      console.log("Loan reCAPTCHA initialized successfully");
+    } catch (error) {
+      console.error("Loan reCAPTCHA initialization failed:", error);
+
+      loanRecaptchaSolvedRef.current = false;
+      setLoanRecaptchaVerified(false);
+
+      if (loanRecaptchaRef.current === verifier) {
+        loanRecaptchaRef.current = null;
+      }
+
+      verifier.clear();
+    }
+  }, 500);
+
+  return () => {
+    cancelled = true;
+    window.clearTimeout(timer);
+
+    const verifier = loanRecaptchaRef.current;
+    loanRecaptchaRef.current = null;
+
+    loanRecaptchaSolvedRef.current = false;
+
+    if (verifier) {
+      verifier.clear();
+    }
+  };
+}, []);
+
+
+
+
+const handleSendLoanOtp = async () => {
+  const phone = customer.phoneNumber.replace(/\D/g, "");
+
+  if (!/^\d{10}$/.test(phone)) {
+    toast.error("Enter a valid 10-digit mobile number.");
+    return;
+  }
+
+  const verifier = loanRecaptchaRef.current;
+
+  if (!verifier) {
+    toast.error("reCAPTCHA is initializing. Please wait a moment.");
+    console.error("Loan reCAPTCHA verifier is null");
+    return;
+  }
+
+  if (!loanRecaptchaSolvedRef.current) {
+    toast.error("Please complete reCAPTCHA first.");
+    return;
+  }
+
+  try {
+    setSendingLoanOtp(true);
+
+    const result = await signInWithPhoneNumber(
+      auth,
+      `+91${phone}`,
+      verifier
+    );
+
+    setLoanConfirmationResult(result);
+    setLoanOtp("");
+
+    toast.success("OTP sent successfully.");
+  } catch (error: any) {
+    console.error("Loan OTP sending failed:", error);
+
+    loanRecaptchaSolvedRef.current = false;
+    setLoanRecaptchaVerified(false);
+
+    toast.error(
+      error?.message || "Failed to send OTP. Please try again."
+    );
+  } finally {
+    setSendingLoanOtp(false);
+  }
+};
+
+
+
+const handleVerifyLoanOtp = async () => {
+  if (!loanConfirmationResult) {
+    toast.error("Please send OTP first.");
+    return;
+  }
+
+  if (!/^\d{6}$/.test(loanOtp)) {
+    toast.error("Enter a valid 6-digit OTP.");
+    return;
+  }
+
+  try {
+    setVerifyingLoanOtp(true);
+
+    const credential =
+      await loanConfirmationResult.confirm(loanOtp);
+
+    const firebaseIdToken =
+      await credential.user.getIdToken(true);
+
+    setLoanFirebaseIdToken(firebaseIdToken);
+
+    setLoanConfirmationResult(null);
+    setLoanOtp("");
+
+    toast.success(
+      "Mobile OTP verified. Save the customer to complete registration."
+    );
+
+  } catch (error: any) {
+  console.error("Loan OTP verification error:", error);
+
+  setLoanFirebaseIdToken(null);
+
+  const errorCode = error?.code;
+
+  if (errorCode === "auth/invalid-verification-code") {
+    toast.error("Incorrect OTP. Please enter the correct OTP.");
+  } else if (errorCode === "auth/code-expired") {
+    toast.error("OTP expired. Please send a new OTP.");
+    setLoanConfirmationResult(null);
+  } else {
+    toast.error(error?.message || "OTP verification failed.");
+  }
+} finally {
+  setVerifyingLoanOtp(false);
+}
 };
 
 useEffect(() => {
@@ -1224,6 +1478,76 @@ const deleteLoanNote = async () => {
               </Grid>
             ))}
           </Grid>
+
+          <Box
+  mt={3}
+  p={2}
+  sx={{
+    border: "1px solid #d0b3ff",
+    borderRadius: "12px",
+    backgroundColor: "#faf7ff",
+  }}
+>
+  <Typography fontWeight="bold" color="primary">
+    Mobile Number Verification (Optional)
+  </Typography>
+
+  <Typography variant="body2" color="text.secondary" mb={2}>
+    You can skip mobile verification and continue adding the loan customer.
+  </Typography>
+
+  <Box mb={2}>
+    <div id="loan-recaptcha-container" />
+  </Box>
+
+  <Box display="flex" gap={2} flexWrap="wrap">
+
+    <Button
+      variant="outlined"
+      onClick={handleSendLoanOtp}
+      disabled={
+        sendingLoanOtp ||
+        verifyingLoanOtp ||
+        loanFirebaseIdToken !== null
+      }
+    >
+      {sendingLoanOtp ? "Sending OTP..." : "Send OTP"}
+    </Button>
+
+    {loanFirebaseIdToken && (
+      <Chip
+  label="OTP Confirmed – Save Customer"
+  color="success"
+/>
+    )}
+
+  </Box>
+
+  {loanConfirmationResult && (
+    <Box mt={2} display="flex" gap={2} flexWrap="wrap">
+
+      <TextField
+        label="Enter 6-digit OTP"
+        value={loanOtp}
+        onChange={(e) =>
+          setLoanOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+        }
+        inputProps={{ maxLength: 6 }}
+        sx={{ maxWidth: 250 }}
+      />
+
+      <Button
+        variant="contained"
+        onClick={handleVerifyLoanOtp}
+        disabled={verifyingLoanOtp}
+      >
+        {verifyingLoanOtp ? "Verifying..." : "Verify OTP"}
+      </Button>
+
+    </Box>
+  )}
+
+</Box>
 
           <Box display="flex" justifyContent="flex-end" mt={4}>
             <Button
