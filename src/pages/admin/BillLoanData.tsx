@@ -276,8 +276,8 @@ const handleVerifyOtp = async () => {
     const firebaseIdToken =
       await credential.user.getIdToken(true);
 
-    const response = await api.post(
-      `/admin/loan-customer/${loanCustomer.loanCusId}/verify-mobile`,
+ const response = await api.post<{ mobileVerified: boolean }>(
+  `/admin/loan-customer/${loanCustomer.loanCusId}/verify-mobile`,
       {
         firebaseIdToken,
       },
