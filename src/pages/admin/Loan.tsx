@@ -209,6 +209,7 @@ const [duplicateLoanPhone, setDuplicateLoanPhone] = useState("");
     name: string;
     village: string;
     phoneNumber: string;
+    alternatePhoneNumber: string;
     emailId: string;
     gender: string;
     aadharCard: string;
@@ -224,6 +225,7 @@ const [duplicateLoanPhone, setDuplicateLoanPhone] = useState("");
     name: "",
     village: "",
     phoneNumber: "",
+    alternatePhoneNumber: "",
     emailId: "",
     gender: "",
     aadharCard: "",
@@ -583,6 +585,25 @@ const handleVerifyExistingLoanCustomer = async () => {
       localStorage.removeItem("loanCusDetailsCustomerId");
       localStorage.removeItem("loanCustomerId");
 
+
+const alternatePhoneNumber = String(
+  customer.alternatePhoneNumber || ""
+).replace(/\D/g, "");
+
+if (
+  alternatePhoneNumber &&
+  !/^\d{10}$/.test(alternatePhoneNumber)
+) {
+  toast.error("Alternate phone number must be exactly 10 digits.");
+  return;
+}
+
+const customerPayload = {
+  ...customer,
+  alternatePhoneNumber: alternatePhoneNumber || "",
+};
+
+
       setFieldErrors({});
 
       // --- Add village if not empty ---
@@ -598,11 +619,11 @@ const handleVerifyExistingLoanCustomer = async () => {
         );
       }
 
-      console.log("requestbody : ", JSON.stringify(customer));
+console.log("requestbody : ", JSON.stringify(customerPayload));
 
       const response = await api.post<Customer>(
         "/admin/addLoanCustomer",
-        customer,
+        customerPayload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1599,6 +1620,7 @@ const deleteLoanNote = async () => {
                 "name",
                 "village",
                 "phoneNumber",
+                "alternatePhoneNumber",
                 "emailId",
                 "gender",
                 "aadharCard",
@@ -1673,15 +1695,19 @@ const deleteLoanNote = async () => {
                   <TextField
                     {...thickTextFieldProps}
                     sx={{ width: "100%" }}
-                    label={
-                      key === "phoneNumber"
-                        ? "Phone Number"
-                        : key === "emailId"
-                          ? "Email ID"
-                          : key === "aadharCard"
-                            ? "Aadhar Card"
-                            : key.charAt(0).toUpperCase() + key.slice(1)
-                    }
+                    
+label={
+  key === "phoneNumber"
+    ? "Phone Number"
+    : key === "alternatePhoneNumber"
+      ? "Alternate Phone Number (Optional)"
+      : key === "emailId"
+        ? "Email ID"
+        : key === "aadharCard"
+          ? "Aadhar Card"
+          : key.charAt(0).toUpperCase() + key.slice(1)
+}
+
                     value={customer[key]}
                     onChange={(e) => handleChange(key, e.target.value)}
                     error={!!fieldErrors[key]}
@@ -2620,12 +2646,8 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
     </Button>
 
     <Button
-      onClick={
-  existingLoanCustomer?.mobileVerified
-    ? handleOpenExistingLoanCustomer
-    : handleCloseDuplicateLoanDialog
-}
-      variant="contained"
+  onClick={handleOpenExistingLoanCustomer}
+  variant="contained"
       fullWidth
       sx={{
         borderRadius: "12px",
@@ -2638,9 +2660,7 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
         },
       }}
     >
-      {existingLoanCustomer?.mobileVerified
-  ? "Yes, Open Profile"
-  : "Close and Verify OTP"}
+      "Open Existing Profile"
     </Button>
   </DialogActions>
 </Dialog>

@@ -47,6 +47,7 @@ interface LoanCustomerProfile {
   village: string;
   phoneNumber: string;
   emailId: string;
+  alternatePhoneNumber?: string | null;
   aadharCard: string;
   numberOfActiveItems: number;
   finalAmount: number;
@@ -90,6 +91,7 @@ const [editName, setEditName] = useState("");
 const [editVillage, setEditVillage] = useState("");
 const [editPhone, setEditPhone] = useState("");
 const [editEmail, setEditEmail] = useState("");
+const [editAlternatePhone, setEditAlternatePhone] = useState("");
 
 const normalizePhone = (value: string) =>
   (value || "").replace(/\D/g, "");
@@ -257,6 +259,8 @@ const handleSendOtp = async () => {
   }
 };
 
+
+
 const handleVerifyOtp = async () => {
   if (!loanCustomer || !confirmationResult) {
     alert("Please send OTP first.");
@@ -326,13 +330,16 @@ const handleOpenEdit = () => {
   setEditVillage(loanCustomer.village || "");
   setEditPhone(loanCustomer.phoneNumber || "");
   setEditEmail(loanCustomer.emailId || "");
+  setEditAlternatePhone(loanCustomer.alternatePhoneNumber || "");
   setOpenEdit(true);
 };
+
 
 const handleUpdateLoanCustomer = async () => {
   if (!loanCustomer) return;
 
   const phoneNumber = normalizePhone(editPhone);
+  const alternatePhoneNumber = normalizePhone(editAlternatePhone);
 
   if (!editName.trim()) {
     alert("Name is required.");
@@ -349,6 +356,15 @@ const handleUpdateLoanCustomer = async () => {
     return;
   }
 
+  // Alternate phone is optional
+  if (
+    alternatePhoneNumber &&
+    !/^\d{10}$/.test(alternatePhoneNumber)
+  ) {
+    alert("Alternate phone number must be exactly 10 digits.");
+    return;
+  }
+
   try {
     const response = await api.put<LoanCustomerProfile>(
       `/admin/loan-customer/update/${loanCustomer.loanCusId}`,
@@ -356,6 +372,7 @@ const handleUpdateLoanCustomer = async () => {
         name: editName.trim(),
         village: editVillage.trim(),
         phoneNumber,
+        alternatePhoneNumber: alternatePhoneNumber || null,
         emailId: editEmail.trim(),
       },
       {
@@ -370,6 +387,8 @@ const handleUpdateLoanCustomer = async () => {
     setLoanCustomer(updatedCustomer);
 
     setEditPhone(updatedCustomer.phoneNumber);
+    setEditAlternatePhone(updatedCustomer.alternatePhoneNumber || "");
+
     localStorage.setItem(
       "bill-loan-phnNumber",
       updatedCustomer.phoneNumber
@@ -403,6 +422,7 @@ const handleUpdateLoanCustomer = async () => {
     );
   }
 };
+
 
   const handleBackClick = () => {
     navigate("/admin/Loan");
@@ -614,6 +634,16 @@ const totalInterestDueAmount =
                   {loanCustomer.phoneNumber}
                 </span>
               </p>
+
+<p className="flex justify-between">
+  <span className="text-gray-300 font-medium">
+    Alternate Phone:
+  </span>
+  <span className="text-teal-300 font-semibold">
+    {loanCustomer.alternatePhoneNumber || "—"}
+  </span>
+</p>
+
               <p className="flex justify-between">
                 <span className="text-gray-300 font-medium">Email:</span>
                 <span className="text-orange-300 font-semibold">
@@ -853,6 +883,11 @@ const totalInterestDueAmount =
       )}
     />
 
+
+
+
+
+
     <TextField
       margin="dense"
       label="Phone Number"
@@ -860,6 +895,19 @@ const totalInterestDueAmount =
       value={editPhone}
       onChange={(e) => setEditPhone(e.target.value)}
     />
+
+<TextField
+  margin="dense"
+  label="Alternate Phone Number (Optional)"
+  fullWidth
+  value={editAlternatePhone}
+  onChange={(e) => setEditAlternatePhone(e.target.value)}
+  inputProps={{
+    maxLength: 15,
+    inputMode: "numeric",
+  }}
+/>
+
     {/* Mobile OTP Verification */}
 
 {phoneHasChanged ? (
