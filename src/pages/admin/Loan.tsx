@@ -921,20 +921,76 @@ const handleSendLoanOtp = async () => {
     return;
   }
 
-  const verifier = loanRecaptchaRef.current;
-
-  if (!verifier) {
-    toast.error("reCAPTCHA is initializing. Please wait a moment.");
-    console.error("Loan reCAPTCHA verifier is null");
-    return;
-  }
-
-  if (!loanRecaptchaSolvedRef.current) {
-    toast.error("Please complete reCAPTCHA first.");
-    return;
-  }
+  setShowExistingLoanAlert(false);
 
   try {
+    const token = localStorage.getItem("token");
+
+    // First check whether this mobile number already exists.
+    try {
+      const response = await api.get<{
+        loanCusId: string | number;
+        name: string;
+        phoneNumber: string;
+        mobileVerified?: boolean;
+      }>(
+        `/admin/getByLoanCusPhnNumber/${phone}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const existingCustomer = response.data;
+
+      if (existingCustomer) {
+        setExistingLoanCustomer({
+          loanCusId: String(existingCustomer.loanCusId),
+          name: existingCustomer.name,
+          phoneNumber: String(existingCustomer.phoneNumber),
+          mobileVerified: Boolean(existingCustomer.mobileVerified),
+        });
+
+        // Already verified: do not send another OTP.
+        if (existingCustomer.mobileVerified) {
+          setShowExistingLoanAlert(true);
+          setLoanOtp("");
+          setLoanConfirmationResult(null);
+          setLoanFirebaseIdToken(null);
+
+          toast.info("This mobile number is already registered and verified.");
+          return;
+        }
+      }
+    } catch (checkError: any) {
+      const status = checkError?.response?.status;
+      const message = checkError?.response?.data?.message || "";
+
+      // Continue OTP flow only when the customer does not exist.
+      if (
+        status !== 400 ||
+        !message.includes("Customer is not found by this")
+      ) {
+        throw checkError;
+      }
+
+      setExistingLoanCustomer(null);
+    }
+
+    // Continue normal OTP flow.
+    const verifier = loanRecaptchaRef.current;
+
+    if (!verifier) {
+      toast.error("reCAPTCHA is initializing. Please wait a moment.");
+      return;
+    }
+
+    if (!loanRecaptchaSolvedRef.current) {
+      toast.error("Please complete reCAPTCHA first.");
+      return;
+    }
+
     setSendingLoanOtp(true);
 
     const result = await signInWithPhoneNumber(
@@ -947,6 +1003,7 @@ const handleSendLoanOtp = async () => {
     setLoanOtp("");
 
     toast.success("OTP sent successfully.");
+
   } catch (error: any) {
     console.error("Loan OTP sending failed:", error);
 
@@ -954,7 +1011,9 @@ const handleSendLoanOtp = async () => {
     setLoanRecaptchaVerified(false);
 
     toast.error(
-      error?.message || "Failed to send OTP. Please try again."
+      error?.response?.data?.message ||
+      error?.message ||
+      "Failed to send OTP. Please try again."
     );
   } finally {
     setSendingLoanOtp(false);
@@ -1649,6 +1708,39 @@ const deleteLoanNote = async () => {
   <Typography variant="body2" color="text.secondary" mb={2}>
     You can skip mobile verification and continue adding the loan customer.
   </Typography>
+  {showExistingLoanAlert && existingLoanCustomer && (
+  <Box
+    mt={2}
+    mb={2}
+    p={2}
+    sx={{
+      border: "1px solid #16a34a",
+      borderRadius: "12px",
+      backgroundColor: "#f0fdf4",
+    }}
+  >
+    <Box display="flex" alignItems="center" gap={1}>
+      <Chip label="Already Verified" color="success" size="small" />
+
+      <Typography fontWeight="bold" color="success.dark">
+        Mobile number already registered!
+      </Typography>
+    </Box>
+
+    <Typography mt={1} variant="body2">
+      Customer: <strong>{existingLoanCustomer.name}</strong>
+    </Typography>
+
+    <Typography variant="body2">
+      Mobile Number: <strong>{existingLoanCustomer.phoneNumber}</strong>
+    </Typography>
+
+    <Typography variant="body2" color="success.dark" mt={1}>
+      This customer's mobile number is already OTP verified.
+      No new OTP is required.
+    </Typography>
+  </Box>
+)}
 
   <Box mb={2}>
     <div id="loan-recaptcha-container" />
