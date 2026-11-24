@@ -185,7 +185,10 @@ const [selectedNoteBill, setSelectedNoteBill] =
   useState<LoanCustomer | null>(null);
 const [noteText, setNoteText] = useState("");
 const [savingNote, setSavingNote] = useState(false);
+const [duplicateLoanDialogOpen, setDuplicateLoanDialogOpen] =
+  useState(false);
 
+const [duplicateLoanPhone, setDuplicateLoanPhone] = useState("");
   localStorage.removeItem("editBillFromBillDetails");
 
   localStorage.removeItem("billLoanNumber");
@@ -420,6 +423,79 @@ const [savingNote, setSavingNote] = useState(false);
 
   navigate("/admin/bill-loan-data");
 };
+
+const handleNext = async () => {
+  const phone = String(customer.phoneNumber || "").replace(/\D/g, "");
+
+  if (!/^\d{10}$/.test(phone)) {
+    toast.error("Enter a valid 10-digit mobile number.");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await api.get(
+      `/admin/getByLoanCusPhnNumber/${phone}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.data) {
+  setDuplicateLoanPhone(phone);
+  setDuplicateLoanDialogOpen(true);
+  return;
+}
+
+    await handleAddCustomer();
+
+ } catch (error: any) {
+  const status = error?.response?.status;
+  const responseMessage = error?.response?.data?.message || "";
+
+  console.log("Loan customer check:", {
+    status,
+    responseMessage,
+  });
+
+  // Customer does not exist
+  if (
+    status === 400 &&
+    responseMessage.includes("Customer is not found by this")
+  ) {
+    await handleAddCustomer();
+    return;
+  }
+
+  // Unexpected error
+  console.error("Existing loan customer check failed:", error);
+
+  toast.error(
+    `Customer check failed. Status: ${status || "Network Error"}`
+  );
+}
+};
+
+
+const handleCloseDuplicateLoanDialog = () => {
+  setDuplicateLoanDialogOpen(false);
+};
+
+const handleOpenExistingLoanCustomer = () => {
+  setDuplicateLoanDialogOpen(false);
+
+  localStorage.removeItem("billLoanNumber");
+  localStorage.setItem("bill-loan-phnNumber", duplicateLoanPhone);
+  localStorage.setItem("checkBackFrom", "Phn-Number");
+
+  navigate("/admin/bill-loan-data");
+};
+
+
+
 
   const handleAddCustomer = async () => {
     localStorage.removeItem("loanItemsFrom");
@@ -1551,7 +1627,7 @@ const deleteLoanNote = async () => {
 
           <Box display="flex" justifyContent="flex-end" mt={4}>
             <Button
-              onClick={handleAddCustomer}
+              onClick={handleNext}
               variant="outlined"
               sx={{
                 paddingX: 4,
@@ -2194,6 +2270,152 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
           {deleteMessage}
         </div>
       )}
+
+
+
+<Dialog
+  open={duplicateLoanDialogOpen}
+  onClose={handleCloseDuplicateLoanDialog}
+  fullWidth
+  maxWidth="sm"
+  PaperProps={{
+    sx: {
+      borderRadius: "24px",
+      overflow: "hidden",
+      boxShadow: "0 24px 80px rgba(0,0,0,0.28)",
+    },
+  }}
+>
+  <Box
+    sx={{
+      background:
+        "linear-gradient(135deg, #4c1d95 0%, #8847FF 55%, #b56cff 100%)",
+      color: "#fff",
+      textAlign: "center",
+      px: 3,
+      pt: 4,
+      pb: 3,
+    }}
+  >
+    <Box
+      sx={{
+        width: 70,
+        height: 70,
+        mx: "auto",
+        mb: 2,
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "rgba(255,255,255,0.18)",
+        border: "2px solid rgba(255,255,255,0.35)",
+        fontSize: "34px",
+      }}
+    >
+      👤
+    </Box>
+
+    <DialogTitle
+      sx={{
+        p: 0,
+        color: "#fff",
+        fontSize: { xs: "24px", md: "30px" },
+        fontWeight: 800,
+      }}
+    >
+      Loan Customer Already Exists
+    </DialogTitle>
+  </Box>
+
+  <DialogContent
+    sx={{
+      textAlign: "center",
+      px: { xs: 3, md: 5 },
+      pt: "30px !important",
+      pb: 2,
+    }}
+  >
+    <Typography sx={{ color: "#4b5563", fontSize: "16px", lineHeight: 1.7 }}>
+      A loan customer account is already registered with this mobile number.
+    </Typography>
+
+    <Box
+      sx={{
+        mt: 3,
+        p: 2,
+        borderRadius: "16px",
+        backgroundColor: "#f5f0ff",
+        border: "1px solid #dfccff",
+      }}
+    >
+      <Typography sx={{ color: "#6b21a8", fontSize: "13px", fontWeight: 600 }}>
+        REGISTERED MOBILE NUMBER
+      </Typography>
+
+      <Typography
+        sx={{
+          mt: 0.5,
+          color: "#2e1065",
+          fontSize: { xs: "22px", md: "26px" },
+          fontWeight: 800,
+          letterSpacing: "1px",
+        }}
+      >
+        {duplicateLoanPhone}
+      </Typography>
+    </Box>
+
+    <Typography
+      sx={{ mt: 3, color: "#111827", fontSize: "17px", fontWeight: 600 }}
+    >
+      Would you like to open the existing loan customer profile?
+    </Typography>
+  </DialogContent>
+
+  <DialogActions
+    sx={{
+      px: { xs: 3, md: 5 },
+      pb: 4,
+      pt: 2,
+      gap: 1.5,
+      justifyContent: "center",
+      flexDirection: { xs: "column-reverse", sm: "row" },
+    }}
+  >
+    <Button
+      onClick={handleCloseDuplicateLoanDialog}
+      variant="outlined"
+      fullWidth
+      sx={{
+        borderRadius: "12px",
+        py: 1.4,
+        fontWeight: 700,
+        borderColor: "#9ca3af",
+        color: "#4b5563",
+      }}
+    >
+      No, Cancel
+    </Button>
+
+    <Button
+      onClick={handleOpenExistingLoanCustomer}
+      variant="contained"
+      fullWidth
+      sx={{
+        borderRadius: "12px",
+        py: 1.4,
+        fontWeight: 700,
+        background: "linear-gradient(135deg, #6d28d9, #8847FF)",
+        boxShadow: "0 8px 20px rgba(136,71,255,0.35)",
+        "&:hover": {
+          background: "linear-gradient(135deg, #5b21b6, #7c3aed)",
+        },
+      }}
+    >
+      Yes, Open Profile
+    </Button>
+  </DialogActions>
+</Dialog>
 
 
       <Dialog
