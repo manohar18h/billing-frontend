@@ -167,7 +167,16 @@ const [loanFirebaseIdToken, setLoanFirebaseIdToken] =
   useState<string | null>(null);
 
 const loanRecaptchaRef = useRef<RecaptchaVerifier | null>(null);
+const [existingLoanCustomer, setExistingLoanCustomer] =
+  useState<{
+    loanCusId: string;
+    name: string;
+    phoneNumber: string;
+    mobileVerified: boolean;
+  } | null>(null);
 
+const [showExistingLoanAlert, setShowExistingLoanAlert] =
+  useState(false);
 
 const [villageLoanCustomers, setVillageLoanCustomers] =
   useState<VillageLoanCustomer[]>([]);
@@ -289,13 +298,14 @@ const [duplicateLoanPhone, setDuplicateLoanPhone] = useState("");
         .join(" ");
     }
 
-    if (
+  if (
   field === "phoneNumber" &&
   String(value) !== customer.phoneNumber
 ) {
   setLoanOtp("");
   setLoanConfirmationResult(null);
   setLoanFirebaseIdToken(null);
+  setExistingLoanCustomer(null);
 }
 
     setCustomer((prev) => ({
@@ -435,21 +445,35 @@ const handleNext = async () => {
   try {
     const token = localStorage.getItem("token");
 
-    const response = await api.get(
-      `/admin/getByLoanCusPhnNumber/${phone}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.get<{
+  loanCusId: string | number;
+  name: string;
+  phoneNumber: string;
+  mobileVerified?: boolean;
+}>(
+  `/admin/getByLoanCusPhnNumber/${phone}`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
     if (response.data) {
+  const existingCustomer = response.data;
+
+  setExistingLoanCustomer({
+    loanCusId: String(existingCustomer.loanCusId),
+    name: existingCustomer.name,
+    phoneNumber: existingCustomer.phoneNumber,
+    mobileVerified: Boolean(existingCustomer.mobileVerified),
+  });
+
   setDuplicateLoanPhone(phone);
   setDuplicateLoanDialogOpen(true);
   return;
 }
-
+setExistingLoanCustomer(null);
     await handleAddCustomer();
 
  } catch (error: any) {
@@ -494,6 +518,60 @@ const handleOpenExistingLoanCustomer = () => {
   navigate("/admin/bill-loan-data");
 };
 
+
+const handleVerifyExistingLoanCustomer = async () => {
+  if (!existingLoanCustomer) {
+    toast.error("Existing loan customer details not found.");
+    return;
+  }
+
+  if (!loanFirebaseIdToken) {
+    toast.error("Please verify the mobile number using OTP first.");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+
+    await api.post(
+      `/admin/loan-customer/${existingLoanCustomer.loanCusId}/verify-mobile`,
+      {
+        firebaseIdToken: loanFirebaseIdToken,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    toast.success("Existing customer mobile verified successfully.");
+
+    setExistingLoanCustomer((prev) =>
+      prev ? { ...prev, mobileVerified: true } : prev
+    );
+
+    setLoanFirebaseIdToken(null);
+    setLoanOtp("");
+    setLoanConfirmationResult(null);
+
+    setDuplicateLoanDialogOpen(false);
+
+    localStorage.removeItem("billLoanNumber");
+    localStorage.setItem("bill-loan-phnNumber", duplicateLoanPhone);
+    localStorage.setItem("checkBackFrom", "Phn-Number");
+
+    navigate("/admin/bill-loan-data");
+
+  } catch (error: any) {
+    console.error("Existing customer mobile verification failed:", error);
+
+    toast.error(
+      error?.response?.data?.message ||
+      "Mobile verification failed. Please try again."
+    );
+  }
+};
 
 
 
@@ -1592,10 +1670,29 @@ const deleteLoanNote = async () => {
 
     {loanFirebaseIdToken && (
       <Chip
-  label="OTP Confirmed – Save Customer"
+  label={
+  existingLoanCustomer
+    ? "OTP Confirmed – Verify Existing Customer"
+    : "OTP Confirmed – Save Customer"
+}
   color="success"
 />
     )}
+
+    {loanFirebaseIdToken &&
+  existingLoanCustomer &&
+  !existingLoanCustomer.mobileVerified && (
+    <Button
+      variant="contained"
+      color="success"
+      onClick={handleVerifyExistingLoanCustomer}
+      disabled={verifyingLoanOtp}
+    >
+      {verifyingLoanOtp
+        ? "Completing Verification..."
+        : "Verify Existing Customer"}
+    </Button>
+  )}
 
   </Box>
 
@@ -2336,8 +2433,41 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
     }}
   >
     <Typography sx={{ color: "#4b5563", fontSize: "16px", lineHeight: 1.7 }}>
-      A loan customer account is already registered with this mobile number.
+  A loan customer account is already registered with this mobile number.
+</Typography>
+
+{existingLoanCustomer && (
+  <Box
+    mt={2}
+    p={2}
+    borderRadius="12px"
+    sx={{
+      backgroundColor: existingLoanCustomer.mobileVerified
+        ? "#ecfdf5"
+        : "#fff7ed",
+      border: existingLoanCustomer.mobileVerified
+        ? "1px solid #86efac"
+        : "1px solid #fdba74",
+    }}
+  >
+    <Typography fontWeight={700}>
+      {existingLoanCustomer.name}
     </Typography>
+
+    <Typography
+      fontWeight={600}
+      color={
+        existingLoanCustomer.mobileVerified
+          ? "success.main"
+          : "warning.dark"
+      }
+    >
+      {existingLoanCustomer.mobileVerified
+        ? "✓ Mobile Number Verified"
+        : "⚠ Mobile Number Not Verified"}
+    </Typography>
+  </Box>
+)}
 
     <Box
       sx={{
@@ -2398,7 +2528,11 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
     </Button>
 
     <Button
-      onClick={handleOpenExistingLoanCustomer}
+      onClick={
+  existingLoanCustomer?.mobileVerified
+    ? handleOpenExistingLoanCustomer
+    : handleCloseDuplicateLoanDialog
+}
       variant="contained"
       fullWidth
       sx={{
@@ -2412,7 +2546,9 @@ sx={{ width: "100%" }}              InputLabelProps={{ shrink: true }}
         },
       }}
     >
-      Yes, Open Profile
+      {existingLoanCustomer?.mobileVerified
+  ? "Yes, Open Profile"
+  : "Close and Verify OTP"}
     </Button>
   </DialogActions>
 </Dialog>
